@@ -1,0 +1,214 @@
+.workout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  padding-bottom: 24px;
+}
+
+.workout-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: rgba(18, 18, 18, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 50;
+}
+
+.workout-timer {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary-color);
+}
+
+.finish-btn {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  background-color: rgba(245, 93, 62, 0.15);
+  color: var(--accent-color);
+}
+
+.workout-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.exercise-card {
+  background-color: var(--surface-color);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.exercise-header h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-main);
+  outline: none;
+  font-size: 1.1rem;
+}
+
+.sets-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr 50px;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.set-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr 50px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+  transition: opacity 0.2s ease;
+}
+
+.set-row.done {
+  opacity: 0.6;
+}
+
+.set-row.done input {
+  background-color: var(--surface-color-elevated);
+}
+
+.set-number {
+  background-color: var(--surface-color-elevated);
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.set-row input {
+  height: 36px;
+  width: 100%;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  appearance: textfield;
+}
+
+.set-row input:focus {
+  outline: 2px solid var(--primary-color);
+  border-color: transparent;
+}
+
+.check-btn {
+  width: 100%;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-color-elevated);
+  color: var(--border-color);
+  border-radius: 8px;
+}
+
+.check-btn.checked {
+  background-color: var(--primary-color);
+  color: #FFF;
+}
+
+.add-set-btn {
+  background-color: transparent;
+  color: var(--text-muted);
+  padding: 8px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+}
+
+.add-set-btn:hover {
+  background-color: var(--surface-color-elevated);
+  color: var(--text-main);
+}
+
+.add-exercise-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--primary-color-dim);
+  color: var(--primary-color);
+  margin-top: 1rem;
+}
+
+.rest-timer-bar {
+  position: sticky;
+  top: 65px; /* right below header */
+  background-color: var(--primary-color);
+  color: #FFF;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 45;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 126, 167, 0.4);
+}
+
+.rest-info {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.rest-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.rest-clock {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+.rest-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn-small {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #FFF;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.finish-rest-btn {
+  padding: 8px;
+}

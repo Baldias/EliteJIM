@@ -1,0 +1,86 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 90px; /* Space for bottom nav */
+}
+
+.app-header {
+  padding: 2.5rem 1.5rem 1.5rem;
+}
+
+.app-header h1 {
+  font-size: 2.2rem;
+  margin: 0;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  font-style: italic;
+  letter-spacing: -0.05em;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.app-main {
+  flex: 1;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.start-workout-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.start-workout-card h2 {
+  font-size: 1.3rem;
+  margin-bottom: 0.25rem;
+}
+
+.start-workout-card p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background-color: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-around;
+  padding: 0.75rem 0;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  z-index: 100;
+}
+
+.nav-item {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.2s ease;
+  cursor: pointer;
+  flex: 1;
+}
+
+.nav-item.active {
+  color: var(--primary-color);
+}
