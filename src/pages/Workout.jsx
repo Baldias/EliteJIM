@@ -16,7 +16,7 @@ function Workout() {
   const cancelWorkout = useStore(state => state.cancelWorkout);
 
   const [sessionTime, setSessionTime] = useState('00:00');
-  
+
   // Rest Timer State
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [isResting, setIsResting] = useState(false);
@@ -66,7 +66,7 @@ function Workout() {
   const handleToggleSet = (exerciseId, setId, currentDoneStatus) => {
     const isNowDone = !currentDoneStatus;
     updateSet(exerciseId, setId, 'done', isNowDone);
-    
+
     // Start rest timer automatically if just finished a set
     if (isNowDone) {
       const exercise = activeWorkout.exercises.find(ex => ex.id === exerciseId);
@@ -79,14 +79,14 @@ function Workout() {
   };
 
   const handleFinishWorkout = () => {
-    if(window.confirm("Sei sicuro di voler terminare l'allenamento?")) {
+    if (window.confirm("Sei sicuro di voler terminare l'allenamento?")) {
       finishStoreWorkout();
       navigate('/history');
     }
   };
 
   const handleCancelWorkout = () => {
-    if(window.confirm("Vuoi davvero annullare questo allenamento senza salvarlo?")) {
+    if (window.confirm("Vuoi davvero annullare questo allenamento senza salvarlo?")) {
       cancelWorkout();
       navigate('/');
     }
@@ -103,17 +103,17 @@ function Workout() {
   // or better, update the store. We'll add the store logic in a separate step or just 
   // bypass it if it's already in the template. If it's a new exercise, we want to name it.
   const handleUpdateExerciseNameLocally = (exerciseId, newName) => {
-      useStore.setState(state => {
-          if (!state.activeWorkout) return state;
-          return {
-              activeWorkout: {
-                  ...state.activeWorkout,
-                  exercises: state.activeWorkout.exercises.map(ex => 
-                      ex.id === exerciseId ? { ...ex, name: newName } : ex
-                  )
-              }
-          }
-      })
+    useStore.setState(state => {
+      if (!state.activeWorkout) return state;
+      return {
+        activeWorkout: {
+          ...state.activeWorkout,
+          exercises: state.activeWorkout.exercises.map(ex =>
+            ex.id === exerciseId ? { ...ex, name: newName } : ex
+          )
+        }
+      }
+    })
   }
 
   return (
@@ -132,7 +132,7 @@ function Workout() {
           </div>
           <div className="rest-controls">
             <button className="icon-btn-small" onClick={() => setRestTimeLeft(prev => prev + 30)}>+30s</button>
-            <button className="icon-btn-small finish-rest-btn" onClick={() => setIsResting(false)}><X size={20}/></button>
+            <button className="icon-btn-small finish-rest-btn" onClick={() => setIsResting(false)}><X size={20} /></button>
           </div>
         </div>
       )}
@@ -145,72 +145,72 @@ function Workout() {
         {activeWorkout.exercises.map((ex, exIdx) => (
           <div key={ex.id} className="exercise-card">
             <div className="exercise-header">
-              <span className="ex-number" style={{display:'inline-flex', marginRight: '8px', verticalAlign:'middle'}}>{exIdx + 1}</span>
-              <div style={{ display: 'inline-block', width: 'calc(100% - 40px)', verticalAlign:'middle' }}>
-                <ExerciseAutocomplete 
+              <span className="ex-number" style={{ display: 'inline-flex', marginRight: '8px', verticalAlign: 'middle' }}>{exIdx + 1}</span>
+              <div style={{ display: 'inline-block', width: 'calc(100% - 40px)', verticalAlign: 'middle' }}>
+                <ExerciseAutocomplete
                   value={ex.name}
                   onChange={(val) => handleUpdateExerciseNameLocally(ex.id, val)}
                   placeholder="Seleziona Esercizio"
                 />
               </div>
             </div>
-            
-            <div className="sets-header" style={{marginTop:'12px'}}>
+
+            <div className="sets-header" style={{ marginTop: '12px' }}>
               <span>Set</span>
               <span>kg</span>
               <span>Reps</span>
-              <span><Check size={16}/></span>
+              <span><Check size={16} /></span>
             </div>
 
             {ex.sets.map((set, setIdx) => (
               <div key={set.id} className={`set-row ${set.done ? 'done' : ''}`}>
                 <div className="set-number">{setIdx + 1}</div>
                 <div className="workout-input-group">
-                  <button 
+                  <button
                     className="workout-num-btn"
                     onClick={() => {
                       const currentVal = parseFloat(set.kg) || 0;
-                      updateSet(ex.id, set.id, 'kg', Math.max(0, currentVal - 1.25).toString());
+                      updateSet(ex.id, set.id, 'kg', Math.max(0, currentVal - 2.5).toString());
                     }}
                   >-</button>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     inputMode="decimal"
-                    placeholder="-" 
-                    value={set.kg || ''} 
+                    placeholder="-"
+                    value={set.kg || ''}
                     onChange={(e) => {
                       const val = e.target.value.replace(/[^0-9.]/g, '');
                       updateSet(ex.id, set.id, 'kg', val);
                     }}
                   />
-                  <button 
+                  <button
                     className="workout-num-btn"
                     onClick={() => {
                       const currentVal = parseFloat(set.kg) || 0;
-                      updateSet(ex.id, set.id, 'kg', (currentVal + 1.25).toString());
+                      updateSet(ex.id, set.id, 'kg', (currentVal + 2.5).toString());
                     }}
                   >+</button>
                 </div>
                 <div className="workout-input-group">
-                  <button 
+                  <button
                     className="workout-num-btn"
                     onClick={() => {
                       const currentVal = parseFloat(set.reps) || 0;
                       updateSet(ex.id, set.id, 'reps', Math.max(0, currentVal - 1).toString());
                     }}
                   >-</button>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    placeholder={set.targetReps || "-"} 
-                    value={set.reps || ''} 
+                    placeholder={set.targetReps || "-"}
+                    value={set.reps || ''}
                     onChange={(e) => {
                       const val = e.target.value.replace(/[^0-9]/g, '');
                       updateSet(ex.id, set.id, 'reps', val);
                     }}
                   />
-                  <button 
+                  <button
                     className="workout-num-btn"
                     onClick={() => {
                       const currentVal = parseFloat(set.reps) || 0;
@@ -218,7 +218,7 @@ function Workout() {
                     }}
                   >+</button>
                 </div>
-                <button 
+                <button
                   className={`check-btn ${set.done ? 'checked' : ''}`}
                   onClick={() => handleToggleSet(ex.id, set.id, set.done)}
                 >
@@ -234,8 +234,8 @@ function Workout() {
           <button className="add-exercise-btn" style={{ flex: 1 }} onClick={() => addExercise('')}>
             <Plus size={20} /> Esercizio
           </button>
-          <button 
-            className="add-exercise-btn" 
+          <button
+            className="add-exercise-btn"
             style={{ flex: 1, backgroundColor: 'rgba(255,69,58,0.15)', color: 'var(--error-color)' }}
             onClick={handleCancelWorkout}
           >
