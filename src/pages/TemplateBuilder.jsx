@@ -112,12 +112,46 @@ function TemplateBuilder() {
                 </div>
                 <div className="detail-group">
                   <label>Reps Target</label>
-                  <input
-                    type="text"
-                    placeholder="Es. 8-10"
-                    value={ex.targetReps}
-                    onChange={(e) => handleUpdateExercise(ex.id, 'targetReps', e.target.value)}
-                  />
+                  <div className="number-input-group">
+                    <button 
+                      type="button" 
+                      className="num-btn"
+                      onClick={() => {
+                        let current = ex.targetReps || '';
+                        let num = 8; // default fallback
+                        if (current) {
+                          const match = current.match(/\d+$/);
+                          if (match) num = parseInt(match[0], 10);
+                        }
+                        const newNum = Math.max(2, num - 2);
+                        handleUpdateExercise(ex.id, 'targetReps', `${newNum - 2}-${newNum}`);
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Es. 8-10"
+                      value={ex.targetReps}
+                      onChange={(e) => handleUpdateExercise(ex.id, 'targetReps', e.target.value)}
+                    />
+                    <button 
+                      type="button" 
+                      className="num-btn"
+                      onClick={() => {
+                        let current = ex.targetReps || '';
+                        let num = 8; // default fallback
+                        if (current) {
+                          const match = current.match(/\d+$/);
+                          if (match) num = parseInt(match[0], 10);
+                        }
+                        const newNum = num + 2;
+                        handleUpdateExercise(ex.id, 'targetReps', `${newNum - 2}-${newNum}`);
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
                 <div className="detail-group" style={{ gridColumn: '1 / -1' }}>
                   <label>Recupero (secondi)</label>
