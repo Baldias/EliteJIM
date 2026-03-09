@@ -1,20 +1,31 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Plus } from 'lucide-react';
+import { Plus, Play } from 'lucide-react';
 
 function Home() {
   const navigate = useNavigate();
   const templates = useStore(state => state.templates);
   const startWorkout = useStore(state => state.startWorkout);
+  const activeWorkout = useStore(state => state.activeWorkout);
 
   const handleStartTemplate = (template) => {
+    if (activeWorkout && !window.confirm("Hai un allenamento in corso. Vuoi abbandonarlo e iniziarne uno nuovo?")) {
+      return;
+    }
     startWorkout(template);
     navigate('/workout');
   };
 
   const handleStartEmpty = () => {
+    if (activeWorkout && !window.confirm("Hai un allenamento in corso. Vuoi abbandonarlo e iniziarne uno nuovo?")) {
+      return;
+    }
     startWorkout(null);
+    navigate('/workout');
+  };
+
+  const handleResumeWorkout = () => {
     navigate('/workout');
   };
 
@@ -26,6 +37,16 @@ function Home() {
       </header>
       
       <main className="app-main">
+        {activeWorkout && (
+          <div className="card start-workout-card" style={{ backgroundColor: 'var(--primary-color-dim)', borderColor: 'var(--primary-color)', marginBottom: '1rem' }}>
+            <h2 style={{ color: 'var(--primary-color)' }}>Allenamento in corso</h2>
+            <p>Stai facendo: <strong>{activeWorkout.name}</strong></p>
+            <button onClick={handleResumeWorkout} style={{ display: 'flex', justifyContent: 'center', gap: '8px', alignItems: 'center' }}>
+              <Play size={18} fill="currentColor" /> Riprendi
+            </button>
+          </div>
+        )}
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
           <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Le tue Schede</h2>
           <button 

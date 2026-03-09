@@ -6,6 +6,7 @@ import Workout from './pages/Workout';
 import History from './pages/History';
 import Profile from './pages/Profile';
 import TemplateBuilder from './pages/TemplateBuilder';
+import ReloadPrompt from './components/ReloadPrompt';
 import './App.css';
 
 function Navigation() {
@@ -35,6 +36,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app-container">
+        <ReloadPrompt />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/workout" element={<Workout />} />

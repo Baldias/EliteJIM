@@ -79,12 +79,71 @@ export const useStore = create(
           if (!state.activeWorkout) return state;
           const updatedExercises = state.activeWorkout.exercises.map((ex) => {
             if (ex.id !== exerciseId) return ex;
+            
+            let lastKg = '';
+            let lastReps = '';
+            let targetReps = '';
+            
+            if (ex.sets && ex.sets.length > 0) {
+              const lastSet = ex.sets[ex.sets.length - 1];
+              lastKg = lastSet.kg || '';
+              lastReps = lastSet.reps || '';
+              targetReps = lastSet.targetReps || '';
+            }
+            
             return {
               ...ex,
-              sets: [...ex.sets, { id: Date.now(), kg: '', reps: '', targetReps: '', done: false }]
+              sets: [...ex.sets, { id: Date.now(), kg: lastKg, reps: lastReps, targetReps, done: false }]
             };
           });
           return { activeWorkout: { ...state.activeWorkout, exercises: updatedExercises } };
+        });
+      },
+
+      addDropsetToActiveExercise: (exerciseId) => {
+        set((state) => {
+          if (!state.activeWorkout) return state;
+          const updatedExercises = state.activeWorkout.exercises.map((ex) => {
+            if (ex.id !== exerciseId) return ex;
+            
+            let lastKg = '';
+            let lastReps = '';
+            if (ex.sets && ex.sets.length > 0) {
+              const lastSet = ex.sets[ex.sets.length - 1];
+              lastKg = lastSet.kg || '';
+              lastReps = lastSet.reps || '';
+            }
+            
+            return {
+              ...ex,
+              sets: [...ex.sets, { id: Date.now(), kg: lastKg, reps: lastReps, targetReps: '', done: false, isDropset: true }]
+            };
+          });
+          return { activeWorkout: { ...state.activeWorkout, exercises: updatedExercises } };
+        });
+      },
+
+      toggleSupersetWithPrevious: (exerciseIndex) => {
+        set((state) => {
+          if (!state.activeWorkout || exerciseIndex <= 0) return state;
+          
+          const exercises = [...state.activeWorkout.exercises];
+          const currentEx = { ...exercises[exerciseIndex] };
+          const prevEx = { ...exercises[exerciseIndex - 1] };
+          
+          if (currentEx.supersetId && currentEx.supersetId === prevEx.supersetId) {
+             currentEx.supersetId = null;
+          } else {
+             if (!prevEx.supersetId) {
+                prevEx.supersetId = Date.now().toString();
+             }
+             currentEx.supersetId = prevEx.supersetId;
+          }
+          
+          exercises[exerciseIndex - 1] = prevEx;
+          exercises[exerciseIndex] = currentEx;
+          
+          return { activeWorkout: { ...state.activeWorkout, exercises } };
         });
       },
 
