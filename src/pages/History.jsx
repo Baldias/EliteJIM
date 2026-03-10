@@ -48,6 +48,15 @@ function History() {
     return `${diff} min`;
   };
 
+  const calculateOneRepMax = (weight, reps) => {
+    const w = parseFloat(weight);
+    const r = parseInt(reps, 10);
+    if (!w || !r || w <= 0 || r <= 0) return null;
+    if (r === 1) return w;
+    // Epley Formula
+    return w * (1 + r / 30);
+  };
+
   const calculateCompletedSets = (exercises) => {
     let sets = 0;
     exercises.forEach(ex => {
@@ -116,12 +125,21 @@ function History() {
                         </div>
                         {isExpanded && (
                           <div className="history-ex-sets">
-                            {doneSets.map((set, setIdx) => (
+                            {doneSets.map((set, setIdx) => {
+                              const est1rm = calculateOneRepMax(set.kg, set.reps);
+                              return (
                               <div key={set.id} className="history-set-row">
                                 <span className="set-number">Set {setIdx + 1}</span>
-                                <span className="set-data">{set.kg} kg × {set.reps} reps</span>
+                                <div className="set-metrics" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                  <span className="set-data">{set.kg} kg × {set.reps} reps</span>
+                                  {est1rm && (
+                                    <span className="set-1rm" style={{ fontSize: '0.75rem', color: 'var(--primary-color)', backgroundColor: 'var(--primary-color-dim)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>
+                                      1RM Est. {est1rm.toFixed(1)} kg
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            ))}
+                            )})}
                           </div>
                         )}
                       </div>
