@@ -102,14 +102,13 @@ function Profile() {
       const doneSets = ex.sets.filter(s => s.done);
       if (doneSets.length === 0) return;
 
-      // Calculate Vol
-      let volume = 0;
+      // Calculate Sets
+      let setsCount = doneSets.length;
       let max1RM = 0;
 
       doneSets.forEach(s => {
         const w = parseFloat(s.kg) || 0;
         const r = parseInt(s.reps, 10) || 0;
-        volume += (w * r);
 
         const rm = calculateOneRepMax(w, r);
         if (rm > max1RM) max1RM = rm;
@@ -122,7 +121,7 @@ function Profile() {
       dataPoints.push({
         date: shortDate,
         timestamp: workout.startTime,
-        volume: volume,
+        setsCount: setsCount,
         oneRepMax: parseFloat(max1RM.toFixed(1))
       });
     });
@@ -137,7 +136,7 @@ function Profile() {
         <div className="custom-tooltip">
           <p className="label">{label}</p>
           <p className="desc">{`1RM Est: ${payload[0].value} kg`}</p>
-          {payload[1] && <p className="desc-volume">{`Volume: ${payload[1].value} kg`}</p>}
+          {payload[1] && <p className="desc-volume">{`Serie: ${payload[1].value}`}</p>}
         </div>
       );
     }
@@ -206,8 +205,8 @@ function Profile() {
                       />
                       <Line
                         type="monotone"
-                        dataKey="volume"
-                        name="Volume"
+                        dataKey="setsCount"
+                        name="Serie"
                         stroke="var(--accent-color)"
                         strokeWidth={2}
                         strokeDasharray="4 4"
