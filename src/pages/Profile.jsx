@@ -1,20 +1,19 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Download, Upload, TrendingUp } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import './Profile.css';
+import { Download, Upload, Calendar, Clock, Dumbbell, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 
 function Profile() {
   const fileInputRef = useRef(null);
+  const history = useStore(state => state.history);
+  const deleteWorkout = useStore(state => state.deleteWorkout);
+  const [expandedSessions, setExpandedSessions] = useState({});
 
   const handleExport = () => {
-    // Get the current state from LocalStorage directly, since Zustand persists it there under 'elitejim-storage'
     const data = localStorage.getItem('elitejim-storage');
     if (!data) {
       alert("Nessun dato trovato da esportare.");
       return;
     }
-
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -32,20 +31,13 @@ function Profile() {
     reader.onload = (e) => {
       try {
         const content = e.target.result;
-        // Basic validation: ensure it's a valid JSON object
         const parsed = JSON.parse(content);
-
         if (!parsed.state) {
           alert("Il file non sembra essere un backup di EliteJIM valido.");
           return;
         }
-
         if (window.confirm("Attenzione: Importare questo file sovrascriverà tutte le tue schede e la cronologia attuali. Sei sicuro di voler procedere?")) {
-          // Restore to local storage
           localStorage.setItem('elitejim-storage', JSON.stringify(parsed));
-
-          // Force Zustand to re-hydrate from the newly set localStorage
-          // The easiest way for a PWA is simply a page reload
           window.location.reload();
         }
       } catch (err) {
@@ -53,32 +45,39 @@ function Profile() {
       }
     };
     reader.readAsText(file);
-
-    // Reset file input
     event.target.value = '';
   };
 
-  // --- Progressive Overload Charts Logic ---
-  const history = useStore(state => state.history);
-  const [selectedExercise, setSelectedExercise] = useState('');
-
-  // Extract all unique exercises ever performed spanning all history
-  const uniqueExercises = useMemo(() => {
-    const exSet = new Set();
-    history.forEach(workout => {
-      workout.exercises.forEach(ex => {
-        // Only consider if at least one set was done
-        if (ex.sets.some(s => s.done)) {
-          exSet.add(ex.name);
-        }
-      });
-    });
-    const arr = Array.from(exSet).sort();
-    if (arr.length > 0 && !selectedExercise) {
-      setSelectedExercise(arr[0]);
+  // --- History Logic ---
+  const handleDelete = (e, workoutId) => {
+    e.stopPropagation();
+    if (window.confirm("Eliminare questa sessione?")) {
+      deleteWorkout(workoutId);
     }
-    return arr;
-  }, [history, selectedExercise]);
+  };
+
+  const toggleSession = (id) => {
+    setExpandedSessions(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const formatDate = (ts) => {
+    const d = new Date(ts);
+    return d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+
+  const formatDuration = (start, end) => {
+    if (!end) return '-';
+    const diff = Math.round((end - start) / 60000);
+    return `${diff} min`;
+  };
+
+  const calculateCompletedSets = (exercises) => {
+    let sets = 0;
+    exercises.forEach(ex => {
+      ex.sets.forEach(s => { if (s.done) sets++; });
+    });
+    return sets;
+  };
 
   const calculateOneRepMax = (weight, reps) => {
     const w = parseFloat(weight);
@@ -88,140 +87,15 @@ function Profile() {
     return w * (1 + r / 30);
   };
 
-  // Prepare data for the selected exercise
-  const chartData = useMemo(() => {
-    if (!selectedExercise) return [];
-
-    const dataPoints = [];
-
-    history.forEach(workout => {
-      // Find the exercise in this workout
-      const ex = workout.exercises.find(e => e.name === selectedExercise);
-      if (!ex) return;
-
-      const doneSets = ex.sets.filter(s => s.done);
-      if (doneSets.length === 0) return;
-
-      // Calculate Sets
-      let setsCount = doneSets.length;
-      let max1RM = 0;
-
-      doneSets.forEach(s => {
-        const w = parseFloat(s.kg) || 0;
-        const r = parseInt(s.reps, 10) || 0;
-
-        const rm = calculateOneRepMax(w, r);
-        if (rm > max1RM) max1RM = rm;
-      });
-
-      // Format Short Date (e.g., "10 Mar")
-      const d = new Date(workout.startTime);
-      const shortDate = `${d.getDate()} ${d.toLocaleString('it-IT', { month: 'short' }).replace('.', '')}`;
-
-      dataPoints.push({
-        date: shortDate,
-        timestamp: workout.startTime,
-        setsCount: setsCount,
-        oneRepMax: parseFloat(max1RM.toFixed(1))
-      });
-    });
-
-    // Sort chronologically
-    return dataPoints.sort((a, b) => a.timestamp - b.timestamp);
-  }, [history, selectedExercise]);
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="custom-tooltip">
-          <p className="label">{label}</p>
-          <p className="desc">{`1RM Est: ${payload[0].value} kg`}</p>
-          {payload[1] && <p className="desc-volume">{`Serie: ${payload[1].value}`}</p>}
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <>
       <header className="app-header">
         <h1>Profilo</h1>
-        <p className="subtitle">Gestione Dati</p>
+        <p className="subtitle">Gestione Dati e Storico</p>
       </header>
 
       <main className="app-main">
-        {/* --- Charts Section --- */}
-        <section className="profile-section">
-          <div className="card">
-            <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <TrendingUp size={20} color="var(--primary-color)" /> Progressive Overload
-            </h2>
-
-            {uniqueExercises.length === 0 ? (
-              <div className="no-data-msg">
-                Nessun dato relativo ad esercizi completati.
-              </div>
-            ) : (
-              <>
-                <select
-                  className="exercise-selector"
-                  value={selectedExercise}
-                  onChange={(e) => setSelectedExercise(e.target.value)}
-                >
-                  {uniqueExercises.map(ex => (
-                    <option key={ex} value={ex}>{ex}</option>
-                  ))}
-                </select>
-
-                <div className="chart-container">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                      <XAxis
-                        dataKey="date"
-                        stroke="var(--text-muted)"
-                        fontSize={12}
-                        tickMargin={10}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        stroke="var(--text-muted)"
-                        fontSize={12}
-                        axisLine={false}
-                        tickLine={false}
-                        domain={['auto', 'auto']}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Line
-                        type="monotone"
-                        dataKey="oneRepMax"
-                        name="1RM Est."
-                        stroke="var(--primary-color)"
-                        strokeWidth={3}
-                        dot={{ r: 4, strokeWidth: 2 }}
-                        activeDot={{ r: 6 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="setsCount"
-                        name="Serie"
-                        stroke="var(--accent-color)"
-                        strokeWidth={2}
-                        strokeDasharray="4 4"
-                        dot={false}
-                        activeDot={{ r: 4 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </>
-            )}
-          </div>
-        </section>
-
-        {/* --- Backup Section --- */}
+        {/* Backup Section */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Backup Dati</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.4 }}>
@@ -251,6 +125,79 @@ function Profile() {
               onChange={handleImport}
             />
           </div>
+        </div>
+
+        {/* History Section */}
+        <div style={{ marginTop: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Calendar size={20} color="var(--primary-color)" /> Storico Allenamenti
+          </h2>
+
+          {(!history || history.length === 0) ? (
+            <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', padding: '2rem' }}>
+              Nessun allenamento registrato.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[...history].reverse().map(workout => {
+                const isExpanded = expandedSessions[workout.id];
+                return (
+                  <div key={workout.id} className="card" style={{ cursor: 'pointer', padding: '1rem' }} onClick={() => toggleSession(workout.id)}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '1rem', letterSpacing: '0.02em' }}>{workout.name || 'Allenamento'}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Calendar size={14} /> {formatDate(workout.startTime)}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          onClick={(e) => handleDelete(e, workout.id)}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: '4px', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        {isExpanded ? <ChevronUp size={18} color="var(--text-muted)" /> : <ChevronDown size={18} color="var(--text-muted)" />}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                      <span className="stat-pill"><Clock size={14} /> {formatDuration(workout.startTime, workout.endTime)}</span>
+                      <span className="stat-pill"><Dumbbell size={14} /> {calculateCompletedSets(workout.exercises)} serie</span>
+                    </div>
+
+                    {isExpanded && (
+                      <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                        {workout.exercises.map(exercise => {
+                          const doneSets = exercise.sets.filter(s => s.done);
+                          if (doneSets.length === 0) return null;
+                          return (
+                            <div key={exercise.id} style={{ marginBottom: '10px' }}>
+                              <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>{exercise.name}</div>
+                              {doneSets.map((set, setIdx) => {
+                                const est1rm = calculateOneRepMax(set.kg, set.reps);
+                                return (
+                                  <div key={set.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '2px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                    <span>Set {setIdx + 1}</span>
+                                    <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{set.kg} kg × {set.reps} reps</span>
+                                    {est1rm && (
+                                      <span style={{ fontSize: '0.75rem', color: 'var(--primary-color)', backgroundColor: 'var(--primary-color-dim)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>
+                                        1RM {est1rm.toFixed(1)} kg
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
     </>

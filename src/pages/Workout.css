@@ -58,7 +58,7 @@
 
 .sets-header {
   display: grid;
-  grid-template-columns: 35px 1fr 1fr 85px 45px;
+  grid-template-columns: 35px 1fr 1fr 45px;
   gap: 8px;
   margin-bottom: 8px;
   padding: 0 4px;
@@ -70,10 +70,10 @@
 
 .set-row {
   display: grid;
-  grid-template-columns: 35px 1fr 1fr 85px 45px;
+  grid-template-columns: 35px 1fr 1fr 45px;
   gap: 8px;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
   transition: opacity 0.2s ease;
 }
 
@@ -193,7 +193,8 @@
 
 .rest-timer-bar {
   position: sticky;
-  top: 65px; /* right below header */
+  top: 65px;
+  /* right below header */
   background-color: var(--primary-color);
   color: #FFF;
   padding: 12px 24px;
@@ -248,76 +249,32 @@
   padding: 8px;
 }
 
-/* Fatigue Selector Styles */
-.fatigue-selector {
+/* Fatigue Indicator (below set row) */
+.fatigue-indicator-row {
   display: flex;
-  gap: 4px;
-  align-items: center;
   justify-content: center;
-  height: 36px;
-  background-color: var(--surface-color-elevated);
-  border-radius: 8px;
-  padding: 0 4px;
+  padding: 2px 0 6px 0;
+  cursor: pointer;
 }
 
-.fatigue-btn {
-  width: 20px;
-  height: 20px;
+.fatigue-dot-small {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  border: 2px solid transparent;
-  padding: 0;
-  cursor: pointer;
-  opacity: 0.3;
   transition: all 0.2s ease;
 }
 
-.fatigue-btn.green {
+.fatigue-dot-small.green {
   background-color: #34c759;
+  box-shadow: 0 0 4px rgba(52, 199, 89, 0.5);
 }
-.fatigue-btn.yellow {
+
+.fatigue-dot-small.yellow {
   background-color: #ffcc00;
+  box-shadow: 0 0 4px rgba(255, 204, 0, 0.5);
 }
-.fatigue-btn.red {
+
+.fatigue-dot-small.red {
   background-color: #ff3b30;
-}
-
-.fatigue-btn:hover {
-  opacity: 0.6;
-  transform: scale(1.1);
-}
-
-.fatigue-btn.active {
-  opacity: 1;
-  border-color: #fff;
-  transform: scale(1.1);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-}
-
-.fatigue-display {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 36px;
-  background-color: var(--surface-color-elevated);
-  border-radius: 8px;
-}
-
-.fatigue-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background-color: var(--text-muted); /* default */
-}
-
-.fatigue-display.green .fatigue-dot {
-  background-color: #34c759;
-  box-shadow: 0 0 6px rgba(52, 199, 89, 0.4);
-}
-.fatigue-display.yellow .fatigue-dot {
-  background-color: #ffcc00;
-  box-shadow: 0 0 6px rgba(255, 204, 0, 0.4);
-}
-.fatigue-display.red .fatigue-dot {
-  background-color: #ff3b30;
-  box-shadow: 0 0 6px rgba(255, 59, 48, 0.4);
+  box-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
 }

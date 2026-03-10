@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { Home as HomeIcon, History as HistoryIcon, User } from 'lucide-react';
+import { Home as HomeIcon, TrendingUp, User } from 'lucide-react';
 import Home from './pages/Home';
 import Workout from './pages/Workout';
-import History from './pages/History';
+import ProgressOverload from './pages/ProgressOverload';
 import Profile from './pages/Profile';
 import TemplateBuilder from './pages/TemplateBuilder';
 import ReloadPrompt from './components/ReloadPrompt';
@@ -21,9 +21,9 @@ function Navigation() {
         <HomeIcon size={24} />
         <span>Home</span>
       </NavLink>
-      <NavLink to="/history" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <HistoryIcon size={24} />
-        <span>Storico</span>
+      <NavLink to="/progress" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+        <TrendingUp size={24} />
+        <span>Progressi</span>
       </NavLink>
       <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <User size={24} />
@@ -41,7 +41,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/workout" element={<Workout />} />
-          <Route path="/history" element={<History />} />
+          <Route path="/progress" element={<ProgressOverload />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/build" element={<TemplateBuilder />} />
         </Routes>

@@ -44,7 +44,7 @@ function Workout() {
   // Rest timer
   useEffect(() => {
     if (!isResting || !restEndTime) return;
-    
+
     // Check immediately to set the right value without 1sec delay
     const updateTimer = () => {
       const remaining = Math.ceil((restEndTime - Date.now()) / 1000);
@@ -57,7 +57,7 @@ function Workout() {
         setRestTimeLeft(remaining);
       }
     };
-    
+
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
@@ -91,7 +91,7 @@ function Workout() {
   const handleFinishWorkout = () => {
     if (window.confirm("Sei sicuro di voler terminare l'allenamento?")) {
       finishStoreWorkout();
-      navigate('/history');
+      navigate('/profile');
     }
   };
 
@@ -115,7 +115,7 @@ function Workout() {
   const handleUpdateExerciseNameLocally = (exerciseId, newName) => {
     useStore.setState(state => {
       if (!state.activeWorkout) return state;
-      
+
       const pastWorkout = state.history.find(w => w.exercises.some(e => e.name === newName));
       const pastEx = pastWorkout ? pastWorkout.exercises.find(e => e.name === newName) : null;
 
@@ -124,15 +124,15 @@ function Workout() {
           ...state.activeWorkout,
           exercises: state.activeWorkout.exercises.map(ex => {
             if (ex.id !== exerciseId) return ex;
-            
+
             const updatedSets = ex.sets.map((set, i) => {
               if (!set.kg && !set.reps && pastEx && pastEx.sets && pastEx.sets.length > 0) {
-                 const pastSet = pastEx.sets[i] || pastEx.sets[pastEx.sets.length - 1];
-                 return {
-                   ...set,
-                   kg: pastSet.kg || '',
-                   reps: pastSet.reps || ''
-                 };
+                const pastSet = pastEx.sets[i] || pastEx.sets[pastEx.sets.length - 1];
+                return {
+                  ...set,
+                  kg: pastSet.kg || '',
+                  reps: pastSet.reps || ''
+                };
               }
               return set;
             });
@@ -151,7 +151,7 @@ function Workout() {
   const numberedExercises = activeWorkout.exercises.map((ex, index) => {
     const prevEx = index > 0 ? activeWorkout.exercises[index - 1] : null;
     const nextEx = index < activeWorkout.exercises.length - 1 ? activeWorkout.exercises[index + 1] : null;
-    
+
     const isTrueSuperset = ex.supersetId && ((prevEx && prevEx.supersetId === ex.supersetId) || (nextEx && nextEx.supersetId === ex.supersetId));
 
     if (isTrueSuperset && ex.supersetId === lastSupersetId) {
@@ -161,9 +161,9 @@ function Workout() {
       currentLetterCode = 65;
     }
     lastSupersetId = ex.supersetId;
-    
+
     const displayNum = isTrueSuperset ? `${currentNum}${String.fromCharCode(currentLetterCode)}` : `${currentNum}`;
-    
+
     const isLinkedToPrev = index > 0 && ex.supersetId && ex.supersetId === activeWorkout.exercises[index - 1].supersetId;
 
     return { ...ex, displayNum, index, isLinkedToPrev, isTrueSuperset };
@@ -198,138 +198,129 @@ function Workout() {
         {numberedExercises.map((ex) => {
           const weightStep = (ex.name || '').toLowerCase().includes('manubri') ? 2 : 2.5;
           return (
-          <div key={ex.id} className="exercise-card" style={{ position: 'relative', marginTop: ex.isLinkedToPrev ? '-0.5rem' : '0' }}>
-            {ex.isLinkedToPrev && (
-              <div style={{ position: 'absolute', top: '-15px', left: '20px', width: '2px', height: '15px', backgroundColor: 'var(--primary-color)' }} />
-            )}
-            <div className="exercise-header" style={{ display: 'flex', alignItems: 'center' }}>
-              <span className="ex-number" style={{ display: 'inline-flex', marginRight: '8px', backgroundColor: ex.isTrueSuperset ? 'var(--primary-color)' : '', color: ex.isTrueSuperset ? '#000' : '' }}>
-                {ex.displayNum}
-              </span>
-              <div style={{ flex: 1 }}>
-                <ExerciseAutocomplete
-                  value={ex.name}
-                  onChange={(val) => handleUpdateExerciseNameLocally(ex.id, val)}
-                  placeholder="Seleziona Esercizio"
-                />
-              </div>
-              {ex.index > 0 && (
-                <button
-                  className="icon-btn-small"
-                  onClick={() => toggleSuperset(ex.index)}
-                  style={{
-                    marginLeft: '8px',
-                    backgroundColor: ex.isLinkedToPrev ? 'var(--primary-color)' : 'transparent',
-                    color: ex.isLinkedToPrev ? '#000' : 'var(--text-muted)'
-                  }}
-                  title="Collega al precedente (Superserie)"
-                >
-                  <Link size={18} />
-                </button>
+            <div key={ex.id} className="exercise-card" style={{ position: 'relative', marginTop: ex.isLinkedToPrev ? '-0.5rem' : '0' }}>
+              {ex.isLinkedToPrev && (
+                <div style={{ position: 'absolute', top: '-15px', left: '20px', width: '2px', height: '15px', backgroundColor: 'var(--primary-color)' }} />
               )}
-            </div>
-
-            <div className="sets-header" style={{ marginTop: '12px' }}>
-              <span>Set</span>
-              <span>kg</span>
-              <span>Reps</span>
-              <span>RPE</span>
-              <span></span>
-            </div>
-
-            {ex.sets.map((set, setIdx) => (
-              <div key={set.id} className={`set-row ${set.done ? 'done' : ''} ${set.isDropset ? 'is-dropset' : ''}`}>
-                <div className="set-number" style={{ fontSize: set.isDropset ? '0.75rem' : '1rem', color: set.isDropset ? 'var(--primary-color)' : '' }}>
-                  {set.isDropset ? 'Drop' : setIdx + 1}
-                </div>
-                <div className="workout-input-group">
-                  <button
-                    className="workout-num-btn"
-                    onClick={() => {
-                      const currentVal = parseFloat(set.kg) || 0;
-                      updateSet(ex.id, set.id, 'kg', Math.max(0, currentVal - weightStep).toString());
-                    }}
-                  >-</button>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="-"
-                    value={set.kg || ''}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9.]/g, '');
-                      updateSet(ex.id, set.id, 'kg', val);
-                    }}
+              <div className="exercise-header" style={{ display: 'flex', alignItems: 'center' }}>
+                <span className="ex-number" style={{ display: 'inline-flex', marginRight: '8px', backgroundColor: ex.isTrueSuperset ? 'var(--primary-color)' : '', color: ex.isTrueSuperset ? '#000' : '' }}>
+                  {ex.displayNum}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <ExerciseAutocomplete
+                    value={ex.name}
+                    onChange={(val) => handleUpdateExerciseNameLocally(ex.id, val)}
+                    placeholder="Seleziona Esercizio"
                   />
-                  <button
-                    className="workout-num-btn"
-                    onClick={() => {
-                      const currentVal = parseFloat(set.kg) || 0;
-                      updateSet(ex.id, set.id, 'kg', (currentVal + weightStep).toString());
-                    }}
-                  >+</button>
                 </div>
-                <div className="workout-input-group">
+                {ex.index > 0 && (
                   <button
-                    className="workout-num-btn"
-                    onClick={() => {
-                      const currentVal = parseFloat(set.reps) || 0;
-                      updateSet(ex.id, set.id, 'reps', Math.max(0, currentVal - 1).toString());
+                    className="icon-btn-small"
+                    onClick={() => toggleSuperset(ex.index)}
+                    style={{
+                      marginLeft: '8px',
+                      backgroundColor: ex.isLinkedToPrev ? 'var(--primary-color)' : 'transparent',
+                      color: ex.isLinkedToPrev ? '#000' : 'var(--text-muted)'
                     }}
-                  >-</button>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    placeholder={set.targetReps || "-"}
-                    value={set.reps || ''}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, '');
-                      updateSet(ex.id, set.id, 'reps', val);
-                    }}
-                  />
-                  <button
-                    className="workout-num-btn"
-                    onClick={() => {
-                      const currentVal = parseFloat(set.reps) || 0;
-                      updateSet(ex.id, set.id, 'reps', (currentVal + 1).toString());
-                    }}
-                  >+</button>
-                </div>
-                {set.done ? (
-                  <div className={`fatigue-display ${set.fatigue || 'default'}`}>
-                    <div className="fatigue-dot"></div>
-                  </div>
-                ) : (
-                  <div className="fatigue-selector">
-                    <button 
-                      className={`fatigue-btn green ${set.fatigue === 'green' ? 'active' : ''}`}
-                      onClick={() => updateSet(ex.id, set.id, 'fatigue', 'green')}
-                    />
-                    <button 
-                      className={`fatigue-btn yellow ${set.fatigue === 'yellow' ? 'active' : ''}`}
-                      onClick={() => updateSet(ex.id, set.id, 'fatigue', 'yellow')}
-                    />
-                    <button 
-                      className={`fatigue-btn red ${set.fatigue === 'red' ? 'active' : ''}`}
-                      onClick={() => updateSet(ex.id, set.id, 'fatigue', 'red')}
-                    />
-                  </div>
+                    title="Collega al precedente (Superserie)"
+                  >
+                    <Link size={18} />
+                  </button>
                 )}
-                
-                <button 
-                  className={`check-btn ${set.done ? 'checked' : ''}`}
-                  onClick={() => handleToggleSet(ex.id, set.id, set.done)}
-                >
-                  <Check size={18} />
-                </button>
               </div>
-            ))}
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-              <button className="add-set-btn" style={{ flex: 1 }} onClick={() => addSet(ex.id)}>+ Set</button>
-              <button className="add-set-btn" style={{ flex: 1, backgroundColor: 'var(--surface-color-elevated)', color: 'var(--text-muted)' }} onClick={() => addDropset(ex.id)}>+ Drop</button>
+
+              <div className="sets-header" style={{ marginTop: '12px' }}>
+                <span>Set</span>
+                <span>kg</span>
+                <span>Reps</span>
+                <span></span>
+              </div>
+
+              {ex.sets.map((set, setIdx) => (
+                <React.Fragment key={set.id}>
+                  <div className={`set-row ${set.done ? 'done' : ''} ${set.isDropset ? 'is-dropset' : ''}`}>
+                    <div className="set-number" style={{ fontSize: set.isDropset ? '0.75rem' : '1rem', color: set.isDropset ? 'var(--primary-color)' : '' }}>
+                      {set.isDropset ? 'Drop' : setIdx + 1}
+                    </div>
+                    <div className="workout-input-group">
+                      <button
+                        className="workout-num-btn"
+                        onClick={() => {
+                          const currentVal = parseFloat(set.kg) || 0;
+                          updateSet(ex.id, set.id, 'kg', Math.max(0, currentVal - weightStep).toString());
+                        }}
+                      >-</button>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="-"
+                        value={set.kg || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                          updateSet(ex.id, set.id, 'kg', val);
+                        }}
+                      />
+                      <button
+                        className="workout-num-btn"
+                        onClick={() => {
+                          const currentVal = parseFloat(set.kg) || 0;
+                          updateSet(ex.id, set.id, 'kg', (currentVal + weightStep).toString());
+                        }}
+                      >+</button>
+                    </div>
+                    <div className="workout-input-group">
+                      <button
+                        className="workout-num-btn"
+                        onClick={() => {
+                          const currentVal = parseFloat(set.reps) || 0;
+                          updateSet(ex.id, set.id, 'reps', Math.max(0, currentVal - 1).toString());
+                        }}
+                      >-</button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder={set.targetReps || "-"}
+                        value={set.reps || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          updateSet(ex.id, set.id, 'reps', val);
+                        }}
+                      />
+                      <button
+                        className="workout-num-btn"
+                        onClick={() => {
+                          const currentVal = parseFloat(set.reps) || 0;
+                          updateSet(ex.id, set.id, 'reps', (currentVal + 1).toString());
+                        }}
+                      >+</button>
+                    </div>
+                    <button
+                      className={`check-btn ${set.done ? 'checked' : ''}`}
+                      onClick={() => handleToggleSet(ex.id, set.id, set.done)}
+                    >
+                      <Check size={18} />
+                    </button>
+                  </div>
+                  <div
+                    className="fatigue-indicator-row"
+                    onDoubleClick={() => {
+                      const cycle = { green: 'yellow', yellow: 'red', red: 'green' };
+                      const current = set.fatigue || 'yellow';
+                      updateSet(ex.id, set.id, 'fatigue', cycle[current]);
+                    }}
+                  >
+                    <div className={`fatigue-dot-small ${set.fatigue || 'yellow'}`} />
+                  </div>
+                </React.Fragment>
+              ))}
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                <button className="add-set-btn" style={{ flex: 1 }} onClick={() => addSet(ex.id)}>+ Set</button>
+                <button className="add-set-btn" style={{ flex: 1, backgroundColor: 'var(--surface-color-elevated)', color: 'var(--text-muted)' }} onClick={() => addDropset(ex.id)}>+ Drop</button>
+              </div>
             </div>
-          </div>
-        )})}
+          )
+        })}
 
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
           <button className="add-exercise-btn" style={{ flex: 1 }} onClick={() => addExercise('')}>
