@@ -249,32 +249,33 @@
   padding: 8px;
 }
 
-/* Fatigue Indicator (below set row) */
-.fatigue-indicator-row {
-  display: flex;
-  justify-content: center;
-  padding: 2px 0 6px 0;
-  cursor: pointer;
-}
-
-.fatigue-dot-small {
-  width: 8px;
-  height: 8px;
+/* Fatigue Dot in Exercise Header */
+.fatigue-dot-header {
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
+  margin-left: 10px;
+  cursor: pointer;
   transition: all 0.2s ease;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
 }
 
-.fatigue-dot-small.green {
+.fatigue-dot-header:active {
+  transform: scale(0.85);
+}
+
+.fatigue-dot-header.green {
   background-color: #34c759;
-  box-shadow: 0 0 4px rgba(52, 199, 89, 0.5);
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.5);
 }
 
-.fatigue-dot-small.yellow {
+.fatigue-dot-header.yellow {
   background-color: #ffcc00;
-  box-shadow: 0 0 4px rgba(255, 204, 0, 0.5);
+  box-shadow: 0 0 6px rgba(255, 204, 0, 0.5);
 }
 
-.fatigue-dot-small.red {
+.fatigue-dot-header.red {
   background-color: #ff3b30;
-  box-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.5);
 }

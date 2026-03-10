@@ -23,6 +23,7 @@ function Workout() {
   const [restEndTime, setRestEndTime] = useState(null);
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [isResting, setIsResting] = useState(false);
+  const [exerciseFatigue, setExerciseFatigue] = useState({});
 
   // Ask for notification permission when they start a workout
   useEffect(() => {
@@ -74,6 +75,11 @@ function Workout() {
 
   const handleToggleSet = (exerciseId, setId, currentDoneStatus) => {
     const isNowDone = !currentDoneStatus;
+    // Save the exercise-level fatigue to the set when marking done
+    if (isNowDone) {
+      const color = exerciseFatigue[exerciseId] || 'yellow';
+      updateSet(exerciseId, setId, 'fatigue', color);
+    }
     updateSet(exerciseId, setId, 'done', isNowDone);
 
     // Start rest timer automatically if just finished a set
@@ -86,6 +92,12 @@ function Workout() {
         setIsResting(true);
       }
     }
+  };
+
+  const cycleFatigue = (exerciseId) => {
+    const cycle = { green: 'yellow', yellow: 'red', red: 'green' };
+    const current = exerciseFatigue[exerciseId] || 'yellow';
+    setExerciseFatigue(prev => ({ ...prev, [exerciseId]: cycle[current] }));
   };
 
   const handleFinishWorkout = () => {
@@ -227,6 +239,11 @@ function Workout() {
                     <Link size={18} />
                   </button>
                 )}
+                <div
+                  className={`fatigue-dot-header ${exerciseFatigue[ex.id] || 'yellow'}`}
+                  onClick={() => cycleFatigue(ex.id)}
+                  title="Fatica (click per cambiare)"
+                />
               </div>
 
               <div className="sets-header" style={{ marginTop: '12px' }}>
@@ -301,16 +318,6 @@ function Workout() {
                     >
                       <Check size={18} />
                     </button>
-                  </div>
-                  <div
-                    className="fatigue-indicator-row"
-                    onDoubleClick={() => {
-                      const cycle = { green: 'yellow', yellow: 'red', red: 'green' };
-                      const current = set.fatigue || 'yellow';
-                      updateSet(ex.id, set.id, 'fatigue', cycle[current]);
-                    }}
-                  >
-                    <div className={`fatigue-dot-small ${set.fatigue || 'yellow'}`} />
                   </div>
                 </React.Fragment>
               ))}
