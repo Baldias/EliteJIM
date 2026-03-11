@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, Play, Pause, X, Link } from 'lucide-react';
+import { Plus, Check, Play, Pause, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
 import { requestNotificationPermission, notifyTimerComplete } from '../utils/notifications';
@@ -14,7 +14,6 @@ function Workout() {
   const addExercise = useStore(state => state.addExerciseToActiveSession);
   const addSet = useStore(state => state.addSetToActiveExercise);
   const addDropset = useStore(state => state.addDropsetToActiveExercise);
-  const toggleSuperset = useStore(state => state.toggleSupersetWithPrevious);
   const cancelWorkout = useStore(state => state.cancelWorkout);
 
   const [sessionTime, setSessionTime] = useState('00:00');
@@ -156,29 +155,8 @@ function Workout() {
     });
   };
 
-  let currentNum = 0;
-  let currentLetterCode = 65; // 'A'
-  let lastSupersetId = null;
-
   const numberedExercises = activeWorkout.exercises.map((ex, index) => {
-    const prevEx = index > 0 ? activeWorkout.exercises[index - 1] : null;
-    const nextEx = index < activeWorkout.exercises.length - 1 ? activeWorkout.exercises[index + 1] : null;
-
-    const isTrueSuperset = ex.supersetId && ((prevEx && prevEx.supersetId === ex.supersetId) || (nextEx && nextEx.supersetId === ex.supersetId));
-
-    if (isTrueSuperset && ex.supersetId === lastSupersetId) {
-      currentLetterCode++;
-    } else {
-      currentNum++;
-      currentLetterCode = 65;
-    }
-    lastSupersetId = ex.supersetId;
-
-    const displayNum = isTrueSuperset ? `${currentNum}${String.fromCharCode(currentLetterCode)}` : `${currentNum}`;
-
-    const isLinkedToPrev = index > 0 && ex.supersetId && ex.supersetId === activeWorkout.exercises[index - 1].supersetId;
-
-    return { ...ex, displayNum, index, isLinkedToPrev, isTrueSuperset };
+    return { ...ex, displayNum: `${index + 1}`, index };
   });
 
   return (
@@ -210,12 +188,9 @@ function Workout() {
         {numberedExercises.map((ex) => {
           const weightStep = (ex.name || '').toLowerCase().includes('manubri') ? 2 : 2.5;
           return (
-            <div key={ex.id} className="exercise-card" style={{ position: 'relative', marginTop: ex.isLinkedToPrev ? '-0.5rem' : '0' }}>
-              {ex.isLinkedToPrev && (
-                <div style={{ position: 'absolute', top: '-15px', left: '20px', width: '2px', height: '15px', backgroundColor: 'var(--primary-color)' }} />
-              )}
+            <div key={ex.id} className="exercise-card" style={{ position: 'relative' }}>
               <div className="exercise-header" style={{ display: 'flex', alignItems: 'center' }}>
-                <span className="ex-number" style={{ display: 'inline-flex', marginRight: '8px', backgroundColor: ex.isTrueSuperset ? 'var(--primary-color)' : '', color: ex.isTrueSuperset ? '#000' : '' }}>
+                <span className="ex-number" style={{ display: 'inline-flex', marginRight: '8px' }}>
                   {ex.displayNum}
                 </span>
                 <div style={{ flex: 1 }}>
@@ -225,20 +200,6 @@ function Workout() {
                     placeholder="Seleziona Esercizio"
                   />
                 </div>
-                {ex.index > 0 && (
-                  <button
-                    className="icon-btn-small"
-                    onClick={() => toggleSuperset(ex.index)}
-                    style={{
-                      marginLeft: '8px',
-                      backgroundColor: ex.isLinkedToPrev ? 'var(--primary-color)' : 'transparent',
-                      color: ex.isLinkedToPrev ? '#000' : 'var(--text-muted)'
-                    }}
-                    title="Collega al precedente (Superserie)"
-                  >
-                    <Link size={18} />
-                  </button>
-                )}
                 <div
                   className={`fatigue-dot-header ${exerciseFatigue[ex.id] || 'yellow'}`}
                   onClick={() => cycleFatigue(ex.id)}

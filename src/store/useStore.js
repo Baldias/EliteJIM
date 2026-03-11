@@ -123,30 +123,6 @@ export const useStore = create(
         });
       },
 
-      toggleSupersetWithPrevious: (exerciseIndex) => {
-        set((state) => {
-          if (!state.activeWorkout || exerciseIndex <= 0) return state;
-
-          const exercises = [...state.activeWorkout.exercises];
-          const currentEx = { ...exercises[exerciseIndex] };
-          const prevEx = { ...exercises[exerciseIndex - 1] };
-
-          if (currentEx.supersetId && currentEx.supersetId === prevEx.supersetId) {
-            currentEx.supersetId = null;
-          } else {
-            if (!prevEx.supersetId) {
-              prevEx.supersetId = Date.now().toString();
-            }
-            currentEx.supersetId = prevEx.supersetId;
-          }
-
-          exercises[exerciseIndex - 1] = prevEx;
-          exercises[exerciseIndex] = currentEx;
-
-          return { activeWorkout: { ...state.activeWorkout, exercises } };
-        });
-      },
-
       finishWorkout: () => {
         set((state) => {
           if (!state.activeWorkout) return state;
