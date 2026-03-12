@@ -1,13 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Plus, Play } from 'lucide-react';
+import { Plus, Play, Trash2 } from 'lucide-react';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 import pkg from '../../package.json';
 
 function Home() {
   const navigate = useNavigate();
   const templates = useStore(state => state.templates);
   const startWorkout = useStore(state => state.startWorkout);
+  const deleteTemplate = useStore(state => state.deleteTemplate);
   const activeWorkout = useStore(state => state.activeWorkout);
 
   const handleStartTemplate = (template) => {
@@ -69,11 +71,17 @@ function Home() {
         </div>
 
         {templates.map(template => (
-          <div key={template.id} className="card start-workout-card" style={{ borderColor: 'var(--primary-color)' }}>
-            <h2>{template.name}</h2>
-            <p>{template.exercises.length} esercizi • {template.exercises.reduce((acc, ex) => acc + ex.setsCount, 0)} serie totali</p>
-            <button onClick={() => handleStartTemplate(template)}>Inizia Scheda</button>
-          </div>
+          <SwipeToDelete key={template.id} onDelete={() => {
+            if (window.confirm(`Sei sicuro di voler eliminare la scheda "${template.name}"?`)) {
+              deleteTemplate(template.id);
+            }
+          }}>
+            <div className="card start-workout-card" style={{ borderColor: 'var(--primary-color)' }}>
+              <h2>{template.name}</h2>
+              <p>{template.exercises.length} esercizi • {template.exercises.reduce((acc, ex) => acc + ex.setsCount, 0)} serie totali</p>
+              <button onClick={() => handleStartTemplate(template)}>Inizia Scheda</button>
+            </div>
+          </SwipeToDelete>
         ))}
 
         <div className="card start-workout-card" style={{ marginTop: templates.length > 0 ? '1rem' : '0' }}>

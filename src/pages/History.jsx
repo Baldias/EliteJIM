@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Calendar, Clock, Dumbbell, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 import './History.css';
 
 function History() {
@@ -84,18 +85,16 @@ function History() {
             {history.map(workout => {
               const isExpanded = expandedSessions[workout.id];
               return (
-              <div key={workout.id} className="history-card" onClick={() => toggleSession(workout.id)} style={{ cursor: 'pointer' }}>
-                <div className="history-header">
-                  <div>
-                    <h3 className="history-title">{workout.name}</h3>
-                    <div className="history-date">
-                      <Calendar size={14} /> {formatDate(workout.startTime)} alle {formatTime(workout.startTime)}
+              <SwipeToDelete key={workout.id} onDelete={(e) => handleDelete(e, workout.id)}>
+                <div className="history-card" onClick={() => toggleSession(workout.id)} style={{ cursor: 'pointer' }}>
+                  <div className="history-header">
+                    <div>
+                      <h3 className="history-title">{workout.name}</h3>
+                      <div className="history-date">
+                        <Calendar size={14} /> {formatDate(workout.startTime)} alle {formatTime(workout.startTime)}
+                      </div>
                     </div>
                   </div>
-                  <button className="icon-btn-small delete-btn" onClick={(e) => handleDelete(e, workout.id)} style={{ padding: '4px', margin: '-8px -8px 0 0' }}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
 
                 <div className="history-stats">
                   <div className="stat-pill">
@@ -145,8 +144,9 @@ function History() {
                       </div>
                     );
                   })}
+                  </div>
                 </div>
-              </div>
+              </SwipeToDelete>
             )})}
           </div>
         )}

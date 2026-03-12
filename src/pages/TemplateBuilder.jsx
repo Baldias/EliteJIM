@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Plus, Trash2, ArrowLeft, Save } from 'lucide-react';
+import { Plus, ArrowLeft, Save } from 'lucide-react';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
 import './TemplateBuilder.css';
 
@@ -66,120 +67,121 @@ function TemplateBuilder() {
         <div className="exercises-list">
           <h3>Esercizi ({exercises.length})</h3>
           {exercises.map((ex, idx) => (
-            <div key={ex.id} className="builder-exercise-card">
-              <div className="ex-card-header">
-                <span className="ex-number">{idx + 1}</span>
-                <div style={{ flex: 1 }}>
-                  <ExerciseAutocomplete
-                    value={ex.name}
-                    onChange={(val) => handleUpdateExercise(ex.id, 'name', val)}
-                  />
+            <div key={ex.id} style={{ marginBottom: '1.5rem' }}>
+              <SwipeToDelete onDelete={() => handleRemoveExercise(ex.id)}>
+                <div className="ex-card-header">
+                  <span className="ex-number">{idx + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <ExerciseAutocomplete
+                      value={ex.name}
+                      onChange={(val) => handleUpdateExercise(ex.id, 'name', val)}
+                    />
+                  </div>
                 </div>
-                <button className="remove-btn" onClick={() => handleRemoveExercise(ex.id)}>
-                  <Trash2 size={20} />
-                </button>
-              </div>
+              </SwipeToDelete>
 
-              <div className="ex-card-details">
-                <div className="detail-group">
-                  <label>Serie</label>
-                  <div className="number-input-group">
-                    <button 
-                      type="button" 
-                      className="num-btn"
-                      onClick={() => handleUpdateExercise(ex.id, 'setsCount', Math.max(1, (parseInt(ex.setsCount) || 1) - 1))}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={ex.setsCount !== undefined ? ex.setsCount : ''}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        handleUpdateExercise(ex.id, 'setsCount', val === '' ? '' : parseInt(val, 10));
-                      }}
-                    />
-                    <button 
-                      type="button" 
-                      className="num-btn"
-                      onClick={() => handleUpdateExercise(ex.id, 'setsCount', (parseInt(ex.setsCount) || 0) + 1)}
-                    >
-                      +
-                    </button>
+              <div className="builder-exercise-card">
+                <div className="ex-card-details">
+                  <div className="detail-group">
+                    <label>Serie</label>
+                    <div className="number-input-group">
+                      <button 
+                        type="button" 
+                        className="num-btn"
+                        onClick={() => handleUpdateExercise(ex.id, 'setsCount', Math.max(1, (parseInt(ex.setsCount) || 1) - 1))}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={ex.setsCount !== undefined ? ex.setsCount : ''}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          handleUpdateExercise(ex.id, 'setsCount', val === '' ? '' : parseInt(val, 10));
+                        }}
+                      />
+                      <button 
+                        type="button" 
+                        className="num-btn"
+                        onClick={() => handleUpdateExercise(ex.id, 'setsCount', (parseInt(ex.setsCount) || 0) + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="detail-group">
-                  <label>Reps Target</label>
-                  <div className="number-input-group">
-                    <button 
-                      type="button" 
-                      className="num-btn"
-                      onClick={() => {
-                        let current = ex.targetReps || '';
-                        let num = 8; // default fallback
-                        if (current) {
-                          const match = current.match(/\d+$/);
-                          if (match) num = parseInt(match[0], 10);
-                        }
-                        const newNum = Math.max(2, num - 2);
-                        handleUpdateExercise(ex.id, 'targetReps', `${newNum - 2}-${newNum}`);
-                      }}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="text"
-                      placeholder="Es. 8-10"
-                      value={ex.targetReps}
-                      onChange={(e) => handleUpdateExercise(ex.id, 'targetReps', e.target.value)}
-                    />
-                    <button 
-                      type="button" 
-                      className="num-btn"
-                      onClick={() => {
-                        let current = ex.targetReps || '';
-                        let num = 8; // default fallback
-                        if (current) {
-                          const match = current.match(/\d+$/);
-                          if (match) num = parseInt(match[0], 10);
-                        }
-                        const newNum = num + 2;
-                        handleUpdateExercise(ex.id, 'targetReps', `${newNum - 2}-${newNum}`);
-                      }}
-                    >
-                      +
-                    </button>
+                  <div className="detail-group">
+                    <label>Reps Target</label>
+                    <div className="number-input-group">
+                      <button 
+                        type="button" 
+                        className="num-btn"
+                        onClick={() => {
+                          let current = ex.targetReps || '';
+                          let num = 8; // default fallback
+                          if (current) {
+                            const match = current.match(/\d+$/);
+                            if (match) num = parseInt(match[0], 10);
+                          }
+                          const newNum = Math.max(2, num - 2);
+                          handleUpdateExercise(ex.id, 'targetReps', `${newNum - 2}-${newNum}`);
+                        }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="text"
+                        placeholder="Es. 8-10"
+                        value={ex.targetReps}
+                        onChange={(e) => handleUpdateExercise(ex.id, 'targetReps', e.target.value)}
+                      />
+                      <button 
+                        type="button" 
+                        className="num-btn"
+                        onClick={() => {
+                          let current = ex.targetReps || '';
+                          let num = 8; // default fallback
+                          if (current) {
+                            const match = current.match(/\d+$/);
+                            if (match) num = parseInt(match[0], 10);
+                          }
+                          const newNum = num + 2;
+                          handleUpdateExercise(ex.id, 'targetReps', `${newNum - 2}-${newNum}`);
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="detail-group" style={{ gridColumn: '1 / -1' }}>
-                  <label>Recupero (secondi)</label>
-                  <div className="number-input-group">
-                    <button 
-                      type="button" 
-                      className="num-btn"
-                      onClick={() => handleUpdateExercise(ex.id, 'restTime', Math.max(0, (parseInt(ex.restTime) || 0) - 15))}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={ex.restTime !== undefined ? ex.restTime : 0}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        handleUpdateExercise(ex.id, 'restTime', val === '' ? '' : parseInt(val, 10));
-                      }}
-                    />
-                    <button 
-                      type="button" 
-                      className="num-btn"
-                      onClick={() => handleUpdateExercise(ex.id, 'restTime', (parseInt(ex.restTime) || 0) + 15)}
-                    >
-                      +
-                    </button>
+                  <div className="detail-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Recupero (secondi)</label>
+                    <div className="number-input-group">
+                      <button 
+                        type="button" 
+                        className="num-btn"
+                        onClick={() => handleUpdateExercise(ex.id, 'restTime', Math.max(0, (parseInt(ex.restTime) || 0) - 15))}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={ex.restTime !== undefined ? ex.restTime : 0}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          handleUpdateExercise(ex.id, 'restTime', val === '' ? '' : parseInt(val, 10));
+                        }}
+                      />
+                      <button 
+                        type="button" 
+                        className="num-btn"
+                        onClick={() => handleUpdateExercise(ex.id, 'restTime', (parseInt(ex.restTime) || 0) + 15)}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

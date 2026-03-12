@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Check, Play, Pause, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../utils/notifications';
 import './Workout.css';
 
@@ -14,6 +15,8 @@ function Workout() {
   const addExercise = useStore(state => state.addExerciseToActiveSession);
   const addSet = useStore(state => state.addSetToActiveExercise);
   const addDropset = useStore(state => state.addDropsetToActiveExercise);
+  const deleteExercise = useStore(state => state.deleteExerciseFromActiveSession);
+  const deleteSet = useStore(state => state.deleteSetFromActiveExercise);
   const cancelWorkout = useStore(state => state.cancelWorkout);
 
   const [sessionTime, setSessionTime] = useState('00:00');
@@ -113,6 +116,12 @@ function Workout() {
     }
   };
 
+  const handleDeleteExercise = (id) => {
+    if (window.confirm("Sei sicuro di voler eliminare questo esercizio?")) {
+      deleteExercise(id);
+    }
+  };
+
   const formatRestTime = (seconds) => {
     const m = Math.floor(seconds / 60);
     const s = String(seconds % 60).padStart(2, '0');
@@ -184,28 +193,29 @@ function Workout() {
         <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--primary-color)' }}>
           {activeWorkout.name}
         </h2>
-
         {numberedExercises.map((ex) => {
           const weightStep = (ex.name || '').toLowerCase().includes('manubri') ? 2 : 2.5;
           return (
             <div key={ex.id} className="exercise-card" style={{ position: 'relative' }}>
-              <div className="exercise-header" style={{ display: 'flex', alignItems: 'center' }}>
-                <span className="ex-number" style={{ display: 'inline-flex', marginRight: '8px' }}>
-                  {ex.displayNum}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <ExerciseAutocomplete
-                    value={ex.name}
-                    onChange={(val) => handleUpdateExerciseNameLocally(ex.id, val)}
-                    placeholder="Seleziona Esercizio"
+              <SwipeToDelete onDelete={() => handleDeleteExercise(ex.id)}>
+                <div className="exercise-header" style={{ display: 'flex', alignItems: 'center' }}>
+                  <span className="ex-number" style={{ display: 'inline-flex', marginRight: '8px' }}>
+                    {ex.displayNum}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <ExerciseAutocomplete
+                      value={ex.name}
+                      onChange={(val) => handleUpdateExerciseNameLocally(ex.id, val)}
+                      placeholder="Seleziona Esercizio"
+                    />
+                  </div>
+                  <div
+                    className={`fatigue-dot-header ${exerciseFatigue[ex.id] || 'yellow'}`}
+                    onClick={() => cycleFatigue(ex.id)}
+                    title="Fatica (click per cambiare)"
                   />
                 </div>
-                <div
-                  className={`fatigue-dot-header ${exerciseFatigue[ex.id] || 'yellow'}`}
-                  onClick={() => cycleFatigue(ex.id)}
-                  title="Fatica (click per cambiare)"
-                />
-              </div>
+              </SwipeToDelete>
 
               <div className="sets-header" style={{ marginTop: '12px' }}>
                 <span>Set</span>
@@ -215,7 +225,7 @@ function Workout() {
               </div>
 
               {ex.sets.map((set, setIdx) => (
-                <React.Fragment key={set.id}>
+                <SwipeToDelete key={set.id} onDelete={() => deleteSet(ex.id, set.id)}>
                   <div className={`set-row ${set.done ? 'done' : ''} ${set.isDropset ? 'is-dropset' : ''}`}>
                     <div className="set-number" style={{ fontSize: set.isDropset ? '0.75rem' : '1rem', color: set.isDropset ? 'var(--primary-color)' : '' }}>
                       {set.isDropset ? 'Drop' : setIdx + 1}
@@ -280,14 +290,14 @@ function Workout() {
                       <Check size={18} />
                     </button>
                   </div>
-                </React.Fragment>
+                </SwipeToDelete>
               ))}
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
                 <button className="add-set-btn" style={{ flex: 1 }} onClick={() => addSet(ex.id)}>+ Set</button>
                 <button className="add-set-btn" style={{ flex: 1, backgroundColor: 'var(--surface-color-elevated)', color: 'var(--text-muted)' }} onClick={() => addDropset(ex.id)}>+ Drop</button>
               </div>
             </div>
-          )
+          );
         })}
 
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>

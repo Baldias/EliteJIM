@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Download, Upload, Calendar, Clock, Dumbbell, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, Upload, Calendar, Clock, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 
 function Profile() {
   const fileInputRef = useRef(null);
@@ -211,58 +212,54 @@ function Profile() {
               {[...history].reverse().map(workout => {
                 const isExpanded = expandedSessions[workout.id];
                 return (
-                  <div key={workout.id} className="card" style={{ cursor: 'pointer', padding: '1rem' }} onClick={() => toggleSession(workout.id)}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: '1rem', letterSpacing: '0.02em' }}>{workout.name || 'Allenamento'}</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <Calendar size={14} /> {formatDate(workout.startTime)}
+                  <SwipeToDelete key={workout.id} onDelete={(e) => handleDelete(e, workout.id)}>
+                    <div className="card" style={{ cursor: 'pointer', padding: '1rem' }} onClick={() => toggleSession(workout.id)}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '1rem', letterSpacing: '0.02em' }}>{workout.name || 'Allenamento'}</div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Calendar size={14} /> {formatDate(workout.startTime)}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {isExpanded ? <ChevronUp size={18} color="var(--text-muted)" /> : <ChevronDown size={18} color="var(--text-muted)" />}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button
-                          onClick={(e) => handleDelete(e, workout.id)}
-                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: '4px', cursor: 'pointer' }}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                        {isExpanded ? <ChevronUp size={18} color="var(--text-muted)" /> : <ChevronDown size={18} color="var(--text-muted)" />}
-                      </div>
-                    </div>
 
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                      <span className="stat-pill"><Clock size={14} /> {formatDuration(workout.startTime, workout.endTime)}</span>
-                      <span className="stat-pill"><Dumbbell size={14} /> {calculateCompletedSets(workout.exercises)} serie</span>
-                    </div>
-
-                    {isExpanded && (
-                      <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-                        {workout.exercises.map(exercise => {
-                          const doneSets = exercise.sets.filter(s => s.done);
-                          if (doneSets.length === 0) return null;
-                          return (
-                            <div key={exercise.id} style={{ marginBottom: '10px' }}>
-                              <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>{exercise.name}</div>
-                              {doneSets.map((set, setIdx) => {
-                                const est1rm = calculateOneRepMax(set.kg, set.reps);
-                                return (
-                                  <div key={set.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '2px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                    <span>Set {setIdx + 1}</span>
-                                    <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{set.kg} kg × {set.reps} reps</span>
-                                    {est1rm && (
-                                      <span style={{ fontSize: '0.75rem', color: 'var(--primary-color)', backgroundColor: 'var(--primary-color-dim)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>
-                                        1RM {est1rm.toFixed(1)} kg
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          );
-                        })}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                        <span className="stat-pill"><Clock size={14} /> {formatDuration(workout.startTime, workout.endTime)}</span>
+                        <span className="stat-pill"><Dumbbell size={14} /> {calculateCompletedSets(workout.exercises)} serie</span>
                       </div>
-                    )}
-                  </div>
+
+                      {isExpanded && (
+                        <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                          {workout.exercises.map(exercise => {
+                            const doneSets = exercise.sets.filter(s => s.done);
+                            if (doneSets.length === 0) return null;
+                            return (
+                              <div key={exercise.id} style={{ marginBottom: '10px' }}>
+                                <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>{exercise.name}</div>
+                                {doneSets.map((set, setIdx) => {
+                                  const est1rm = calculateOneRepMax(set.kg, set.reps);
+                                  return (
+                                    <div key={set.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '2px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                      <span>Set {setIdx + 1}</span>
+                                      <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{set.kg} kg × {set.reps} reps</span>
+                                      {est1rm && (
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--primary-color)', backgroundColor: 'var(--primary-color-dim)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>
+                                          1RM {est1rm.toFixed(1)} kg
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </SwipeToDelete>
                 );
               })}
             </div>

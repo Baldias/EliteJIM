@@ -143,6 +143,37 @@ export const useStore = create(
         set((state) => ({
           history: state.history.filter(w => w.id !== workoutId)
         }));
+      },
+
+      deleteExerciseFromActiveSession: (exerciseId) => {
+        set((state) => {
+          if (!state.activeWorkout) return state;
+          return {
+            activeWorkout: {
+              ...state.activeWorkout,
+              exercises: state.activeWorkout.exercises.filter(ex => ex.id !== exerciseId)
+            }
+          };
+        });
+      },
+
+      deleteSetFromActiveExercise: (exerciseId, setId) => {
+        set((state) => {
+          if (!state.activeWorkout) return state;
+          const updatedExercises = state.activeWorkout.exercises.map(ex => {
+            if (ex.id !== exerciseId) return ex;
+            return {
+              ...ex,
+              sets: ex.sets.filter(s => s.id !== setId)
+            };
+          });
+          return {
+            activeWorkout: {
+              ...state.activeWorkout,
+              exercises: updatedExercises
+            }
+          };
+        });
       }
     }),
     {

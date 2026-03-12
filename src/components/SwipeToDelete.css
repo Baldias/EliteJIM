@@ -1,0 +1,42 @@
+.swipe-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 2px;
+}
+
+.swipe-content {
+  position: relative;
+  z-index: 2;
+  background-color: transparent;
+  width: 100%;
+}
+
+.swipe-action-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: #ff3b30;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 24px;
+  color: white;
+  z-index: 1;
+  border-radius: 12px;
+}
+
+.swipe-action-content {
+  display: flex;
+  align-items: center;
+}
+
+.swipe-container.deleting {
+  max-height: 0;
+  margin: 0;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+}
