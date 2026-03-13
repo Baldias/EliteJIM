@@ -1,10 +1,10 @@
 /* Muscle Group Chips */
 .muscle-chips-container {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     overflow-x: auto;
-    padding-bottom: 12px;
-    margin-bottom: 8px;
+    padding: 0 4px 12px;
+    margin-bottom: 0.5rem;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -14,105 +14,134 @@
 }
 
 .muscle-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: 12px;
     background-color: var(--surface-color-elevated);
     border: 1px solid var(--border-color);
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .muscle-chip:hover {
     border-color: var(--primary-color);
     color: var(--text-main);
+    transform: translateY(-1px);
 }
 
 .muscle-chip.active {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dim));
     border-color: var(--primary-color);
     color: #000;
-    font-weight: 600;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
 }
 
-.muscle-chip.active svg {
-    stroke: #000;
+/* Chart Area */
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
 }
 
-/* Exercise Selector */
-.exercise-selector {
-    width: 100%;
-    padding: 12px 16px;
-    background-color: var(--surface-color-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+.insight-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.insight-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.insight-value {
+    font-size: 1.1rem;
+    font-weight: 700;
     color: var(--text-main);
-    font-size: 1rem;
-    font-family: inherit;
-    margin-bottom: 0.5rem;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239e9e9e%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right 16px top 50%;
-    background-size: 12px auto;
 }
 
-.exercise-selector:focus {
-    outline: none;
-    border-color: var(--primary-color);
+.insight-value.primary { color: var(--primary-color); }
+.insight-value.success { color: #10b981; }
+
+/* Chart Area */
+.chart-card {
+    padding: 1.5rem 0.5rem 1rem !important;
 }
 
-/* Chart */
 .chart-container {
-    height: 300px;
+    height: 320px;
     width: 100%;
-    margin-top: 1rem;
 }
 
-/* Tooltip */
+/* Custom Tooltip */
 .custom-tooltip {
-    background-color: var(--surface-color-elevated);
-    border: 1px solid var(--border-color);
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 12px;
+    min-width: 140px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .custom-tooltip .label {
-    font-weight: 600;
-    margin-bottom: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
     color: var(--text-main);
-    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 4px;
 }
 
-.custom-tooltip .desc {
-    color: var(--primary-color);
-    font-size: 0.85rem;
-    margin: 0;
+.tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.custom-tooltip .desc-volume {
-    color: var(--accent-color);
-    font-size: 0.85rem;
-    margin: 0;
-}
-
-/* No data */
-.no-data-msg {
+.tooltip-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 200px;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.dot.rm { background: var(--primary-color); }
+.dot.reps { background: #6366f1; }
+.dot.volume { background: var(--accent-color); opacity: 0.7; }
+
+.val {
+    color: var(--text-muted);
+}
+
+.glass {
+    background: rgba(25, 25, 25, 0.6) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.no-data-msg {
+    padding: 3rem 2rem;
+    text-align: center;
     color: var(--text-muted);
     font-style: italic;
-    font-size: 0.95rem;
-    text-align: center;
-    padding: 1rem;
+    font-size: 1rem;
+    line-height: 1.6;
 }

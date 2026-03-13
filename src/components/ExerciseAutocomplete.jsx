@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { EXERCISES_DB } from '../data/exercises';
 import './Autocomplete.css';
 
-export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca esercizio..." }) {
+export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca esercizio...", options = null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef(null);
@@ -18,10 +18,14 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filteredExercises = EXERCISES_DB.filter(ex => 
-    ex.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    ex.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const sourceData = options || EXERCISES_DB;
+
+  const filteredExercises = sourceData.filter(ex => {
+    const name = typeof ex === 'string' ? ex : ex.name;
+    const category = typeof ex === 'string' ? '' : ex.category;
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           category.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <div ref={wrapperRef} className="autocomplete-wrapper">
@@ -44,21 +48,27 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
       {isOpen && (
         <ul className="autocomplete-dropdown">
           {filteredExercises.length > 0 ? (
-            filteredExercises.map(ex => (
-              <li 
-                key={ex.id} 
-                className="autocomplete-item"
-                onClick={() => {
-                  onChange(ex.name);
-                  setIsOpen(false);
-                }}
-              >
-                <span className="ac-name">{ex.name}</span>
-                <span className="ac-category">{ex.category}</span>
-              </li>
-            ))
+            filteredExercises.map((ex, idx) => {
+              const name = typeof ex === 'string' ? ex : ex.name;
+              const category = typeof ex === 'string' ? null : ex.category;
+              const id = typeof ex === 'string' ? `opt-${idx}` : ex.id;
+              
+              return (
+                <li 
+                  key={id} 
+                  className="autocomplete-item"
+                  onClick={() => {
+                    onChange(name);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span className="ac-name">{name}</span>
+                  {category && <span className="ac-category">{category}</span>}
+                </li>
+              );
+            })
           ) : (
-             <li className="autocomplete-item-empty">Premi invio per aggiungere "{value}" custom</li>
+             <li className="autocomplete-item-empty">Nessun esercizio trovato</li>
           )}
         </ul>
       )}

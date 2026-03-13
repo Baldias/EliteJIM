@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { EXERCISE_CATEGORIES, EXERCISES_DB } from '../data/exercises';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
 import './ProgressOverload.css';
 
 function ProgressOverload() {
@@ -89,20 +90,51 @@ function ProgressOverload() {
         return dataPoints.sort((a, b) => a.timestamp - b.timestamp);
     }, [history, selectedExercise]);
 
+    const insights = useMemo(() => {
+        if (chartData.length === 0) return null;
+        
+        const validPRs = chartData.map(d => d.oneRepMax).filter(val => val > 0);
+        const pb = validPRs.length > 0 ? Math.max(...validPRs) : 0;
+        const last1RM = chartData[chartData.length - 1].oneRepMax;
+        
+        let progressPercent = 0;
+        if (validPRs.length >= 2) {
+            const first1RM = validPRs[0];
+            progressPercent = ((pb - first1RM) / first1RM) * 100;
+        }
+
+        return {
+            pb: pb > 0 ? `${pb}kg` : chartData[chartData.length - 1].maxReps + ' reps',
+            last: last1RM > 0 ? `${last1RM}kg` : '-',
+            progress: progressPercent > 0 ? `+${progressPercent.toFixed(1)}%` : '0%'
+        };
+    }, [chartData]);
+
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             const showsReps = data.oneRepMax === 0 && data.maxReps > 0;
 
             return (
-                <div className="custom-tooltip">
+                <div className="custom-tooltip glass">
                     <p className="label">{label}</p>
-                    {showsReps ? (
-                        <p className="desc">{`Max Reps: ${data.maxReps}`}</p>
-                    ) : (
-                        <p className="desc">{`1RM Est: ${data.oneRepMax} kg`}</p>
-                    )}
-                    {payload[1] && <p className="desc-volume">{`Serie: ${payload[1].value}`}</p>}
+                    <div className="tooltip-content">
+                        {showsReps ? (
+                            <div className="tooltip-row">
+                                <span className="dot reps"></span>
+                                <span className="val">Max Reps: {data.maxReps}</span>
+                            </div>
+                        ) : (
+                            <div className="tooltip-row">
+                                <span className="dot rm"></span>
+                                <span className="val">1RM Est: {data.oneRepMax}kg</span>
+                            </div>
+                        )}
+                        <div className="tooltip-row">
+                            <span className="dot volume"></span>
+                            <span className="val">Serie: {data.setsCount}</span>
+                        </div>
+                    </div>
                 </div>
             );
         }
@@ -113,7 +145,7 @@ function ProgressOverload() {
         <>
             <header className="app-header">
                 <h1>Progressi</h1>
-                <p className="subtitle">Sovraccarico Progressivo</p>
+                <p className="subtitle">Performance & Insight</p>
             </header>
 
             <main className="app-main">
@@ -138,41 +170,62 @@ function ProgressOverload() {
                     })}
                 </div>
 
-                {/* Chart Card */}
-                <div className="card">
-                    {availableExercises.length === 0 ? (
-                        <div className="no-data-msg">
-                            {selectedCategory
-                                ? `Nessun esercizio completato per ${EXERCISE_CATEGORIES[selectedCategory]}.`
-                                : 'Nessun dato disponibile. Completa qualche allenamento!'}
-                        </div>
-                    ) : (
-                        <>
-                            <select
-                                className="exercise-selector"
+                {availableExercises.length === 0 ? (
+                    <div className="card glass no-data-msg">
+                        {selectedCategory
+                            ? `Nessun esercizio completato per ${EXERCISE_CATEGORIES[selectedCategory]}.`
+                            : 'Nessun dato disponibile. Inizia ad allenarti per vedere i tuoi progressi!'}
+                    </div>
+                ) : (
+                    <>
+                        <div className="exercise-picker-row">
+                            <ExerciseAutocomplete
                                 value={selectedExercise}
-                                onChange={(e) => setSelectedExercise(e.target.value)}
-                            >
-                                {availableExercises.map(ex => (
-                                    <option key={ex} value={ex}>{ex}</option>
-                                ))}
-                            </select>
+                                onChange={(val) => setSelectedExercise(val)}
+                                options={availableExercises}
+                                placeholder="Cerca esercizio..."
+                            />
+                        </div>
 
+                        {insights && (
+                            <div className="insights-grid">
+                                <div className="insight-card">
+                                    <span className="insight-label">Personal Best</span>
+                                    <span className="insight-value primary">{insights.pb}</span>
+                                </div>
+                                <div className="insight-card">
+                                    <span className="insight-label">Ultima Sessione</span>
+                                    <span className="insight-value">{insights.last}</span>
+                                </div>
+                                <div className="insight-card">
+                                    <span className="insight-label">Progresso Tot.</span>
+                                    <span className="insight-value success">{insights.progress}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="card chart-card glass">
                             <div className="chart-container">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+                                    <LineChart data={chartData} margin={{ top: 20, right: 5, left: -25, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorRM" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="var(--primary-color)" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="var(--primary-color)" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                                         <XAxis
                                             dataKey="date"
                                             stroke="var(--text-muted)"
-                                            fontSize={12}
-                                            tickMargin={10}
+                                            fontSize={11}
+                                            tickMargin={12}
                                             axisLine={false}
                                             tickLine={false}
                                         />
                                         <YAxis
                                             stroke="var(--text-muted)"
-                                            fontSize={12}
+                                            fontSize={11}
                                             axisLine={false}
                                             tickLine={false}
                                             domain={['auto', 'auto']}
@@ -183,9 +236,10 @@ function ProgressOverload() {
                                             dataKey="oneRepMax"
                                             name="1RM Est."
                                             stroke="var(--primary-color)"
-                                            strokeWidth={3}
-                                            dot={{ r: 4, strokeWidth: 2 }}
-                                            activeDot={{ r: 6 }}
+                                            strokeWidth={4}
+                                            dot={{ r: 4, strokeWidth: 2, fill: 'var(--surface-color)' }}
+                                            activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--primary-color)' }}
+                                            animationDuration={1500}
                                         />
                                         <Line
                                             type="monotone"
@@ -193,16 +247,17 @@ function ProgressOverload() {
                                             name="Serie"
                                             stroke="var(--accent-color)"
                                             strokeWidth={2}
-                                            strokeDasharray="4 4"
+                                            strokeDasharray="5 5"
                                             dot={false}
                                             activeDot={{ r: 4 }}
+                                            opacity={0.5}
                                         />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
-                        </>
-                    )}
-                </div>
+                        </div>
+                    </>
+                )}
             </main>
         </>
     );
