@@ -114,31 +114,50 @@ function History() {
                     const doneSets = ex.sets.filter(s => s.done);
                     if (doneSets.length === 0) return null; // Skip if no set was marked as done
                     
+                    // Find the best set (highest estimated 1RM)
+                    let bestSetId = null;
+                    let max1Rm = 0;
+                    doneSets.forEach(s => {
+                       const est = calculateOneRepMax(s.kg, s.reps);
+                       if (est && est > max1Rm) { max1Rm = est; bestSetId = s.id; }
+                    });
+
                     return (
                       <div key={ex.id} className="history-ex-container">
-                        <div className="history-ex-row">
-                          <span className="h-ex-name">{exIdx + 1}. {ex.name}</span>
+                        <div className="history-ex-header">
+                          <div className="h-ex-title">
+                            <span className="h-ex-num">{exIdx + 1}</span>
+                            <span className="h-ex-name">{ex.name}</span>
+                          </div>
                           <span className="h-ex-details">
                             {doneSets.length} set completati
                           </span>
                         </div>
                         {isExpanded && (
-                          <div className="history-ex-sets">
+                          <div className="history-ex-sets-table">
+                            <div className="history-set-thead">
+                              <span>Set</span>
+                              <span>kg</span>
+                              <span>Reps</span>
+                              <span style={{ textAlign: 'right' }}>1RM Est.</span>
+                            </div>
                             {doneSets.map((set, setIdx) => {
                               const est1rm = calculateOneRepMax(set.kg, set.reps);
+                              const isBest = set.id === bestSetId && max1Rm > 0;
                               return (
-                              <div key={set.id} className="history-set-row">
-                                <span className="set-number">Set {setIdx + 1}</span>
-                                <div className="set-metrics" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                  <span className="set-data">{set.kg} kg × {set.reps} reps</span>
-                                  {est1rm && (
-                                    <span className="set-1rm" style={{ fontSize: '0.75rem', color: 'var(--primary-color)', backgroundColor: 'var(--primary-color-dim)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>
-                                      1RM Est. {est1rm.toFixed(1)} kg
-                                    </span>
-                                  )}
+                                <div key={set.id} className={`history-set-trow ${isBest ? 'best-set' : ''} ${set.isDropset ? 'drop-set' : ''}`}>
+                                  <span className="set-col-num">
+                                    {set.isDropset ? <span className="drop-badge">Drop</span> : setIdx + 1}
+                                  </span>
+                                  <span className="set-col-data">{set.kg || '-'}</span>
+                                  <span className="set-col-data">{set.reps || '-'}</span>
+                                  <span className="set-col-1rm">
+                                    {est1rm ? est1rm.toFixed(1) : '-'}
+                                    {isBest && <span className="best-badge" title="Miglior Set">🏆</span>}
+                                  </span>
                                 </div>
-                              </div>
-                            )})}
+                              );
+                            })}
                           </div>
                         )}
                       </div>
