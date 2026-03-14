@@ -15,7 +15,11 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   const sourceData = options || EXERCISES_DB;
@@ -57,6 +61,7 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
                 <li 
                   key={id} 
                   className="autocomplete-item"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     onChange(name);
                     setIsOpen(false);

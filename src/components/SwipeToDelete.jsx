@@ -12,6 +12,10 @@ export function SwipeToDelete({ children, onDelete }) {
   const confirmThreshold = 150; // px to auto-delete
 
   const handleTouchStart = (e) => {
+    // Non intercettare il tocco su input, bottoni o menu a tendina
+    if (e.target.closest('input') || e.target.closest('button') || e.target.closest('.autocomplete-dropdown')) {
+      return;
+    }
     setStartX(e.touches[0].clientX);
     setIsSwiping(true);
   };
@@ -46,7 +50,10 @@ export function SwipeToDelete({ children, onDelete }) {
   const translateX = Math.max(-200, currentX);
 
   return (
-    <div className={`swipe-container ${isDeleting ? 'deleting' : ''}`}>
+    <div 
+      className={`swipe-container ${isDeleting ? 'deleting' : ''}`}
+      style={{ overflow: (currentX !== 0 || isSwiping) ? 'hidden' : 'visible' }}
+    >
       <div 
         className="swipe-action-bg"
         style={{ opacity: Math.abs(currentX) > 20 ? 1 : 0 }}
@@ -59,8 +66,10 @@ export function SwipeToDelete({ children, onDelete }) {
       <div 
         className="swipe-content"
         style={{ 
-          transform: `translateX(${translateX}px)`,
-          transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          transform: currentX !== 0 ? `translateX(${translateX}px)` : 'none',
+          transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          position: 'relative',
+          zIndex: (currentX !== 0 || isSwiping) ? 2 : 'auto'
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}

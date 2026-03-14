@@ -8,7 +8,7 @@
 
 .swipe-content {
   position: relative;
-  z-index: 2;
+  /* z-index is applied dynamically in jsx */
   background-color: transparent;
   width: 100%;
 }
@@ -25,7 +25,7 @@
   align-items: center;
   padding-right: 24px;
   color: white;
-  z-index: 1;
+  z-index: 0;
   border-radius: 12px;
 }
 
