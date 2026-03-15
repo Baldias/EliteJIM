@@ -2,9 +2,11 @@
   --bg-color: #000000;
   --surface-color: #121212;
   --surface-color-elevated: #1e1e1e;
-  --primary-color: #007EA7; /* Cerulean */
+  --primary-color: #007EA7;
+  /* Cerulean */
   --primary-color-dim: rgba(0, 126, 167, 0.15);
-  --accent-color: #F55D3E; /* Tomato */
+  --accent-color: #F55D3E;
+  /* Tomato */
   --text-main: #FFFFFF;
   --text-muted: #9e9e9e;
   --border-color: #2c2c2c;
@@ -41,12 +43,14 @@ body {
 
 #root {
   width: 100%;
-  max-width: 480px; /* Mobile focused app layout */
+  max-width: 480px;
+  /* Mobile focused app layout */
   margin: 0 auto;
   min-height: 100vh;
   background-color: var(--bg-color);
   position: relative;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5); /* Helps separate from desktop bg if viewed on desktop */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  /* Helps separate from desktop bg if viewed on desktop */
 }
 
 a {
@@ -60,7 +64,12 @@ a:hover {
   color: var(--text-main);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-bottom: 0.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -96,4 +105,22 @@ button:disabled {
   padding: 1.5rem;
   border: 1px solid var(--border-color);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Aggiungi questa regola in fondo per bloccare l'UI se girano il telefono */
+@media screen and (orientation: landscape) and (max-height: 700px) {
+  #root {
+    display: none;
+  }
+
+  body::before {
+    content: 'Ruota il dispositivo in verticale';
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+    font-weight: bold;
+    background: #121212;
+  }
 }
