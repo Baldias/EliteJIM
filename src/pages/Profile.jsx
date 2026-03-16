@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { Download, Upload, Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
+import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
+import { EXERCISES_DB } from '../data/exercises';
 import './Profile.css';
 
 function Profile() {
@@ -147,6 +149,12 @@ function Profile() {
     };
   }, [history]);
 
+  // --- RP Volume Logic ---
+  const rpVolumes = useMemo(() => {
+    if (!history || history.length === 0) return null;
+    return calculateLast7DaysVolume(history, EXERCISES_DB);
+  }, [history]);
+
   const welcomePhrase = useMemo(() => {
     if (history.length === 0) return "Inizia la tua sfida";
     if (history.length < 5) return "Ottimo inizio, Campione";
@@ -240,6 +248,71 @@ function Profile() {
             <span className="stat-label">Serie</span>
           </div>
         </div>
+
+        {/* RP Volume Section */}
+        {rpVolumes && (
+          <div style={{ marginTop: '2rem' }}>
+            <div className="section-header" style={{ marginBottom: '1.5rem' }}>
+              <h2 className="section-title-premium">
+                Volume RP (Ultimi 7 Giorni)
+              </h2>
+            </div>
+            <div className="card glass rp-volume-container" style={{ borderRadius: '24px', padding: '1.5rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.4 }}>
+                Serie completate negli ultimi 7 giorni rispetto ai landmark di Dr. Mike Israetel (MEV, MAV, MRV).
+              </p>
+              
+              <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                {Object.entries(rpVolumes).map(([category, sets]) => {
+                  if (sets === 0) return null; // Nascondi muscoli non allenati
+                  const status = getVolumeStatus(sets, category);
+                  const landmarks = RP_LANDMARKS[category];
+                  
+                  // Calculate raw percentage for visual bar (cap at 120%)
+                  const maxTarget = landmarks.MRV || landmarks.MAV_MAX || sets || 1;
+                  const visualPercent = Math.min(120, (sets / maxTarget) * 100);
+
+                  return (
+                    <div key={category} className="rp-item" style={{ 
+                      background: 'rgba(255,255,255,0.03)', 
+                      padding: '1rem', 
+                      borderRadius: '16px',
+                      border: '1px solid rgba(255,255,255,0.05)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{category}</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: status.color, background: `${status.color}20`, padding: '2px 8px', borderRadius: '12px' }}>
+                          {sets} serie
+                        </span>
+                      </div>
+                      
+                      <div style={{ width: '100%', height: '8px', background: 'var(--surface-color)', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                        <div style={{ 
+                          height: '100%', 
+                          width: `${visualPercent}%`, 
+                          background: status.color,
+                          borderRadius: '4px',
+                          transition: 'width 0.5s ease-out'
+                        }}></div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        <span>Stato: <strong style={{ color: status.color }}>{status.status}</strong></span>
+                        <span>MRV: {landmarks.MRV}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {Object.values(rpVolumes).every(v => v === 0) && (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', margin: '2rem 0' }}>
+                  Nessuna serie registrata negli ultimi 7 giorni.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* History Section */}
         <div style={{ marginTop: '3rem' }}>
