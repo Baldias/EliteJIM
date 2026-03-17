@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { RefreshCw, Zap, Target, BookOpen, Calendar, ChevronRight } from 'lucide-react';
 import './Science.css';
@@ -316,9 +316,70 @@ function Science() {
     gender: null,
     stats: { bw: '', bench: '', squat: '', deadlift: '' },
     legs: null,
-    focus1: [],
     focus2: []
   });
+
+  const history = useStore(state => state.history);
+
+  // Auto-fill 1RM stats from history
+  useEffect(() => {
+    if (step === 1 && history.length > 0) {
+      const best1RMs = {
+        bench: 0,
+        squat: 0,
+        deadlift: 0
+      };
+
+      const calculate1RM = (w, r) => {
+        const weight = parseFloat(w);
+        const reps = parseInt(r, 10);
+        if (!weight || !reps || weight <= 0 || reps <= 0) return 0;
+        if (reps === 1) return weight;
+        return weight * (1 + reps / 30);
+      };
+
+      history.forEach(workout => {
+        workout.exercises.forEach(ex => {
+          let type = '';
+          if (ex.name === 'Panca Piana Bilanciere') type = 'bench';
+          else if (ex.name === 'Squat con Bilanciere') type = 'squat';
+          else if (ex.name === 'Stacchi da Terra (Deadlift)') type = 'deadlift';
+
+          if (type) {
+            ex.sets.forEach(s => {
+              if (s.done) {
+                const rm = calculate1RM(s.kg, s.reps);
+                if (rm > best1RMs[type]) {
+                  best1RMs[type] = rm;
+                }
+              }
+            });
+          }
+        });
+      });
+
+      setAnswers(prev => {
+        // Only update if current values are empty to avoid overwriting user manual tweaks
+        const newStats = { ...prev.stats };
+        let changed = false;
+
+        if (!newStats.bench && best1RMs.bench > 0) {
+          newStats.bench = Math.round(best1RMs.bench).toString();
+          changed = true;
+        }
+        if (!newStats.squat && best1RMs.squat > 0) {
+          newStats.squat = Math.round(best1RMs.squat).toString();
+          changed = true;
+        }
+        if (!newStats.deadlift && best1RMs.deadlift > 0) {
+          newStats.deadlift = Math.round(best1RMs.deadlift).toString();
+          changed = true;
+        }
+
+        return changed ? { ...prev, stats: newStats } : prev;
+      });
+    }
+  }, [step, history]);
 
   const handleSelect = (qId, value, isMulti, maxSelection) => {
     if (isMulti) {

@@ -11,6 +11,7 @@
   /* z-index is applied dynamically in jsx */
   background-color: transparent;
   width: 100%;
+  touch-action: pan-y;
 }
 
 .swipe-action-bg {

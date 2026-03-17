@@ -518,8 +518,12 @@ function Profile() {
                                 </div>
                               </div>
                               <div className="expand-icon" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                <button onClick={(e) => { e.stopPropagation(); setEditingWorkout(JSON.parse(JSON.stringify(workout))); }} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '4px' }}><Edit2 size={18} /></button>
-                                <button onClick={(e) => handleDelete(e, workout.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}><Trash2 size={18} /></button>
+                                <button className="edit-workout-btn" onClick={(e) => { e.stopPropagation(); setEditingWorkout(JSON.parse(JSON.stringify(workout))); }}>
+                                  <Edit2 size={18} />
+                                </button>
+                                <button className="delete-workout-btn" onClick={(e) => handleDelete(e, workout.id)}>
+                                  <Trash2 size={18} />
+                                </button>
                                 <div style={{ opacity: 0.5, display: 'flex' }}>
                                   {isExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
                                 </div>

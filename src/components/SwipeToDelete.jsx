@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import './SwipeToDelete.css';
 
@@ -11,34 +11,61 @@ export function SwipeToDelete({ children, onDelete }) {
   const threshold = 70; // px to show delete button
   const confirmThreshold = 150; // px to auto-delete
 
-  const handleTouchStart = (e) => {
-    // Non intercettare il tocco su input, bottoni o menu a tendina
-    if (e.target.closest('input') || e.target.closest('button') || e.target.closest('.autocomplete-dropdown')) {
-      return;
-    }
-    setStartX(e.touches[0].clientX);
-    setIsSwiping(true);
-  };
+  const swipeContentRef = useRef(null);
+  const dragInfo = useRef({ startX: 0, currentX: 0, isSwiping: false });
 
-  const handleTouchMove = (e) => {
-    if (!isSwiping) return;
-    const diff = e.touches[0].clientX - startX;
-    // Only allow left swipe (negative diff)
-    if (diff < 0) {
-      setCurrentX(diff);
-    }
-  };
+  useEffect(() => {
+    const el = swipeContentRef.current;
+    if (!el) return;
 
-  const handleTouchEnd = () => {
-    setIsSwiping(false);
-    if (currentX < -confirmThreshold) {
-      handleDelete();
-    } else if (currentX < -threshold) {
-      setCurrentX(-threshold);
-    } else {
-      setCurrentX(0);
-    }
-  };
+    const handleStart = (e) => {
+      if (e.target.closest('.autocomplete-dropdown')) return;
+      dragInfo.current.startX = e.touches[0].clientX;
+      dragInfo.current.isSwiping = true;
+      setIsSwiping(true);
+    };
+
+    const handleMove = (e) => {
+      if (!dragInfo.current.isSwiping) return;
+      const diff = e.touches[0].clientX - dragInfo.current.startX;
+
+      if (Math.abs(diff) > 5) {
+        // If horizontal movement is dominant, prevent scroll
+        if (e.cancelable) e.preventDefault();
+        
+        if (diff < 0) {
+          dragInfo.current.currentX = diff;
+          setCurrentX(diff);
+        }
+      }
+    };
+
+    const handleEnd = () => {
+      dragInfo.current.isSwiping = false;
+      setIsSwiping(false);
+      
+      const finalX = dragInfo.current.currentX;
+      if (finalX < -confirmThreshold) {
+        handleDelete();
+      } else if (finalX < -threshold) {
+        dragInfo.current.currentX = -threshold;
+        setCurrentX(-threshold);
+      } else {
+        dragInfo.current.currentX = 0;
+        setCurrentX(0);
+      }
+    };
+
+    el.addEventListener('touchstart', handleStart, { passive: true });
+    el.addEventListener('touchmove', handleMove, { passive: false });
+    el.addEventListener('touchend', handleEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener('touchstart', handleStart);
+      el.removeEventListener('touchmove', handleMove);
+      el.removeEventListener('touchend', handleEnd);
+    };
+  }, []);
 
   const handleDelete = () => {
     setIsDeleting(true);
@@ -64,6 +91,7 @@ export function SwipeToDelete({ children, onDelete }) {
         </div>
       </div>
       <div 
+        ref={swipeContentRef}
         className="swipe-content"
         style={{ 
           transform: currentX !== 0 ? `translateX(${translateX}px)` : 'none',
@@ -71,9 +99,6 @@ export function SwipeToDelete({ children, onDelete }) {
           position: 'relative',
           zIndex: (currentX !== 0 || isSwiping) ? 2 : 'auto'
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {children}
       </div>
