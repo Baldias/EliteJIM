@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { ArrowLeft, Plus, Search, Trash2, Dumbbell } from 'lucide-react';
-import { EXERCISE_CATEGORIES, EXERCISES_DB } from '../data/exercises';
+import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories } from '../data/exercises';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import './Settings.css';
 
@@ -21,14 +21,15 @@ function Settings() {
   const allExercises = [...EXERCISES_DB, ...customExercises];
 
   // Filter based on search term
-  const filteredExercises = allExercises.filter(ex => 
-    ex.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    ex.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredExercises = allExercises.filter(ex => {
+    const categories = getExerciseCategories(ex);
+    const categoryMatch = categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()));
+    return ex.name.toLowerCase().includes(searchTerm.toLowerCase()) || categoryMatch;
+  });
 
-  // Group by category
+  // Group by category — exercises appear in every group they belong to
   const groupedTasks = Object.values(EXERCISE_CATEGORIES).reduce((acc, cat) => {
-    acc[cat] = filteredExercises.filter(e => e.category === cat);
+    acc[cat] = filteredExercises.filter(e => getExerciseCategories(e).includes(cat));
     return acc;
   }, {});
 

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { EXERCISE_CATEGORIES, EXERCISES_DB } from '../data/exercises';
+import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories } from '../data/exercises';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
 import './ProgressOverload.css';
@@ -33,7 +33,7 @@ function ProgressOverload() {
         if (selectedCategory) {
             const categoryLabel = EXERCISE_CATEGORIES[selectedCategory];
             const categoryExNames = allExercisesDB
-                .filter(e => e.category === categoryLabel)
+                .filter(e => getExerciseCategories(e).includes(categoryLabel))
                 .map(e => e.name);
             arr = arr.filter(name => categoryExNames.includes(name));
         }

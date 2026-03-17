@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore';
 import { Download, Upload, Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Check } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
-import { EXERCISES_DB } from '../data/exercises';
+import { EXERCISES_DB, getExerciseCategories } from '../data/exercises';
 import './Profile.css';
 
 function Profile() {
@@ -215,11 +215,13 @@ function Profile() {
       if (w.startTime >= startOfCurrentWeek) {
         w.exercises.forEach(ex => {
           const foundEx = EXERCISES_DB.find(e => e.name === ex.name);
-          const muscle = foundEx ? foundEx.category : null;
+          const muscles = foundEx ? getExerciseCategories(foundEx) : [];
           
-          if (muscle && scienceReport.baseLandmarks[muscle]) {
-            setsDoneThisWeek[muscle] = (setsDoneThisWeek[muscle] || 0) + ex.sets.filter(s => s.done && !s.isDropset).length;
-          }
+          muscles.forEach(muscle => {
+            if (muscle && scienceReport.baseLandmarks[muscle]) {
+              setsDoneThisWeek[muscle] = (setsDoneThisWeek[muscle] || 0) + ex.sets.filter(s => s.done && !s.isDropset).length;
+            }
+          });
         });
       }
     });

@@ -37,6 +37,7 @@ body {
   background-color: var(--bg-color);
   color: var(--text-main);
   min-height: 100vh;
+  min-height: 100dvh;
   /* Prevent scrolling bounce on iOS PWA */
   overscroll-behavior-y: none;
 }
@@ -47,6 +48,7 @@ body {
   /* Mobile focused app layout */
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-color);
   position: relative;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);

@@ -1,5 +1,6 @@
 // A simplified, localized database of common gym exercises
 // Categorized by muscle group for easy filtering and autocomplete
+// Exercises can have a primary `category` and optional `secondaryCategories` for compound movements
 
 export const EXERCISE_CATEGORIES = {
   CHEST: 'Petto',
@@ -14,6 +15,17 @@ export const EXERCISE_CATEGORIES = {
   FOREARMS: 'Avambracci'
 };
 
+/**
+ * Returns all categories for an exercise (primary + secondary).
+ * Works with both DB exercises and custom exercises.
+ */
+export const getExerciseCategories = (exercise) => {
+  if (!exercise) return [];
+  const primary = exercise.category ? [exercise.category] : [];
+  const secondary = exercise.secondaryCategories || [];
+  return [...primary, ...secondary];
+};
+
 export const EXERCISES_DB = [
   // Petto
   { id: 'c1', name: 'Panca Piana Bilanciere', category: EXERCISE_CATEGORIES.CHEST },
@@ -21,7 +33,7 @@ export const EXERCISES_DB = [
   { id: 'c3', name: 'Croci ai Cavi', category: EXERCISE_CATEGORIES.CHEST },
   { id: 'c4', name: 'Chest Press', category: EXERCISE_CATEGORIES.CHEST },
   { id: 'c5', name: 'Piegamenti sulle braccia (Push-up)', category: EXERCISE_CATEGORIES.CHEST },
-  { id: 'c6', name: 'Dip alle Parallele', category: EXERCISE_CATEGORIES.CHEST },
+  { id: 'c6', name: 'Dip alle Parallele', category: EXERCISE_CATEGORIES.CHEST, secondaryCategories: [EXERCISE_CATEGORIES.TRICEPS] },
   { id: 'c7', name: 'Croci Manubri Panca Piana', category: EXERCISE_CATEGORIES.CHEST },
   { id: 'c8', name: 'Panca Inclinata Bilanciere', category: EXERCISE_CATEGORIES.CHEST },
   { id: 'c9', name: 'Panca Declinata Bilanciere', category: EXERCISE_CATEGORIES.CHEST },
@@ -30,7 +42,7 @@ export const EXERCISES_DB = [
   { id: 'c12', name: 'Croci Manubri Panca Inclinata', category: EXERCISE_CATEGORIES.CHEST },
 
   // Dorso
-  { id: 'b1', name: 'Trazioni alla Sbarra (Pull-up)', category: EXERCISE_CATEGORIES.BACK },
+  { id: 'b1', name: 'Trazioni alla Sbarra (Pull-up)', category: EXERCISE_CATEGORIES.BACK, secondaryCategories: [EXERCISE_CATEGORIES.BICEPS] },
   { id: 'b2', name: 'Lat Machine Avanti', category: EXERCISE_CATEGORIES.BACK },
   { id: 'b3', name: 'Rematore con Bilanciere', category: EXERCISE_CATEGORIES.BACK },
   { id: 'b4', name: 'Pulley Basso', category: EXERCISE_CATEGORIES.BACK },
@@ -50,8 +62,8 @@ export const EXERCISES_DB = [
   { id: 'l3', name: 'Affondi con Manubri', category: EXERCISE_CATEGORIES.LEGS },
   { id: 'l4', name: 'Leg Extension', category: EXERCISE_CATEGORIES.LEGS },
   { id: 'l5', name: 'Leg Curl', category: EXERCISE_CATEGORIES.LEGS },
-  { id: 'l6', name: 'Stacchi da Terra (Deadlift)', category: EXERCISE_CATEGORIES.LEGS },
-  { id: 'l7', name: 'Stacchi Rumeni (RDL)', category: EXERCISE_CATEGORIES.LEGS },
+  { id: 'l6', name: 'Stacchi da Terra (Deadlift)', category: EXERCISE_CATEGORIES.LEGS, secondaryCategories: [EXERCISE_CATEGORIES.BACK] },
+  { id: 'l7', name: 'Stacchi Rumeni (RDL)', category: EXERCISE_CATEGORIES.LEGS, secondaryCategories: [EXERCISE_CATEGORIES.BACK] },
   { id: 'l8', name: 'Calf Raise Seduto', category: EXERCISE_CATEGORIES.LEGS },
   { id: 'l9', name: 'Calf Raise in Piedi', category: EXERCISE_CATEGORIES.LEGS },
   { id: 'l10', name: 'Front Squat', category: EXERCISE_CATEGORIES.LEGS },
@@ -64,7 +76,7 @@ export const EXERCISES_DB = [
   { id: 'l17', name: 'Sissy Squat', category: EXERCISE_CATEGORIES.LEGS },
 
   // Spalle
-  { id: 's1', name: 'Military Press', category: EXERCISE_CATEGORIES.SHOULDERS },
+  { id: 's1', name: 'Military Press', category: EXERCISE_CATEGORIES.SHOULDERS, secondaryCategories: [EXERCISE_CATEGORIES.TRICEPS] },
   { id: 's2', name: 'Spinte Manubri Seduto', category: EXERCISE_CATEGORIES.SHOULDERS },
   { id: 's3', name: 'Alzate Laterali Manubri', category: EXERCISE_CATEGORIES.SHOULDERS },
   { id: 's4', name: 'Alzate Laterali ai Cavi', category: EXERCISE_CATEGORIES.SHOULDERS },
@@ -78,7 +90,7 @@ export const EXERCISES_DB = [
   // Bicipiti
   { id: 'bi1', name: 'Curl Bilanciere', category: EXERCISE_CATEGORIES.BICEPS },
   { id: 'bi2', name: 'Curl Manubri Panca Inclinata', category: EXERCISE_CATEGORIES.BICEPS },
-  { id: 'bi3', name: 'Hammer Curl', category: EXERCISE_CATEGORIES.BICEPS },
+  { id: 'bi3', name: 'Hammer Curl', category: EXERCISE_CATEGORIES.BICEPS, secondaryCategories: [EXERCISE_CATEGORIES.FOREARMS] },
   { id: 'bi4', name: 'Curl Bilanciere EZ', category: EXERCISE_CATEGORIES.BICEPS },
   { id: 'bi5', name: 'Curl ai Cavi', category: EXERCISE_CATEGORIES.BICEPS },
   { id: 'bi6', name: 'Curl Concentrato', category: EXERCISE_CATEGORIES.BICEPS },
@@ -91,17 +103,17 @@ export const EXERCISES_DB = [
   { id: 'tr2', name: 'French Press', category: EXERCISE_CATEGORIES.TRICEPS },
   { id: 'tr3', name: 'Estensioni Dietro Nuca Manubrio', category: EXERCISE_CATEGORIES.TRICEPS },
   { id: 'tr4', name: 'Kickback Tricipiti Manubrio', category: EXERCISE_CATEGORIES.TRICEPS },
-  { id: 'tr5', name: 'Dip alla Panca', category: EXERCISE_CATEGORIES.TRICEPS },
+  { id: 'tr5', name: 'Dip alla Panca', category: EXERCISE_CATEGORIES.TRICEPS, secondaryCategories: [EXERCISE_CATEGORIES.CHEST] },
   { id: 'tr6', name: 'Pushdown Corda', category: EXERCISE_CATEGORIES.TRICEPS },
   { id: 'tr7', name: 'Estensioni ai Cavi Sopra la Testa', category: EXERCISE_CATEGORIES.TRICEPS },
   { id: 'tr8', name: 'JM Press', category: EXERCISE_CATEGORIES.TRICEPS },
-  { id: 'tr9', name: 'Panca Presa Stretta', category: EXERCISE_CATEGORIES.TRICEPS },
+  { id: 'tr9', name: 'Panca Presa Stretta', category: EXERCISE_CATEGORIES.TRICEPS, secondaryCategories: [EXERCISE_CATEGORIES.CHEST] },
 
   // Avambracci
   { id: 'f1', name: 'Wrist Curl Bilanciere (Supinazione)', category: EXERCISE_CATEGORIES.FOREARMS },
   { id: 'f2', name: 'Wrist Curl Bilanciere (Pronazione)', category: EXERCISE_CATEGORIES.FOREARMS },
   { id: 'f3', name: 'Farmer\'s Walk', category: EXERCISE_CATEGORIES.FOREARMS },
-  { id: 'f4', name: 'Reverse Curl Bilanciere EZ', category: EXERCISE_CATEGORIES.FOREARMS },
+  { id: 'f4', name: 'Reverse Curl Bilanciere EZ', category: EXERCISE_CATEGORIES.FOREARMS, secondaryCategories: [EXERCISE_CATEGORIES.BICEPS] },
 
   // Addome
   { id: 'co1', name: 'Crunch a Terra', category: EXERCISE_CATEGORIES.CORE },

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { EXERCISES_DB } from '../data/exercises';
+import { EXERCISES_DB, getExerciseCategories } from '../data/exercises';
 import './Autocomplete.css';
 
 export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca esercizio...", options = null }) {
@@ -28,9 +28,9 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
 
   const filteredExercises = sourceData.filter(ex => {
     const name = typeof ex === 'string' ? ex : ex.name;
-    const category = typeof ex === 'string' ? '' : ex.category;
-    return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           category.toLowerCase().includes(searchTerm.toLowerCase());
+    const categories = typeof ex === 'string' ? [] : getExerciseCategories(ex);
+    const categoryMatch = categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()));
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) || categoryMatch;
   });
 
   return (
@@ -56,7 +56,8 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
           {filteredExercises.length > 0 ? (
             filteredExercises.map((ex, idx) => {
               const name = typeof ex === 'string' ? ex : ex.name;
-              const category = typeof ex === 'string' ? null : ex.category;
+              const categories = typeof ex === 'string' ? null : getExerciseCategories(ex);
+              const categoryLabel = categories ? categories.join(' · ') : null;
               const id = typeof ex === 'string' ? `opt-${idx}` : ex.id;
               
               return (
@@ -70,7 +71,7 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
                   }}
                 >
                   <span className="ac-name">{name}</span>
-                  {category && <span className="ac-category">{category}</span>}
+                  {categoryLabel && <span className="ac-category">{categoryLabel}</span>}
                 </li>
               );
             })

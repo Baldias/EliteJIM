@@ -21,10 +21,14 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
     volumes[cat] = 0;
   });
 
-  // Create a fast lookup map for exercise categories
+  // Create a fast lookup map: exercise name -> all categories (primary + secondary)
   const categoryMap = {};
   exercisesDb.forEach(ex => {
-    categoryMap[ex.name] = ex.category;
+    const allCats = [ex.category];
+    if (ex.secondaryCategories) {
+      allCats.push(...ex.secondaryCategories);
+    }
+    categoryMap[ex.name] = allCats;
   });
 
   // Filter last 7 days workouts
@@ -32,12 +36,16 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
 
   recentWorkouts.forEach(workout => {
     workout.exercises.forEach(ex => {
-      // Find category (fallback to checking if it's already a recognized name, though standard is passing exercisesDb)
-      const category = categoryMap[ex.name];
-      if (category && volumes[category] !== undefined) {
+      const categories = categoryMap[ex.name];
+      if (categories) {
         // Count only completed sets, ignore dropsets for structural volume
         const completedSets = ex.sets.filter(s => s.done && !s.isDropset).length;
-        volumes[category] += completedSets;
+        // Distribute sets across ALL muscle groups this exercise targets
+        categories.forEach(cat => {
+          if (volumes[cat] !== undefined) {
+            volumes[cat] += completedSets;
+          }
+        });
       }
     });
   });

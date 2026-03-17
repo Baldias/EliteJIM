@@ -38,24 +38,43 @@ export const useStore = create(
 
       // --- Workout Actions ---
       startWorkout: (template) => {
+        const history = get().history;
+
+        // Helper: find the most recent past sets for a given exercise name
+        const findLastSets = (exerciseName) => {
+          for (const w of history) {
+            const pastEx = w.exercises.find(e => e.name === exerciseName);
+            if (pastEx && pastEx.sets && pastEx.sets.length > 0) {
+              return pastEx.sets;
+            }
+          }
+          return null;
+        };
+
         // Build a fresh session from a template
         const session = {
           id: Date.now(),
           templateId: template ? template.id : null,
           name: template ? template.name : 'Allenamento Libero',
           startTime: Date.now(),
-          exercises: template ? template.exercises.map(ex => ({
-            id: Date.now() + Math.random(),
-            name: ex.name,
-            restTime: ex.restTime || 60,
-            sets: Array.from({ length: parseInt(ex.setsCount) || 1 }, (_, i) => ({
-              id: Date.now() + i,
-              kg: '',
-              reps: '',
-              targetReps: ex.targetReps,
-              done: false
-            }))
-          })) : []
+          exercises: template ? template.exercises.map(ex => {
+            const pastSets = findLastSets(ex.name);
+            return {
+              id: Date.now() + Math.random(),
+              name: ex.name,
+              restTime: ex.restTime || 60,
+              sets: Array.from({ length: parseInt(ex.setsCount) || 1 }, (_, i) => {
+                const pastSet = pastSets && pastSets[i] ? pastSets[i] : (pastSets ? pastSets[pastSets.length - 1] : null);
+                return {
+                  id: Date.now() + i,
+                  kg: pastSet ? (pastSet.kg || '') : '',
+                  reps: pastSet ? (pastSet.reps || '') : '',
+                  targetReps: ex.targetReps,
+                  done: false
+                };
+              })
+            };
+          }) : []
         };
         set({ activeWorkout: session });
       },
