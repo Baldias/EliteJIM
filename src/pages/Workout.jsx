@@ -19,10 +19,14 @@ function Workout() {
   const deleteSet = useStore(state => state.deleteSetFromActiveExercise);
   const cancelWorkout = useStore(state => state.cancelWorkout);
 
-  const [sessionTime, setSessionTime] = useState('00:00');
+  const sessionTime = useState('00:00')[0]; // kept logic below but removed duplicate set
+  const [sessionTimeStr, setSessionTimeStr] = useState('00:00');
 
   // Rest Timer State
-  const [restEndTime, setRestEndTime] = useState(null);
+  const globalRestEndTime = useStore(state => state.globalRestEndTime);
+  const setGlobalRestEndTime = useStore(state => state.setGlobalRestEndTime);
+  const clearGlobalRestTimer = useStore(state => state.clearGlobalRestTimer);
+  
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [isResting, setIsResting] = useState(false);
   const [exerciseFatigue, setExerciseFatigue] = useState({});
@@ -39,32 +43,37 @@ function Workout() {
       const diff = Math.floor((Date.now() - activeWorkout.startTime) / 1000);
       const m = String(Math.floor(diff / 60)).padStart(2, '0');
       const s = String(diff % 60).padStart(2, '0');
-      setSessionTime(`${m}:${s}`);
+      setSessionTimeStr(`${m}:${s}`);
     }, 1000);
     return () => clearInterval(interval);
   }, [activeWorkout]);
 
-  // Rest timer
+  // Rest timer sync with global store
   useEffect(() => {
-    if (!isResting || !restEndTime) return;
+    if (!globalRestEndTime) {
+      setIsResting(false);
+      setRestTimeLeft(0);
+      return;
+    }
 
-    // Check immediately to set the right value without 1sec delay
-    const updateTimer = () => {
-      const remaining = Math.ceil((restEndTime - Date.now()) / 1000);
+    setIsResting(true);
+
+    const checkTimer = () => {
+      const remaining = Math.ceil((globalRestEndTime - Date.now()) / 1000);
       if (remaining <= 0) {
         setIsResting(false);
         setRestTimeLeft(0);
-        setRestEndTime(null);
+        clearGlobalRestTimer();
         notifyTimerComplete(); // Web Audio Beep + Push Notification
       } else {
         setRestTimeLeft(remaining);
       }
     };
 
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+    checkTimer();
+    const interval = setInterval(checkTimer, 1000);
     return () => clearInterval(interval);
-  }, [isResting, restEndTime]);
+  }, [globalRestEndTime, clearGlobalRestTimer]);
 
   // Protection if user reloads without active session
   useEffect(() => {
@@ -89,8 +98,7 @@ function Workout() {
       const exercise = activeWorkout.exercises.find(ex => ex.id === exerciseId);
       const restSeconds = exercise && exercise.restTime !== undefined && exercise.restTime !== '' ? parseInt(exercise.restTime) : 60;
       if (restSeconds > 0) {
-        setRestEndTime(Date.now() + restSeconds * 1000);
-        setRestTimeLeft(restSeconds);
+        setGlobalRestEndTime(Date.now() + restSeconds * 1000);
         setIsResting(true);
       }
     }
@@ -186,7 +194,7 @@ function Workout() {
         >
           <ChevronLeft size={28} />
         </button>
-        <div className="workout-timer" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>{sessionTime}</div>
+        <div className="workout-timer" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>{sessionTimeStr}</div>
         <button className="finish-btn" onClick={handleFinishWorkout}>Termina</button>
       </header>
 
@@ -198,8 +206,8 @@ function Workout() {
             <span className="rest-clock">{formatRestTime(restTimeLeft)}</span>
           </div>
           <div className="rest-controls">
-            <button className="icon-btn-small" onClick={() => setRestEndTime(prev => prev + 30000)}>+30s</button>
-            <button className="icon-btn-small finish-rest-btn" onClick={() => setIsResting(false)}><X size={20} /></button>
+            <button className="icon-btn-small" onClick={() => setGlobalRestEndTime(globalRestEndTime + 30000)}>+30s</button>
+            <button className="icon-btn-small finish-rest-btn" onClick={() => clearGlobalRestTimer()}><X size={20} /></button>
           </div>
         </div>
       )}

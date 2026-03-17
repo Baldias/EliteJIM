@@ -1,7 +1,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Download, Upload, Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon } from 'lucide-react';
+import { Download, Upload, Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Check } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
 import { EXERCISES_DB } from '../data/exercises';
@@ -11,9 +11,19 @@ function Profile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const history = useStore(state => state.history);
+  const scienceReport = useStore(state => state.scienceReport);
   const deleteWorkout = useStore(state => state.deleteWorkout);
   const [expandedSessions, setExpandedSessions] = useState({});
   const [visibleWeeks, setVisibleWeeks] = useState(2);
+  const [editingWorkout, setEditingWorkout] = useState(null);
+
+  const saveEditedWorkout = () => {
+    if (!editingWorkout) return;
+    useStore.setState(state => ({
+      history: state.history.map(w => w.id === editingWorkout.id ? editingWorkout : w)
+    }));
+    setEditingWorkout(null);
+  };
 
   const handleExport = () => {
     const data = localStorage.getItem('elitejim-storage');
@@ -162,6 +172,93 @@ function Profile() {
     return "Atleta d'Elite";
   }, [history.length]);
 
+  // --- Scienza V2: Weekly Goals Logic ---
+  const scienceGoals = useMemo(() => {
+    if (!scienceReport) return null;
+
+    const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const weeksElapsed = Math.floor((now - scienceReport.timestamp) / MS_PER_WEEK);
+    const currentWeek = Math.min(Math.max(1, weeksElapsed + 1), 12);
+    
+    // Calculate start of THIS biological week
+    const startOfCurrentWeek = scienceReport.timestamp + (currentWeek - 1) * MS_PER_WEEK;
+
+    let currentMonth = 1;
+    if (currentWeek > 4 && currentWeek <= 8) currentMonth = 2;
+    if (currentWeek > 8) currentMonth = 3;
+
+    // Helper to calc target
+    const getTargetForMuscle = (muscle) => {
+      const lm = scienceReport.baseLandmarks[muscle];
+      if (!lm) return null;
+
+      if (currentMonth === 3) {
+        if (currentWeek === 9 || currentWeek === 10) return Math.max(0, lm.mev - 2);
+        return lm.mev;
+      }
+
+      const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(muscle)) || 
+                      (currentMonth === 2 && (scienceReport.focus2 || []).includes(muscle));
+      
+      if (!isFocus) return lm.mev;
+
+      const relativeWeek = currentWeek - ((currentMonth - 1) * 4);
+      const gap = lm.mrv - lm.mav;
+      const weeklyIncrement = gap / 3;
+      return Math.round(lm.mav + (weeklyIncrement * (relativeWeek - 1)));
+    };
+
+    // Gather sets done THIS week
+    const setsDoneThisWeek = {};
+    history.forEach(w => {
+      if (w.startTime >= startOfCurrentWeek) {
+        w.exercises.forEach(ex => {
+          const foundEx = EXERCISES_DB.find(e => e.name === ex.name);
+          const muscle = foundEx ? foundEx.category : null;
+          
+          if (muscle && scienceReport.baseLandmarks[muscle]) {
+            setsDoneThisWeek[muscle] = (setsDoneThisWeek[muscle] || 0) + ex.sets.filter(s => s.done && !s.isDropset).length;
+          }
+        });
+      }
+    });
+
+    // Build the goals array
+    const goals = Object.keys(scienceReport.baseLandmarks).map(muscle => {
+      const target = getTargetForMuscle(muscle);
+      const done = setsDoneThisWeek[muscle] || 0;
+      const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(muscle)) || 
+                      (currentMonth === 2 && (scienceReport.focus2 || []).includes(muscle));
+      
+      const lm = scienceReport.baseLandmarks[muscle];
+      let badge = null;
+      if (lm && target !== null) {
+        if (currentMonth === 3 && (currentWeek === 9 || currentWeek === 10)) {
+          badge = { label: 'Deload', color: '#34c759', bg: 'rgba(52, 199, 89, 0.15)' };
+        } else if (target <= lm.mev) {
+          badge = { label: 'MEV', color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.05)' };
+        } else if (target >= lm.mrv) {
+          badge = { label: 'MRV', color: '#ff3b30', bg: 'rgba(255, 59, 48, 0.15)' };
+        } else {
+          if (Math.abs(target - lm.mav) < Math.abs(target - lm.mrv)) {
+            badge = { label: 'MAV', color: '#ff9500', bg: 'rgba(255, 149, 0, 0.15)' };
+          } else {
+            badge = { label: 'Overreach', color: '#ff2d55', bg: 'rgba(255, 45, 85, 0.15)' };
+          }
+        }
+      }
+
+      return { muscle, target, done, isFocus, badge };
+    }).filter(g => g.target !== null).sort((a, b) => (b.isFocus ? 1 : 0) - (a.isFocus ? 1 : 0));
+
+    return {
+      currentWeek,
+      startOfCurrentWeek,
+      goals
+    };
+  }, [scienceReport, history]);
+
   // --- Journey Logic (Weekly Grouping) ---
   const groupedHistory = useMemo(() => {
     if (!history || history.length === 0) return [];
@@ -248,6 +345,67 @@ function Profile() {
             <span className="stat-label">Serie</span>
           </div>
         </div>
+
+        {/* Science Mesocycle Sync Section */}
+        {scienceGoals && (
+          <div style={{ marginTop: '2rem' }}>
+            <div className="section-header" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Target size={24} color="var(--primary-color)" />
+              <h2 className="section-title-premium" style={{ margin: 0 }}>
+                Obiettivi W{scienceGoals.currentWeek}
+              </h2>
+            </div>
+            
+            <div className="card glass" style={{ padding: '1.5rem', borderRadius: '24px', border: '1px solid var(--primary-color)' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.4 }}>
+                Progresso delle serie in base al tuo mesociclo scientifico.
+              </p>
+              
+              <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                {scienceGoals.goals.map(g => {
+                  const percent = Math.min(100, Math.round((g.done / g.target) * 100)) || 0;
+                  const isCompleted = g.done >= g.target;
+                  let color = isCompleted ? '#34c759' : 'var(--primary-color)';
+                  if (!g.isFocus) color = 'var(--text-muted)';
+                  if (g.isFocus && isCompleted) color = '#34c759';
+
+                  return (
+                    <div key={g.muscle} style={{ 
+                      background: 'rgba(255,255,255,0.03)', 
+                      padding: '1rem', 
+                      borderRadius: '16px',
+                      border: `1px solid ${isCompleted ? 'rgba(52, 199, 89, 0.3)' : 'rgba(255,255,255,0.05)'}`
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '600', color: g.isFocus ? 'var(--text-main)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {g.muscle} 
+                          {g.badge && (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', color: g.badge.color, backgroundColor: g.badge.bg, textTransform: 'uppercase' }}>
+                              {g.badge.label}
+                            </span>
+                          )}
+                        </span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: '700', color: color }}>
+                          {g.done} / {g.target}
+                        </span>
+                      </div>
+                      
+                      <div style={{ width: '100%', height: '8px', background: 'var(--surface-color)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ 
+                          height: '100%', 
+                          width: `${percent}%`, 
+                          background: color,
+                          borderRadius: '4px',
+                          transition: 'width 0.5s ease-out'
+                        }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* RP Volume Section */}
         {rpVolumes && (
@@ -359,8 +517,12 @@ function Profile() {
                                   {formatDate(workout.startTime)} • {formatDuration(workout.startTime, workout.endTime)}
                                 </div>
                               </div>
-                              <div className="expand-icon" style={{ opacity: 0.5 }}>
-                                {isExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                              <div className="expand-icon" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <button onClick={(e) => { e.stopPropagation(); setEditingWorkout(JSON.parse(JSON.stringify(workout))); }} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '4px' }}><Edit2 size={18} /></button>
+                                <button onClick={(e) => handleDelete(e, workout.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}><Trash2 size={18} /></button>
+                                <div style={{ opacity: 0.5, display: 'flex' }}>
+                                  {isExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                                </div>
                               </div>
                             </div>
 
@@ -456,6 +618,82 @@ function Profile() {
             Carica Dati Demo
           </button>
         </div>
+
+        {/* Edit Workout Modal */}
+        {editingWorkout && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+            zIndex: 9999, padding: '1rem',
+            overflowY: 'auto'
+          }}>
+            <div className="card glass" style={{ maxWidth: '600px', margin: '2rem auto', border: '1px solid var(--primary-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+                <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.2rem' }}>Modifica {editingWorkout.name}</h3>
+                <button onClick={() => setEditingWorkout(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}><X size={24} /></button>
+              </div>
+
+              {editingWorkout.exercises.map((ex, exIdx) => (
+                <div key={ex.id} style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px' }}>
+                  <div style={{ fontWeight: '600', color: 'var(--primary-color)', marginBottom: '0.75rem' }}>{ex.name}</div>
+                  
+                  {ex.sets.map((set, setIdx) => (
+                    <div key={set.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{ width: '30px', color: 'var(--text-muted)' }}>S{setIdx + 1}</span>
+                      <input 
+                        type="number" 
+                        value={set.kg} 
+                        onChange={(e) => {
+                          const w = { ...editingWorkout };
+                          w.exercises[exIdx].sets[setIdx].kg = e.target.value;
+                          setEditingWorkout(w);
+                        }}
+                        style={{ width: '60px', padding: '6px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                        placeholder="kg"
+                      />
+                      <span style={{ color: 'var(--text-muted)' }}>x</span>
+                      <input 
+                        type="number" 
+                        value={set.reps} 
+                        onChange={(e) => {
+                          const w = { ...editingWorkout };
+                          w.exercises[exIdx].sets[setIdx].reps = e.target.value;
+                          setEditingWorkout(w);
+                        }}
+                        style={{ width: '60px', padding: '6px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                        placeholder="reps"
+                      />
+                      <button 
+                        onClick={() => {
+                          const w = { ...editingWorkout };
+                          w.exercises[exIdx].sets[setIdx].done = !w.exercises[exIdx].sets[setIdx].done;
+                          setEditingWorkout(w);
+                        }}
+                        style={{ 
+                          width: '32px', height: '32px', borderRadius: '50%', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          marginLeft: 'auto',
+                          background: set.done ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255,255,255,0.05)',
+                          color: set.done ? '#34c759' : 'var(--text-muted)'
+                        }}
+                      >
+                        <Check size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ))}
+
+              <button 
+                className="btn-primary" 
+                onClick={saveEditedWorkout}
+                style={{ width: '100%', marginTop: '1rem', height: '54px', borderRadius: '16px' }}
+              >
+                Salva Modifiche
+              </button>
+            </div>
+          </div>
+        )}
+
       </main>
     </>
   );

@@ -35,8 +35,8 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
       // Find category (fallback to checking if it's already a recognized name, though standard is passing exercisesDb)
       const category = categoryMap[ex.name];
       if (category && volumes[category] !== undefined) {
-        // Count only completed sets
-        const completedSets = ex.sets.filter(s => s.done).length;
+        // Count only completed sets, ignore dropsets for structural volume
+        const completedSets = ex.sets.filter(s => s.done && !s.isDropset).length;
         volumes[category] += completedSets;
       }
     });

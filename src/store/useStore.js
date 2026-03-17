@@ -12,7 +12,18 @@ export const useStore = create(
       customExercises: [],
       // Currently active workout session
       activeWorkout: null,
+      // Saved science assessment report
+      scienceReport: null,
+      // Persistent rest timer end timestamp
+      globalRestEndTime: null,
 
+      // --- Rest Timer Actions ---
+      setGlobalRestEndTime: (timestamp) => set({ globalRestEndTime: timestamp }),
+      clearGlobalRestTimer: () => set({ globalRestEndTime: null }),
+
+      // --- Science Actions ---
+      saveScienceReport: (report) => set({ scienceReport: report }),
+      
       // --- Custom Exercises Actions ---
       addCustomExercise: (exercise) =>
         set((state) => ({ customExercises: [...(state.customExercises || []), { ...exercise, id: `custom-${Date.now()}` }] })),
@@ -140,12 +151,13 @@ export const useStore = create(
           };
           return {
             history: [completedWorkout, ...state.history],
-            activeWorkout: null
+            activeWorkout: null,
+            globalRestEndTime: null
           };
         });
       },
 
-      cancelWorkout: () => set({ activeWorkout: null }),
+      cancelWorkout: () => set({ activeWorkout: null, globalRestEndTime: null }),
 
       deleteWorkout: (workoutId) => {
         set((state) => ({
