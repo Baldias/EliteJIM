@@ -6,30 +6,104 @@
 }
 
 .app-header {
-  padding: 2.5rem 1.5rem 1.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 1.5rem 5.5rem;
+  background: #000;
+  overflow: hidden;
+  border-bottom: none;
 }
 
-.app-header h1 {
-  font-size: 2.2rem;
-  margin: 0;
-  color: var(--primary-color);
-  text-transform: uppercase;
+/* Global Mesh Gradient Background */
+.app-container .app-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(var(--primary-color-rgb), 0.4) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(245, 93, 62, 0.3) 0%, transparent 50%);
+  animation: mesh-rotate 20s linear infinite;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+@keyframes mesh-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.header-content {
+  position: relative;
+  z-index: 2;
+}
+
+.header-content h1 {
+  font-size: 3.2rem;
+  font-weight: 900;
+  letter-spacing: -0.06em;
   font-style: italic;
-  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  background: linear-gradient(to bottom, #ffffff 30%, #a0a0a0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 0.9;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
 }
 
-.subtitle {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  margin-top: 0.25rem;
+.header-content .subtitle {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: var(--primary-color);
+  font-weight: 800;
+  opacity: 0.9;
+  margin-top: 0;
 }
 
 .app-main {
   flex: 1;
-  padding: 0 1.5rem;
+  padding: 0 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  margin-top: -3.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* Premium Section Titles */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+.section-title-premium {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+/* Global Glass Utility */
+.glass {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .start-workout-card {

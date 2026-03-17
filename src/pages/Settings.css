@@ -8,28 +8,59 @@
 }
 
 .settings-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 1rem;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+  padding: 3rem 1.5rem 2rem;
+  background: #000;
+  overflow: hidden;
+  border-bottom: none;
+}
+
+.settings-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(var(--primary-color-rgb), 0.4) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(245, 93, 62, 0.3) 0%, transparent 50%);
+  animation: mesh-rotate 20s linear infinite;
+  z-index: 0;
+  filter: blur(40px);
 }
 
 .settings-header h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-style: italic;
+  text-transform: uppercase;
+  background: linear-gradient(to bottom, #ffffff 30%, #a0a0a0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+  margin: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.settings-header .icon-btn {
+  position: relative;
+  z-index: 2;
   color: #fff;
 }
 
 .settings-content {
   padding: 1rem;
   flex: 1;
+  margin-top: -1rem;
+  position: relative;
+  z-index: 10;
 }
 
 /* Search Bar */
@@ -48,7 +79,8 @@
 
 .search-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   padding: 14px 14px 14px 44px;
@@ -92,6 +124,7 @@
 
 .add-exercise-form {
   background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 1.5rem;
@@ -210,8 +243,9 @@
 }
 
 .category-list {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   overflow: hidden;
 }

@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import TemplateBuilder from './pages/TemplateBuilder';
 import ReloadPrompt from './components/ReloadPrompt';
+import GlobalWorkoutBanner from './components/GlobalWorkoutBanner';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
 
@@ -44,6 +45,7 @@ function App() {
     <BrowserRouter>
       <div className="app-container">
         <ReloadPrompt />
+        <GlobalWorkoutBanner />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/workout" element={<Workout />} />

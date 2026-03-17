@@ -35,13 +35,15 @@ function Home() {
   return (
     <>
       <header className="app-header">
-        <h1>EliteJIM</h1>
-        <p className="subtitle">Pronto a spaccare?</p>
+        <div className="header-content">
+          <h1>EliteJIM</h1>
+          <p className="subtitle">Pronto a spaccare?</p>
+        </div>
       </header>
       
       <main className="app-main">
         {activeWorkout && (
-          <div className="card start-workout-card" style={{ backgroundColor: 'var(--primary-color-dim)', borderColor: 'var(--primary-color)', marginBottom: '1rem' }}>
+          <div className="card glass start-workout-card" style={{ backgroundColor: 'var(--primary-color-dim)', borderColor: 'var(--primary-color)', marginBottom: '1rem' }}>
             <h2 style={{ color: 'var(--primary-color)' }}>Allenamento in corso</h2>
             <p>Stai facendo: <strong>{activeWorkout.name}</strong></p>
             <button onClick={handleResumeWorkout} style={{ display: 'flex', justifyContent: 'center', gap: '8px', alignItems: 'center' }}>
@@ -76,7 +78,7 @@ function Home() {
               deleteTemplate(template.id);
             }
           }}>
-            <div className="card start-workout-card" style={{ borderColor: 'var(--primary-color)' }}>
+            <div className="card glass start-workout-card" style={{ borderColor: 'var(--primary-color)' }}>
               <h2>{template.name}</h2>
               <p>{template.exercises.length} esercizi • {template.exercises.reduce((acc, ex) => acc + ex.setsCount, 0)} serie totali</p>
               <button onClick={() => handleStartTemplate(template)}>Inizia Scheda</button>
@@ -84,7 +86,7 @@ function Home() {
           </SwipeToDelete>
         ))}
 
-        <div className="card start-workout-card" style={{ marginTop: templates.length > 0 ? '1rem' : '0' }}>
+        <div className="card glass start-workout-card" style={{ marginTop: templates.length > 0 ? '1rem' : '0' }}>
           <h2>Allenamento Vuoto</h2>
           <p>Inizia una sessione senza template predefinito.</p>
           <button 

@@ -166,8 +166,10 @@ function ProgressOverload() {
     return (
         <>
             <header className="app-header">
-                <h1>Progressi</h1>
-                <p className="subtitle">Performance & Insight</p>
+                <div className="header-content">
+                    <h1>Progressi</h1>
+                    <p className="subtitle">Performance & Insight</p>
+                </div>
             </header>
 
             <main className="app-main">

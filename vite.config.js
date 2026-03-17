@@ -38,4 +38,14 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          utils: ['zustand', 'lucide-react', '@vercel/speed-insights']
+        }
+      }
+    }
+  }
 })

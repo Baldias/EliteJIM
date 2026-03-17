@@ -175,8 +175,10 @@ function Dashboard({ report, reset }) {
   return (
     <>
       <header className="app-header">
-        <h1>Scienza</h1>
-        <p className="subtitle">Il tuo protocollo personalizzato</p>
+        <div className="header-content">
+          <h1>Scienza</h1>
+          <p className="subtitle">Il tuo protocollo personalizzato</p>
+        </div>
       </header>
       
       <main className="app-main">
@@ -450,8 +452,10 @@ function Science() {
   return (
     <>
       <header className="app-header">
-        <h1>Scienza</h1>
-        <p className="subtitle">L'algoritmo di Periodizzazione</p>
+        <div className="header-content">
+          <h1>Scienza</h1>
+          <p className="subtitle">L'algoritmo di Periodizzazione</p>
+        </div>
       </header>
 
       <main className="app-main">

@@ -319,7 +319,7 @@ function Profile() {
         <button 
           className="icon-btn settings-btn" 
           onClick={() => navigate('/settings')}
-          style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', color: '#fff', zIndex: 10 }}
+          style={{ position: 'absolute', top: 'max(1.5rem, env(safe-area-inset-top))', right: '1.5rem', color: '#fff', zIndex: 10 }}
         >
           <SettingsIcon size={24} />
         </button>

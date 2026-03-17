@@ -64,7 +64,6 @@ function Workout() {
         setIsResting(false);
         setRestTimeLeft(0);
         clearGlobalRestTimer();
-        notifyTimerComplete(); // Web Audio Beep + Push Notification
       } else {
         setRestTimeLeft(remaining);
       }
