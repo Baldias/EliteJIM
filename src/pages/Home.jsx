@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { Plus, Play, Trash2 } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
+import { InteractiveBody } from '../components/InteractiveBody';
 import pkg from '../../package.json';
 
 function Home() {
@@ -97,6 +98,8 @@ function Home() {
           </button>
         </div>
         
+        <InteractiveBody />
+
         <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '1rem' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>v{pkg.version}</span>
         </div>

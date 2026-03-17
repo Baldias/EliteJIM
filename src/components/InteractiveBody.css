@@ -1,0 +1,106 @@
+.interactive-body-container {
+  background: rgba(10, 10, 10, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.ib-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.ib-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+.ib-header p {
+  margin: 2px 0 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* 3D Scene Setup */
+.ib-scene {
+  width: 100%;
+  height: 350px;
+  perspective: 1000px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ib-scene:hover .ib-card-inner {
+  transform: scale(1.02);
+}
+
+.ib-scene:hover .ib-card-inner.is-flipped {
+  transform: rotateY(180deg) scale(1.02);
+}
+
+.ib-card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+}
+
+.ib-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.ib-card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at center, rgba(31, 214, 85, 0.05) 0%, transparent 60%);
+  border-radius: 12px;
+}
+
+.ib-card-back {
+  transform: rotateY(180deg);
+}
+
+/* Force body highlighter svgs to scale properly */
+.ib-card-face svg {
+  max-height: 100%;
+  width: auto;
+  margin: 0 auto;
+  display: block;
+  filter: drop-shadow(0 0 10px rgba(31, 214, 85, 0.2));
+}
+
+.ib-label {
+  position: absolute;
+  bottom: 10px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
