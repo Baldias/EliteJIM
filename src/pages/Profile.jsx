@@ -1,7 +1,7 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Download, Upload, Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Check, Flame, Trophy } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Flame, Trophy } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
 import { EXERCISES_DB, EXERCISE_CATEGORIES, getExerciseCategories } from '../data/exercises';
@@ -10,14 +10,6 @@ import './Profile.css';
 
 function Profile() {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
-  const history = useStore(state => state.history);
-  const scienceReport = useStore(state => state.scienceReport);
-  const deleteWorkout = useStore(state => state.deleteWorkout);
-  const userXP = useStore(state => state.userXP);
-  const currentStreak = useStore(state => state.currentStreak);
-  const muscleXP = useStore(state => state.muscleXP) || {};
-  const syncGamificationWithHistory = useStore(state => state.syncGamificationWithHistory);
   const showScience = useStore(state => state.showScience);
 
   const [expandedSessions, setExpandedSessions] = useState({});
@@ -35,45 +27,6 @@ function Profile() {
     setEditingWorkout(null);
   };
 
-  const handleExport = () => {
-    const data = localStorage.getItem('elitejim-storage');
-    if (!data) {
-      alert("Nessun dato trovato da esportare.");
-      return;
-    }
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `EliteJIM_Backup_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImport = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target.result;
-        const parsed = JSON.parse(content);
-        if (!parsed.state) {
-          alert("Il file non sembra essere un backup di EliteJIM valido.");
-          return;
-        }
-        if (window.confirm("Attenzione: Importare questo file sovrascriverà tutte le tue schede e la cronologia attuali. Sei sicuro di voler procedere?")) {
-          localStorage.setItem('elitejim-storage', JSON.stringify(parsed));
-          window.location.reload();
-        }
-      } catch (err) {
-        alert("Errore durante la lettura del file: " + err.message);
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-  };
 
   // --- History Logic ---
   const handleDelete = (e, workoutId) => {
@@ -114,81 +67,6 @@ function Profile() {
     return w * (1 + r / 30);
   };
 
-  const loadTestData = () => {
-    if (!window.confirm("Attenzione: questo sovrascriverà il tuo storico attuale con dati di test realistici. Sei sicuro?")) return;
-
-    const now = Date.now();
-    const day = 24 * 60 * 60 * 1000;
-
-    const sessionTemplates = [
-      {
-        name: 'Spinta (Petto/Spalle/Tricipiti)',
-        exercises: [
-          { name: 'Panca Piana Bilanciere', sets: 3, baseKg: 60 },
-          { name: 'Military Press', sets: 3, baseKg: 35 },
-          { name: 'Alzate Laterali Manubri', sets: 3, baseKg: 10 },
-          { name: 'Pushdown Tricipiti ai Cavi', sets: 3, baseKg: 20 }
-        ]
-      },
-      {
-        name: 'Trazione (Dorso/Bicipiti)',
-        exercises: [
-          { name: 'Trazioni alla Sbarra (Pull-up)', sets: 3, baseKg: 0 },
-          { name: 'Rematore con Bilanciere', sets: 3, baseKg: 50 },
-          { name: 'Pulley Basso', sets: 3, baseKg: 45 },
-          { name: 'Curl Bilanciere', sets: 3, baseKg: 25 }
-        ]
-      },
-      {
-        name: 'Gambe (Leg Day)',
-        exercises: [
-          { name: 'Squat con Bilanciere', sets: 3, baseKg: 80 },
-          { name: 'Leg Extension', sets: 3, baseKg: 50 },
-          { name: 'Leg Curl', sets: 3, baseKg: 40 },
-          { name: 'Calf Raise Seduto', sets: 3, baseKg: 30 }
-        ]
-      }
-    ];
-
-    const mockHistory = Array.from({ length: 18 }).map((_, i) => {
-      // Spread sessions over the last 4 weeks, ~4-5 sessions per week
-      const workoutTime = now - (30 - i * 1.6) * day;
-      const template = sessionTemplates[i % sessionTemplates.length];
-      const progressFactor = Math.floor(i / 3) * 2.5; // Every cycle (3 sessions) weight increases
-
-      return {
-        id: `mock-w-${i}`,
-        name: template.name,
-        startTime: workoutTime,
-        endTime: workoutTime + (45 + Math.random() * 20) * 60 * 1000,
-        exercises: template.exercises.map((ex, exIdx) => ({
-          id: `mock-ex-${i}-${exIdx}`,
-          name: ex.name,
-          sets: Array.from({ length: ex.sets }).map((_, sIdx) => ({
-            id: Date.now() + i + exIdx + sIdx,
-            kg: String(ex.baseKg > 0 ? ex.baseKg + Math.floor(progressFactor) : 0),
-            reps: String(8 + (sIdx % 2)),
-            done: true
-          }))
-        }))
-      };
-    });
-
-    const newHistory = mockHistory.reverse();
-    const { userXP, muscleXP } = recalculateTotalXpFromHistory(newHistory, [...EXERCISES_DB, ...(useStore.getState().customExercises || [])]);
-
-    // Update store with history and recalculated stats
-    useStore.setState({ 
-      history: newHistory,
-      userXP: userXP,
-      muscleXP: muscleXP,
-      currentStreak: 5,
-      highestStreak: 15,
-      lastWorkoutDate: now - 1 * day
-    });
-
-    alert("Dati demo realistici caricati con successo!");
-  };
 
   // --- Statistics Logic ---
   const stats = useMemo(() => {
@@ -728,55 +606,7 @@ function Profile() {
           )}
         </div>
 
-        {/* Sync & Backup Section */}
-        <div className="card glass data-management" style={{ borderRadius: '28px', marginTop: '2rem' }}>
-          <h2 className="section-title-premium" style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Sicurezza Dati</h2>
-          <p className="description" style={{ marginBottom: '1.5rem', opacity: 0.7 }}>
-            Mantieni i tuoi progressi al sicuro esportando il backup o sincronizzando un file esistente.
-          </p>
 
-          <div className="action-buttons" style={{ display: 'flex', gap: '12px' }}>
-            <button className="btn-secondary" onClick={handleExport} style={{ flex: 1, height: '54px', borderRadius: '16px' }}>
-              <Upload size={20} /> Esporta
-            </button>
-
-            <button className="btn-primary" onClick={() => fileInputRef.current?.click()} style={{ flex: 1, height: '54px', borderRadius: '16px' }}>
-              <Download size={20} /> Importa
-            </button>
-            <input
-              type="file"
-              accept=".json"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              onChange={handleImport}
-            />
-          </div>
-
-          <button className="btn-ghost" onClick={loadTestData} style={{ marginTop: '1rem', height: '44px', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
-            Carica Dati Demo
-          </button>
-        </div>
-
-        {/* Sync Gamification Button manually */}
-        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <button 
-            className="btn-ghost" 
-            onClick={() => {
-              syncGamificationWithHistory();
-              alert("Rank e Livelli Muscolari sincronizzati con la cronologia!");
-            }}
-            style={{ 
-              fontSize: '0.8rem', 
-              color: 'var(--primary-color)', 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.05em',
-              fontWeight: '700',
-              opacity: 0.8
-            }}
-          >
-            <Zap size={14} style={{ marginRight: '6px' }} /> Sincronizza Rank con Cronologia
-          </button>
-        </div>
 
         {/* Edit Workout Modal */}
         {editingWorkout && (

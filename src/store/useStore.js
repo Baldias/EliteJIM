@@ -73,8 +73,8 @@ export const useStore = create(
       },
       syncGamificationWithHistory: () => {
         set((state) => {
-          const { userXP, muscleXP } = recalculateTotalXpFromHistory(state.history, [...EXERCISES_DB, ...(state.customExercises || [])]);
-          return { userXP, muscleXP };
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(state.history, [...EXERCISES_DB, ...(state.customExercises || [])]);
+          return { userXP, muscleXP, currentStreak, highestStreak };
         });
       },
 
@@ -277,11 +277,13 @@ export const useStore = create(
       deleteWorkout: (workoutId) => {
         set((state) => {
           const newHistory = state.history.filter(w => w.id !== workoutId);
-          const { userXP, muscleXP } = recalculateTotalXpFromHistory(newHistory, [...EXERCISES_DB, ...(state.customExercises || [])]);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, [...EXERCISES_DB, ...(state.customExercises || [])]);
           return {
             history: newHistory,
             userXP,
-            muscleXP
+            muscleXP,
+            currentStreak,
+            highestStreak
           };
         });
       },

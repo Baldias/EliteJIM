@@ -251,7 +251,7 @@ export const checkStreakInactivity = (lastWorkoutDateMs, currentStreak, xp) => {
 
 export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {
   if (!history || history.length === 0) {
-    return { userXP: 0, muscleXP: {} };
+    return { userXP: 0, muscleXP: {}, currentStreak: 0, highestStreak: 0 };
   }
 
   // Sort by date ascending to process oldest sessions first
@@ -260,11 +260,33 @@ export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {
   let totalXP = 0;
   const totalMuscleXP = {};
   const rollingHistory = [];
+  
+  let currentStreak = 0;
+  let highestStreak = 0;
+  let lastWorkoutTime = null;
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
   sortedHistory.forEach(workout => {
+    // 1. Streak reset check
+    if (lastWorkoutTime) {
+      const daysInactive = Math.floor((workout.startTime - lastWorkoutTime) / MS_PER_DAY);
+      if (daysInactive >= 3) {
+        currentStreak = 0;
+      }
+    }
+
+    // 2. Calculate session score
     const score = calculateSessionScore(workout, rollingHistory, exercisesDb);
     totalXP += score.xp;
     
+    // 3. Increment streak if workout is significant
+    if (score.doneSets >= 3) {
+      currentStreak++;
+    }
+    
+    highestStreak = Math.max(highestStreak, currentStreak);
+    lastWorkoutTime = workout.startTime;
+
     if (score.muscleXpGained) {
       Object.keys(score.muscleXpGained).forEach(muscle => {
         totalMuscleXP[muscle] = (totalMuscleXP[muscle] || 0) + score.muscleXpGained[muscle];
@@ -277,6 +299,8 @@ export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {
 
   return {
     userXP: totalXP,
-    muscleXP: totalMuscleXP
+    muscleXP: totalMuscleXP,
+    currentStreak,
+    highestStreak
   };
 };
