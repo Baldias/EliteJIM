@@ -248,3 +248,35 @@ export const checkStreakInactivity = (lastWorkoutDateMs, currentStreak, xp) => {
 
   return { newStreak, newXp, penalty, daysInactive };
 };
+
+export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {
+  if (!history || history.length === 0) {
+    return { userXP: 0, muscleXP: {} };
+  }
+
+  // Sort by date ascending to process oldest sessions first
+  const sortedHistory = [...history].sort((a, b) => a.startTime - b.startTime);
+  
+  let totalXP = 0;
+  const totalMuscleXP = {};
+  const rollingHistory = [];
+
+  sortedHistory.forEach(workout => {
+    const score = calculateSessionScore(workout, rollingHistory, exercisesDb);
+    totalXP += score.xp;
+    
+    if (score.muscleXpGained) {
+      Object.keys(score.muscleXpGained).forEach(muscle => {
+        totalMuscleXP[muscle] = (totalMuscleXP[muscle] || 0) + score.muscleXpGained[muscle];
+      });
+    }
+    
+    // Add current workout to rolling history for future overload checks
+    rollingHistory.push(workout);
+  });
+
+  return {
+    userXP: totalXP,
+    muscleXP: totalMuscleXP
+  };
+};

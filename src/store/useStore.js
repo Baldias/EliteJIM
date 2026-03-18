@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { checkStreakInactivity, calculateSessionScore } from '../utils/gamification';
+import { checkStreakInactivity, calculateSessionScore, recalculateTotalXpFromHistory } from '../utils/gamification';
 import { EXERCISES_DB } from '../data/exercises';
 
 export const useStore = create(
@@ -69,6 +69,12 @@ export const useStore = create(
             return { currentStreak: newStreak, userXP: newXp };
           }
           return state;
+        });
+      },
+      syncGamificationWithHistory: () => {
+        set((state) => {
+          const { userXP, muscleXP } = recalculateTotalXpFromHistory(state.history, [...EXERCISES_DB, ...(state.customExercises || [])]);
+          return { userXP, muscleXP };
         });
       },
 
@@ -269,9 +275,15 @@ export const useStore = create(
       cancelWorkout: () => set({ activeWorkout: null, globalRestEndTime: null }),
 
       deleteWorkout: (workoutId) => {
-        set((state) => ({
-          history: state.history.filter(w => w.id !== workoutId)
-        }));
+        set((state) => {
+          const newHistory = state.history.filter(w => w.id !== workoutId);
+          const { userXP, muscleXP } = recalculateTotalXpFromHistory(newHistory, [...EXERCISES_DB, ...(state.customExercises || [])]);
+          return {
+            history: newHistory,
+            userXP,
+            muscleXP
+          };
+        });
       },
 
       deleteExerciseFromActiveSession: (exerciseId) => {

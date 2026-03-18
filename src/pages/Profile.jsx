@@ -17,6 +17,7 @@ function Profile() {
   const userXP = useStore(state => state.userXP);
   const currentStreak = useStore(state => state.currentStreak);
   const muscleXP = useStore(state => state.muscleXP) || {};
+  const syncGamificationWithHistory = useStore(state => state.syncGamificationWithHistory);
   const showScience = useStore(state => state.showScience);
 
   const [expandedSessions, setExpandedSessions] = useState({});
@@ -25,9 +26,12 @@ function Profile() {
 
   const saveEditedWorkout = () => {
     if (!editingWorkout) return;
-    useStore.setState(state => ({
-      history: state.history.map(w => w.id === editingWorkout.id ? editingWorkout : w)
-    }));
+    useStore.setState(state => {
+      const newHistory = state.history.map(w => w.id === editingWorkout.id ? editingWorkout : w);
+      return { history: newHistory };
+    });
+    // Trigger gamification sync after history change
+    useStore.getState().syncGamificationWithHistory();
     setEditingWorkout(null);
   };
 
@@ -170,22 +174,17 @@ function Profile() {
       };
     });
 
-    // Update store with history and some plausible initial stats
+    const newHistory = mockHistory.reverse();
+    const { userXP, muscleXP } = recalculateTotalXpFromHistory(newHistory, [...EXERCISES_DB, ...(useStore.getState().customExercises || [])]);
+
+    // Update store with history and recalculated stats
     useStore.setState({ 
-      history: mockHistory.reverse(),
-      userXP: 3250,
+      history: newHistory,
+      userXP: userXP,
+      muscleXP: muscleXP,
       currentStreak: 5,
       highestStreak: 15,
-      lastWorkoutDate: now - 1 * day,
-      muscleXP: {
-        'Petto': 1200,
-        'Dorso': 950,
-        'Gambe': 1500,
-        'Spalle': 600,
-        'Bicipiti': 400,
-        'Tricipiti': 450,
-        'Addome': 300
-      }
+      lastWorkoutDate: now - 1 * day
     });
 
     alert("Dati demo realistici caricati con successo!");
@@ -755,6 +754,27 @@ function Profile() {
 
           <button className="btn-ghost" onClick={loadTestData} style={{ marginTop: '1rem', height: '44px', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
             Carica Dati Demo
+          </button>
+        </div>
+
+        {/* Sync Gamification Button manually */}
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <button 
+            className="btn-ghost" 
+            onClick={() => {
+              syncGamificationWithHistory();
+              alert("Rank e Livelli Muscolari sincronizzati con la cronologia!");
+            }}
+            style={{ 
+              fontSize: '0.8rem', 
+              color: 'var(--primary-color)', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.05em',
+              fontWeight: '700',
+              opacity: 0.8
+            }}
+          >
+            <Zap size={14} style={{ marginRight: '6px' }} /> Sincronizza Rank con Cronologia
           </button>
         </div>
 
