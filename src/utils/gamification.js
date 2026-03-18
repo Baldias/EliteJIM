@@ -80,18 +80,19 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   
   let doneSets = 0;
   let totalVolume = 0;
-  let overloadCount = 0;
-  const rawMuscleXp = {}; // Base XP tracked per muscle
-
-  // Map to find categories
-  const categoryMap = {};
-  exercisesDb.forEach(ex => {
-    categoryMap[ex.name] = ex.category;
-  });
-
   // --- PASS 1: Determine which exercises achieved progressive overload ---
-  // An exercise is "overloaded" if current volume > best previous volume for that exercise
   const overloadedExercises = new Set();
+  
+  // Flatten exercisesDb and any others passed (like customExercises)
+  const allKnownExercises = Array.isArray(exercisesDb) ? exercisesDb : [];
+  
+  // Map for fast lookup of categories [primary, ...secondary]
+  const exerciseMetaMap = {};
+  allKnownExercises.forEach(ex => {
+    const cats = [ex.category];
+    if (ex.secondaryCategories) cats.push(...ex.secondaryCategories);
+    exerciseMetaMap[ex.name] = cats.filter(Boolean);
+  });
 
   workout.exercises.forEach(ex => {
     if (pastHistory && pastHistory.length > 0) {
@@ -113,11 +114,8 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   });
 
   // --- PASS 2: Assign XP per set based on absolute tonnage ---
-  // KEY PRINCIPLE: XP is (kg * reps) / 10 ONLY if the exercise had overload.
-  // Without overload: only 5 symbolic XP — you stagnated, you barely progress.
-  // This means 100kg x 8 = 80 XP/set vs 50kg x 8 = 40 XP/set — load matters hugely.
   workout.exercises.forEach(ex => {
-    const category = categoryMap[ex.name];
+    const categories = exerciseMetaMap[ex.name] || [];
     const hadOverload = overloadedExercises.has(ex.name);
 
     ex.sets.forEach(set => {
@@ -127,15 +125,13 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
         const reps = parseInt(set.reps, 10) || 0;
         totalVolume += kg * reps;
 
-        if (category) {
-          if (hadOverload) {
-            // XP scales directly with absolute load: heavier = much more XP
-            const setXp = Math.round((kg * reps) / 10);
-            rawMuscleXp[category] = (rawMuscleXp[category] || 0) + setXp;
-          } else {
-            // Stagnated: nearly zero XP — the system punishes lack of progress
-            rawMuscleXp[category] = (rawMuscleXp[category] || 0) + 5;
-          }
+        if (categories.length > 0) {
+          const setXp = hadOverload ? Math.round((kg * reps) / 10) : 5;
+          
+          // Distribute XP among all muscles (primary gets 100%, secondary gets 100% too for simplicity/fun)
+          categories.forEach(cat => {
+            rawMuscleXp[cat] = (rawMuscleXp[cat] || 0) + setXp;
+          });
         }
       }
     });

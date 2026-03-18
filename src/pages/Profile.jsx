@@ -110,35 +110,84 @@ function Profile() {
   };
 
   const loadTestData = () => {
-    if (!window.confirm("Attenzione: questo sovrascriverà il tuo storico attuale con dati di test. Sei sicuro?")) return;
+    if (!window.confirm("Attenzione: questo sovrascriverà il tuo storico attuale con dati di test realistici. Sei sicuro?")) return;
 
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
 
-    // Generate 12 workouts over the last 30 days (multiple weeks)
-    const mockHistory = Array.from({ length: 15 }).map((_, i) => {
-      const workoutTime = now - (30 - i * 2) * day; // Spread across several weeks
-      const progressFactor = i * 2;
+    const sessionTemplates = [
+      {
+        name: 'Spinta (Petto/Spalle/Tricipiti)',
+        exercises: [
+          { name: 'Panca Piana Bilanciere', sets: 3, baseKg: 60 },
+          { name: 'Military Press', sets: 3, baseKg: 35 },
+          { name: 'Alzate Laterali Manubri', sets: 3, baseKg: 10 },
+          { name: 'Pushdown Tricipiti ai Cavi', sets: 3, baseKg: 20 }
+        ]
+      },
+      {
+        name: 'Trazione (Dorso/Bicipiti)',
+        exercises: [
+          { name: 'Trazioni alla Sbarra (Pull-up)', sets: 3, baseKg: 0 },
+          { name: 'Rematore con Bilanciere', sets: 3, baseKg: 50 },
+          { name: 'Pulley Basso', sets: 3, baseKg: 45 },
+          { name: 'Curl Bilanciere', sets: 3, baseKg: 25 }
+        ]
+      },
+      {
+        name: 'Gambe (Leg Day)',
+        exercises: [
+          { name: 'Squat con Bilanciere', sets: 3, baseKg: 80 },
+          { name: 'Leg Extension', sets: 3, baseKg: 50 },
+          { name: 'Leg Curl', sets: 3, baseKg: 40 },
+          { name: 'Calf Raise Seduto', sets: 3, baseKg: 30 }
+        ]
+      }
+    ];
+
+    const mockHistory = Array.from({ length: 18 }).map((_, i) => {
+      // Spread sessions over the last 4 weeks, ~4-5 sessions per week
+      const workoutTime = now - (30 - i * 1.6) * day;
+      const template = sessionTemplates[i % sessionTemplates.length];
+      const progressFactor = Math.floor(i / 3) * 2.5; // Every cycle (3 sessions) weight increases
 
       return {
         id: `mock-w-${i}`,
-        name: i % 2 === 0 ? 'Push Day' : 'Pull Day',
+        name: template.name,
         startTime: workoutTime,
-        endTime: workoutTime + 60 * 60 * 1000,
-        exercises: [
-          {
-            id: `mock-ex-${i}`,
-            name: i % 2 === 0 ? 'Panca Piana' : 'Trazioni',
-            sets: [
-              { id: 1, kg: String(60 + progressFactor), reps: '8', done: true }
-            ]
-          }
-        ]
+        endTime: workoutTime + (45 + Math.random() * 20) * 60 * 1000,
+        exercises: template.exercises.map((ex, exIdx) => ({
+          id: `mock-ex-${i}-${exIdx}`,
+          name: ex.name,
+          sets: Array.from({ length: ex.sets }).map((_, sIdx) => ({
+            id: Date.now() + i + exIdx + sIdx,
+            kg: String(ex.baseKg > 0 ? ex.baseKg + Math.floor(progressFactor) : 0),
+            reps: String(8 + (sIdx % 2)),
+            done: true
+          }))
+        }))
       };
     });
 
-    useStore.setState({ history: mockHistory.reverse() });
-    alert("Dati di test caricati!");
+    // Update store with history and some plausible initial stats
+    useStore.setState({ 
+      history: mockHistory.reverse(),
+      userXP: 3250,
+      currentStreak: 5,
+      highestStreak: 15,
+      lastWorkoutDate: now - 1 * day,
+      muscleXP: {
+        'Petto': 1200,
+        'Dorso': 950,
+        'Gambe': 1500,
+        'Spalle': 600,
+        'Bicipiti': 400,
+        'Tricipiti': 450,
+        'Addome': 300
+      }
+    });
+
+    alert("Dati demo realistici caricati con successo!");
   };
 
   // --- Statistics Logic ---

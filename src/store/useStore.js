@@ -7,7 +7,38 @@ export const useStore = create(
   persist(
     (set, get) => ({
       // Array of predefined templates
-      templates: [],
+      templates: [
+        {
+          id: 'tpl-1',
+          name: 'Spinta (Petto/Spalle/Tricipiti)',
+          exercises: [
+            { name: 'Panca Piana Bilanciere', setsCount: 3, targetReps: '8-10', restTime: 90 },
+            { name: 'Military Press', setsCount: 3, targetReps: '8-10', restTime: 90 },
+            { name: 'Alzate Laterali Manubri', setsCount: 3, targetReps: '12-15', restTime: 60 },
+            { name: 'Pushdown Tricipiti ai Cavi', setsCount: 3, targetReps: '12-15', restTime: 60 }
+          ]
+        },
+        {
+          id: 'tpl-2',
+          name: 'Trazione (Dorso/Bicipiti)',
+          exercises: [
+            { name: 'Trazioni alla Sbarra (Pull-up)', setsCount: 3, targetReps: '6-8', restTime: 120 },
+            { name: 'Rematore con Bilanciere', setsCount: 3, targetReps: '8-10', restTime: 90 },
+            { name: 'Pulley Basso', setsCount: 3, targetReps: '10-12', restTime: 90 },
+            { name: 'Curl Bilanciere', setsCount: 3, targetReps: '10-12', restTime: 60 }
+          ]
+        },
+        {
+          id: 'tpl-3',
+          name: 'Gambe (Leg Day)',
+          exercises: [
+            { name: 'Squat con Bilanciere', setsCount: 3, targetReps: '6-8', restTime: 120 },
+            { name: 'Leg Extension', setsCount: 3, targetReps: '12-15', restTime: 60 },
+            { name: 'Leg Curl', setsCount: 3, targetReps: '12-15', restTime: 60 },
+            { name: 'Calf Raise Seduto', setsCount: 3, targetReps: '15-20', restTime: 60 }
+          ]
+        }
+      ],
       // Array of completed workouts
       history: [],
       // Array of custom exercises created by user
@@ -192,7 +223,7 @@ export const useStore = create(
             endTime: Date.now()
           };
 
-          const sessionScore = calculateSessionScore(completedWorkout, state.history, EXERCISES_DB);
+          const sessionScore = calculateSessionScore(completedWorkout, state.history, [...EXERCISES_DB, ...(state.customExercises || [])]);
           
           let newStreak = state.currentStreak || 0;
           // Increment streak logic: if they completed at least 3 sets

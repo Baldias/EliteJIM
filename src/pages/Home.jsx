@@ -29,12 +29,6 @@ function Home() {
 
   const [showWelcome, setShowWelcome] = useState(false);
 
-  useEffect(() => {
-    if (lastWorkoutDate) {
-      const hoursSinceLast = (Date.now() - lastWorkoutDate) / (1000 * 60 * 60);
-      if (hoursSinceLast > 24) setShowWelcome(true);
-    }
-  }, [lastWorkoutDate]);
 
   const handleStartTemplate = (template) => {
     if (activeWorkout && !window.confirm("Hai un allenamento in corso. Vuoi abbandonarlo?")) return;
