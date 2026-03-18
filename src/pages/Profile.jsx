@@ -1,10 +1,11 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Download, Upload, Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Check } from 'lucide-react';
+import { Download, Upload, Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Check, Flame, Trophy } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
-import { EXERCISES_DB, getExerciseCategories } from '../data/exercises';
+import { EXERCISES_DB, EXERCISE_CATEGORIES, getExerciseCategories } from '../data/exercises';
+import { getRankByXp, getMuscleLevelByXp } from '../utils/gamification';
 import './Profile.css';
 
 function Profile() {
@@ -13,6 +14,10 @@ function Profile() {
   const history = useStore(state => state.history);
   const scienceReport = useStore(state => state.scienceReport);
   const deleteWorkout = useStore(state => state.deleteWorkout);
+  const userXP = useStore(state => state.userXP);
+  const currentStreak = useStore(state => state.currentStreak);
+  const muscleXP = useStore(state => state.muscleXP) || {};
+
   const [expandedSessions, setExpandedSessions] = useState({});
   const [visibleWeeks, setVisibleWeeks] = useState(2);
   const [editingWorkout, setEditingWorkout] = useState(null);
@@ -140,7 +145,7 @@ function Profile() {
   const stats = useMemo(() => {
     let totalWeight = 0;
     let totalSets = 0;
-    
+
     history.forEach(workout => {
       workout.exercises.forEach(ex => {
         ex.sets.forEach(s => {
@@ -172,6 +177,13 @@ function Profile() {
     return "Atleta d'Elite";
   }, [history.length]);
 
+  const rank = getRankByXp(userXP || 0);
+  const isBossFight = scienceReport && (() => {
+    const wElapsed = Math.floor((Date.now() - scienceReport.timestamp) / (7 * 24 * 60 * 60 * 1000));
+    const cw = Math.min(Math.max(1, wElapsed + 1), 12);
+    return cw === 4 || cw === 8;
+  })();
+
   // --- Scienza V2: Weekly Goals Logic ---
   const scienceGoals = useMemo(() => {
     if (!scienceReport) return null;
@@ -180,7 +192,7 @@ function Profile() {
     const now = Date.now();
     const weeksElapsed = Math.floor((now - scienceReport.timestamp) / MS_PER_WEEK);
     const currentWeek = Math.min(Math.max(1, weeksElapsed + 1), 12);
-    
+
     // Calculate start of THIS biological week
     const startOfCurrentWeek = scienceReport.timestamp + (currentWeek - 1) * MS_PER_WEEK;
 
@@ -198,9 +210,9 @@ function Profile() {
         return lm.mev;
       }
 
-      const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(muscle)) || 
-                      (currentMonth === 2 && (scienceReport.focus2 || []).includes(muscle));
-      
+      const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(muscle)) ||
+        (currentMonth === 2 && (scienceReport.focus2 || []).includes(muscle));
+
       if (!isFocus) return lm.mev;
 
       const relativeWeek = currentWeek - ((currentMonth - 1) * 4);
@@ -230,9 +242,9 @@ function Profile() {
     const goals = Object.keys(scienceReport.baseLandmarks).map(muscle => {
       const target = getTargetForMuscle(muscle);
       const done = setsDoneThisWeek[muscle] || 0;
-      const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(muscle)) || 
-                      (currentMonth === 2 && (scienceReport.focus2 || []).includes(muscle));
-      
+      const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(muscle)) ||
+        (currentMonth === 2 && (scienceReport.focus2 || []).includes(muscle));
+
       const lm = scienceReport.baseLandmarks[muscle];
       let badge = null;
       if (lm && target !== null) {
@@ -277,12 +289,12 @@ function Profile() {
 
       const weekKey = monday.toISOString().split('T')[0];
       let group = groups.find(g => g.weekKey === weekKey);
-      
+
       if (!group) {
-        group = { 
-          weekKey, 
+        group = {
+          weekKey,
           monday,
-          workouts: [] 
+          workouts: []
         };
         groups.push(group);
       }
@@ -296,42 +308,87 @@ function Profile() {
 
   const getWeekLabel = (monday) => {
     const today = new Date();
-    today.setHours(0,0,0,0);
-    
+    today.setHours(0, 0, 0, 0);
+
     // Get this week's monday
     const currentDay = today.getDay();
     const currentDiff = today.getDate() - (currentDay === 0 ? 6 : currentDay - 1);
     const thisMonday = new Date(new Date().setDate(currentDiff));
-    thisMonday.setHours(0,0,0,0);
+    thisMonday.setHours(0, 0, 0, 0);
 
     const diffWeeks = Math.round((thisMonday - monday) / (7 * 24 * 60 * 60 * 1000));
 
     if (diffWeeks === 0) return "Questa Settimana";
     if (diffWeeks === 1) return "Settimana Scorsa";
-    
+
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
-    
+
     return `${monday.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} - ${sunday.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}`;
   };
 
   return (
     <>
-      <header className="app-header profile-header">
-        <button 
-          className="icon-btn settings-btn" 
-          onClick={() => navigate('/settings')}
-          style={{ position: 'absolute', top: 'max(1.5rem, env(safe-area-inset-top))', right: '1.5rem', color: '#fff', zIndex: 10 }}
-        >
-          <SettingsIcon size={24} />
-        </button>
+      <header className="app-header profile-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div className="header-content">
           <h1>Profilo</h1>
           <p className="subtitle">{welcomePhrase}</p>
         </div>
+        <button
+          onClick={() => navigate('/settings')}
+          style={{ background: 'transparent', position: 'absolute', top: '40px', right: '40px', borderRadius: '10px', padding: '8px', color: 'hsla(0, 0%, 100%, 1.00)', marginTop: '4px', flexShrink: 0 }}
+        >
+          <SettingsIcon size={20} />
+        </button>
       </header>
 
       <main className="app-main" style={{ paddingBottom: '2rem' }}>
+
+        {/* Gamification Dashboard */}
+        <div className="card glass gamification-dash" style={{
+          marginBottom: '2rem',
+          borderRadius: '24px',
+          border: `1px solid ${isBossFight ? '#ff3b30' : rank.color}`,
+          background: isBossFight ? 'linear-gradient(135deg, rgba(255, 59, 48, 0.1), rgba(0,0,0,0.4))' : 'rgba(255,255,255,0.03)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {isBossFight && (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: '#ff3b30', color: '#fff', fontSize: '0.75rem', fontWeight: '800', textAlign: 'center', padding: '4px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              ⚠️ MRV Boss Fight Week ⚠️
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: isBossFight ? '1rem' : '0', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${rank.color}` }}>
+                <Trophy size={24} color={rank.color} />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.2rem', fontWeight: '800', color: rank.color, textTransform: 'uppercase' }}>{rank.title}</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{userXP || 0} XP</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ff9500', fontWeight: '800', fontSize: '1.2rem' }}>
+                {currentStreak > 0 ? currentStreak : '-'} <Flame size={20} fill={currentStreak >= 3 ? "#ff9500" : "none"} />
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Streak</div>
+            </div>
+          </div>
+
+          <div className="rank-progress-container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: '700' }}>
+              <span>Progresso Rank</span>
+              <span>{rank.nextRank ? rank.nextRank.title : 'MAX'}</span>
+            </div>
+            <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${rank.progressPercent}%`, background: rank.color, borderRadius: '4px', transition: 'width 1s ease-out' }}></div>
+            </div>
+          </div>
+        </div>
+
         {/* Stats Dashboard */}
         <div className="stats-grid">
           <div className="stat-card">
@@ -348,21 +405,45 @@ function Profile() {
           </div>
         </div>
 
+        {/* Muscle Levels Button */}
+        <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
+          <button
+            onClick={() => navigate('/levels')}
+            className="btn-primary"
+            style={{
+              width: '100%',
+              padding: '1.2rem',
+              fontSize: '1.2rem',
+              background: 'linear-gradient(135deg, #ffcc00 0%, #ff9500 100%)',
+              color: 'black',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              boxShadow: '0 8px 32px rgba(255,204,0,0.3)'
+            }}
+          >
+            <Zap size={24} color="black" fill="black" />
+            <span style={{ fontWeight: '800' }}>I Tuoi Livelli Muscolari</span>
+          </button>
+        </div>
+
+
         {/* Science Mesocycle Sync Section */}
         {scienceGoals && (
           <div style={{ marginTop: '2rem' }}>
             <div className="section-header" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Target size={24} color="var(--primary-color)" />
-              <h2 className="section-title-premium" style={{ margin: 0 }}>
-                Obiettivi W{scienceGoals.currentWeek}
+              <h2 className="section-title-premium" style={{ margin: 0, color: isBossFight ? '#ff3b30' : 'var(--text-main)' }}>
+                Obiettivi W{scienceGoals.currentWeek} {isBossFight && "💀"}
               </h2>
             </div>
-            
+
             <div className="card glass" style={{ padding: '1.5rem', borderRadius: '24px', border: '1px solid var(--primary-color)' }}>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.4 }}>
                 Progresso delle serie in base al tuo mesociclo scientifico.
               </p>
-              
+
               <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                 {scienceGoals.goals.map(g => {
                   const percent = Math.min(100, Math.round((g.done / g.target) * 100)) || 0;
@@ -372,15 +453,15 @@ function Profile() {
                   if (g.isFocus && isCompleted) color = '#34c759';
 
                   return (
-                    <div key={g.muscle} style={{ 
-                      background: 'rgba(255,255,255,0.03)', 
-                      padding: '1rem', 
+                    <div key={g.muscle} style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      padding: '1rem',
                       borderRadius: '16px',
                       border: `1px solid ${isCompleted ? 'rgba(52, 199, 89, 0.3)' : 'rgba(255,255,255,0.05)'}`
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
                         <span style={{ fontWeight: '600', color: g.isFocus ? 'var(--text-main)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {g.muscle} 
+                          {g.muscle}
                           {g.badge && (
                             <span style={{ fontSize: '0.65rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', color: g.badge.color, backgroundColor: g.badge.bg, textTransform: 'uppercase' }}>
                               {g.badge.label}
@@ -391,11 +472,11 @@ function Profile() {
                           {g.done} / {g.target}
                         </span>
                       </div>
-                      
+
                       <div style={{ width: '100%', height: '8px', background: 'var(--surface-color)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ 
-                          height: '100%', 
-                          width: `${percent}%`, 
+                        <div style={{
+                          height: '100%',
+                          width: `${percent}%`,
                           background: color,
                           borderRadius: '4px',
                           transition: 'width 0.5s ease-out'
@@ -421,21 +502,21 @@ function Profile() {
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.4 }}>
                 Serie completate negli ultimi 7 giorni rispetto ai landmark di Dr. Mike Israetel (MEV, MAV, MRV).
               </p>
-              
+
               <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                 {Object.entries(rpVolumes).map(([category, sets]) => {
                   if (sets === 0) return null; // Nascondi muscoli non allenati
                   const status = getVolumeStatus(sets, category);
                   const landmarks = RP_LANDMARKS[category];
-                  
+
                   // Calculate raw percentage for visual bar (cap at 120%)
                   const maxTarget = landmarks.MRV || landmarks.MAV_MAX || sets || 1;
                   const visualPercent = Math.min(120, (sets / maxTarget) * 100);
 
                   return (
-                    <div key={category} className="rp-item" style={{ 
-                      background: 'rgba(255,255,255,0.03)', 
-                      padding: '1rem', 
+                    <div key={category} className="rp-item" style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      padding: '1rem',
                       borderRadius: '16px',
                       border: '1px solid rgba(255,255,255,0.05)'
                     }}>
@@ -445,17 +526,17 @@ function Profile() {
                           {sets} serie
                         </span>
                       </div>
-                      
+
                       <div style={{ width: '100%', height: '8px', background: 'var(--surface-color)', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
-                        <div style={{ 
-                          height: '100%', 
-                          width: `${visualPercent}%`, 
+                        <div style={{
+                          height: '100%',
+                          width: `${visualPercent}%`,
                           background: status.color,
                           borderRadius: '4px',
                           transition: 'width 0.5s ease-out'
                         }}></div>
                       </div>
-                      
+
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         <span>Stato: <strong style={{ color: status.color }}>{status.status}</strong></span>
                         <span>MRV: {landmarks.MRV}</span>
@@ -464,7 +545,7 @@ function Profile() {
                   );
                 })}
               </div>
-              
+
               {Object.values(rpVolumes).every(v => v === 0) && (
                 <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', margin: '2rem 0' }}>
                   Nessuna serie registrata negli ultimi 7 giorni.
@@ -490,11 +571,11 @@ function Profile() {
             <div className="journey-feed">
               {displayedGroups.map(group => (
                 <div key={group.weekKey} className="week-group" style={{ marginBottom: '2.5rem' }}>
-                  <div className="week-header" style={{ 
-                    fontSize: '0.75rem', 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.15em', 
-                    color: 'var(--primary-color)', 
+                  <div className="week-header" style={{
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.15em',
+                    color: 'var(--primary-color)',
                     fontWeight: '800',
                     marginBottom: '1rem',
                     paddingLeft: '0.5rem',
@@ -572,7 +653,7 @@ function Profile() {
               ))}
 
               {groupedHistory.length > visibleWeeks && (
-                <button 
+                <button
                   className="btn-show-more"
                   onClick={() => setVisibleWeeks(prev => prev + 1)}
                   style={{
@@ -642,13 +723,13 @@ function Profile() {
               {editingWorkout.exercises.map((ex, exIdx) => (
                 <div key={ex.id} style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px' }}>
                   <div style={{ fontWeight: '600', color: 'var(--primary-color)', marginBottom: '0.75rem' }}>{ex.name}</div>
-                  
+
                   {ex.sets.map((set, setIdx) => (
                     <div key={set.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <span style={{ width: '30px', color: 'var(--text-muted)' }}>S{setIdx + 1}</span>
-                      <input 
-                        type="number" 
-                        value={set.kg} 
+                      <input
+                        type="number"
+                        value={set.kg}
                         onChange={(e) => {
                           const w = { ...editingWorkout };
                           w.exercises[exIdx].sets[setIdx].kg = e.target.value;
@@ -658,9 +739,9 @@ function Profile() {
                         placeholder="kg"
                       />
                       <span style={{ color: 'var(--text-muted)' }}>x</span>
-                      <input 
-                        type="number" 
-                        value={set.reps} 
+                      <input
+                        type="number"
+                        value={set.reps}
                         onChange={(e) => {
                           const w = { ...editingWorkout };
                           w.exercises[exIdx].sets[setIdx].reps = e.target.value;
@@ -669,13 +750,13 @@ function Profile() {
                         style={{ width: '60px', padding: '6px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                         placeholder="reps"
                       />
-                      <button 
+                      <button
                         onClick={() => {
                           const w = { ...editingWorkout };
                           w.exercises[exIdx].sets[setIdx].done = !w.exercises[exIdx].sets[setIdx].done;
                           setEditingWorkout(w);
                         }}
-                        style={{ 
+                        style={{
                           width: '32px', height: '32px', borderRadius: '50%', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
                           marginLeft: 'auto',
                           background: set.done ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255,255,255,0.05)',
@@ -689,8 +770,8 @@ function Profile() {
                 </div>
               ))}
 
-              <button 
-                className="btn-primary" 
+              <button
+                className="btn-primary"
                 onClick={saveEditedWorkout}
                 style={{ width: '100%', marginTop: '1rem', height: '54px', borderRadius: '16px' }}
               >

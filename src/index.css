@@ -80,15 +80,15 @@ h6 {
 button {
   border-radius: 12px;
   border: none;
-  padding: 16px 24px;
-  font-size: 1.05rem;
+  padding: 0;
+  font-size: 1rem;
   font-weight: 600;
   font-family: inherit;
-  background-color: var(--primary-color);
-  color: #FFFFFF;
+  background-color: transparent;
+  color: inherit;
   cursor: pointer;
   transition: transform 0.15s ease, opacity 0.2s ease;
-  width: 100%;
+  width: auto;
 }
 
 button:active {

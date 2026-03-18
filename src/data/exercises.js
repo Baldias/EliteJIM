@@ -74,6 +74,10 @@ export const EXERCISES_DB = [
   { id: 'l15', name: 'Abductor Machine', category: EXERCISE_CATEGORIES.LEGS },
   { id: 'l16', name: 'Pressa Orizzontale', category: EXERCISE_CATEGORIES.LEGS },
   { id: 'l17', name: 'Sissy Squat', category: EXERCISE_CATEGORIES.LEGS },
+  { id: 'l18', name: 'Step Up', category: EXERCISE_CATEGORIES.LEGS },
+  { id: 'l19', name: 'Good Morning', category: EXERCISE_CATEGORIES.LEGS },
+  { id: 'l19', name: 'Slanci ai Cavi', category: EXERCISE_CATEGORIES.LEGS },
+
 
   // Spalle
   { id: 's1', name: 'Military Press', category: EXERCISE_CATEGORIES.SHOULDERS, secondaryCategories: [EXERCISE_CATEGORIES.TRICEPS] },
@@ -114,6 +118,7 @@ export const EXERCISES_DB = [
   { id: 'f2', name: 'Wrist Curl Bilanciere (Pronazione)', category: EXERCISE_CATEGORIES.FOREARMS },
   { id: 'f3', name: 'Farmer\'s Walk', category: EXERCISE_CATEGORIES.FOREARMS },
   { id: 'f4', name: 'Reverse Curl Bilanciere EZ', category: EXERCISE_CATEGORIES.FOREARMS, secondaryCategories: [EXERCISE_CATEGORIES.BICEPS] },
+  { id: 'f5', name: 'Sessione di Autostima Personale', category: EXERCISE_CATEGORIES.FOREARMS },
 
   // Addome
   { id: 'co1', name: 'Crunch a Terra', category: EXERCISE_CATEGORIES.CORE },

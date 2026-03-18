@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { checkStreakInactivity, calculateSessionScore } from '../utils/gamification';
+import { EXERCISES_DB } from '../data/exercises';
 
 export const useStore = create(
   persist(
@@ -16,6 +18,27 @@ export const useStore = create(
       scienceReport: null,
       // Persistent rest timer end timestamp
       globalRestEndTime: null,
+
+      // --- Gamification State ---
+      userXP: 0,
+      muscleXP: {}, // Track XP per muscle group
+      currentStreak: 0,
+      highestStreak: 0,
+      lastWorkoutDate: null,
+      recapData: null,
+
+      // --- Gamification Actions ---
+      clearRecapData: () => set({ recapData: null }),
+      processInactivity: () => {
+        set((state) => {
+          if (!state.lastWorkoutDate) return state;
+          const { newStreak, newXp, penalty } = checkStreakInactivity(state.lastWorkoutDate, state.currentStreak, state.userXP);
+          if (penalty > 0 || newStreak !== state.currentStreak) {
+            return { currentStreak: newStreak, userXP: newXp };
+          }
+          return state;
+        });
+      },
 
       // --- Rest Timer Actions ---
       setGlobalRestEndTime: (timestamp) => set({ globalRestEndTime: timestamp }),
@@ -168,10 +191,44 @@ export const useStore = create(
             ...state.activeWorkout,
             endTime: Date.now()
           };
+
+          const sessionScore = calculateSessionScore(completedWorkout, state.history, EXERCISES_DB);
+          
+          let newStreak = state.currentStreak || 0;
+          // Increment streak logic: if they completed at least 3 sets
+          if (sessionScore.doneSets >= 3) {
+            newStreak += 1;
+          }
+
+          const highestStreak = Math.max(state.highestStreak || 0, newStreak);
+          const newXP = (state.userXP || 0) + sessionScore.xp;
+          
+          // Merge Muscle XP
+          const newMuscleXP = { ...(state.muscleXP || {}) };
+          if (sessionScore.muscleXpGained) {
+            Object.keys(sessionScore.muscleXpGained).forEach(muscle => {
+              newMuscleXP[muscle] = (newMuscleXP[muscle] || 0) + sessionScore.muscleXpGained[muscle];
+            });
+          }
+
+          const recapData = {
+            workout: completedWorkout,
+            score: sessionScore,
+            xpGained: sessionScore.xp,
+            newTotalXp: newXP,
+            streak: newStreak
+          };
+
           return {
             history: [completedWorkout, ...state.history],
             activeWorkout: null,
-            globalRestEndTime: null
+            globalRestEndTime: null,
+            userXP: newXP,
+            muscleXP: newMuscleXP,
+            currentStreak: newStreak,
+            highestStreak,
+            lastWorkoutDate: Date.now(),
+            recapData
           };
         });
       },

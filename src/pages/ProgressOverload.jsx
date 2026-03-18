@@ -3,11 +3,15 @@ import { useStore } from '../store/useStore';
 import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories } from '../data/exercises';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
+import { getMuscleLevelByXp } from '../utils/gamification';
+import { Zap } from 'lucide-react';
 import './ProgressOverload.css';
 
 function ProgressOverload() {
     const history = useStore(state => state.history);
     const customExercises = useStore(state => state.customExercises || []);
+    const muscleXP = useStore(state => state.muscleXP) || {};
+    
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedExercise, setSelectedExercise] = useState('');
 
@@ -193,6 +197,44 @@ function ProgressOverload() {
                         );
                     })}
                 </div>
+
+                {/* Muscle Levels Info Box — only visible when a specific muscle group is selected */}
+                {selectedCategory && (
+                <div style={{ marginBottom: '2rem', padding: '1rem', background: 'rgba(255, 204, 0, 0.05)', borderRadius: '16px', border: '1px solid rgba(255, 204, 0, 0.2)' }}>
+                    <h3 style={{ fontSize: '1.1rem', color: '#ffcc00', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+                        <Zap size={20} />
+                        Livelli RPG
+                    </h3>
+                    <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                        {Object.entries(EXERCISE_CATEGORIES)
+                            .filter(([key]) => !selectedCategory || selectedCategory === key)
+                            .map(([key, label]) => {
+                                const xp = muscleXP[label] || 0;
+                                const levelData = getMuscleLevelByXp(xp);
+                                
+                                return (
+                                    <div key={key} style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '12px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                            <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{label}</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{xp} XP</span>
+                                                <span style={{ fontSize: '1rem', fontWeight: '800', color: '#ffcc00' }}>Lv. {levelData.level}</span>
+                                            </div>
+                                        </div>
+                                        <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                            <div style={{ 
+                                                height: '100%', 
+                                                width: `${levelData.progressPercent}%`, 
+                                                background: 'linear-gradient(90deg, var(--primary-color) 0%, #ffcc00 100%)', 
+                                                borderRadius: '3px'
+                                            }}></div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                    </div>
+                </div>
+                )}
 
                 {availableExercises.length === 0 ? (
                     <div className="card glass no-data-msg">

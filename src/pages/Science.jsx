@@ -1,19 +1,19 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { RefreshCw, Zap, Target, BookOpen, Calendar, ChevronRight } from 'lucide-react';
+import { RefreshCw, Zap, Target, BookOpen, Calendar, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
 import './Science.css';
+import './BossFight.css';
 
 const RP_BASE_LANDMARKS = {
   'Petto': { mev: 10, mav: 12, mrv: 20 },
-  'Schiena': { mev: 10, mav: 14, mrv: 22 },
+  'Dorso': { mev: 10, mav: 14, mrv: 22 },
   'Quadricipiti': { mev: 8, mav: 12, mrv: 18 },
   'Femorali': { mev: 6, mav: 10, mrv: 16 },
   'Glutei': { mev: 0, mav: 8, mrv: 16 },
-  'Spalle (Deltoidi)': { mev: 8, mav: 12, mrv: 22 },
+  'Spalle': { mev: 8, mav: 12, mrv: 22 },
   'Bicipiti': { mev: 8, mav: 10, mrv: 20 },
   'Tricipiti': { mev: 6, mav: 10, mrv: 18 },
-  'Polpacci': { mev: 8, mav: 12, mrv: 20 },
-  'Addome': { mev: 0, mav: 8, mrv: 20 }
+  'Polpacci': { mev: 8, mav: 12, mrv: 20 }
 };
 
 const MUSCLE_GROUPS = Object.keys(RP_BASE_LANDMARKS);
@@ -61,6 +61,18 @@ const QUESTIONS = [
     subtitle: 'Dopo il primo mese, su cosa vuoi spingere? (Scegline max 3 diversi)',
     isMulti: true,
     maxSelection: 3
+  },
+  {
+    id: 'daysPerWeek',
+    title: 'Frequenza di Allenamento',
+    subtitle: 'Quanti giorni ti alleni a settimana?',
+    options: [
+      { value: '2', label: '2 Giorni' },
+      { value: '3', label: '3 Giorni' },
+      { value: '4', label: '4 Giorni' },
+      { value: '5', label: '5 Giorni' },
+      { value: '6', label: '6 Giorni' }
+    ]
   }
 ];
 
@@ -99,11 +111,17 @@ function Dashboard({ report, reset }) {
   // Calculate current week (1 to 12)
   const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
   const weeksElapsed = Math.floor((Date.now() - report.timestamp) / MS_PER_WEEK);
-  const currentWeek = Math.min(Math.max(1, weeksElapsed + 1), 12); // Bound 1-12
+  const currentWeekNum = Math.min(Math.max(1, weeksElapsed + 1), 12); // Bound 1-12
   
+  // Forecasting State
+  const [selectedWeek, setSelectedWeek] = useState(currentWeekNum);
+  const weekToDisplay = selectedWeek;
+
   let currentMonth = 1;
-  if (currentWeek > 4 && currentWeek <= 8) currentMonth = 2;
-  if (currentWeek > 8) currentMonth = 3;
+  if (weekToDisplay > 4 && weekToDisplay <= 8) currentMonth = 2;
+  if (weekToDisplay > 8) currentMonth = 3;
+
+  const isBossFight = weekToDisplay === 4 || weekToDisplay === 8;
 
   const expLabel = { 
     'beginner': 'Principiante', 
@@ -118,7 +136,7 @@ function Dashboard({ report, reset }) {
     
     // Mesocycle 3 (Weeks 9-12) is resensitization/deload
     if (currentMonth === 3) {
-      if (currentWeek === 9 || currentWeek === 10) return Math.max(0, lm.mev - 2); // Deload
+      if (weekToDisplay === 9 || weekToDisplay === 10) return Math.max(0, lm.mev - 2); // Deload
       return lm.mev; // Back to MEV to retain
     }
 
@@ -133,7 +151,7 @@ function Dashboard({ report, reset }) {
 
     // It's in focus. We span from MAV to MRV over 4 weeks.
     // Week relative to the month (1, 2, 3, 4)
-    const relativeWeek = currentWeek - ((currentMonth - 1) * 4);
+    const relativeWeek = weekToDisplay - ((currentMonth - 1) * 4);
     
     // Total series to add across the 4 weeks
     // Target calc logic
@@ -147,7 +165,7 @@ function Dashboard({ report, reset }) {
     const lm = report.baseLandmarks[muscle];
     if (!lm) return null;
 
-    if (currentMonth === 3 && (currentWeek === 9 || currentWeek === 10)) {
+    if (currentMonth === 3 && (weekToDisplay === 9 || weekToDisplay === 10)) {
       return { label: 'Deload', color: '#34c759', bg: 'rgba(52, 199, 89, 0.15)' };
     }
 
@@ -194,21 +212,50 @@ function Dashboard({ report, reset }) {
 
           <div className="summary-grid">
             <div className="summary-card">
-              <span className="summary-label">Mese in corso</span>
+              <span className="summary-label">Mese Stimato</span>
               <span className="summary-value" style={{ fontSize: '1.4rem' }}>{currentMonth} <span style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>/ 3</span></span>
             </div>
             <div className="summary-card">
               <span className="summary-label">Settimana Attuale</span>
-              <span className="summary-value" style={{ fontSize: '1.4rem', color: 'var(--primary-color)' }}>{currentWeek} <span style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>/ 12</span></span>
+              <span className="summary-value" style={{ fontSize: '1.4rem', color: 'var(--primary-color)' }}>{currentWeekNum} <span style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>/ 12</span></span>
             </div>
           </div>
 
-          <div className="card glass" style={{ marginBottom: '2rem', borderColor: 'var(--primary-color)' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem', color: 'var(--text-main)', fontSize: '1.1rem' }}>
-              <Target size={18} color="var(--primary-color)" />
-              Obiettivi Settimana {currentWeek}
+          {/* Forecasting Week Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <button 
+              onClick={() => setSelectedWeek(prev => Math.max(1, prev - 1))}
+              disabled={selectedWeek === 1}
+              style={{ background: 'transparent', border: 'none', color: selectedWeek === 1 ? 'var(--text-muted)' : 'var(--primary-color)', cursor: selectedWeek === 1 ? 'not-allowed' : 'pointer' }}>
+              <ChevronLeft size={24} />
+            </button>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Proiezione</span>
+              <strong style={{ fontSize: '1.2rem', color: selectedWeek === currentWeekNum ? 'var(--text-main)' : 'var(--primary-color)' }}>
+                Settimana {selectedWeek}
+              </strong>
+            </div>
+            <button 
+              onClick={() => setSelectedWeek(prev => Math.min(12, prev + 1))}
+              disabled={selectedWeek === 12}
+              style={{ background: 'transparent', border: 'none', color: selectedWeek === 12 ? 'var(--text-muted)' : 'var(--primary-color)', cursor: selectedWeek === 12 ? 'not-allowed' : 'pointer' }}>
+              <ChevronRight size={24} />
+            </button>
+          </div>
+
+          <div className={`card glass target-card ${isBossFight ? 'boss-fight' : ''}`} style={{ marginBottom: '2rem', borderColor: isBossFight ? '#ff3b30' : 'var(--primary-color)' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem', color: isBossFight ? '#ff3b30' : 'var(--text-main)', fontSize: '1.1rem', fontWeight: '800' }}>
+              <Target size={18} color={isBossFight ? '#ff3b30' : "var(--primary-color)"} />
+              {isBossFight ? "BOSS FIGHT: Settimana MRV" : `Obiettivi Settimana ${selectedWeek}`}
             </h3>
             
+            {isBossFight && (
+              <p style={{ color: '#ff3b30', fontSize: '0.85rem', marginBottom: '1rem', fontWeight: '600', animation: 'pulse 2s infinite' }}>
+                <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}/>
+                Raggiungi il Massimo Volume Recuperabile. Usa tutto lo sforzo che hai.
+              </p>
+            )}
+
             <div className="focus-list">
               {Object.keys(report.baseLandmarks).map(muscle => {
                 const targetSets = getTargetForMuscle(muscle);
@@ -261,16 +308,23 @@ function Dashboard({ report, reset }) {
           
           <div className="calendar-grid">
             {getWeekLabels().map(w => {
-              const isPast = w < currentWeek;
-              const isCurrent = w === currentWeek;
+              const isPast = w < currentWeekNum;
+              const isCurrent = w === currentWeekNum;
+              const isSelected = w === selectedWeek;
               
               let typeClass = 'maintenance';
               if (w >= 9 && w <= 10) typeClass = 'deload';
               else if (w >= 11) typeClass = 'resens';
+              else if (w === 4 || w === 8) typeClass = 'bossfight';
               else typeClass = 'overreaching';
 
               return (
-                <div key={w} className={`cal-week ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''} ${typeClass}`}>
+                <div 
+                  key={w} 
+                  onClick={() => setSelectedWeek(w)}
+                  className={`cal-week ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''} ${typeClass} ${isSelected ? 'selected-week' : ''}`}
+                  style={{ cursor: 'pointer', outline: isSelected ? '2px solid white' : 'none', outlineOffset: '2px' }}
+                >
                   <span className="cal-week-num">W{w}</span>
                 </div>
               )
@@ -279,6 +333,7 @@ function Dashboard({ report, reset }) {
 
           <div className="calendar-legend">
             <div><span className="dot overreaching"></span> Overreaching Focus</div>
+            <div><span className="dot bossfight"></span> Boss Fight (MRV)</div>
             <div><span className="dot deload"></span> Deload (Scarico)</div>
             <div><span className="dot resens"></span> Mantenimento Basso</div>
           </div>
@@ -310,13 +365,16 @@ function Dashboard({ report, reset }) {
 function Science() {
   const scienceReport = useStore(state => state.scienceReport);
   const saveScienceReport = useStore(state => state.saveScienceReport);
+  const initializeMuscleXP = useStore(state => state.initializeMuscleXP);
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({
     gender: null,
     stats: { bw: '', bench: '', squat: '', deadlift: '' },
     legs: null,
-    focus2: []
+    focus1: [],
+    focus2: [],
+    daysPerWeek: null
   });
 
   const history = useStore(state => state.history);
@@ -465,7 +523,8 @@ function Science() {
         legsIncluded: answers.legs === 'yes',
         focus1: cleanFocus1,
         focus2: cleanFocus2,
-        baseLandmarks: finalLandmarks
+        baseLandmarks: finalLandmarks,
+        daysPerWeek: parseInt(answers.daysPerWeek, 10) || 4
       };
 
       saveScienceReport(report);
@@ -479,7 +538,8 @@ function Science() {
       stats: { bw: '', bench: '', squat: '', deadlift: '' },
       legs: null,
       focus1: [],
-      focus2: []
+      focus2: [],
+      daysPerWeek: null
     });
   };
 
@@ -533,7 +593,7 @@ function Science() {
 
           <div className="quiz-step" key={step}>
             <h2 className="question-text">{currentQ.title}</h2>
-            {currentQ.subtitle && <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '1rem', marginTop: '-0.5rem', fontSize: '0.9rem' }}>{currentQ.subtitle}</p>}
+            {currentQ.subtitle && <p style={{ textAlign: 'center', color: '#ccc', marginBottom: '1rem', marginTop: '-0.5rem', fontSize: '0.9rem' }}>{currentQ.subtitle}</p>}
 
             {currentQ.type === 'inputs' ? (
               <div className="inputs-grid">

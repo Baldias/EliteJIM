@@ -131,32 +131,35 @@
   transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
-  background-color: rgba(18, 18, 18, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(0, 80, 110, 0.82) 0%, rgba(0, 55, 80, 0.88) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(0, 184, 212, 0.25);
   display: flex;
   justify-content: space-around;
   padding: 0.75rem 0;
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   z-index: 100;
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
 }
 
 .nav-item {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.72rem;
+  font-weight: 600;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   transition: color 0.2s ease;
   cursor: pointer;
   flex: 1;
+  text-decoration: none;
 }
 
 .nav-item.active {
-  color: var(--primary-color);
+  color: #00e5ff;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.5);
 }
 
 /* PWA Reload Prompt Styles */

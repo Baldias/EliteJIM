@@ -1,0 +1,289 @@
+.recap-container {
+  padding: 1rem;
+  padding-bottom: 5rem; /* Space for fixed bottom button */
+  min-height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-main);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.recap-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.recap-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+}
+
+.recap-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary-color), #a275ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+  animation: slideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.recap-subtitle {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.recap-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.recap-card {
+  padding: 1.5rem;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: scale(0.95);
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.grade-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  animation-delay: 0.2s;
+}
+
+.grade-badge {
+  flex-shrink: 0;
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 900;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.grade-badge[data-grade="S"] { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; }
+.grade-badge[data-grade="A"] { background: linear-gradient(135deg, #34c759, #30b14c); color: #fff; }
+.grade-badge[data-grade="B"] { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+.grade-badge[data-grade="C"] { background: linear-gradient(135deg, #ff9500, #e68600); color: #fff; }
+.grade-badge[data-grade="D"] { background: linear-gradient(135deg, #ff3b30, #e6352b); color: #fff; }
+
+.grade-info h3 { margin: 0 0 0.25rem 0; font-size: 1.2rem; }
+.grade-info p { margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.4; }
+
+.recap-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  opacity: 0;
+  animation: slideUp 0.5s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+.recap-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 0.5rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+  gap: 8px;
+}
+
+.recap-stat-box .stat-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+.recap-stat-box .stat-lbl {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.card-title {
+  margin: 0 0 1.25rem 0;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+/* Goals Progression */
+.recap-card:nth-child(3) { animation-delay: 0.6s; }
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.goal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Progress Bars */
+.recap-progress-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.recap-progress-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: var(--primary-color);
+}
+
+.recap-progress-fill.prev {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.recap-progress-fill.new {
+  background: var(--primary-color);
+  box-shadow: 0 0 10px var(--primary-color);
+  width: 0; /* Animated via JS inline style */
+}
+
+/* XP Card */
+.xp-card {
+  animation-delay: 0.8s;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(162, 117, 255, 0.05));
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.xp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1rem;
+}
+
+.xp-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #fff;
+}
+
+.rank-badge {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.xp-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.xp-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateX(-10px);
+  animation: slideRight 0.4s ease-out forwards;
+}
+
+.xp-val {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.rank-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Footer Button */
+.recap-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem 1.5rem;
+  padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+  background: linear-gradient(transparent, var(--bg-color) 40%);
+  display: flex;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  animation: slideUp 0.5s ease-out forwards;
+  animation-delay: 1.5s;
+}
+
+.recap-footer .btn-primary {
+  width: 100%;
+  max-width: 400px;
+  height: 56px;
+  border-radius: 28px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Animations */
+@keyframes slideDown {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideRight {
+  0% { opacity: 0; transform: translateX(-10px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
