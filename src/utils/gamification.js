@@ -80,6 +80,8 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   
   let doneSets = 0;
   let totalVolume = 0;
+  let overloadCount = 0;
+  const rawMuscleXp = {};
   // --- PASS 1: Determine which exercises achieved progressive overload ---
   const overloadedExercises = new Set();
   

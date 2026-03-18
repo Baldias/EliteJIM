@@ -75,6 +75,22 @@ const getMusclesFromExercise = (exerciseName) => {
   return [];
 };
 
+const INTENSITY_COLORS = [
+  '#003f53', // Intensity 1 (1-4 sets) - Dark blue
+  '#006484', // Intensity 2 (5-9 sets) - Medium blue
+  '#007EA7', // Intensity 3 (10-14 sets) - App Primary Color
+  '#00bfff', // Intensity 4 (15-19 sets) - Bright cyan/blue
+  '#5ce1e6'  // Intensity 5 (20+ sets) - Neon cyan
+];
+
+const getIntensity = (sets) => {
+  if (sets < 5) return 1;
+  if (sets < 10) return 2;
+  if (sets < 15) return 3;
+  if (sets < 20) return 4;
+  return 5;
+};
+
 export const InteractiveBody = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const history = useStore(state => state.history);
@@ -99,18 +115,16 @@ export const InteractiveBody = () => {
       });
     });
 
-    // Format for react-body-highlighter
-    // The library takes data like [{ name: 'Workout', muscles: ['chest', 'biceps'] }]
-    // We can just map all trained muscles into one "Activity" object.
-    const activatedMuscles = Object.keys(muscleFrequencies);
-    
-    // We can also adjust colors if the library allows it, but default highlighting is fine.
-    return [
-      {
-        name: 'Allenamenti Recenti',
-        muscles: activatedMuscles
-      }
-    ];
+    // Create an individual entry for each muscle
+    // The library uses `frequency - 1` as the index for target color in highlightedColors
+    return Object.keys(muscleFrequencies).map(muscle => {
+      const sets = muscleFrequencies[muscle];
+      return {
+        name: muscle,
+        muscles: [muscle],
+        frequency: getIntensity(sets)
+      };
+    });
   }, [history]);
 
   return (
@@ -130,7 +144,7 @@ export const InteractiveBody = () => {
               data={workoutData}
               style={{ width: '100%', height: '100%', padding: '1rem' }}
               type="anterior"
-              highlightedColors={['var(--primary-color)']}
+              highlightedColors={INTENSITY_COLORS}
             />
             <span className="ib-label">Vista Frontale</span>
           </div>
@@ -140,7 +154,7 @@ export const InteractiveBody = () => {
               data={workoutData}
               style={{ width: '100%', height: '100%', padding: '1rem' }}
               type="posterior"
-              highlightedColors={['var(--primary-color)']}
+              highlightedColors={INTENSITY_COLORS}
             />
             <span className="ib-label">Vista Posteriore</span>
           </div>
