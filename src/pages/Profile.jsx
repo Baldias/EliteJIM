@@ -102,7 +102,7 @@ function Profile() {
     if (!history || history.length === 0) return null;
     const customExercises = useStore.getState().customExercises || [];
     return calculateLast7DaysVolume(history, [...EXERCISES_DB, ...customExercises]);
-  }, [history]);
+  }, [history, useStore.getState().customExercises]);
 
   const welcomePhrase = useMemo(() => {
     if (history.length === 0) return "Inizia la tua sfida";
@@ -163,7 +163,8 @@ function Profile() {
     history.forEach(w => {
       if (w.startTime >= startOfCurrentWeek) {
         w.exercises.forEach(ex => {
-          const foundEx = allEx.find(e => e.name === ex.name);
+          const searchName = (ex.name || "").toLowerCase().trim();
+          const foundEx = allEx.find(e => e.name.toLowerCase().trim() === searchName);
           const muscles = foundEx ? getExerciseCategories(foundEx) : [];
           
           muscles.forEach(muscle => {
@@ -212,7 +213,7 @@ function Profile() {
       startOfCurrentWeek,
       goals
     };
-  }, [scienceReport, history]);
+  }, [scienceReport, history, useStore.getState().customExercises]);
 
   // --- Journey Logic (Weekly Grouping) ---
   const groupedHistory = useMemo(() => {

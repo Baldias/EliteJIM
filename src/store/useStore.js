@@ -75,8 +75,8 @@ export const useStore = create(
         set((state) => {
           // 1. Discover "lost" custom exercises from history
           const allKnownNames = new Set([
-            ...EXERCISES_DB.map(e => e.name),
-            ...(state.customExercises || []).map(e => e.name)
+            ...EXERCISES_DB.map(e => e.name.toLowerCase().trim()),
+            ...(state.customExercises || []).map(e => e.name.toLowerCase().trim())
           ]);
           
           const newCustomExercises = [...(state.customExercises || [])];
@@ -84,25 +84,36 @@ export const useStore = create(
 
           state.history.forEach(workout => {
             workout.exercises.forEach(ex => {
-              if (ex.name && !allKnownNames.has(ex.name)) {
-                // Infer category if possible
+              if (ex.name && !allKnownNames.has(ex.name.toLowerCase().trim())) {
+                // 1. Try to find a case-insensitive match in EXERCISES_DB first for best accuracy
+                const dbMatch = EXERCISES_DB.find(d => d.name.toLowerCase().trim() === ex.name.toLowerCase().trim());
+                
                 let category = 'Altro';
-                const n = ex.name.toLowerCase();
-                if (n.includes('panca') || n.includes('petto') || n.includes('chest') || n.includes('spinte')) category = 'Petto';
-                else if (n.includes('rematore') || n.includes('trazioni') || n.includes('dorso') || n.includes('lat') || n.includes('pulley')) category = 'Dorso';
-                else if (n.includes('stacco') || n.includes('squat') || n.includes('gambe') || n.includes('pressa') || n.includes('leg')) category = 'Gambe';
-                else if (n.includes('spalle') || n.includes('military') || n.includes('alzate') || n.includes('deltoidi')) category = 'Spalle';
-                else if (n.includes('curl') || n.includes('bicipiti')) category = 'Bicipiti';
-                else if (n.includes('frenck') || n.includes('tricipiti') || n.includes('pushdown')) category = 'Tricipiti';
-                else if (n.includes('crunch') || n.includes('addome') || n.includes('plank')) category = 'Addome';
+                if (dbMatch) {
+                  category = dbMatch.category;
+                } else {
+                  // 2. Infer category via keywords with improved prioritization
+                  const n = ex.name.toLowerCase();
+                  
+                  // Specific Shoulder keywords (PRIORITY)
+                  if (n.includes('spalle') || n.includes('shoulder') || n.includes('military') || n.includes('alzate') || n.includes('deltoidi') || (n.includes('spinte') && (n.includes('seduto') || n.includes('manubri')))) {
+                    category = 'Spalle';
+                  } 
+                  else if (n.includes('panca') || n.includes('petto') || n.includes('chest') || n.includes('spinte')) category = 'Petto';
+                  else if (n.includes('rematore') || n.includes('trazioni') || n.includes('dorso') || n.includes('lat') || n.includes('pulley')) category = 'Dorso';
+                  else if (n.includes('stacco') || n.includes('squat') || n.includes('gambe') || n.includes('pressa') || n.includes('leg')) category = 'Gambe';
+                  else if (n.includes('curl') || n.includes('bicipiti')) category = 'Bicipiti';
+                  else if (n.includes('frenck') || n.includes('tricipiti') || n.includes('pushdown')) category = 'Tricipiti';
+                  else if (n.includes('crunch') || n.includes('addome') || n.includes('plank')) category = 'Addome';
+                }
 
                 newCustomExercises.push({
                   id: `custom-sync-${Date.now()}-${Math.random()}`,
-                  name: ex.name,
+                  name: ex.name.trim(), // Keep original name but trimmed
                   category,
                   isCustom: true
                 });
-                allKnownNames.add(ex.name);
+                allKnownNames.add(ex.name.toLowerCase().trim());
                 discoveredAny = true;
               }
             });

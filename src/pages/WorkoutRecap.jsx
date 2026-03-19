@@ -57,7 +57,8 @@ function WorkoutRecap() {
 
     const setsDoneInWorkout = {};
     recapData.workout.exercises.forEach(ex => {
-      const foundEx = allEx.find(e => e.name === ex.name);
+      const searchName = (ex.name || "").toLowerCase().trim();
+      const foundEx = allEx.find(e => e.name.toLowerCase().trim() === searchName);
       const muscle = foundEx ? foundEx.category : null;
       if (muscle) {
         setsDoneInWorkout[muscle] = (setsDoneInWorkout[muscle] || 0) + ex.sets.filter(s => s.done && !s.isDropset).length;
@@ -74,7 +75,8 @@ function WorkoutRecap() {
     history.forEach(w => {
       if (w.id !== recapData.workout.id && w.startTime >= startOfCurrentWeek) {
         w.exercises.forEach(ex => {
-          const foundEx = allEx.find(e => e.name === ex.name);
+          const searchName = (ex.name || "").toLowerCase().trim();
+          const foundEx = allEx.find(e => e.name.toLowerCase().trim() === searchName);
           const muscle = foundEx ? foundEx.category : null;
           if (muscle && setsDoneBeforeWorkout[muscle] !== undefined) {
             setsDoneBeforeWorkout[muscle] += ex.sets.filter(s => s.done && !s.isDropset).length;
