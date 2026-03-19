@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../store/useStore';
-import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Flame, Trophy } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Flame, Trophy, Plus, PlusCircle, Trash, Check } from 'lucide-react';
+import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
 import { EXERCISES_DB, EXERCISE_CATEGORIES, getExerciseCategories } from '../data/exercises';
@@ -638,66 +638,164 @@ function Profile() {
             zIndex: 9999, padding: '1rem',
             overflowY: 'auto'
           }}>
-            <div className="card glass" style={{ maxWidth: '600px', margin: '2rem auto', border: '1px solid var(--primary-color)' }}>
+            <div className="card glass" style={{ maxWidth: '600px', margin: '2rem auto', border: '1px solid var(--primary-color)', padding: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
-                <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.2rem' }}>Modifica {editingWorkout.name}</h3>
+                <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.2rem' }}>Dettagli Allenamento</h3>
                 <button onClick={() => setEditingWorkout(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}><X size={24} /></button>
               </div>
 
-              {editingWorkout.exercises.map((ex, exIdx) => (
-                <div key={ex.id} style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px' }}>
-                  <div style={{ fontWeight: '600', color: 'var(--primary-color)', marginBottom: '0.75rem' }}>{ex.name}</div>
+              {/* General Workout Info */}
+              <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
+                <div className="input-field">
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px', display: 'block' }}>Nome Sessione</label>
+                  <input
+                    type="text"
+                    value={editingWorkout.name}
+                    onChange={(e) => setEditingWorkout({ ...editingWorkout, name: e.target.value })}
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                  />
+                </div>
+                <div className="input-field">
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px', display: 'block' }}>Data e Ora Inizio</label>
+                  <input
+                    type="datetime-local"
+                    value={new Date(editingWorkout.startTime - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16)}
+                    onChange={(e) => {
+                      const newTs = new Date(e.target.value).getTime();
+                      if (!isNaN(newTs)) {
+                        setEditingWorkout({ ...editingWorkout, startTime: newTs });
+                      }
+                    }}
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                  />
+                </div>
+              </div>
 
-                  {ex.sets.map((set, setIdx) => (
-                    <div key={set.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <span style={{ width: '30px', color: 'var(--text-muted)' }}>S{setIdx + 1}</span>
-                      <input
-                        type="number"
-                        value={set.kg}
-                        onChange={(e) => {
+              {/* Exercises Section */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-main)' }}>Esercizi</h4>
+                <button 
+                  onClick={() => {
+                    const w = { ...editingWorkout };
+                    w.exercises.push({
+                      id: Date.now().toString(),
+                      name: '',
+                      sets: [{ id: `s-${Date.now()}`, kg: '', reps: '', done: true }]
+                    });
+                    setEditingWorkout(w);
+                  }}
+                  className="btn-add-exercise"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--primary-color)', background: 'none', border: 'none', fontWeight: '700' }}
+                >
+                  <PlusCircle size={16} /> Aggiungi
+                </button>
+              </div>
+
+              {editingWorkout.exercises.map((ex, exIdx) => (
+                <div key={ex.id} style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ flex: 1, marginRight: '1rem' }}>
+                      <ExerciseAutocomplete
+                        value={ex.name}
+                        onChange={(newName) => {
                           const w = { ...editingWorkout };
-                          w.exercises[exIdx].sets[setIdx].kg = e.target.value;
+                          w.exercises[exIdx].name = newName;
                           setEditingWorkout(w);
                         }}
-                        style={{ width: '60px', padding: '6px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                        placeholder="kg"
+                        placeholder="Nome esercizio"
                       />
-                      <span style={{ color: 'var(--text-muted)' }}>x</span>
-                      <input
-                        type="number"
-                        value={set.reps}
-                        onChange={(e) => {
-                          const w = { ...editingWorkout };
-                          w.exercises[exIdx].sets[setIdx].reps = e.target.value;
-                          setEditingWorkout(w);
-                        }}
-                        style={{ width: '60px', padding: '6px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                        placeholder="reps"
-                      />
-                      <button
-                        onClick={() => {
-                          const w = { ...editingWorkout };
-                          w.exercises[exIdx].sets[setIdx].done = !w.exercises[exIdx].sets[setIdx].done;
-                          setEditingWorkout(w);
-                        }}
-                        style={{
-                          width: '32px', height: '32px', borderRadius: '50%', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          marginLeft: 'auto',
-                          background: set.done ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255,255,255,0.05)',
-                          color: set.done ? '#34c759' : 'var(--text-muted)'
-                        }}
-                      >
-                        <Check size={16} />
-                      </button>
                     </div>
-                  ))}
+                    <button 
+                      onClick={() => {
+                        const w = { ...editingWorkout };
+                        w.exercises = w.exercises.filter((_, i) => i !== exIdx);
+                        setEditingWorkout(w);
+                      }}
+                      style={{ background: 'none', border: 'none', color: '#ff453a', opacity: 0.6 }}
+                    >
+                      <Trash size={18} />
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    {ex.sets.map((set, setIdx) => (
+                      <div key={set.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '24px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>S{setIdx + 1}</span>
+                        <input
+                          type="number"
+                          value={set.kg}
+                          onChange={(e) => {
+                            const w = { ...editingWorkout };
+                            w.exercises[exIdx].sets[setIdx].kg = e.target.value;
+                            setEditingWorkout(w);
+                          }}
+                          style={{ width: '60px', padding: '8px', borderRadius: '10px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', textAlign: 'center' }}
+                          placeholder="kg"
+                        />
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>x</span>
+                        <input
+                          type="number"
+                          value={set.reps}
+                          onChange={(e) => {
+                            const w = { ...editingWorkout };
+                            w.exercises[exIdx].sets[setIdx].reps = e.target.value;
+                            setEditingWorkout(w);
+                          }}
+                          style={{ width: '60px', padding: '8px', borderRadius: '10px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', textAlign: 'center' }}
+                          placeholder="reps"
+                        />
+                        
+                        <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                          <button
+                            onClick={() => {
+                              const w = { ...editingWorkout };
+                              w.exercises[exIdx].sets[setIdx].done = !w.exercises[exIdx].sets[setIdx].done;
+                              setEditingWorkout(w);
+                            }}
+                            style={{
+                              width: '32px', height: '32px', borderRadius: '10px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              background: set.done ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255,255,255,0.05)',
+                              color: set.done ? '#34c759' : 'var(--text-muted)'
+                            }}
+                          >
+                            <Check size={16} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const w = { ...editingWorkout };
+                              w.exercises[exIdx].sets = w.exercises[exIdx].sets.filter((_, i) => i !== setIdx);
+                              setEditingWorkout(w);
+                            }}
+                            style={{ width: '32px', height: '32px', borderRadius: '10px', border: 'none', background: 'rgba(255, 69, 58, 0.1)', color: '#ff453a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <button 
+                      onClick={() => {
+                        const w = { ...editingWorkout };
+                        w.exercises[exIdx].sets.push({
+                          id: `s-${Date.now()}-${Math.random()}`,
+                          kg: '',
+                          reps: '',
+                          done: true
+                        });
+                        setEditingWorkout(w);
+                      }}
+                      style={{ marginTop: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px', padding: '8px', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    >
+                      <Plus size={14} /> Aggiungi Serie
+                    </button>
+                  </div>
                 </div>
               ))}
 
               <button
                 className="btn-primary"
                 onClick={saveEditedWorkout}
-                style={{ width: '100%', marginTop: '1rem', height: '54px', borderRadius: '16px' }}
+                style={{ width: '100%', marginTop: '1rem', height: '54px', borderRadius: '18px', fontSize: '1.1rem', fontWeight: '800' }}
               >
                 Salva Modifiche
               </button>
