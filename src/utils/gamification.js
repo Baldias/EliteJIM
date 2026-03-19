@@ -79,7 +79,6 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   const durationHours = durationMs / (1000 * 60 * 60);
   
   let doneSets = 0;
-  let totalVolume = 0;
   let overloadCount = 0;
   const rawMuscleXp = {};
   // --- PASS 1: Determine which exercises achieved progressive overload ---
@@ -93,14 +92,14 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   allKnownExercises.forEach(ex => {
     const cats = [ex.category];
     if (ex.secondaryCategories) cats.push(...ex.secondaryCategories);
-    exerciseMetaMap[ex.name.toLowerCase()] = cats.filter(Boolean);
+    exerciseMetaMap[ex.name.trim().toLowerCase()] = cats.filter(Boolean);
   });
 
   workout.exercises.forEach(ex => {
     if (pastHistory && pastHistory.length > 0) {
-      const pastWorkout = pastHistory.find(w => w.exercises.some(e => e.name.toLowerCase() === ex.name.toLowerCase()));
+      const pastWorkout = pastHistory.find(w => w.exercises.some(e => e.name.trim().toLowerCase() === ex.name.trim().toLowerCase()));
       if (pastWorkout) {
-        const pastEx = pastWorkout.exercises.find(e => e.name.toLowerCase() === ex.name.toLowerCase());
+        const pastEx = pastWorkout.exercises.find(e => e.name.trim().toLowerCase() === ex.name.trim().toLowerCase());
         const pastVolume = pastEx.sets
           .filter(s => s.done && !s.isDropset)
           .reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
@@ -108,7 +107,7 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
           .filter(s => s.done && !s.isDropset)
           .reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
         if (currentVolume > pastVolume && pastVolume > 0) {
-          overloadedExercises.add(ex.name.toLowerCase());
+          overloadedExercises.add(ex.name.trim().toLowerCase());
           overloadCount++;
         }
       }
@@ -117,15 +116,14 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
 
   // --- PASS 2: Assign XP per set based on absolute tonnage ---
   workout.exercises.forEach(ex => {
-    const categories = exerciseMetaMap[ex.name.toLowerCase()] || [];
-    const hadOverload = overloadedExercises.has(ex.name.toLowerCase());
+    const categories = exerciseMetaMap[ex.name.trim().toLowerCase()] || [];
+    const hadOverload = overloadedExercises.has(ex.name.trim().toLowerCase());
 
     ex.sets.forEach(set => {
       if (set.done && !set.isDropset) {
         doneSets++;
         const kg = parseFloat(set.kg) || 0;
         const reps = parseInt(set.reps, 10) || 0;
-        totalVolume += kg * reps;
 
         if (categories.length > 0) {
           const setXp = hadOverload ? Math.round((kg * reps) / 10) : 5;
@@ -153,7 +151,7 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   const isJunk = doneSets < 5;
   // "First timer" = no history to compare against (all exercises are new)
   const allNew = totalExercises > 0 && overloadedCount === 0 && 
-    workout.exercises.every(ex => !pastHistory?.find(w => w.exercises.some(e => e.name.toLowerCase() === ex.name.toLowerCase())));
+    workout.exercises.every(ex => !pastHistory?.find(w => w.exercises.some(e => e.name.trim().toLowerCase() === ex.name.trim().toLowerCase())));
 
   let grade;
   let gradeLabel;

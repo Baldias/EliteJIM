@@ -16,7 +16,8 @@ function Profile() {
   const userXP = useStore(state => state.userXP);
   const currentStreak = useStore(state => state.currentStreak);
   const showScience = useStore(state => state.showScience);
-  const customExercises = useStore(state => state.customExercises) || [];
+  const _customExercises = useStore(state => state.customExercises);
+  const customExercises = useMemo(() => _customExercises || [], [_customExercises]);
 
   const [expandedSessions, setExpandedSessions] = useState({});
   const [visibleWeeks, setVisibleWeeks] = useState(2);
@@ -101,7 +102,7 @@ function Profile() {
   const rpVolumes = useMemo(() => {
     if (!history || history.length === 0) return null;
     return calculateLast7DaysVolume(history, [...EXERCISES_DB, ...customExercises]);
-  }, [history]);
+  }, [history, customExercises]);
 
   const welcomePhrase = useMemo(() => {
     if (history.length === 0) return "Inizia la tua sfida";
@@ -160,7 +161,7 @@ function Profile() {
       if (w.startTime >= startOfCurrentWeek) {
         w.exercises.forEach(ex => {
           const allKnown = [...EXERCISES_DB, ...customExercises];
-          const foundEx = allKnown.find(e => e.name.toLowerCase() === ex.name.toLowerCase());
+          const foundEx = allKnown.find(e => e.name.trim().toLowerCase() === ex.name.trim().toLowerCase());
           const muscles = foundEx ? getExerciseCategories(foundEx) : [];
           
           muscles.forEach(muscle => {
@@ -205,7 +206,7 @@ function Profile() {
       startOfCurrentWeek,
       goals
     };
-  }, [scienceReport, history]);
+  }, [scienceReport, history, customExercises]);
 
   // --- Journey Logic (Weekly Grouping) ---
   const groupedHistory = useMemo(() => {

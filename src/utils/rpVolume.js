@@ -12,8 +12,10 @@ export const RP_LANDMARKS = {
 };
 
 export const calculateLast7DaysVolume = (history, exercisesDb) => {
-  const now = Date.now();
-  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  // Define "Last 7 Days" as Today + previous 6 full calendar days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sevenDaysAgo = today.getTime() - (6 * 24 * 60 * 60 * 1000);
   
   // Initialize volumes for each tracked category
   const volumes = {};
@@ -28,7 +30,7 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
     if (ex.secondaryCategories) {
       allCats.push(...ex.secondaryCategories);
     }
-    categoryMap[ex.name.toLowerCase()] = allCats;
+    categoryMap[ex.name.trim().toLowerCase()] = allCats;
   });
 
   // Filter last 7 days workouts
@@ -36,7 +38,7 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
 
   recentWorkouts.forEach(workout => {
     workout.exercises.forEach(ex => {
-      const categories = categoryMap[ex.name.toLowerCase()];
+      const categories = categoryMap[ex.name.trim().toLowerCase()];
       if (categories) {
         // Count only completed sets, ignore dropsets for structural volume
         const completedSets = ex.sets.filter(s => s.done && !s.isDropset).length;
