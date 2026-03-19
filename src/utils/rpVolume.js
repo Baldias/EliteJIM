@@ -28,7 +28,7 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
     if (ex.secondaryCategories) {
       allCats.push(...ex.secondaryCategories);
     }
-    categoryMap[ex.name] = allCats;
+    categoryMap[ex.name.toLowerCase()] = allCats;
   });
 
   // Filter last 7 days workouts
@@ -36,7 +36,7 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
 
   recentWorkouts.forEach(workout => {
     workout.exercises.forEach(ex => {
-      const categories = categoryMap[ex.name];
+      const categories = categoryMap[ex.name.toLowerCase()];
       if (categories) {
         // Count only completed sets, ignore dropsets for structural volume
         const completedSets = ex.sets.filter(s => s.done && !s.isDropset).length;

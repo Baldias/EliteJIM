@@ -16,6 +16,7 @@ function Profile() {
   const userXP = useStore(state => state.userXP);
   const currentStreak = useStore(state => state.currentStreak);
   const showScience = useStore(state => state.showScience);
+  const customExercises = useStore(state => state.customExercises) || [];
 
   const [expandedSessions, setExpandedSessions] = useState({});
   const [visibleWeeks, setVisibleWeeks] = useState(2);
@@ -99,7 +100,7 @@ function Profile() {
   // --- RP Volume Logic ---
   const rpVolumes = useMemo(() => {
     if (!history || history.length === 0) return null;
-    return calculateLast7DaysVolume(history, EXERCISES_DB);
+    return calculateLast7DaysVolume(history, [...EXERCISES_DB, ...customExercises]);
   }, [history]);
 
   const welcomePhrase = useMemo(() => {
@@ -158,7 +159,8 @@ function Profile() {
     history.forEach(w => {
       if (w.startTime >= startOfCurrentWeek) {
         w.exercises.forEach(ex => {
-          const foundEx = EXERCISES_DB.find(e => e.name === ex.name);
+          const allKnown = [...EXERCISES_DB, ...customExercises];
+          const foundEx = allKnown.find(e => e.name.toLowerCase() === ex.name.toLowerCase());
           const muscles = foundEx ? getExerciseCategories(foundEx) : [];
           
           muscles.forEach(muscle => {

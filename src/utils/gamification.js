@@ -93,14 +93,14 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   allKnownExercises.forEach(ex => {
     const cats = [ex.category];
     if (ex.secondaryCategories) cats.push(...ex.secondaryCategories);
-    exerciseMetaMap[ex.name] = cats.filter(Boolean);
+    exerciseMetaMap[ex.name.toLowerCase()] = cats.filter(Boolean);
   });
 
   workout.exercises.forEach(ex => {
     if (pastHistory && pastHistory.length > 0) {
-      const pastWorkout = pastHistory.find(w => w.exercises.some(e => e.name === ex.name));
+      const pastWorkout = pastHistory.find(w => w.exercises.some(e => e.name.toLowerCase() === ex.name.toLowerCase()));
       if (pastWorkout) {
-        const pastEx = pastWorkout.exercises.find(e => e.name === ex.name);
+        const pastEx = pastWorkout.exercises.find(e => e.name.toLowerCase() === ex.name.toLowerCase());
         const pastVolume = pastEx.sets
           .filter(s => s.done && !s.isDropset)
           .reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
@@ -108,7 +108,7 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
           .filter(s => s.done && !s.isDropset)
           .reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
         if (currentVolume > pastVolume && pastVolume > 0) {
-          overloadedExercises.add(ex.name);
+          overloadedExercises.add(ex.name.toLowerCase());
           overloadCount++;
         }
       }
@@ -117,8 +117,8 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
 
   // --- PASS 2: Assign XP per set based on absolute tonnage ---
   workout.exercises.forEach(ex => {
-    const categories = exerciseMetaMap[ex.name] || [];
-    const hadOverload = overloadedExercises.has(ex.name);
+    const categories = exerciseMetaMap[ex.name.toLowerCase()] || [];
+    const hadOverload = overloadedExercises.has(ex.name.toLowerCase());
 
     ex.sets.forEach(set => {
       if (set.done && !set.isDropset) {
@@ -153,7 +153,7 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   const isJunk = doneSets < 5;
   // "First timer" = no history to compare against (all exercises are new)
   const allNew = totalExercises > 0 && overloadedCount === 0 && 
-    workout.exercises.every(ex => !pastHistory?.find(w => w.exercises.some(e => e.name === ex.name)));
+    workout.exercises.every(ex => !pastHistory?.find(w => w.exercises.some(e => e.name.toLowerCase() === ex.name.toLowerCase())));
 
   let grade;
   let gradeLabel;
