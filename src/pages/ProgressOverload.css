@@ -14,30 +14,36 @@
 }
 
 .muscle-chip {
-    padding: 8px 16px;
-    border-radius: 12px;
-    background-color: var(--surface-color-elevated);
-    border: 1px solid var(--border-color);
+    padding: 8px 18px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--text-muted);
     font-size: 0.85rem;
     font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.2s ease-out;
 }
 
 .muscle-chip:hover {
-    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
     color: var(--text-main);
-    transform: translateY(-1px);
+}
+
+.muscle-chip:active {
+    transform: scale(0.94);
 }
 
 .muscle-chip.active {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dim));
-    border-color: var(--primary-color);
-    color: #000;
+    background: rgba(0, 126, 167, 0.85); /* rgba value of var(--primary-color) */
+    border-color: rgba(0, 126, 167, 0.6);
+    color: #ffffff;
     font-weight: 700;
-    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
+    box-shadow: 0 4px 12px rgba(0, 126, 167, 0.25);
 }
 
 /* Chart Area */

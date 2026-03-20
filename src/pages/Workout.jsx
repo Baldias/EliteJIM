@@ -112,14 +112,14 @@ function Workout() {
   return (
     <div style={{ minHeight: '100vh', background: '#080c10', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── STICKY HEADER ─────────────────── */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(8,12,16,0.97)', backdropFilter: 'blur(24px)',
-        borderBottom: '1px solid rgba(0,184,212,0.15)',
-        padding: '10px 14px',
-        display: 'flex', alignItems: 'center', gap: '8px'
-      }}>
+      {/* ── STICKY HEADER & TIMER ─────────────────── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', flexDirection: 'column' }}>
+        <div style={{
+          background: 'rgba(8,12,16,0.97)', backdropFilter: 'blur(24px)',
+          borderBottom: isResting ? 'none' : '1px solid rgba(0,184,212,0.15)',
+          padding: '10px 14px',
+          display: 'flex', alignItems: 'center', gap: '8px'
+        }}>
         {/* Back — fixed width */}
         <button onClick={() => navigate('/')} style={{
           flexShrink: 0,
@@ -165,28 +165,30 @@ function Workout() {
         >
           TERMINA
         </button>
-      </div>
-
-      {/* ── REST TIMER ────────────────────── */}
-      {isResting && (
-        <div style={{
-          background: 'rgba(0,100,130,0.2)',
-          borderBottom: '1px solid rgba(0,184,212,0.2)',
-          padding: '10px 16px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-        }}>
-          <div>
-            <p style={{ margin: 0, fontSize: '0.62rem', color: '#00b8d4', fontWeight: '800', letterSpacing: '1px' }}>⏱ RECUPERO</p>
-            <p style={{ margin: '1px 0 0', fontWeight: '900', fontSize: '1.8rem', color: 'white', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtRest(restTimeLeft)}</p>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setGlobalRestEndTime(globalRestEndTime + 30000)} style={{ background: 'rgba(0,184,212,0.15)', border: '1px solid rgba(0,184,212,0.25)', borderRadius: '10px', padding: '7px 14px', color: '#00b8d4', fontWeight: '800', fontSize: '0.85rem' }}>+30s</button>
-            <button onClick={() => clearGlobalRestTimer()} style={{ background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.2)', borderRadius: '10px', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3b30' }}>
-              <X size={18} />
-            </button>
-          </div>
         </div>
-      )}
+
+        {/* ── REST TIMER ────────────────────── */}
+        {isResting && (
+          <div style={{
+            background: 'rgba(4, 25, 35, 0.95)', /* Darker, less transparent background so scrolled content isn't visible */
+            backdropFilter: 'blur(24px)',
+            borderBottom: '1px solid rgba(0,184,212,0.2)',
+            padding: '10px 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+          }}>
+            <div>
+              <p style={{ margin: 0, fontSize: '0.62rem', color: '#00b8d4', fontWeight: '800', letterSpacing: '1px' }}>⏱ RECUPERO</p>
+              <p style={{ margin: '1px 0 0', fontWeight: '900', fontSize: '1.8rem', color: 'white', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtRest(restTimeLeft)}</p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => setGlobalRestEndTime(globalRestEndTime + 30000)} style={{ background: 'rgba(0,184,212,0.15)', border: '1px solid rgba(0,184,212,0.25)', borderRadius: '10px', padding: '7px 14px', color: '#00b8d4', fontWeight: '800', fontSize: '0.85rem' }}>+30s</button>
+              <button onClick={() => clearGlobalRestTimer()} style={{ background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.2)', borderRadius: '10px', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3b30' }}>
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ── EXERCISES ─────────────────────── */}
       <div style={{ flex: 1, padding: '12px 14px 120px' }}>

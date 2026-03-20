@@ -8,19 +8,19 @@ import { EXERCISES_DB, EXERCISE_CATEGORIES } from '../data/exercises';
 // Maps our internal EXERCISE_CATEGORIES to the react-body-highlighter valid muscle names
 const mapCategoryToMuscles = (category, exerciseName) => {
   const name = exerciseName.toLowerCase();
-  
+
   switch (category) {
     case EXERCISE_CATEGORIES.CHEST:
       if (name.includes('croc') || name.includes('pectoral')) return ['chest'];
       return ['chest', 'triceps', 'front-deltoids'];
-      
+
     case EXERCISE_CATEGORIES.BACK:
       if (name.includes('hyperextension')) return ['lower-back', 'gluteal', 'hamstring'];
       if (name.includes('scrollate')) return ['trapezius'];
       if (name.includes('pullover')) return ['upper-back', 'chest'];
       // Standard rows/pulls
       return ['upper-back', 'biceps', 'back-deltoids'];
-      
+
     case EXERCISE_CATEGORIES.LEGS:
       if (name.includes('calf')) return ['calves'];
       if (name.includes('femorali') || name.includes('curl') || name.includes('stacc')) {
@@ -37,22 +37,22 @@ const mapCategoryToMuscles = (category, exerciseName) => {
       }
       if (name.includes('laterali')) return ['back-deltoids']; // Mapped to back-delts for visual proximity
       return ['front-deltoids', 'triceps'];
-      
+
     case EXERCISE_CATEGORIES.BICEPS:
       return ['biceps'];
-      
+
     case EXERCISE_CATEGORIES.TRICEPS:
       return ['triceps'];
-      
+
     case EXERCISE_CATEGORIES.FOREARMS:
       return ['forearm'];
-      
+
     case EXERCISE_CATEGORIES.CORE:
       return ['abs'];
-      
+
     case EXERCISE_CATEGORIES.NECK:
       return ['neck'];
-      
+
     default:
       return [];
   }
@@ -61,7 +61,7 @@ const mapCategoryToMuscles = (category, exerciseName) => {
 const getMusclesFromExercise = (exerciseName) => {
   // Find the exact exercise in our DB
   const exerciseDef = EXERCISES_DB.find(ex => ex.name === exerciseName);
-  
+
   if (exerciseDef) {
     return mapCategoryToMuscles(exerciseDef.category, exerciseDef.name);
   }
@@ -138,7 +138,7 @@ export const InteractiveBody = () => {
 
       <div className="ib-scene" onClick={() => setIsFlipped(!isFlipped)}>
         <div className={`ib-card-inner ${isFlipped ? 'is-flipped' : ''}`}>
-          
+
           <div className="ib-card-face ib-card-front">
             <Model
               data={workoutData}

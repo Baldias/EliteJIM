@@ -135,20 +135,21 @@ function Home() {
         {/* ── ALLENAMENTO IN CORSO ─────────────────────── */}
         {activeWorkout && (
           <div onClick={() => navigate('/workout')} style={{
-            background: 'linear-gradient(135deg, var(--primary-color) 0%, #00b4d8 100%)',
+            background: 'linear-gradient(135deg, rgba(var(--primary-color-rgb), 0.9) 0%, rgba(var(--primary-color-rgb), 0.6) 100%)',
             borderRadius: '24px', padding: '1.25rem 1.5rem',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: '0.5rem',
-            cursor: 'pointer', boxShadow: '0 12px 30px rgba(0, 184, 212, 0.25)',
+            marginBottom: '1rem',
+            cursor: 'pointer', boxShadow: '0 12px 30px rgba(var(--primary-color-rgb), 0.25)',
             transition: 'transform 0.2s',
-            animation: 'pulse 2s ease-in-out infinite'
+            animation: 'pulse 2s ease-in-out infinite',
+            border: '1px solid rgba(255,255,255,0.1)'
           }}>
             <div>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '1px', margin: 0, textTransform: 'uppercase' }}>⚡ In Corso</p>
-              <p style={{ color: 'white', fontWeight: '800', fontSize: '1.2rem', margin: '4px 0 0' }}>{activeWorkout.name || 'Sessione Libera'}</p>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px', margin: 0, textTransform: 'uppercase' }}>⚡ In Corso</p>
+              <p style={{ color: 'white', fontWeight: '800', fontSize: '1.3rem', margin: '4px 0 0' }}>{activeWorkout.name || 'Sessione Libera'}</p>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '50%', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Play size={20} color="white" fill="white" />
+            <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '50%', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
+              <Play size={22} color="white" fill="white" />
             </div>
           </div>
         )}
@@ -157,7 +158,7 @@ function Home() {
         {showScience && trackerData && (
           <div className="glass" style={{
             borderRadius: '24px', padding: '1.5rem',
-            marginBottom: '0.5rem'
+            marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.08)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>
@@ -165,7 +166,7 @@ function Home() {
                   SETTIMANA {trackerData.currentWeekNum} · VOLUME
                 </p>
                 {done ? (
-                  <p style={{ color: '#34c759', fontWeight: '800', fontSize: '1.2rem', margin: '6px 0 0' }}>✅ Settimana Completata!</p>
+                  <p style={{ color: '#34c759', fontWeight: '800', fontSize: '1.3rem', margin: '6px 0 0' }}>✅ Target Raggiunto!</p>
                 ) : (
                   <p style={{ color: 'var(--text-main)', fontWeight: '800', fontSize: '1.2rem', margin: '6px 0 0' }}>
                     <span style={{ color: 'var(--primary-color)', fontSize: '1.8rem' }}>{trackerData.missingSets}</span> serie mancanti
@@ -174,26 +175,26 @@ function Home() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{
-                  width: '60px', height: '60px', borderRadius: '50%',
+                  width: '64px', height: '64px', borderRadius: '50%',
                   background: `conic-gradient(${done ? '#34c759' : 'var(--primary-color)'} ${trackerData.percent * 3.6}deg, rgba(255,255,255,0.06) 0deg)`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                  <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontWeight: '900', fontSize: '0.85rem', color: done ? '#34c759' : '#fff' }}>{trackerData.percent}%</span>
+                  <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--surface-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontWeight: '900', fontSize: '0.9rem', color: done ? '#34c759' : '#fff' }}>{trackerData.percent}%</span>
                   </div>
                 </div>
               </div>
             </div>
             {!done && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ flex: 1, height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{
                     height: '100%', width: `${trackerData.percent}%`,
-                    background: 'linear-gradient(90deg, var(--primary-color), #00e5ff)',
+                    background: 'var(--primary-color)',
                     borderRadius: '4px', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
                   }} />
                 </div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
                   ⏳ {trackerData.daysLeft}g
                 </span>
               </div>
@@ -202,43 +203,70 @@ function Home() {
         )}
 
         {/* ── QUICK START ──────────────────────────────── */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div className="section-header" style={{ marginBottom: '1rem' }}>
-            <h2 className="section-title-premium">
-              <Plus size={20} color="var(--primary-color)" />
+        <div style={{ marginBottom: '2rem' }}>
+          <div className="section-header" style={{ marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 className="section-title-premium" style={{ margin: 0, fontSize: '1.4rem' }}>
               Allenati
             </h2>
+            <button
+              onClick={() => navigate('/build')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                background: 'rgba(255,255,255,0.05)', padding: '8px 14px',
+                borderRadius: '16px', color: 'var(--text-main)',
+                fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)',
+                transition: 'all 0.2s ease-out'
+              }}
+            >
+              <Plus size={16} color="var(--primary-color)" /> Nuova Scheda
+            </button>
           </div>
+
+          {/* Free session CTA */}
+          <button onClick={handleStartEmpty} className="glass" style={{
+            width: '100%', padding: '1.25rem',
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px dashed rgba(255, 255, 255, 0.15)',
+            borderRadius: '24px', color: 'var(--primary-color)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+            fontSize: '1rem', fontWeight: '800', transition: 'all 0.2s',
+            marginBottom: templates.length > 0 ? '16px' : '0'
+          }}>
+            <Dumbbell size={20} />
+            Sessione Libera
+          </button>
 
           {/* Template cards */}
           {templates.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {templates.map(template => (
                 <div key={template.id} className="glass" style={{
-                  borderRadius: '22px', padding: '1.25rem',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                  borderRadius: '24px', padding: '1.25rem 1.5rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  border: '1px solid rgba(255, 255, 255, 0.06)'
                 }}>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: '800', fontSize: '1.1rem', margin: 0, color: '#fff' }}>{template.name}</p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: '600', margin: '4px 0 0' }}>
+                  <div style={{ flex: 1, paddingRight: '1rem' }}>
+                    <p style={{ fontWeight: '800', fontSize: '1.15rem', margin: 0, color: '#fff', letterSpacing: '-0.3px' }}>{template.name}</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: '500', margin: '4px 0 0' }}>
                       {template.exercises.length} esercizi · {template.exercises.reduce((a, ex) => a + ex.setsCount, 0)} serie
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <button
                       onClick={() => { if (window.confirm(`Eliminare "${template.name}"?`)) deleteTemplate(template.id); }}
-                      style={{ background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3b30', transition: 'all 0.2s' }}
+                      style={{ background: 'rgba(255,59,48,0.08)', border: 'none', borderRadius: '14px', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3b30', transition: 'all 0.2s' }}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={18} />
                     </button>
                     <button
                       onClick={() => handleStartTemplate(template)}
                       style={{
-                        background: 'linear-gradient(135deg, var(--primary-color) 0%, #0090b0 100%)',
-                        border: 'none', borderRadius: '14px',
-                        padding: '10px 22px', color: 'white', fontWeight: '800', fontSize: '0.95rem',
+                        background: 'rgba(0, 126, 167, 0.85)',
+                        border: '1px solid rgba(0, 126, 167, 0.5)', borderRadius: '14px',
+                        padding: '10px 24px', color: 'white', fontWeight: '800', fontSize: '0.95rem',
                         display: 'flex', alignItems: 'center', gap: '8px',
-                        boxShadow: '0 6px 16px rgba(0, 184, 212, 0.2)'
+                        boxShadow: '0 4px 12px rgba(0, 126, 167, 0.25)',
+                        transition: 'transform 0.2s ease-out'
                       }}
                     >
                       <Play size={16} fill="white" /> Vai
@@ -248,46 +276,28 @@ function Home() {
               ))}
             </div>
           )}
-
-          {/* New template button */}
-          <button onClick={() => navigate('/build')} className="glass" style={{
-            width: '100%', padding: '1.25rem',
-            borderRadius: '22px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-            color: 'var(--primary-color)', fontWeight: '800', fontSize: '1rem',
-            marginBottom: '12px', borderStyle: 'dashed'
-          }}>
-            <Plus size={20} /> Crea Nuova Scheda
-          </button>
-
-          {/* Free session CTA */}
-          <button onClick={handleStartEmpty} style={{
-            width: '100%', padding: '1rem',
-            background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '20px', color: 'var(--text-muted)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-            fontSize: '0.9rem', fontWeight: '700', transition: 'all 0.2s'
-          }}>
-            <Dumbbell size={18} />
-            Sessione Libera
-          </button>
         </div>
 
         {/* ── XP INFO ──────────────────────────────────── */}
         {userXP > 0 && (
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '2.5rem' }}>
             <div className="glass" style={{
-              flex: 1, borderRadius: '22px', padding: '1.25rem', textAlign: 'center'
+              flex: 1, borderRadius: '24px', padding: '1.25rem', textAlign: 'center',
+              border: '1px solid rgba(255, 204, 0, 0.15)', background: 'linear-gradient(180deg, rgba(255,204,0,0.05) 0%, rgba(0,0,0,0) 100%)'
             }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.5px', margin: 0, textTransform: 'uppercase' }}>XP Totali</p>
-              <p style={{ color: 'var(--primary-color)', fontWeight: '900', fontSize: '1.6rem', margin: '6px 0 0' }}>{userXP.toLocaleString()}</p>
+              <p style={{ color: 'rgba(255, 204, 0, 0.8)', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px', margin: '0 0 6px 0', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                <Zap size={14} fill="currentColor" /> XP Totali
+              </p>
+              <p style={{ color: '#ffcc00', fontWeight: '900', fontSize: '1.8rem', margin: 0, textShadow: '0 2px 10px rgba(255,204,0,0.2)' }}>{userXP.toLocaleString()}</p>
             </div>
             <div className="glass" style={{
-              flex: 1, borderRadius: '22px', padding: '1.25rem', textAlign: 'center'
+              flex: 1, borderRadius: '24px', padding: '1.25rem', textAlign: 'center',
+              border: '1px solid rgba(255, 255, 255, 0.06)'
             }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.5px', margin: 0, textTransform: 'uppercase' }}>Sessioni</p>
-              <p style={{ color: '#fff', fontWeight: '900', fontSize: '1.6rem', margin: '6px 0 0' }}>{history.length}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.5px', margin: '0 0 6px 0', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                <CheckCircle2 size={14} /> Sessioni
+              </p>
+              <p style={{ color: '#fff', fontWeight: '900', fontSize: '1.8rem', margin: 0 }}>{history.length}</p>
             </div>
           </div>
         )}
