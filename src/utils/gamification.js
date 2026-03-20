@@ -123,7 +123,18 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   // --- PASS 2: Assign XP per set based on absolute tonnage ---
   workout.exercises.forEach(ex => {
     console.log(`[DEBUG] Processing exercise in score: "${ex.name}"`);
-    const categories = exerciseMetaMap[normalizeName(ex.name)] || [];
+    const categories = [...(exerciseMetaMap[normalizeName(ex.name)] || [])];
+    
+    // Fuzzy fallback for Shoudlers & Addome in gamification
+    if (categories.length === 0) {
+      const fuzzyName = normalizeName(ex.name).toLowerCase();
+      if (fuzzyName.includes('spalle') || fuzzyName.includes('shoulder') || fuzzyName.includes('military') || fuzzyName.includes('lento avanti')) {
+        categories.push('Spalle');
+      } else if (fuzzyName.includes('addome') || fuzzyName.includes('core') || fuzzyName.includes('crunch') || fuzzyName.includes('addominali')) {
+        categories.push('Addome');
+      }
+    }
+
     const hadOverload = overloadedExercises.has(normalizeName(ex.name));
     
     // Safety check for categories to help debug

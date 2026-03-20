@@ -1,0 +1,9 @@
+Merge branch 'vicviii' of https://github.com/onlyvincy/EliteJIM into onlyvincy-vicviii
+
+# Conflicts:
+#	src/data/exercises.js
+#	src/pages/Home.jsx
+#	src/pages/Profile.css
+#	src/pages/Profile.jsx
+#	src/pages/Science.jsx
+#	src/pages/Workout.jsx

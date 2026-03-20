@@ -115,6 +115,11 @@ export const EXERCISES_DB = [
   { id: 's9', name: 'Shoulder Press alla Macchina', category: EXERCISE_CATEGORIES.SHOULDERS },
   { id: 's10', name: 'Reverse Fly alla Macchina', category: EXERCISE_CATEGORIES.SHOULDERS },
   { id: 's11', name: 'Alzate Frontali Manubri', category: EXERCISE_CATEGORIES.SHOULDERS },
+  { id: 's12', name: 'Lento Avanti Bilanciere', category: EXERCISE_CATEGORIES.SHOULDERS, secondaryCategories: [EXERCISE_CATEGORIES.TRICEPS] },
+  { id: 's13', name: 'Spinte Spalle Manubri', category: EXERCISE_CATEGORIES.SHOULDERS },
+  { id: 's14', name: 'Front Press Bilanciere', category: EXERCISE_CATEGORIES.SHOULDERS },
+  { id: 's15', name: 'Shoulder Press', category: EXERCISE_CATEGORIES.SHOULDERS },
+  { id: 's16', name: 'Military Press Seduto', category: EXERCISE_CATEGORIES.SHOULDERS },
 
   // --- BICIPITI (BICEPS) ---
   { id: 'bi1', name: 'Curl Bilanciere', category: EXERCISE_CATEGORIES.BICEPS },

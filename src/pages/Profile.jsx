@@ -163,10 +163,26 @@ function Profile() {
         w.exercises.forEach(ex => {
           const allKnown = [...EXERCISES_DB, ...customExercises];
           const normalizedExName = normalizeName(ex.name);
-          const foundEx = allKnown.find(e => normalizeName(e.name) === normalizedExName);
-          const muscles = foundEx ? getExerciseCategories(foundEx) : [];
+          let foundEx = allKnown.find(e => normalizeName(e.name) === normalizedExName);
           
+          let muscles = foundEx ? getExerciseCategories(foundEx) : [];
+          
+          // Fuzzy fallback for Shoudlers & Abs
+          if (muscles.length === 0) {
+            const fuzzyName = normalizedExName.toLowerCase();
+            if (fuzzyName.includes('spalle') || fuzzyName.includes('shoulder') || fuzzyName.includes('military') || fuzzyName.includes('lento avanti')) {
+              muscles = ['Spalle'];
+              console.log(`[DEBUG_SHOULDERS] Fuzzy match for "${ex.name}" -> Spalle`);
+            } else if (fuzzyName.includes('addome') || fuzzyName.includes('core') || fuzzyName.includes('crunch') || fuzzyName.includes('addominali')) {
+              muscles = ['Addome'];
+              console.log(`[DEBUG_CORE] Fuzzy match for "${ex.name}" -> Addome`);
+            }
+          }
+
           muscles.forEach(muscle => {
+            if (muscle === 'Spalle') {
+              console.log(`[DEBUG_SHOULDERS] Counting: "${ex.name}", foundEx: ${foundEx?.name}, sets: ${ex.sets.length}`);
+            }
             if (muscle && scienceReport.baseLandmarks[muscle]) {
               const count = ex.sets.filter(s => s.done && !s.isDropset).length;
               setsDoneThisWeek[muscle] = (setsDoneThisWeek[muscle] || 0) + count;
