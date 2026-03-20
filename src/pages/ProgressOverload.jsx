@@ -60,9 +60,20 @@ function ProgressOverload() {
         return w * (1 + r / 30);
     };
 
+    const getMonday = (date) => {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - (day === 0 ? 6 : day - 1);
+        const monday = new Date(d.setDate(diff));
+        monday.setHours(0, 0, 0, 0);
+        return monday;
+    };
+
     const chartData = useMemo(() => {
         if (!selectedExercise) return [];
-        const dataPoints = [];
+        
+        // Aggregazione per settimana
+        const weeklyMap = new Map();
 
         history.forEach(workout => {
             const ex = workout.exercises.find(e => e.name === selectedExercise);
@@ -70,31 +81,55 @@ function ProgressOverload() {
             const doneSets = ex.sets.filter(s => s.done);
             if (doneSets.length === 0) return;
 
-            let setsCount = doneSets.length;
-            let max1RM = 0;
-            let maxReps = 0;
-            let tonnage = 0;
+            const monday = getMonday(workout.startTime);
+            const timeKey = monday.getTime();
 
+            if (!weeklyMap.has(timeKey)) {
+                weeklyMap.set(timeKey, {
+                    monday: monday,
+                    setsCount: 0,
+                    tonnage: 0,
+                    max1RM: 0,
+                    maxReps: 0
+                });
+            }
+
+            const week = weeklyMap.get(timeKey);
             doneSets.forEach(s => {
                 const w = parseFloat(s.kg) || 0;
                 const r = parseInt(s.reps, 10) || 0;
-                tonnage += (w * r);
+                
+                week.tonnage += (w * r);
+                week.setsCount += 1;
+                
                 const rm = calculateOneRepMax(w, r);
-                if (rm > max1RM) max1RM = rm;
-                if (r > maxReps) maxReps = r;
+                if (rm > week.max1RM) week.max1RM = rm;
+                if (r > week.maxReps) week.maxReps = r;
             });
+        });
 
-            const d = new Date(workout.startTime);
-            const shortDate = `${d.getDate()} ${d.toLocaleString('it-IT', { month: 'short' }).replace('.', '')}`;
+        const dataPoints = Array.from(weeklyMap.values()).map(week => {
+            const start = week.monday;
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
 
-            dataPoints.push({
-                date: shortDate,
-                timestamp: workout.startTime,
-                setsCount,
-                oneRepMax: parseFloat(max1RM.toFixed(1)),
-                maxReps,
-                tonnage: parseFloat(tonnage.toFixed(1))
-            });
+            const startDay = start.getDate();
+            const endDay = end.getDate();
+            const startMonth = start.toLocaleString('it-IT', { month: 'short' }).replace('.', '');
+            const endMonth = end.toLocaleString('it-IT', { month: 'short' }).replace('.', '');
+
+            const label = startMonth === endMonth 
+                ? `${startDay}-${endDay} ${startMonth}`
+                : `${startDay} ${startMonth}-${endDay} ${endMonth}`;
+
+            return {
+                date: label,
+                timestamp: start.getTime(),
+                setsCount: week.setsCount,
+                oneRepMax: parseFloat(week.max1RM.toFixed(1)),
+                maxReps: week.maxReps,
+                tonnage: parseFloat(week.tonnage.toFixed(1))
+            };
         });
 
         return dataPoints.sort((a, b) => a.timestamp - b.timestamp);
