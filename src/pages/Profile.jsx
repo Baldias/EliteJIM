@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Edit2, Trash2, X, Flame, Trophy, Check } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Trash2, X, Flame, Trophy, Check } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
 import { EXERCISES_DB, getExerciseCategories, normalizeName } from '../data/exercises';
@@ -609,9 +609,6 @@ function Profile() {
                                 </div>
                               </div>
                               <div className="expand-icon" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                <button className="edit-workout-btn" onClick={(e) => { e.stopPropagation(); setEditingWorkout(JSON.parse(JSON.stringify(workout))); }}>
-                                  <Edit2 size={18} />
-                                </button>
                                 <button className="delete-workout-btn" onClick={(e) => handleDelete(e, workout.id)}>
                                   <Trash2 size={18} />
                                 </button>
@@ -686,81 +683,7 @@ function Profile() {
         </div>
 
 
-
-        {/* Edit Workout Modal */}
-        {editingWorkout && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
-            zIndex: 9999, padding: '1rem',
-            overflowY: 'auto'
-          }}>
-            <div className="card glass" style={{ maxWidth: '600px', margin: '2rem auto', border: '1px solid var(--primary-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
-                <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.2rem' }}>Modifica {editingWorkout.name}</h3>
-                <button onClick={() => setEditingWorkout(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}><X size={24} /></button>
-              </div>
-
-              {editingWorkout.exercises.map((ex, exIdx) => (
-                <div key={ex.id} style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px' }}>
-                  <div style={{ fontWeight: '600', color: 'var(--primary-color)', marginBottom: '0.75rem' }}>{ex.name}</div>
-
-                  {ex.sets.map((set, setIdx) => (
-                    <div key={set.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <span style={{ width: '30px', color: 'var(--text-muted)' }}>S{setIdx + 1}</span>
-                      <input
-                        type="number"
-                        value={set.kg}
-                        onChange={(e) => {
-                          const w = { ...editingWorkout };
-                          w.exercises[exIdx].sets[setIdx].kg = e.target.value;
-                          setEditingWorkout(w);
-                        }}
-                        style={{ width: '60px', padding: '6px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                        placeholder="kg"
-                      />
-                      <span style={{ color: 'var(--text-muted)' }}>x</span>
-                      <input
-                        type="number"
-                        value={set.reps}
-                        onChange={(e) => {
-                          const w = { ...editingWorkout };
-                          w.exercises[exIdx].sets[setIdx].reps = e.target.value;
-                          setEditingWorkout(w);
-                        }}
-                        style={{ width: '60px', padding: '6px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                        placeholder="reps"
-                      />
-                      <button
-                        onClick={() => {
-                          const w = { ...editingWorkout };
-                          w.exercises[exIdx].sets[setIdx].done = !w.exercises[exIdx].sets[setIdx].done;
-                          setEditingWorkout(w);
-                        }}
-                        style={{
-                          width: '32px', height: '32px', borderRadius: '50%', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          marginLeft: 'auto',
-                          background: set.done ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255,255,255,0.05)',
-                          color: set.done ? '#34c759' : 'var(--text-muted)'
-                        }}
-                      >
-                        <Check size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ))}
-
-              <button
-                className="btn-primary"
-                onClick={saveEditedWorkout}
-                style={{ width: '100%', marginTop: '1rem', height: '54px', borderRadius: '16px' }}
-              >
-                Salva Modifiche
-              </button>
-            </div>
-          </div>
-        )}
+    
 
       </main>
     </>
