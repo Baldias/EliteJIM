@@ -656,7 +656,6 @@ function Profile() {
                   </div>
                 </div>
               ))}
-
               {groupedHistory.length > visibleWeeks && (
                 <button
                   className="btn-show-more"
@@ -678,6 +677,29 @@ function Profile() {
                   Mostra settimana precedente
                 </button>
               )}
+              
+              <button
+                onClick={() => navigate('/history')}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: 'var(--primary-color-dim)',
+                  border: 'none',
+                  borderRadius: '16px',
+                  color: 'var(--primary-color)',
+                  fontSize: '0.95rem',
+                  fontWeight: '700',
+                  marginTop: '1.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Vai a tutto lo Storico →
+              </button>
             </div>
           )}
         </div>
