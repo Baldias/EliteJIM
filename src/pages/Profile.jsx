@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Trash2, X, Flame, Trophy, Check, Edit2 } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
+import { WorkoutEditorModal } from '../components/WorkoutEditorModal';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
 import { EXERCISES_DB, getExerciseCategories, normalizeName } from '../data/exercises';
 import { getRankByXp } from '../utils/gamification';
@@ -22,18 +23,6 @@ function Profile() {
   const [expandedSessions, setExpandedSessions] = useState({});
   const [visibleWeeks, setVisibleWeeks] = useState(2);
   const [editingWorkout, setEditingWorkout] = useState(null);
-
-  const saveEditedWorkout = () => {
-    if (!editingWorkout) return;
-    useStore.setState(state => {
-      const newHistory = state.history.map(w => w.id === editingWorkout.id ? editingWorkout : w);
-      return { history: newHistory };
-    });
-    // Trigger gamification sync after history change
-    useStore.getState().syncGamificationWithHistory();
-    setEditingWorkout(null);
-  };
-
 
   // --- History Logic ---
   const handleDelete = (e, workoutId) => {
@@ -609,7 +598,7 @@ function Profile() {
                                 </div>
                               </div>
                               <div className="expand-icon" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                <button className="edit-workout-btn" onClick={(e) => { e.stopPropagation(); navigate('/history', { state: { editWorkoutId: workout.id } }); }}>
+                                <button className="edit-workout-btn" onClick={(e) => { e.stopPropagation(); setEditingWorkout(workout); }}>
                                   <Edit2 size={18} />
                                 </button>
                                 <button className="delete-workout-btn" onClick={(e) => handleDelete(e, workout.id)}>
@@ -707,9 +696,9 @@ function Profile() {
           )}
         </div>
 
-
-    
-
+        {editingWorkout && (
+          <WorkoutEditorModal workout={editingWorkout} onClose={() => setEditingWorkout(null)} />
+        )}
       </main>
     </>
   );
