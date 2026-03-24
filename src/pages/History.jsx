@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, ChevronLeft } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
 import './History.css';
 
 function History() {
+  const navigate = useNavigate();
   const history = useStore(state => state.history);
   // Optional: add a delete history record function to the store
   const setStore = useStore.setState;
@@ -145,9 +147,15 @@ function History() {
 
   return (
     <>
-      <header className="app-header">
-        <h1>Storico</h1>
-        <p className="subtitle">I tuoi allenamenti passati</p>
+      <header className="app-header" style={{ position: 'relative' }}>
+        <button 
+          onClick={() => navigate(-1)} 
+          style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <ChevronLeft size={28} />
+        </button>
+        <h1 style={{ marginLeft: '32px' }}>Storico</h1>
+        <p className="subtitle" style={{ marginLeft: '32px' }}>I tuoi allenamenti passati</p>
       </header>
       
       <main className="app-main history-main">
