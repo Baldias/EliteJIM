@@ -31,6 +31,20 @@ const mapCategoryToMuscles = (category, exerciseName) => {
       // Standard squat/press/extension
       return ['quadriceps', 'gluteal'];
 
+    case EXERCISE_CATEGORIES.QUADRICEPS:
+      if (name.includes('adductor')) return ['adductor'];
+      return ['quadriceps', 'gluteal'];
+
+    case EXERCISE_CATEGORIES.HAMSTRINGS:
+      return ['hamstring', 'gluteal', 'lower-back'];
+
+    case EXERCISE_CATEGORIES.GLUTES:
+      if (name.includes('abductor')) return ['abductors'];
+      return ['gluteal'];
+
+    case EXERCISE_CATEGORIES.CALVES:
+      return ['calves'];
+
     case EXERCISE_CATEGORIES.SHOULDERS:
       if (name.includes('posteriori') || name.includes('face pull') || name.includes('reverse')) {
         return ['back-deltoids'];
@@ -58,16 +72,17 @@ const mapCategoryToMuscles = (category, exerciseName) => {
   }
 };
 
-const getMusclesFromExercise = (exerciseName) => {
-  // Find the exact exercise in our DB
-  const exerciseDef = EXERCISES_DB.find(ex => ex.name === exerciseName);
-
+const getMusclesFromExercise = (exerciseName, customExercises = []) => {
+  // Find the exact exercise in our DB or custom exercises
+  const exerciseDef = EXERCISES_DB.find(ex => ex.name === exerciseName) || customExercises.find(ex => ex.name === exerciseName);
+  
   if (exerciseDef) {
-    return mapCategoryToMuscles(exerciseDef.category, exerciseDef.name);
+    const categories = [exerciseDef.category, ...(exerciseDef.secondaryCategories || [])].filter(Boolean);
+    const allMuscles = categories.flatMap(cat => mapCategoryToMuscles(cat, exerciseDef.name));
+    return [...new Set(allMuscles)];
   }
 
   // Fallback for custom exercises or if not found in DB
-  // Just a very basic fallback, though user requested to purely rely on DB
   const name = exerciseName.toLowerCase();
   if (name.includes('panc') || name.includes('chest')) return ['chest', 'triceps'];
   if (name.includes('squat') || name.includes('leg ext')) return ['quadriceps', 'gluteal'];
@@ -94,6 +109,7 @@ const getIntensity = (sets) => {
 export const InteractiveBody = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const history = useStore(state => state.history);
+  const customExercises = useStore(state => state.customExercises);
 
   const workoutData = useMemo(() => {
     // Look at workouts from the last 7 days
@@ -107,7 +123,7 @@ export const InteractiveBody = () => {
         // Only count if there were actual completed sets
         const completedSets = ex.sets ? ex.sets.filter(s => s.done) : [];
         if (completedSets.length > 0) {
-          const muscles = getMusclesFromExercise(ex.name);
+          const muscles = getMusclesFromExercise(ex.name, customExercises || []);
           muscles.forEach(m => {
             muscleFrequencies[m] = (muscleFrequencies[m] || 0) + completedSets.length;
           });
@@ -125,7 +141,7 @@ export const InteractiveBody = () => {
         frequency: getIntensity(sets)
       };
     });
-  }, [history]);
+  }, [history, customExercises]);
 
   return (
     <div className="interactive-body-container">
