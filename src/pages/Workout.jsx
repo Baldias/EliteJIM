@@ -211,7 +211,8 @@ function Workout() {
             <div key={ex.id} style={{
               background: 'rgba(255,255,255,0.025)',
               border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: '16px', marginBottom: '10px', overflow: 'hidden'
+              borderRadius: '16px', marginBottom: '10px', 
+              position: 'relative', zIndex: activeWorkout.exercises.length - idx
             }}>
               {/* Exercise name row */}
               <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>

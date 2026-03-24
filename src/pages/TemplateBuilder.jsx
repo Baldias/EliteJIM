@@ -123,7 +123,8 @@ function TemplateBuilder() {
               <div key={ex.id || idx} style={{
                 background: 'rgba(255,255,255,0.025)',
                 border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: '14px', marginBottom: '10px', overflow: 'hidden'
+                borderRadius: '14px', marginBottom: '10px', 
+                position: 'relative', zIndex: exercises.length - idx
               }}>
                 {/* Name row */}
                 <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
