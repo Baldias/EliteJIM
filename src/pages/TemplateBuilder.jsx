@@ -193,4 +193,34 @@ function TemplateBuilder() {
   );
 }
 
-export default TemplateBuilder;
+class TemplateBuilderErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("TemplateBuilder Crash:", error, errorInfo);
+    this.setState({ errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red', background: 'black', minHeight: '100vh', wordBreak: 'break-all' }}>
+          <h2>TemplateBuilder ERRORE:</h2>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '12px', marginTop: '10px' }}>{this.state.error?.toString()}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '10px', marginTop: '10px', color: '#ffb3b3' }}>{this.state.errorInfo?.componentStack}</pre>
+          <p style={{ marginTop: '20px', color: 'white', fontSize: '14px' }}>Fai uno screenshot di questa schermata!</p>
+        </div>
+      );
+    }
+    return <TemplateBuilder />;
+  }
+}
+
+export default TemplateBuilderErrorBoundary;
