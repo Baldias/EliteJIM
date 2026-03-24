@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, Edit2, Check, X } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import './History.css';
 
@@ -9,12 +9,51 @@ function History() {
   // Optional: add a delete history record function to the store
   const setStore = useStore.setState;
   const [expandedSessions, setExpandedSessions] = useState({});
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ date: '', time: '', duration: 0 });
 
   const toggleSession = (id) => {
+    // Only toggle if not editing
+    if (editingId === id) return;
     setExpandedSessions(prev => ({
       ...prev,
       [id]: !prev[id]
     }));
+  };
+
+  const startEditing = (e, workout) => {
+    e.stopPropagation();
+    const startDate = new Date(workout.startTime);
+    // Adjust to local time before ISO split
+    const tzOffset = startDate.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(startDate.getTime() - tzOffset)).toISOString().slice(0, -1);
+    
+    const dateStr = localISOTime.split('T')[0]; // YYYY-MM-DD
+    const timeStr = localISOTime.split('T')[1].slice(0, 5);  // HH:MM
+    const duration = workout.endTime ? Math.floor((workout.endTime - workout.startTime) / 1000 / 60) : 0;
+    
+    setEditForm({ date: dateStr, time: timeStr, duration });
+    setEditingId(workout.id);
+  };
+
+  const saveEdit = (e, workoutId) => {
+    e.stopPropagation();
+    try {
+      const [year, month, day] = editForm.date.split('-');
+      const [hours, minutes] = editForm.time.split(':');
+      const newStart = new Date(year, month - 1, day, hours, minutes).getTime();
+      const newEnd = newStart + (editForm.duration * 60 * 1000);
+
+      if (!isNaN(newStart) && !isNaN(newEnd)) {
+        useStore.getState().updateHistoryWorkout(workoutId, {
+          startTime: newStart,
+          endTime: newEnd
+        });
+      }
+    } catch(err) {
+      console.error(err);
+    }
+    setEditingId(null);
   };
 
   const handleDelete = (e, id) => {
@@ -88,11 +127,36 @@ function History() {
               <SwipeToDelete key={workout.id} onDelete={(e) => handleDelete(e, workout.id)}>
                 <div className="history-card" onClick={() => toggleSession(workout.id)} style={{ cursor: 'pointer' }}>
                   <div className="history-header">
-                    <div>
-                      <h3 className="history-title">{workout.name}</h3>
-                      <div className="history-date">
-                        <Calendar size={14} /> {formatDate(workout.startTime)} alle {formatTime(workout.startTime)}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <h3 className="history-title">{workout.name}</h3>
+                        {editingId !== workout.id && (
+                          <button onClick={(e) => startEditing(e, workout)} style={{ background: 'transparent', border: 'none', color: 'var(--primary-color)', padding: '4px' }}>
+                            <Edit2 size={16} />
+                          </button>
+                        )}
                       </div>
+                      
+                      {editingId === workout.id ? (
+                        <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '8px', marginTop: '8px' }}>
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                            <input type="date" value={editForm.date} onChange={e => setEditForm({...editForm, date: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'var(--surface-color-elevated)', color: 'white', fontSize: '0.9rem' }} />
+                            <input type="time" value={editForm.time} onChange={e => setEditForm({...editForm, time: e.target.value})} style={{ width: '100px', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'var(--surface-color-elevated)', color: 'white', fontSize: '0.9rem' }} />
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Durata (min):</span>
+                            <input type="number" min="1" value={editForm.duration} onChange={e => setEditForm({...editForm, duration: parseInt(e.target.value) || 0})} style={{ width: '70px', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'var(--surface-color-elevated)', color: 'white', fontSize: '0.9rem' }} />
+                            <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
+                              <button onClick={(e) => { e.stopPropagation(); setEditingId(null); }} style={{ width: '36px', height: '36px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.1)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+                              <button onClick={(e) => saveEdit(e, workout.id)} style={{ width: '36px', height: '36px', borderRadius: '8px', border: 'none', background: 'var(--primary-color)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={18} /></button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="history-date">
+                          <Calendar size={14} /> {formatDate(workout.startTime)} alle {formatTime(workout.startTime)}
+                        </div>
+                      )}
                     </div>
                   </div>
 

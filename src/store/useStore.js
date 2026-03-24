@@ -290,6 +290,13 @@ export const useStore = create(
         });
       },
 
+      updateHistoryWorkout: (workoutId, updates) => {
+        set((state) => {
+          const newHistory = state.history.map(w => w.id === workoutId ? { ...w, ...updates } : w);
+          return { history: newHistory };
+        });
+      },
+
       deleteExerciseFromActiveSession: (exerciseId) => {
         set((state) => {
           if (!state.activeWorkout) return state;
