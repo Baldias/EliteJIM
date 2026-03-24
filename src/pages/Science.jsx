@@ -286,23 +286,7 @@ function Dashboard({ report, reset }) {
             </p>
           </div>
 
-          <div className="card glass" style={{ marginBottom: '2rem', borderColor: 'rgba(255,255,255,0.05)' }}>
-            <h3 style={{ marginBottom: '1rem', color: 'var(--text-main)', fontSize: '1.1rem' }}>
-              I Tuoi Landmark Base (Limiti Scientifici)
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
-              {Object.entries(report.baseLandmarks).map(([muscle, lm]) => (
-                <div key={muscle} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ fontWeight: '600', fontSize: '0.9rem', marginBottom: '8px', color: 'var(--primary-color)', textAlign: 'center' }}>{muscle}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{display: 'flex', justifyContent: 'space-between', paddingBottom: '2px', borderBottom: '1px dashed rgba(255,255,255,0.1)'}}><span>MEV:</span> <strong>{lm.mev}</strong></div>
-                    <div style={{display: 'flex', justifyContent: 'space-between', color: '#ff9500', paddingBottom: '2px', borderBottom: '1px dashed rgba(255,255,255,0.1)'}}><span>MAV:</span> <strong>{lm.mav}</strong></div>
-                    <div style={{display: 'flex', justifyContent: 'space-between', color: '#ff3b30'}}><span>MRV:</span> <strong>{lm.mrv}</strong></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+
 
 
           <h3 style={{ margin: '1rem 0', color: 'var(--text-main)', fontSize: '1.2rem' }}>Calendario Periodizzazione</h3>
