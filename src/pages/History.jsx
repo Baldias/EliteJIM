@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, Edit2, Check, X } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
+import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
 import './History.css';
 
 function History() {
@@ -11,6 +12,8 @@ function History() {
   const [expandedSessions, setExpandedSessions] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ date: '', time: '', duration: 0 });
+  const [draftExercises, setDraftExercises] = useState([]);
+  const [showAddEx, setShowAddEx] = useState(false);
 
   const toggleSession = (id) => {
     // Only toggle if not editing
@@ -33,7 +36,41 @@ function History() {
     const duration = workout.endTime ? Math.floor((workout.endTime - workout.startTime) / 1000 / 60) : 0;
     
     setEditForm({ date: dateStr, time: timeStr, duration });
+    setDraftExercises(JSON.parse(JSON.stringify(workout.exercises))); // Deep clone exercises
+    setShowAddEx(false);
     setEditingId(workout.id);
+  };
+
+  const hndUpdSet = (exId, setId, field, val) => {
+    setDraftExercises(p => p.map(ex => ex.id === exId ? { 
+      ...ex, sets: ex.sets.map(s => s.id === setId ? { ...s, [field]: val } : s) 
+    } : ex));
+  };
+  
+  const hndAddSet = (exId) => {
+    setDraftExercises(p => p.map(ex => {
+      if(ex.id !== exId) return ex;
+      const lastSet = ex.sets[ex.sets.length-1] || { kg: '', reps: '' };
+      return { ...ex, sets: [...ex.sets, { id: Date.now(), kg: lastSet.kg, reps: lastSet.reps, done: true }] };
+    }));
+  };
+
+  const hndRmSet = (exId, setId) => {
+    setDraftExercises(p => p.map(ex => ex.id === exId ? {
+      ...ex, sets: ex.sets.filter(s => s.id !== setId)
+    } : ex));
+  };
+
+  const hndRmEx = (exId) => {
+     if(window.confirm("Eliminare intero esercizio?")) setDraftExercises(p => p.filter(ex => ex.id !== exId));
+  };
+
+  const hndAddEx = (name) => {
+    setDraftExercises(p => [
+      ...p,
+      { id: Date.now(), name, sets: [{ id: Date.now()+1, kg: '', reps: '', done: true }] }
+    ]);
+    setShowAddEx(false);
   };
 
   const saveEdit = (e, workoutId) => {
@@ -47,7 +84,8 @@ function History() {
       if (!isNaN(newStart) && !isNaN(newEnd)) {
         useStore.getState().updateHistoryWorkout(workoutId, {
           startTime: newStart,
-          endTime: newEnd
+          endTime: newEnd,
+          exercises: draftExercises
         });
       }
     } catch(err) {
@@ -174,14 +212,16 @@ function History() {
                 </div>
 
                 <div className="history-exercises">
-                  {workout.exercises.map((ex, exIdx) => {
-                    const doneSets = ex.sets.filter(s => s.done);
-                    if (doneSets.length === 0) return null; // Skip if no set was marked as done
+                  {(editingId === workout.id ? draftExercises : workout.exercises).map((ex, exIdx) => {
+                    const isEditingWorkout = editingId === workout.id;
+                    const visibleSets = isEditingWorkout ? ex.sets : ex.sets.filter(s => s.done);
+                    if (visibleSets.length === 0 && !isEditingWorkout) return null; // Skip if no set was marked as done
                     
                     // Find the best set (highest estimated 1RM)
                     let bestSetId = null;
                     let max1Rm = 0;
-                    doneSets.forEach(s => {
+                    visibleSets.forEach(s => {
+                       if (!s.done && !isEditingWorkout) return;
                        const est = calculateOneRepMax(s.kg, s.reps);
                        if (est && est > max1Rm) { max1Rm = est; bestSetId = s.id; }
                     });
@@ -193,40 +233,77 @@ function History() {
                             <span className="h-ex-num">{exIdx + 1}</span>
                             <span className="h-ex-name">{ex.name}</span>
                           </div>
-                          <span className="h-ex-details">
-                            {doneSets.length} set completati
-                          </span>
+                          {!isEditingWorkout ? (
+                            <span className="h-ex-details">{visibleSets.length} set completati</span>
+                          ) : (
+                            <button onClick={(e) => { e.stopPropagation(); hndRmEx(ex.id); }} style={{ background: 'transparent', border: 'none', color: 'rgba(255,59,48,0.7)', padding: '4px' }}>
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
-                        {isExpanded && (
+                        {(isExpanded || isEditingWorkout) && (
                           <div className="history-ex-sets-table">
-                            <div className="history-set-thead">
+                            <div className="history-set-thead" style={{ gridTemplateColumns: isEditingWorkout ? '1fr 2fr 2fr 1fr' : '2fr 1.5fr 1.5fr 2fr' }}>
                               <span>Set</span>
                               <span>kg</span>
                               <span>Reps</span>
-                              <span style={{ textAlign: 'right' }}>1RM Est.</span>
+                              <span style={{ textAlign: isEditingWorkout ? 'center' : 'right' }}>{isEditingWorkout ? 'Azione' : '1RM Est.'}</span>
                             </div>
-                            {doneSets.map((set, setIdx) => {
+                            {visibleSets.map((set, setIdx) => {
                               const est1rm = calculateOneRepMax(set.kg, set.reps);
                               const isBest = set.id === bestSetId && max1Rm > 0;
                               return (
-                                <div key={set.id} className={`history-set-trow ${isBest ? 'best-set' : ''} ${set.isDropset ? 'drop-set' : ''}`}>
+                                <div key={set.id} className={`history-set-trow ${isBest && !isEditingWorkout ? 'best-set' : ''} ${set.isDropset ? 'drop-set' : ''}`} style={{ gridTemplateColumns: isEditingWorkout ? '1fr 2fr 2fr 1fr' : '2fr 1.5fr 1.5fr 2fr' }}>
                                   <span className="set-col-num">
                                     {set.isDropset ? <span className="drop-badge">Drop</span> : setIdx + 1}
                                   </span>
-                                  <span className="set-col-data">{set.kg || '-'}</span>
-                                  <span className="set-col-data">{set.reps || '-'}</span>
-                                  <span className="set-col-1rm">
-                                    {est1rm ? est1rm.toFixed(1) : '-'}
-                                    {isBest && <span className="best-badge" title="Miglior Set">🏆</span>}
-                                  </span>
+                                  {isEditingWorkout ? (
+                                    <>
+                                      <input type="text" inputMode="decimal" value={set.kg || ''} onChange={e => hndUpdSet(ex.id, set.id, 'kg', e.target.value.replace(/[^0-9.]/g, ''))} onClick={e=>e.stopPropagation()} style={{ width: '90%', padding: '4px', borderRadius: '4px', border: 'none', background: 'rgba(255,255,255,0.1)', color: 'white', textAlign: 'center' }} placeholder="kg" />
+                                      <input type="text" inputMode="numeric" value={set.reps || ''} onChange={e => hndUpdSet(ex.id, set.id, 'reps', e.target.value.replace(/[^0-9]/g, ''))} onClick={e=>e.stopPropagation()} style={{ width: '90%', padding: '4px', borderRadius: '4px', border: 'none', background: 'rgba(255,255,255,0.1)', color: 'white', textAlign: 'center' }} placeholder="reps" />
+                                      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                                        <button onClick={(e) => { e.stopPropagation(); hndRmSet(ex.id, set.id); }} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)' }}><X size={16} /></button>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="set-col-data">{set.kg || '-'}</span>
+                                      <span className="set-col-data">{set.reps || '-'}</span>
+                                      <span className="set-col-1rm">
+                                        {est1rm ? est1rm.toFixed(1) : '-'}
+                                        {isBest && <span className="best-badge" title="Miglior Set">🏆</span>}
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               );
                             })}
+                            
+                            {isEditingWorkout && (
+                              <button onClick={(e) => { e.stopPropagation(); hndAddSet(ex.id); }} style={{ marginTop: '8px', padding: '6px', background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '6px', color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                <Plus size={14} /> Aggiungi Set
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
                     );
                   })}
+                  
+                  {editingId === workout.id && (
+                    <div style={{ marginTop: '10px' }} onClick={e => e.stopPropagation()}>
+                      {showAddEx ? (
+                        <div style={{ padding: '4px 0' }}>
+                          <ExerciseAutocomplete onChange={(name) => hndAddEx(name)} placeholder="Cerca esercizio..." />
+                          <button onClick={() => setShowAddEx(false)} style={{ marginTop: '8px', padding: '6px', width: '100%', background: 'transparent', border: 'none', color: 'var(--text-muted)' }}>Annulla</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setShowAddEx(true)} style={{ width: '100%', padding: '8px', background: 'var(--primary-color-dim)', color: 'var(--primary-color)', border: 'none', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}>
+                          <Plus size={16} /> Nuovo Esercizio
+                        </button>
+                      )}
+                    </div>
+                  )}
                   </div>
                 </div>
               </SwipeToDelete>
