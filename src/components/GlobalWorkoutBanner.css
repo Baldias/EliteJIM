@@ -1,15 +1,13 @@
 .global-workout-banner {
   position: fixed;
   top: max(env(safe-area-inset-top, 16px), 16px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 16px;
   width: fit-content;
-  min-width: 250px;
   max-width: calc(100% - 32px);
   background-color: var(--primary-color);
   color: #fff;
   z-index: 150;
-  padding: 8px 12px 8px 16px;
+  padding: 6px 12px;
   border-radius: 999px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 126, 167, 0.4);
@@ -17,9 +15,8 @@
 
 .global-banner-content {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .global-banner-info {
@@ -42,8 +39,8 @@
 }
 
 .global-banner-time {
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.5px;
 }
@@ -61,21 +58,21 @@
 .global-banner-rest {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background-color: rgba(255, 255, 255, 0.2);
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 999px;
 }
 
 .global-banner-rest-label {
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 700;
   text-transform: uppercase;
   opacity: 0.9;
 }
 
 .global-banner-rest-time {
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-weight: 800;
+  font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
 }

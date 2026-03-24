@@ -78,13 +78,12 @@ function GlobalWorkoutBanner() {
     <div className="global-workout-banner" onClick={() => navigate('/workout')}>
       <div className="global-banner-content">
         <div className="global-banner-info">
-          <Play size={16} className="global-banner-icon blink" />
+          <Play size={14} className="global-banner-icon blink" />
           <span className="global-banner-time">{sessionTimeStr}</span>
-          <span className="global-banner-title">{activeWorkout.name}</span>
         </div>
         {isResting && (
           <div className="global-banner-rest">
-            <span className="global-banner-rest-label">Recupero</span>
+            <span className="global-banner-rest-label">Rec.</span>
             <span className="global-banner-rest-time">{formatRestTime(restTimeLeft)}</span>
           </div>
         )}
