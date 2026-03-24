@@ -31,8 +31,12 @@ function TemplateBuilder() {
   const editTemplateData = location.state?.template;
   const isEditing = !!editTemplateData;
 
-  const [name, setName] = useState(isEditing ? editTemplateData.name : '');
-  const [exercises, setExercises] = useState(isEditing ? editTemplateData.exercises : []);
+  const [name, setName] = useState(isEditing ? editTemplateData.name || '' : '');
+  const [exercises, setExercises] = useState(
+    isEditing 
+      ? (editTemplateData.exercises || []).map((ex, i) => ({ ...ex, id: ex.id || `ex-${Date.now()}-${i}` }))
+      : []
+  );
 
   const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90 }]);
   const updEx = (id, field, val) => setExercises(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
@@ -116,7 +120,7 @@ function TemplateBuilder() {
             </p>
 
             {exercises.map((ex, idx) => (
-              <div key={ex.id} style={{
+              <div key={ex.id || idx} style={{
                 background: 'rgba(255,255,255,0.025)',
                 border: '1px solid rgba(255,255,255,0.06)',
                 borderRadius: '14px', marginBottom: '10px', overflow: 'hidden'
