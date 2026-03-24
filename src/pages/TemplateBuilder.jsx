@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { Plus, ArrowLeft, Check, Trash2 } from 'lucide-react';
 import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
@@ -24,9 +24,15 @@ function NumInput({ label, value, onChange, min = 0, step = 1, format }) {
 
 function TemplateBuilder() {
   const navigate = useNavigate();
+  const location = useLocation();
   const addTemplate = useStore(state => state.addTemplate);
-  const [name, setName] = useState('');
-  const [exercises, setExercises] = useState([]);
+  const updateTemplate = useStore(state => state.updateTemplate);
+  
+  const editTemplateData = location.state?.template;
+  const isEditing = !!editTemplateData;
+
+  const [name, setName] = useState(isEditing ? editTemplateData.name : '');
+  const [exercises, setExercises] = useState(isEditing ? editTemplateData.exercises : []);
 
   const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90 }]);
   const updEx = (id, field, val) => setExercises(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
@@ -36,7 +42,12 @@ function TemplateBuilder() {
     if (!name.trim()) return alert('Inserisci il nome della scheda');
     if (!exercises.length) return alert('Aggiungi almeno un esercizio');
     if (exercises.some(e => !e.name.trim())) return alert('Tutti gli esercizi devono avere un nome');
-    addTemplate({ name, exercises });
+    
+    if (isEditing) {
+      updateTemplate({ id: editTemplateData.id, name, exercises });
+    } else {
+      addTemplate({ name, exercises });
+    }
     navigate('/');
   };
 
@@ -61,7 +72,7 @@ function TemplateBuilder() {
         <button onClick={() => navigate('/')} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '10px', padding: '8px', color: 'rgba(255,255,255,0.6)', display: 'flex', width: 'auto' }}>
           <ArrowLeft size={20} />
         </button>
-        <span style={{ flex: 1, fontWeight: '800', fontSize: '1rem', color: 'white' }}>Nuova Scheda</span>
+        <span style={{ flex: 1, fontWeight: '800', fontSize: '1rem', color: 'white' }}>{isEditing ? 'Modifica Scheda' : 'Nuova Scheda'}</span>
         <button onClick={handleSave} style={{
           background: isValid ? 'linear-gradient(135deg, #00b8d4 0%, #0090b0 100%)' : 'rgba(255,255,255,0.07)',
           border: 'none', borderRadius: '10px', padding: '8px 16px',

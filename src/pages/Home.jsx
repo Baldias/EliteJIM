@@ -147,25 +147,43 @@ function Home() {
                       {template.exercises.length} esercizi · {template.exercises.reduce((a, ex) => a + ex.setsCount, 0)} serie
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
                     <button
-                      onClick={() => { if (window.confirm(`Eliminare "${template.name}"?`)) deleteTemplate(template.id); }}
-                      style={{ background: 'rgba(255,59,48,0.08)', border: 'none', borderRadius: '14px', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3b30', transition: 'all 0.2s' }}
+                      onClick={(e) => { e.stopPropagation(); deleteTemplate(template.id); }}
+                      style={{
+                        background: 'rgba(255, 59, 48, 0.1)',
+                        border: '1px solid rgba(255, 59, 48, 0.3)', borderRadius: '14px',
+                        width: '44px', height: '44px', color: '#ff3b30',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'background 0.2s', flexShrink: 0
+                      }}
                     >
                       <Trash2 size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate('/builder', { state: { template } }); }}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px',
+                        width: '44px', height: '44px', color: 'white',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'background 0.2s', flexShrink: 0
+                      }}
+                    >
+                      <Edit3 size={18} />
                     </button>
                     <button
                       onClick={() => handleStartTemplate(template)}
                       style={{
                         background: 'rgba(0, 126, 167, 0.85)',
                         border: '1px solid rgba(0, 126, 167, 0.5)', borderRadius: '14px',
-                        padding: '10px 24px', color: 'white', fontWeight: '800', fontSize: '0.95rem',
-                        display: 'flex', alignItems: 'center', gap: '8px',
+                        width: '44px', height: '44px', color: 'white',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                         boxShadow: '0 4px 12px rgba(0, 126, 167, 0.25)',
-                        transition: 'transform 0.2s ease-out'
+                        transition: 'transform 0.2s ease-out', flexShrink: 0
                       }}
                     >
-                      <Play size={16} fill="white" /> Vai
+                      <Play size={20} fill="white" />
                     </button>
                   </div>
                 </div>

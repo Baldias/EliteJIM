@@ -95,6 +95,8 @@ export const useStore = create(
       // --- Template Actions ---
       addTemplate: (template) =>
         set((state) => ({ templates: [...state.templates, { ...template, id: Date.now() }] })),
+      updateTemplate: (updatedTemplate) =>
+        set((state) => ({ templates: state.templates.map(t => t.id === updatedTemplate.id ? updatedTemplate : t) })),
       deleteTemplate: (id) =>
         set((state) => ({ templates: state.templates.filter((t) => t.id !== id) })),
 
