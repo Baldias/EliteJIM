@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, ChevronLeft } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
@@ -8,6 +8,7 @@ import './History.css';
 
 function History() {
   const navigate = useNavigate();
+  const location = useLocation();
   const history = useStore(state => state.history);
   // Optional: add a delete history record function to the store
   const setStore = useStore.setState;
@@ -16,6 +17,31 @@ function History() {
   const [editForm, setEditForm] = useState({ date: '', time: '', duration: 0 });
   const [draftExercises, setDraftExercises] = useState([]);
   const [showAddEx, setShowAddEx] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.editWorkoutId && history.length > 0) {
+      const workoutToEdit = history.find(w => w.id === location.state.editWorkoutId);
+      if (workoutToEdit && editingId !== workoutToEdit.id) {
+        setExpandedSessions(prev => ({ ...prev, [workoutToEdit.id]: true }));
+        
+        const startDate = new Date(workoutToEdit.startTime);
+        const tzOffset = startDate.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(startDate.getTime() - tzOffset)).toISOString().slice(0, -1);
+        
+        const dateStr = localISOTime.split('T')[0];
+        const timeStr = localISOTime.split('T')[1].slice(0, 5);
+        const duration = workoutToEdit.endTime ? Math.floor((workoutToEdit.endTime - workoutToEdit.startTime) / 1000 / 60) : 0;
+        
+        setEditForm({ date: dateStr, time: timeStr, duration });
+        setDraftExercises(JSON.parse(JSON.stringify(workoutToEdit.exercises)));
+        setShowAddEx(false);
+        setEditingId(workoutToEdit.id);
+        
+        // Clear the state so it doesn't stay stuck on reload
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, history, editingId, navigate, location.pathname]);
 
   const toggleSession = (id) => {
     // Only toggle if not editing

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Trash2, X, Flame, Trophy, Check } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Trash2, X, Flame, Trophy, Check, Edit2 } from 'lucide-react';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
 import { EXERCISES_DB, getExerciseCategories, normalizeName } from '../data/exercises';
@@ -609,6 +609,9 @@ function Profile() {
                                 </div>
                               </div>
                               <div className="expand-icon" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <button className="edit-workout-btn" onClick={(e) => { e.stopPropagation(); navigate('/history', { state: { editWorkoutId: workout.id } }); }}>
+                                  <Edit2 size={18} />
+                                </button>
                                 <button className="delete-workout-btn" onClick={(e) => handleDelete(e, workout.id)}>
                                   <Trash2 size={18} />
                                 </button>
