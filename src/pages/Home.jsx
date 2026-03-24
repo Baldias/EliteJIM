@@ -161,7 +161,7 @@ function Home() {
                       <Trash2 size={18} />
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); navigate('/builder', { state: { template } }); }}
+                      onClick={(e) => { e.stopPropagation(); navigate('/build', { state: { template } }); }}
                       style={{
                         background: 'rgba(255, 255, 255, 0.05)',
                         border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px',
