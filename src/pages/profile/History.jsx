@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { Calendar, Clock, ChevronDown, ChevronUp, Edit2, ChevronLeft } from 'lucide-react';
-import { SwipeToDelete } from '../components/SwipeToDelete';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 import './History.css';
 
 function History() {

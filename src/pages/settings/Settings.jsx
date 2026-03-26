@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { ArrowLeft, ChevronRight, Dumbbell, Dna, Info, Download, Upload, Zap } from 'lucide-react';
-import { EXERCISES_DB } from '../data/exercises';
-import { recalculateTotalXpFromHistory } from '../utils/gamification';
+import { EXERCISES_DB } from '../../data/exercises';
+import { recalculateTotalXpFromHistory } from '../../utils/gamification';
 import './Settings.css';
 
 function Settings() {

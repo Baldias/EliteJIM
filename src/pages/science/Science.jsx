@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { RefreshCw, Zap, Target, BookOpen, Calendar, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
-import { EXERCISES_DB } from '../data/exercises';
-import { calculateScienceVolume } from '../utils/rpVolume';
+import { EXERCISES_DB } from '../../data/exercises';
+import { calculateScienceVolume } from '../../utils/rpVolume';
 import './Science.css';
 import './BossFight.css';
 

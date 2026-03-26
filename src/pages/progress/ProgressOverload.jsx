@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { useStore } from '../store/useStore';
-import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories } from '../data/exercises';
+import { useStore } from '../../store/useStore';
+import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories } from '../../data/exercises';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
-import { getMuscleLevelByXp } from '../utils/gamification';
+import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
+import { getMuscleLevelByXp } from '../../utils/gamification';
 import { Zap } from 'lucide-react';
 import './ProgressOverload.css';
 

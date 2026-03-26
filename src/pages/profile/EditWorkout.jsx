@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { ChevronLeft, Check, Plus, Trash2, X } from 'lucide-react';
-import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
+import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import './EditWorkout.css';
 
 function EditWorkout() {

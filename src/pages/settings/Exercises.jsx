@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { ArrowLeft, Plus, Search, Trash2, Dumbbell } from 'lucide-react';
-import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories, normalizeName } from '../data/exercises';
-import { SwipeToDelete } from '../components/SwipeToDelete';
+import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories, normalizeName } from '../../data/exercises';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 import './Settings.css';
 
 function Exercises() {

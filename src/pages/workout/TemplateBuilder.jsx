@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { Plus, ArrowLeft, Check, Trash2 } from 'lucide-react';
-import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
+import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 
 const REPS_PRESETS = ['4-6', '6-8', '8-10', '10-12', '12-15', '15-20'];
 

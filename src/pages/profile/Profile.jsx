@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Trash2, X, Flame, Trophy, Check, Edit2 } from 'lucide-react';
-import { SwipeToDelete } from '../components/SwipeToDelete';
-import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../utils/rpVolume';
-import { EXERCISES_DB, getExerciseCategories, normalizeName } from '../data/exercises';
-import { getRankByXp } from '../utils/gamification';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
+import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../utils/rpVolume';
+import { EXERCISES_DB, getExerciseCategories, normalizeName } from '../../data/exercises';
+import { getRankByXp } from '../../utils/gamification';
 import './Profile.css';
 
 function Profile() {

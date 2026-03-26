@@ -1,8 +1,8 @@
 import React from 'react';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { Zap, ChevronLeft, Info } from 'lucide-react';
-import { EXERCISE_CATEGORIES } from '../data/exercises';
-import { getMuscleLevelByXp } from '../utils/gamification';
+import { EXERCISE_CATEGORIES } from '../../data/exercises';
+import { getMuscleLevelByXp } from '../../utils/gamification';
 import { useNavigate } from 'react-router-dom';
 
 function MuscleLevels() {

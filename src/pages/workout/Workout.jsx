@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Check, X, ChevronLeft, Trash2, Clock } from 'lucide-react';
-import { useStore } from '../store/useStore';
-import { ExerciseAutocomplete } from '../components/ExerciseAutocomplete';
-import { SwipeToDelete } from '../components/SwipeToDelete';
-import { requestNotificationPermission, notifyTimerComplete } from '../utils/notifications';
-import { normalizeName } from '../data/exercises';
+import { useStore } from '../../store/useStore';
+import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
+import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
+import { normalizeName } from '../../data/exercises';
 
 function Workout() {
   const navigate = useNavigate();

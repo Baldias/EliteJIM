@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { Plus, Play, Dumbbell, ChevronRight, Zap, Bell, CheckCircle2, Trash2, Edit3 } from 'lucide-react';
-import { SwipeToDelete } from '../components/SwipeToDelete';
-import { InteractiveBody } from '../components/InteractiveBody';
-import { WelcomeBack } from '../components/WelcomeBack';
-import { EXERCISES_DB } from '../data/exercises';
-import pkg from '../../package.json';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
+import { InteractiveBody } from '../../components/InteractiveBody';
+import { WelcomeBack } from '../../components/WelcomeBack';
+import { EXERCISES_DB } from '../../data/exercises';
+import pkg from '../../../package.json';
 
 function getGreeting() {
   const h = new Date().getHours();

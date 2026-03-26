@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { useStore } from '../../store/useStore';
 import { Trophy, Clock, Zap, Target, Flame, ChevronRight, Check } from 'lucide-react';
-import { getRankByXp, getMuscleLevelByXp } from '../utils/gamification';
-import { EXERCISES_DB } from '../data/exercises';
-import { RP_LANDMARKS } from '../utils/rpVolume';
+import { getRankByXp, getMuscleLevelByXp } from '../../utils/gamification';
+import { EXERCISES_DB } from '../../data/exercises';
+import { RP_LANDMARKS } from '../../utils/rpVolume';
 import './WorkoutRecap.css';
 
 function WorkoutRecap() {
@@ -81,14 +81,24 @@ function WorkoutRecap() {
     });
 
     const getTargetForMuscle = (muscle) => {
-      // Mapping from DB categories to Science Report landmarks if needed
-      const mapping = {
-        'Petto': 'Petto', 'Dorso': 'Schiena', 'Gambe': 'Quadricipiti',
-        'Spalle': 'Spalle (Deltoidi)', 'Bicipiti': 'Bicipiti', 
-        'Tricipiti': 'Tricipiti', 'Addome': 'Addome', 'Avambracci': 'Avambracci', 'Collo': 'Collo'
+      // Legacy mapping support for old report keys vs DB categories
+      const legacyMapping = {
+        'Dorso': 'Schiena',
+        'Spalle': 'Spalle (Deltoidi)',
+        'Gambe': 'Quadricipiti',
+        'Addome': 'Addominali'
       };
 
-      const scienceKey = mapping[muscle];
+      let scienceKey = null;
+      if (scienceReport && scienceReport.baseLandmarks) {
+        if (scienceReport.baseLandmarks[muscle]) {
+          scienceKey = muscle;
+        } else if (legacyMapping[muscle] && scienceReport.baseLandmarks[legacyMapping[muscle]]) {
+          scienceKey = legacyMapping[muscle];
+        } else if (muscle === 'Schiena' && scienceReport.baseLandmarks['Dorso']) {
+          scienceKey = 'Dorso';
+        }
+      }
       
       // Target dal Science Report (se disponibile e valido)
       if (scienceReport && scienceKey && scienceReport.baseLandmarks[scienceKey]) {
