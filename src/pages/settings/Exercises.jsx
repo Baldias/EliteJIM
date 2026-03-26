@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { ArrowLeft, Plus, Search, Trash2, Dumbbell } from 'lucide-react';
-import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories, normalizeName } from '../../data/exercises';
+import { EXERCISE_CATEGORIES, EXERCISES_DB, EQUIPMENT_TYPES, getExerciseCategories, normalizeName } from '../../data/exercises';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import './Settings.css';
 
@@ -15,6 +15,7 @@ function Exercises() {
   const [searchTerm, setSearchTerm] = useState('');
   const [newExName, setNewExName] = useState('');
   const [newExCategory, setNewExCategory] = useState(EXERCISE_CATEGORIES.CHEST);
+  const [newExEquipment, setNewExEquipment] = useState(EQUIPMENT_TYPES.BARBELL);
   const [isAdding, setIsAdding] = useState(false);
 
   // Combine default and custom exercises
@@ -44,8 +45,9 @@ function Exercises() {
       return;
     }
 
-    addCustomExercise({ name: newExName.trim(), category: newExCategory, isCustom: true });
+    addCustomExercise({ name: newExName.trim(), category: newExCategory, equipmentType: newExEquipment, isCustom: true });
     setNewExName('');
+    setNewExEquipment(EQUIPMENT_TYPES.BARBELL);
     setIsAdding(false);
   };
 
@@ -96,6 +98,16 @@ function Exercises() {
                   {Object.values(EXERCISE_CATEGORIES).map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Tipo Attrezzo</label>
+                <select
+                  value={newExEquipment}
+                  onChange={(e) => setNewExEquipment(e.target.value)}
+                >
+                  <option value={EQUIPMENT_TYPES.BARBELL}>Bilanciere / Macchina (+2.5kg)</option>
+                  <option value={EQUIPMENT_TYPES.DUMBBELL}>Manubri (+2kg)</option>
                 </select>
               </div>
               <div className="form-actions">

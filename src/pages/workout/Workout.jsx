@@ -5,7 +5,7 @@ import { useStore } from '../../store/useStore';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
-import { normalizeName } from '../../data/exercises';
+import { normalizeName, EXERCISES_DB, getWeightStep } from '../../data/exercises';
 
 function Workout() {
   const navigate = useNavigate();
@@ -203,7 +203,9 @@ function Workout() {
         )}
 
         {activeWorkout.exercises.map((ex, idx) => {
-          const weightStep = (ex.name || '').toLowerCase().includes('manubri') ? 2 : 2.5;
+          const customExercises = useStore.getState().customExercises || [];
+          const allDB = [...EXERCISES_DB, ...customExercises];
+          const weightStep = getWeightStep(ex, allDB);
           const fatigue = exerciseFatigue[ex.id] || 'yellow';
           const doneCount = ex.sets.filter(s => s.done).length;
 
