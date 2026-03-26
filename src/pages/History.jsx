@@ -210,7 +210,7 @@ function History() {
                       </div>
                       
                       {editingId === workout.id ? (
-                        <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '8px', marginTop: '8px' }}>
+                        <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '8px', marginTop: '8px', overflow: 'hidden', boxSizing: 'border-box', width: '100%' }}>
                           <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                             <input type="date" value={editForm.date} onChange={e => setEditForm({...editForm, date: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'var(--surface-color-elevated)', color: 'white', fontSize: '0.9rem' }} />
                             <input type="time" value={editForm.time} onChange={e => setEditForm({...editForm, time: e.target.value})} style={{ width: '100px', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'var(--surface-color-elevated)', color: 'white', fontSize: '0.9rem' }} />
@@ -277,7 +277,7 @@ function History() {
                         </div>
                         {(isExpanded || isEditingWorkout) && (
                           <div className="history-ex-sets-table">
-                            <div className="history-set-thead" style={{ gridTemplateColumns: isEditingWorkout ? '1fr 2fr 2fr 1fr' : '2fr 1.5fr 1.5fr 2fr' }}>
+                            <div className="history-set-thead" style={{ gridTemplateColumns: isEditingWorkout ? '30px 1fr 1fr 30px' : '2fr 1.5fr 1.5fr 2fr' }}>
                               <span>Set</span>
                               <span>kg</span>
                               <span>Reps</span>
@@ -287,17 +287,15 @@ function History() {
                               const est1rm = calculateOneRepMax(set.kg, set.reps);
                               const isBest = set.id === bestSetId && max1Rm > 0;
                               return (
-                                <div key={set.id} className={`history-set-trow ${isBest && !isEditingWorkout ? 'best-set' : ''} ${set.isDropset ? 'drop-set' : ''}`} style={{ gridTemplateColumns: isEditingWorkout ? '1fr 2fr 2fr 1fr' : '2fr 1.5fr 1.5fr 2fr' }}>
+                                <div key={set.id} className={`history-set-trow ${isBest && !isEditingWorkout ? 'best-set' : ''} ${set.isDropset ? 'drop-set' : ''}`} style={{ gridTemplateColumns: isEditingWorkout ? '30px 1fr 1fr 30px' : '2fr 1.5fr 1.5fr 2fr' }}>
                                   <span className="set-col-num">
                                     {set.isDropset ? <span className="drop-badge">Drop</span> : setIdx + 1}
                                   </span>
                                   {isEditingWorkout ? (
                                     <>
-                                      <input type="text" inputMode="decimal" value={set.kg || ''} onChange={e => hndUpdSet(ex.id, set.id, 'kg', e.target.value.replace(/[^0-9.]/g, ''))} onClick={e=>e.stopPropagation()} style={{ width: '90%', padding: '4px', borderRadius: '4px', border: 'none', background: 'rgba(255,255,255,0.1)', color: 'white', textAlign: 'center' }} placeholder="kg" />
-                                      <input type="text" inputMode="numeric" value={set.reps || ''} onChange={e => hndUpdSet(ex.id, set.id, 'reps', e.target.value.replace(/[^0-9]/g, ''))} onClick={e=>e.stopPropagation()} style={{ width: '90%', padding: '4px', borderRadius: '4px', border: 'none', background: 'rgba(255,255,255,0.1)', color: 'white', textAlign: 'center' }} placeholder="reps" />
-                                      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                                        <button onClick={(e) => { e.stopPropagation(); hndRmSet(ex.id, set.id); }} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)' }}><X size={16} /></button>
-                                      </div>
+                                      <input type="text" inputMode="decimal" value={set.kg || ''} onChange={e => hndUpdSet(ex.id, set.id, 'kg', e.target.value.replace(/[^0-9.]/g, ''))} onClick={e=>e.stopPropagation()} style={{ width: '100%', padding: '6px 4px', borderRadius: '6px', border: 'none', background: 'rgba(255,255,255,0.1)', color: 'white', textAlign: 'center', boxSizing: 'border-box', minWidth: 0, fontSize: '0.85rem' }} placeholder="kg" />
+                                      <input type="text" inputMode="numeric" value={set.reps || ''} onChange={e => hndUpdSet(ex.id, set.id, 'reps', e.target.value.replace(/[^0-9]/g, ''))} onClick={e=>e.stopPropagation()} style={{ width: '100%', padding: '6px 4px', borderRadius: '6px', border: 'none', background: 'rgba(255,255,255,0.1)', color: 'white', textAlign: 'center', boxSizing: 'border-box', minWidth: 0, fontSize: '0.85rem' }} placeholder="reps" />
+                                      <button onClick={(e) => { e.stopPropagation(); hndRmSet(ex.id, set.id); }} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}><X size={16} /></button>
                                     </>
                                   ) : (
                                     <>

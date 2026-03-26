@@ -22,6 +22,9 @@
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: 0 4px 6px var(--shadow-color);
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .history-header {
@@ -133,6 +136,10 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .h-ex-details {
@@ -153,6 +160,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .history-set-thead {
@@ -176,6 +186,8 @@
   padding: 6px 0;
   border-radius: 6px;
   transition: background-color 0.2s;
+  overflow: hidden;
+  gap: 6px;
 }
 
 .history-set-trow.best-set {
