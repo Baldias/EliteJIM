@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { RefreshCw, Zap, Target, BookOpen, Calendar, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
-import { EXERCISES_DB, getExerciseCategories } from '../data/exercises';
+import { EXERCISES_DB } from '../data/exercises';
+import { calculateVolumeForDateRange } from '../utils/rpVolume';
 import './Science.css';
 import './BossFight.css';
 
@@ -124,44 +125,24 @@ function Dashboard({ report, reset }) {
   const customExercises = useStore(state => state.customExercises || []);
   const allExercisesDB = useMemo(() => [...EXERCISES_DB, ...customExercises], [customExercises]);
 
-  // Calculate actual completed sets per muscle group for any given week number
+  // Calculate actual completed sets per muscle group for each week of the mesocycle
+  // Uses the same counting logic as the Profile page (normalizeName + secondaryCategories)
   const getActualSetsForWeek = useMemo(() => {
     const MS_PER_WEEK_CONST = 7 * 24 * 60 * 60 * 1000;
     const mesoStart = report.timestamp;
-
-    // Build a map: weekNum -> { muscle -> completedSets }
     const weekMuscleMap = {};
 
-    history.forEach(workout => {
-      const workoutTime = workout.startTime || workout.endTime;
-      if (!workoutTime || workoutTime < mesoStart) return;
-
-      const weeksSinceMeso = Math.floor((workoutTime - mesoStart) / MS_PER_WEEK_CONST);
-      const weekNum = weeksSinceMeso + 1;
-      if (weekNum < 1 || weekNum > 12) return;
-
-      if (!weekMuscleMap[weekNum]) weekMuscleMap[weekNum] = {};
-
-      workout.exercises.forEach(ex => {
-        const completedSets = ex.sets.filter(s => s.done).length;
-        if (completedSets === 0) return;
-
-        // Find exercise in DB to get its muscle categories
-        const dbEx = allExercisesDB.find(d => d.name === ex.name);
-        if (!dbEx) return;
-
-        const categories = getExerciseCategories(dbEx);
-        categories.forEach(cat => {
-          // Only count muscles that exist in the report landmarks
-          if (report.baseLandmarks[cat]) {
-            weekMuscleMap[weekNum][cat] = (weekMuscleMap[weekNum][cat] || 0) + completedSets;
-          }
-        });
-      });
-    });
+    for (let w = 1; w <= 12; w++) {
+      const weekStart = mesoStart + (w - 1) * MS_PER_WEEK_CONST;
+      const weekEnd = mesoStart + w * MS_PER_WEEK_CONST;
+      const volumes = calculateVolumeForDateRange(history, allExercisesDB, weekStart, weekEnd);
+      // Only store if there's at least one non-zero value
+      const hasData = Object.values(volumes).some(v => v > 0);
+      if (hasData) weekMuscleMap[w] = volumes;
+    }
 
     return weekMuscleMap;
-  }, [history, allExercisesDB, report.timestamp, report.baseLandmarks]);
+  }, [history, allExercisesDB, report.timestamp]);
 
   let currentMonth = 1;
   if (weekToDisplay > 4 && weekToDisplay <= 8) currentMonth = 2;

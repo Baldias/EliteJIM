@@ -57,6 +57,49 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
   return volumes;
 };
 
+/**
+ * Calculate completed sets per muscle group for a specific date range.
+ * Reuses the same category mapping as calculateLast7DaysVolume.
+ * @param {Array} history - workout history array
+ * @param {Array} exercisesDb - exercises database array
+ * @param {number} startTime - start timestamp (inclusive)
+ * @param {number} endTime - end timestamp (exclusive)
+ * @returns {Object} - { muscleName: completedSets }
+ */
+export const calculateVolumeForDateRange = (history, exercisesDb, startTime, endTime) => {
+  const volumes = {};
+  Object.keys(RP_LANDMARKS).forEach(cat => {
+    volumes[cat] = 0;
+  });
+
+  const categoryMap = {};
+  exercisesDb.forEach(ex => {
+    const allCats = [ex.category];
+    if (ex.secondaryCategories) {
+      allCats.push(...ex.secondaryCategories);
+    }
+    categoryMap[normalizeName(ex.name)] = allCats;
+  });
+
+  const rangeWorkouts = history.filter(w => w.startTime >= startTime && w.startTime < endTime);
+
+  rangeWorkouts.forEach(workout => {
+    workout.exercises.forEach(ex => {
+      const categories = categoryMap[normalizeName(ex.name)];
+      if (categories) {
+        const completedSets = ex.sets.filter(s => s.done && !s.isDropset).length;
+        categories.forEach(cat => {
+          if (volumes[cat] !== undefined) {
+            volumes[cat] += completedSets;
+          }
+        });
+      }
+    });
+  });
+
+  return volumes;
+};
+
 export const getVolumeStatus = (sets, category) => {
   const landmarks = RP_LANDMARKS[category];
   if (!landmarks) return { status: 'Unknown', color: '#6b7280', label: 'N/A' }; // gray-500
