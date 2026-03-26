@@ -1,0 +1,268 @@
+.edit-workout-page {
+  min-height: 100vh;
+  background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-workout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.edit-workout-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.edit-workout-back {
+  background: transparent;
+  border: none;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.edit-workout-save {
+  background: var(--primary-color);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.edit-workout-content {
+  padding: 16px;
+  padding-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.edit-row {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface-color-elevated);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.edit-exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edit-exercise-card {
+  background: var(--surface-color);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.edit-exercise-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.edit-exercise-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.edit-exercise-num {
+  background-color: var(--primary-color-dim);
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 700;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.edit-exercise-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.edit-delete-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 59, 48, 0.7);
+  padding: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.edit-sets-table {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.edit-sets-header {
+  display: grid;
+  grid-template-columns: 36px 1fr 1fr 32px;
+  gap: 8px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.edit-set-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 1fr 32px;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.edit-set-num {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.edit-set-input {
+  width: 100%;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  text-align: center;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.edit-set-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.edit-set-delete {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.edit-set-delete:hover {
+  color: rgba(255, 59, 48, 0.8);
+}
+
+.edit-add-set-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.edit-add-exercise-area {
+  margin-top: 4px;
+}
+
+.edit-add-exercise-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary-color-dim);
+  color: var(--primary-color);
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.edit-cancel-add {
+  margin-top: 8px;
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
