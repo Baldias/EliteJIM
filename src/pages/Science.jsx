@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { RefreshCw, Zap, Target, BookOpen, Calendar, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
 import { EXERCISES_DB } from '../data/exercises';
-import { calculateVolumeForDateRange } from '../utils/rpVolume';
+import { calculateScienceVolume } from '../utils/rpVolume';
 import './Science.css';
 import './BossFight.css';
 
@@ -126,23 +126,23 @@ function Dashboard({ report, reset }) {
   const allExercisesDB = useMemo(() => [...EXERCISES_DB, ...customExercises], [customExercises]);
 
   // Calculate actual completed sets per muscle group for each week of the mesocycle
-  // Uses the same counting logic as the Profile page (normalizeName + secondaryCategories)
+  // Uses the same counting logic as the Profile page (primary category only + fuzzy matching)
   const getActualSetsForWeek = useMemo(() => {
     const MS_PER_WEEK_CONST = 7 * 24 * 60 * 60 * 1000;
     const mesoStart = report.timestamp;
     const weekMuscleMap = {};
 
     for (let w = 1; w <= 12; w++) {
-      const weekStart = mesoStart + (w - 1) * MS_PER_WEEK_CONST;
+      // Add 12-hour buffer same as Profile
+      const weekStart = (mesoStart + (w - 1) * MS_PER_WEEK_CONST) - (12 * 60 * 60 * 1000);
       const weekEnd = mesoStart + w * MS_PER_WEEK_CONST;
-      const volumes = calculateVolumeForDateRange(history, allExercisesDB, weekStart, weekEnd);
-      // Only store if there's at least one non-zero value
+      const volumes = calculateScienceVolume(history, allExercisesDB, report.baseLandmarks, weekStart, weekEnd);
       const hasData = Object.values(volumes).some(v => v > 0);
       if (hasData) weekMuscleMap[w] = volumes;
     }
 
     return weekMuscleMap;
-  }, [history, allExercisesDB, report.timestamp]);
+  }, [history, allExercisesDB, report.timestamp, report.baseLandmarks]);
 
   let currentMonth = 1;
   if (weekToDisplay > 4 && weekToDisplay <= 8) currentMonth = 2;

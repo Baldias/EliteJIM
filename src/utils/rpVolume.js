@@ -141,3 +141,65 @@ export const getVolumeStatus = (sets, category) => {
     };
   }
 };
+
+/**
+ * Calculate completed sets per muscle group for a specific date range,
+ * using the EXACT same logic as the Profile's "Obiettivi Settimanali" section.
+ * - Uses ONLY primary category (not secondaryCategories)
+ * - Has fuzzy fallback for unmatched exercises (Spalle, Dorso, Addome)
+ * - Has legacy key mapping for baseLandmarks compatibility
+ */
+export const calculateScienceVolume = (history, exercisesDb, baseLandmarks, startTime, endTime) => {
+  const setsDone = {};
+
+  const legacyMapping = {
+    'Dorso': 'Schiena',
+    'Spalle': 'Spalle (Deltoidi)',
+    'Gambe': 'Quadricipiti'
+  };
+
+  history.forEach(w => {
+    if (Number(w.startTime) < startTime || Number(w.startTime) >= endTime) return;
+
+    w.exercises.forEach(ex => {
+      const normalizedExName = normalizeName(ex.name);
+      let foundEx = exercisesDb.find(e => normalizeName(e.name) === normalizedExName);
+
+      // Only use primary category (same as Profile)
+      let muscles = foundEx?.category ? [foundEx.category] : [];
+
+      // Fuzzy fallback for unmatched exercises
+      if (muscles.length === 0) {
+        const fuzzyName = normalizedExName.toLowerCase();
+        if (fuzzyName.includes('spalle') || fuzzyName.includes('shoulder') || fuzzyName.includes('military') || fuzzyName.includes('lento avanti')) {
+          muscles = ['Spalle'];
+        } else if (fuzzyName.includes('addome') || fuzzyName.includes('core') || fuzzyName.includes('crunch') || fuzzyName.includes('addominali')) {
+          muscles = ['Addome'];
+        } else if (fuzzyName.includes('schiena') || fuzzyName.includes('back') || fuzzyName.includes('lat machine') || fuzzyName.includes('rematore')) {
+          muscles = ['Dorso'];
+        }
+      }
+
+      muscles.forEach(muscle => {
+        let targetKey = null;
+
+        if (baseLandmarks[muscle]) {
+          targetKey = muscle;
+        } else if (legacyMapping[muscle] && baseLandmarks[legacyMapping[muscle]]) {
+          targetKey = legacyMapping[muscle];
+        } else if (muscle === 'Schiena' && baseLandmarks['Dorso']) {
+          targetKey = 'Dorso';
+        } else if (muscle === 'Addominali' && baseLandmarks['Addome']) {
+          targetKey = 'Addome';
+        }
+
+        if (targetKey) {
+          const count = ex.sets.filter(s => s.done && !s.isDropset).length;
+          setsDone[targetKey] = (setsDone[targetKey] || 0) + count;
+        }
+      });
+    });
+  });
+
+  return setsDone;
+};
