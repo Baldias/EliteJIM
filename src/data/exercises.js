@@ -26,7 +26,7 @@ export const EXERCISE_CATEGORIES = {
  * - Replace multiple spaces with a single space
  */
 export const normalizeName = (name) => {
-  if (!name) return '';
+  if (!name || typeof name !== 'string') return '';
   return name.toLowerCase().trim().replace(/\s+/g, ' ');
 };
 
@@ -56,12 +56,14 @@ export const EQUIPMENT_TYPES = {
  * Reads the equipmentType field from the exercise or looks it up in the DB.
  */
 export const getWeightStep = (exercise, allExercisesDb) => {
+  const exName = typeof exercise === 'string' ? exercise : (exercise.name || '');
+  if (!exName) return 2.5; // no name yet, return default
   const dbEx = allExercisesDb
-    ? allExercisesDb.find(e => normalizeName(e.name) === normalizeName(exercise.name || exercise))
+    ? allExercisesDb.find(e => normalizeName(e.name) === normalizeName(exName))
     : null;
   const exObj = dbEx || exercise;
 
-  if (exObj.equipmentType === EQUIPMENT_TYPES.DUMBBELL) return 2;
+  if (exObj && exObj.equipmentType === EQUIPMENT_TYPES.DUMBBELL) return 2;
   return 2.5; // barbell/machine default
 };
 

@@ -26,7 +26,6 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
 
   const sourceData = options || [...EXERCISES_DB, ...customExercises];
 
-  console.log(`[DEBUG] Autocomplete searchTerm: "${searchTerm}", sourceData length: ${sourceData?.length}`);
   const filteredExercises = sourceData.filter(ex => {
     const name = typeof ex === 'string' ? ex : ex.name;
     const categories = typeof ex === 'string' ? [] : getExerciseCategories(ex);
@@ -37,7 +36,7 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
     
     return nameMatch || categoryMatch;
   });
-  console.log(`[DEBUG] Autocomplete filtered: ${filteredExercises.length}`);
+
 
   return (
     <div ref={wrapperRef} className="autocomplete-wrapper">
