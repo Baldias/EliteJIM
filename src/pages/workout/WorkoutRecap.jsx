@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Trophy, Clock, Zap, Target, Flame, ChevronRight, Check } from 'lucide-react';
+import { Trophy, Clock, Zap, Target, Flame, ChevronRight, Check, ShieldCheck, Download } from 'lucide-react';
 import { getRankByXp, getMuscleLevelByXp } from '../../utils/gamification';
 import { EXERCISES_DB } from '../../data/exercises';
 import { RP_LANDMARKS } from '../../utils/rpVolume';
+import { exportDataBackup } from '../../utils/backup';
 import './WorkoutRecap.css';
 
 function WorkoutRecap() {
@@ -16,6 +17,7 @@ function WorkoutRecap() {
   const muscleXPState = useStore(state => state.muscleXP) || {};
 
   const [showAnimations, setShowAnimations] = useState(false);
+  const [backupSaved, setBackupSaved] = useState(false);
 
   useEffect(() => {
     if (!recapData) {
@@ -311,6 +313,67 @@ function WorkoutRecap() {
               }}></div>
             </div>
           </div>
+        </div>
+
+        {/* Quick Backup Card */}
+        <div className="recap-card glass" style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          padding: '1.2rem 1.25rem',
+          borderRadius: '20px',
+          border: `1px solid ${backupSaved ? 'rgba(52, 199, 89, 0.4)' : 'rgba(255,255,255,0.08)'}`,
+          background: backupSaved ? 'rgba(52, 199, 89, 0.05)' : 'rgba(255,255,255,0.02)',
+          transition: 'all 0.3s ease'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ 
+              width: '40px', 
+              height: '40px', 
+              borderRadius: '12px', 
+              background: backupSaved ? 'rgba(52, 199, 89, 0.15)' : 'rgba(var(--primary-color-rgb), 0.15)',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: `1px solid ${backupSaved ? 'rgba(52, 199, 89, 0.3)' : 'rgba(var(--primary-color-rgb), 0.3)'}`,
+              flexShrink: 0
+            }}>
+              {backupSaved ? <Check size={20} color="#34c759" /> : <ShieldCheck size={20} color="var(--primary-color)" />}
+            </div>
+            <div>
+              <p style={{ margin: 0, fontWeight: '700', fontSize: '0.95rem', color: '#fff' }}>
+                {backupSaved ? 'Backup Salvato!' : 'Salvataggio Dati'}
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                {backupSaved ? 'Copia di sicurezza scaricata' : 'Salva offline la sessione e l\'XP'}
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              const res = exportDataBackup();
+              if (res) setBackupSaved(true);
+            }}
+            disabled={backupSaved}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '12px',
+              background: backupSaved ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255,255,255,0.08)',
+              border: `1px solid ${backupSaved ? '#34c759' : 'rgba(255,255,255,0.15)'}`,
+              color: backupSaved ? '#34c759' : '#fff',
+              fontSize: '0.8rem',
+              fontWeight: '700',
+              cursor: backupSaved ? 'default' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+              flexShrink: 0
+            }}
+          >
+            {backupSaved ? <Check size={16} /> : <Download size={16} />}
+            {backupSaved ? 'Salvato' : 'Scarica'}
+          </button>
         </div>
 
       </div>

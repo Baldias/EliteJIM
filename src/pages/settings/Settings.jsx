@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ArrowLeft, ChevronRight, Dumbbell, Dna, Info, Download, Upload, Zap } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Dumbbell, Dna, Info, Download, Upload, Zap, ShieldCheck, HardDrive, Check, Clock } from 'lucide-react';
 import { EXERCISES_DB } from '../../data/exercises';
 import { recalculateTotalXpFromHistory } from '../../utils/gamification';
+import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import './Settings.css';
 
 function Settings() {
@@ -11,46 +12,41 @@ function Settings() {
   const showScience = useStore(state => state.showScience);
   const toggleScience = useStore(state => state.toggleScience);
   const syncGamificationWithHistory = useStore(state => state.syncGamificationWithHistory);
+  
+  const autoBackupEnabled = useStore(state => state.autoBackupEnabled ?? true);
+  const autoBackupFrequency = useStore(state => state.autoBackupFrequency || 'after_workout');
+  const lastBackupDate = useStore(state => state.lastBackupDate);
+  const isStoragePersisted = useStore(state => state.isStoragePersisted);
+  const setAutoBackupSettings = useStore(state => state.setAutoBackupSettings);
+
+  const [exportSuccess, setExportSuccess] = useState(false);
+  const [persistenceLoading, setPersistenceLoading] = useState(false);
   const fileInputRef = React.useRef(null);
 
   const handleExport = () => {
-    const data = localStorage.getItem('elitejim-storage');
-    if (!data) {
-      alert("Nessun dato trovato da esportare.");
-      return;
+    const success = exportDataBackup();
+    if (success) {
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 2500);
     }
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `EliteJIM_Backup_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleImport = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target.result;
-        const parsed = JSON.parse(content);
-        if (!parsed.state) {
-          alert("Il file non sembra essere un backup di EliteJIM valido.");
-          return;
-        }
-        if (window.confirm("Attenzione: Importare questo file sovrascriverà tutte le tue schede e la cronologia attuali. Sei sicuro di voler procedere?")) {
-          localStorage.setItem('elitejim-storage', JSON.stringify(parsed));
-          window.location.reload();
-        }
-      } catch (err) {
-        alert("Errore durante la lettura del file: " + err.message);
-      }
-    };
-    reader.readAsText(file);
+    importDataBackup(file);
     event.target.value = '';
+  };
+
+  const handleRequestStoragePersistence = async () => {
+    setPersistenceLoading(true);
+    const granted = await initPersistentStorage();
+    setPersistenceLoading(false);
+    if (granted) {
+      alert("Protezione Memoria Locale attivata con successo!");
+    } else {
+      alert("Il browser non ha concesso la persistenza automatica o non supporta la richiesta manuale.");
+    }
   };
 
   const loadTestData = () => {
@@ -208,18 +204,144 @@ function Settings() {
 
         {/* Sync & Backup Section */}
         <div className="card glass data-management" style={{ borderRadius: '24px', marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: '#fff' }}>Sicurezza Dati</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.4 }}>
-            Mantieni i tuoi progressi al sicuro esportando il backup o sincronizzando un file esistente.
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <h3 style={{ fontSize: '1.15rem', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck size={20} color="var(--primary-color)" /> Sicurezza & Backup Dati
+            </h3>
+            {isStoragePersisted && (
+              <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '12px', background: 'rgba(52, 199, 89, 0.15)', color: '#34c759', fontWeight: '700', border: '1px solid rgba(52, 199, 89, 0.3)' }}>
+                ✓ Memoria Protetta
+              </span>
+            )}
+          </div>
+
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.4 }}>
+            Salva una copia offline dei tuoi dati per proteggere schede, progressi e XP in caso di cancellazione dell'app.
           </p>
 
+          {/* Ultimo Backup & Stato Memoria */}
+          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '1rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+              <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Clock size={15} /> Ultimo backup:
+              </span>
+              <strong style={{ color: lastBackupDate ? '#fff' : 'var(--text-muted)' }}>
+                {formatLastBackupDate(lastBackupDate)}
+              </strong>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+              <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <HardDrive size={15} /> Archiviazione PWA:
+              </span>
+              <span style={{ color: isStoragePersisted ? '#34c759' : '#ff9500', fontWeight: '700' }}>
+                {isStoragePersisted ? 'Persistente (sicura)' : 'Standard'}
+              </span>
+            </div>
+
+            {!isStoragePersisted && (
+              <button
+                onClick={handleRequestStoragePersistence}
+                disabled={persistenceLoading}
+                style={{
+                  marginTop: '4px',
+                  background: 'rgba(255,149,0,0.1)',
+                  border: '1px solid rgba(255,149,0,0.25)',
+                  color: '#ff9500',
+                  padding: '6px 10px',
+                  borderRadius: '10px',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                {persistenceLoading ? 'Verifica in corso...' : '🔒 Attiva Protezione Memoria Permanente'}
+              </button>
+            )}
+          </div>
+
+          {/* Impostazioni Promemoria Backup */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#fff' }}>
+                Promemoria Backup Automatico
+              </span>
+              <div 
+                onClick={() => setAutoBackupSettings({ autoBackupEnabled: !autoBackupEnabled })}
+                style={{
+                  width: '46px', height: '26px', 
+                  background: autoBackupEnabled ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)',
+                  borderRadius: '20px', position: 'relative', cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                <div style={{
+                  width: '20px', height: '20px', background: '#fff',
+                  borderRadius: '50%', position: 'absolute', top: '3px',
+                  left: autoBackupEnabled ? '23px' : '3px',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }} />
+              </div>
+            </div>
+
+            {autoBackupEnabled && (
+              <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                {[
+                  { key: 'after_workout', label: 'Fine Workout' },
+                  { key: 'weekly', label: 'Settimanale' },
+                  { key: 'monthly', label: 'Mensile' }
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setAutoBackupSettings({ autoBackupFrequency: opt.key })}
+                    style={{
+                      flex: 1,
+                      padding: '8px 4px',
+                      borderRadius: '10px',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      background: autoBackupFrequency === opt.key ? 'rgba(var(--primary-color-rgb), 0.2)' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${autoBackupFrequency === opt.key ? 'var(--primary-color)' : 'rgba(255,255,255,0.08)'}`,
+                      color: autoBackupFrequency === opt.key ? 'var(--primary-color)' : 'var(--text-muted)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Azioni Esporta & Importa */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '1rem' }}>
-            <button className="btn-secondary" onClick={handleExport} style={{ flex: 1, padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}>
-              <Upload size={18} /> Esporta
+            <button 
+              className="btn-primary" 
+              onClick={handleExport} 
+              style={{ 
+                flex: 1, padding: '12px', borderRadius: '12px', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
+                background: exportSuccess ? '#34c759' : 'var(--primary-color)', 
+                border: 'none', color: exportSuccess ? '#fff' : '#000', fontWeight: '800' 
+              }}
+            >
+              {exportSuccess ? <Check size={18} /> : <Download size={18} />} 
+              {exportSuccess ? 'Scaricato!' : 'Salva Backup'}
             </button>
 
-            <button className="btn-primary" onClick={() => fileInputRef.current?.click()} style={{ flex: 1, padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--primary-color)', border: 'none', color: '#000', fontWeight: '700' }}>
-              <Download size={18} /> Importa
+            <button 
+              className="btn-secondary" 
+              onClick={() => fileInputRef.current?.click()} 
+              style={{ 
+                flex: 1, padding: '12px', borderRadius: '12px', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' 
+              }}
+            >
+              <Upload size={18} /> Ripristina
             </button>
             <input
               type="file"
@@ -230,6 +352,7 @@ function Settings() {
             />
           </div>
 
+          {/* Dati Demo e Sincronizzazione */}
           <div style={{ display: 'flex', gap: '12px' }}>
             <button 
               className="btn-ghost" 

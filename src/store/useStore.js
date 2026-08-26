@@ -58,6 +58,18 @@ export const useStore = create(
       lastWorkoutDate: null,
       recapData: null,
       showScience: true,
+      // --- Backup & Storage State ---
+      autoBackupEnabled: true,
+      autoBackupFrequency: 'after_workout', // 'after_workout' | 'weekly' | 'monthly'
+      lastBackupDate: null,
+      dismissedBackupReminderUntil: null,
+      isStoragePersisted: false,
+
+      // --- Backup & Storage Actions ---
+      setAutoBackupSettings: (settings) => set((state) => ({ ...state, ...settings })),
+      recordBackupExported: () => set({ lastBackupDate: Date.now(), dismissedBackupReminderUntil: null }),
+      setStoragePersisted: (isPersisted) => set({ isStoragePersisted: isPersisted }),
+      snoozeBackupReminder: (hours = 24) => set({ dismissedBackupReminderUntil: Date.now() + (hours * 60 * 60 * 1000) }),
 
       // --- Gamification Actions ---
       clearRecapData: () => set({ recapData: null }),

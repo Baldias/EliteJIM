@@ -1,0 +1,128 @@
+.backup-banner-container {
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, rgba(0, 126, 167, 0.15) 0%, rgba(0, 126, 167, 0.05) 100%);
+  border: 1px solid rgba(0, 126, 167, 0.35);
+  border-radius: 20px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  animation: slideDownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.backup-banner-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 4px 0 0 4px;
+}
+
+.backup-banner-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.backup-banner-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backup-banner-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(var(--primary-color-rgb), 0.15);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.backup-banner-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.backup-banner-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+  line-height: 1.35;
+}
+
+.backup-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.backup-banner-btn-save {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--primary-color);
+  color: #000;
+  border: none;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.backup-banner-btn-save:active {
+  transform: scale(0.97);
+}
+
+.backup-banner-btn-save.success {
+  background: #34c759;
+  color: #fff;
+}
+
+.backup-banner-btn-later {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.backup-banner-btn-later:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

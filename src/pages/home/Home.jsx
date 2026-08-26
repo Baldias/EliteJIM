@@ -5,6 +5,7 @@ import { Plus, Play, Dumbbell, ChevronRight, Zap, Bell, CheckCircle2, Trash2, Ed
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { InteractiveBody } from '../../components/InteractiveBody';
 import { WelcomeBack } from '../../components/WelcomeBack';
+import { BackupReminderBanner } from '../../components/BackupReminderBanner';
 import { EXERCISES_DB } from '../../data/exercises';
 import pkg from '../../../package.json';
 
@@ -74,6 +75,9 @@ function Home() {
       </header>
 
       <main className="app-main" style={{ paddingBottom: '140px' }}>
+        {/* ── BACKUP REMINDER BANNER ───────────────────── */}
+        <BackupReminderBanner />
+
         {/* ── ALLENAMENTO IN CORSO ─────────────────────── */}
         {activeWorkout && (
           <div onClick={() => navigate('/workout')} style={{

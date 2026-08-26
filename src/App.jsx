@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, TrendingUp, User, Dna } from 'lucide-react';
 import { useStore } from './store/useStore';
+import { initPersistentStorage } from './utils/backup';
 import Home from './pages/home/Home';
 import Workout from './pages/workout/Workout';
 import ProgressOverload from './pages/progress/ProgressOverload';
@@ -50,6 +51,10 @@ function Navigation() {
 }
 
 function App() {
+  useEffect(() => {
+    initPersistentStorage();
+  }, []);
+
   return (
     <BrowserRouter>
       <div className="app-container">
