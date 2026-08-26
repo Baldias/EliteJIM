@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { ShieldCheck, Download, Check, X } from 'lucide-react';
+import { ShieldCheck, Download, Check, FileCheck } from 'lucide-react';
 import { exportDataBackup, shouldShowBackupBanner } from '../utils/backup';
 import './BackupReminderBanner.css';
 
@@ -21,7 +21,7 @@ export function BackupReminderBanner() {
       setSavedSuccess(true);
       setTimeout(() => {
         setSavedSuccess(false);
-      }, 2500);
+      }, 3000);
     }
   };
 
@@ -31,20 +31,22 @@ export function BackupReminderBanner() {
   };
 
   return (
-    <div className="backup-banner-container">
+    <div className={`backup-banner-container ${savedSuccess ? 'is-success' : ''}`}>
+      <div className="backup-banner-accent-bar" />
       <div className="backup-banner-header">
         <div className="backup-banner-info">
-          <div className="backup-banner-icon" style={{ borderColor: savedSuccess ? '#34c759' : undefined }}>
-            {savedSuccess ? <Check size={20} color="#34c759" /> : <ShieldCheck size={20} />}
+          <div className="backup-banner-icon">
+            {savedSuccess ? <Check size={22} /> : <ShieldCheck size={22} />}
           </div>
           <div>
             <h4 className="backup-banner-title">
-              {savedSuccess ? 'Backup Salvato con Successo!' : 'Proteggi i tuoi Progressi'}
+              {savedSuccess ? 'Backup Salvato!' : 'Proteggi i tuoi Dati'}
+              <span className="backup-banner-badge">EliteJIM_Backup.json</span>
             </h4>
             <p className="backup-banner-desc">
               {savedSuccess 
-                ? 'I tuoi allenamenti sono al sicuro nel tuo dispositivo.'
-                : 'Salva una copia offline dei tuoi dati per non perderli mai.'}
+                ? 'File scaricato e aggiornato sul tuo dispositivo.'
+                : 'Salva una copia offline per non perdere mai schede e XP.'}
             </p>
           </div>
         </div>
@@ -53,7 +55,7 @@ export function BackupReminderBanner() {
       {!savedSuccess && (
         <div className="backup-banner-actions">
           <button className="backup-banner-btn-save" onClick={handleQuickBackup}>
-            <Download size={16} /> Salva Backup (1 tap)
+            <Download size={17} /> Salva Backup (1 tap)
           </button>
           <button className="backup-banner-btn-later" onClick={handleSnooze}>
             Più tardi

@@ -203,39 +203,48 @@ function Settings() {
         </div>
 
         {/* Sync & Backup Section */}
-        <div className="card glass data-management" style={{ borderRadius: '24px', marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="card glass backup-hub-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <h3 style={{ fontSize: '1.15rem', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={20} color="var(--primary-color)" /> Sicurezza & Backup Dati
+            <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', letterSpacing: '-0.3px' }}>
+              <ShieldCheck size={22} color="var(--primary-color)" /> Sicurezza & Backup Dati
             </h3>
             {isStoragePersisted && (
-              <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '12px', background: 'rgba(52, 199, 89, 0.15)', color: '#34c759', fontWeight: '700', border: '1px solid rgba(52, 199, 89, 0.3)' }}>
-                ✓ Memoria Protetta
+              <span className="backup-storage-pill persisted">
+                ● Memoria Protetta
               </span>
             )}
           </div>
 
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.4 }}>
-            Salva una copia offline dei tuoi dati per proteggere schede, progressi e XP in caso di cancellazione dell'app.
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.45 }}>
+            Salva una copia offline per proteggere schede, progressi e XP anche se elimini la PWA.
           </p>
 
           {/* Ultimo Backup & Stato Memoria */}
-          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '1rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-              <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Clock size={15} /> Ultimo backup:
+          <div className="backup-status-panel">
+            <div className="backup-status-row">
+              <span className="backup-status-label">
+                <Clock size={16} /> Ultimo backup:
               </span>
-              <strong style={{ color: lastBackupDate ? '#fff' : 'var(--text-muted)' }}>
+              <strong className="backup-status-val">
                 {formatLastBackupDate(lastBackupDate)}
               </strong>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-              <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <HardDrive size={15} /> Archiviazione PWA:
+            <div className="backup-status-row">
+              <span className="backup-status-label">
+                <HardDrive size={16} /> File di destinazione:
               </span>
-              <span style={{ color: isStoragePersisted ? '#34c759' : '#ff9500', fontWeight: '700' }}>
-                {isStoragePersisted ? 'Persistente (sicura)' : 'Standard'}
+              <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}>
+                EliteJIM_Backup.json
+              </span>
+            </div>
+
+            <div className="backup-status-row">
+              <span className="backup-status-label">
+                <ShieldCheck size={16} /> Archiviazione PWA:
+              </span>
+              <span className={`backup-storage-pill ${isStoragePersisted ? 'persisted' : 'standard'}`}>
+                {isStoragePersisted ? '● Persistente (Protetta)' : '○ Standard'}
               </span>
             </div>
 
@@ -244,16 +253,17 @@ function Settings() {
                 onClick={handleRequestStoragePersistence}
                 disabled={persistenceLoading}
                 style={{
-                  marginTop: '4px',
-                  background: 'rgba(255,149,0,0.1)',
-                  border: '1px solid rgba(255,149,0,0.25)',
+                  marginTop: '6px',
+                  background: 'rgba(255,149,0,0.12)',
+                  border: '1px solid rgba(255,149,0,0.3)',
                   color: '#ff9500',
-                  padding: '6px 10px',
-                  borderRadius: '10px',
-                  fontSize: '0.75rem',
+                  padding: '8px 12px',
+                  borderRadius: '12px',
+                  fontSize: '0.78rem',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {persistenceLoading ? 'Verifica in corso...' : '🔒 Attiva Protezione Memoria Permanente'}
@@ -263,31 +273,32 @@ function Settings() {
 
           {/* Impostazioni Promemoria Backup */}
           <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>
                 Promemoria Backup Automatico
               </span>
               <div 
                 onClick={() => setAutoBackupSettings({ autoBackupEnabled: !autoBackupEnabled })}
                 style={{
-                  width: '46px', height: '26px', 
-                  background: autoBackupEnabled ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)',
+                  width: '48px', height: '28px', 
+                  background: autoBackupEnabled ? 'var(--primary-color)' : 'rgba(255,255,255,0.12)',
                   borderRadius: '20px', position: 'relative', cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  border: '1px solid rgba(255,255,255,0.1)'
                 }}
               >
                 <div style={{
-                  width: '20px', height: '20px', background: '#fff',
-                  borderRadius: '50%', position: 'absolute', top: '3px',
-                  left: autoBackupEnabled ? '23px' : '3px',
+                  width: '22px', height: '22px', background: '#fff',
+                  borderRadius: '50%', position: 'absolute', top: '2px',
+                  left: autoBackupEnabled ? '23px' : '2px',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
                 }} />
               </div>
             </div>
 
             {autoBackupEnabled && (
-              <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+              <div className="backup-frequency-selector">
                 {[
                   { key: 'after_workout', label: 'Fine Workout' },
                   { key: 'weekly', label: 'Settimanale' },
@@ -296,18 +307,7 @@ function Settings() {
                   <button
                     key={opt.key}
                     onClick={() => setAutoBackupSettings({ autoBackupFrequency: opt.key })}
-                    style={{
-                      flex: 1,
-                      padding: '8px 4px',
-                      borderRadius: '10px',
-                      fontSize: '0.75rem',
-                      fontWeight: '700',
-                      background: autoBackupFrequency === opt.key ? 'rgba(var(--primary-color-rgb), 0.2)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${autoBackupFrequency === opt.key ? 'var(--primary-color)' : 'rgba(255,255,255,0.08)'}`,
-                      color: autoBackupFrequency === opt.key ? 'var(--primary-color)' : 'var(--text-muted)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
+                    className={`backup-freq-btn ${autoBackupFrequency === opt.key ? 'active' : ''}`}
                   >
                     {opt.label}
                   </button>
@@ -319,27 +319,16 @@ function Settings() {
           {/* Azioni Esporta & Importa */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '1rem' }}>
             <button 
-              className="btn-primary" 
+              className={`backup-btn-export ${exportSuccess ? 'success' : ''}`}
               onClick={handleExport} 
-              style={{ 
-                flex: 1, padding: '12px', borderRadius: '12px', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
-                background: exportSuccess ? '#34c759' : 'var(--primary-color)', 
-                border: 'none', color: exportSuccess ? '#fff' : '#000', fontWeight: '800' 
-              }}
             >
               {exportSuccess ? <Check size={18} /> : <Download size={18} />} 
               {exportSuccess ? 'Scaricato!' : 'Salva Backup'}
             </button>
 
             <button 
-              className="btn-secondary" 
+              className="backup-btn-import"
               onClick={() => fileInputRef.current?.click()} 
-              style={{ 
-                flex: 1, padding: '12px', borderRadius: '12px', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' 
-              }}
             >
               <Upload size={18} /> Ripristina
             </button>
