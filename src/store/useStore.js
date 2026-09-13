@@ -150,6 +150,18 @@ export const useStore = create(
       startWorkout: (template) => {
         const history = get().history;
 
+        // Helper: find the most recent past sets for a given exercise name
+        const findLastSets = (exerciseName) => {
+          const norm = normalizeName(exerciseName);
+          for (const w of history) {
+            const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
+            if (pastEx && pastEx.sets && pastEx.sets.length > 0) {
+              return pastEx.sets;
+            }
+          }
+          return null;
+        };
+
         // Build a fresh session from a template
         const session = {
           id: Date.now(),
@@ -157,18 +169,19 @@ export const useStore = create(
           name: template ? template.name : 'Allenamento Libero',
           startTime: Date.now(),
           exercises: template ? template.exercises.map(ex => {
-            const bestData = findLastBest1RMSet(history, ex.name);
-            const bestSet = bestData?.set;
+            const pastSets = findLastSets(ex.name);
             return {
               id: Date.now() + Math.random(),
               name: ex.name,
-              notes: ex.notes !== undefined ? ex.notes : (bestData?.notes || ''),
+              notes: ex.notes !== undefined ? ex.notes : '',
               restTime: ex.restTime || 60,
+              isAdded: false,
               sets: Array.from({ length: parseInt(ex.setsCount) || 1 }, (_, i) => {
+                const pastSet = pastSets && pastSets[i] ? pastSets[i] : (pastSets ? pastSets[pastSets.length - 1] : null);
                 return {
                   id: Date.now() + i + Math.random(),
-                  kg: bestSet ? (bestSet.kg || '') : '',
-                  reps: bestSet ? (bestSet.reps || '') : '',
+                  kg: pastSet ? (pastSet.kg || '') : '',
+                  reps: pastSet ? (pastSet.reps || '') : '',
                   targetReps: ex.targetReps,
                   done: false
                 };
@@ -229,6 +242,7 @@ export const useStore = create(
             name: name || '',
             notes: initialNotes,
             restTime: 60, // default
+            isAdded: true,
             sets: [{
               id: Date.now() + 1,
               kg: bestSet ? (bestSet.kg || '') : '',

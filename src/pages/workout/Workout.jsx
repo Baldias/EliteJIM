@@ -83,13 +83,20 @@ function Workout() {
       if (!state.activeWorkout) return state;
       const hist = state.history || [];
       const templates = state.templates || [];
-      const bestData = findLastBest1RMSet(hist, newName);
+      const targetEx = state.activeWorkout.exercises.find(e => e.id === exerciseId);
+      const isAdded = targetEx?.isAdded;
+
+      const norm = normalizeName(newName);
+      const pastWk = hist.find(w => w.exercises?.some(e => normalizeName(e.name) === norm));
+      const pastEx = pastWk?.exercises?.find(e => normalizeName(e.name) === norm);
+
+      const bestData = isAdded ? findLastBest1RMSet(hist, newName) : null;
       const bestSet = bestData?.set;
 
-      let initialNotes = bestData?.notes || '';
+      let initialNotes = bestData?.notes || pastEx?.notes || '';
       if (!initialNotes) {
         for (const tpl of templates) {
-          const found = tpl.exercises?.find(e => normalizeName(e.name) === normalizeName(newName));
+          const found = tpl.exercises?.find(e => normalizeName(e.name) === norm);
           if (found?.notes) {
             initialNotes = found.notes;
             break;
@@ -102,9 +109,14 @@ function Workout() {
           ...state.activeWorkout,
           exercises: state.activeWorkout.exercises.map(ex => {
             if (ex.id !== exerciseId) return ex;
-            const sets = ex.sets.map((s) => {
-              if (!s.kg && !s.reps && bestSet) {
-                return { ...s, kg: bestSet.kg || '', reps: bestSet.reps || '' };
+            const sets = ex.sets.map((s, i) => {
+              if (!s.kg && !s.reps) {
+                if (isAdded && bestSet) {
+                  return { ...s, kg: bestSet.kg || '', reps: bestSet.reps || '' };
+                } else if (!isAdded && pastEx?.sets?.length > 0) {
+                  const ps = pastEx.sets[i] || pastEx.sets[pastEx.sets.length - 1];
+                  return { ...s, kg: ps.kg || '', reps: ps.reps || '' };
+                }
               }
               return s;
             });
@@ -262,8 +274,8 @@ function Workout() {
                 </div>
               </div>
 
-              {/* Best 1RM reference row */}
-              {best1RMData && best1RMData.set && (
+              {/* Best 1RM reference row - only for added exercises */}
+              {ex.isAdded && best1RMData && best1RMData.set && (
                 <div style={{
                   padding: '6px 12px',
                   background: 'rgba(0, 184, 212, 0.05)',
