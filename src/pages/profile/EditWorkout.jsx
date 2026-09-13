@@ -54,9 +54,11 @@ function EditWorkout() {
   };
 
   const hndRmSet = (exId, setId) => {
-    setDraftExercises(p => p.map(ex => ex.id === exId ? {
-      ...ex, sets: ex.sets.filter(s => s.id !== setId)
-    } : ex));
+    if (window.confirm("Eliminare questa serie?")) {
+      setDraftExercises(p => p.map(ex => ex.id === exId ? {
+        ...ex, sets: ex.sets.filter(s => s.id !== setId)
+      } : ex));
+    }
   };
 
   const hndRmEx = (exId) => {

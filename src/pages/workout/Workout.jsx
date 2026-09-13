@@ -268,7 +268,15 @@ function Workout() {
                     <FileText size={13} />
                     <span>{ex.notes ? 'Nota' : '+ Nota'}</span>
                   </button>
-                  <button onClick={() => { if (window.confirm('Eliminare?')) deleteExercise(ex.id); }} style={{ background: 'transparent', border: 'none', padding: '3px', color: 'rgba(255,59,48,0.5)', display: 'flex' }}>
+                  <button
+                    onClick={() => {
+                      const exName = ex.name?.trim() ? `l'esercizio "${ex.name}"` : 'questo esercizio';
+                      if (window.confirm(`Sei sicuro di voler eliminare ${exName} dalla sessione?`)) {
+                        deleteExercise(ex.id);
+                      }
+                    }}
+                    style={{ background: 'transparent', border: 'none', padding: '3px', color: 'rgba(255,59,48,0.5)', display: 'flex' }}
+                  >
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -335,7 +343,11 @@ function Workout() {
                 </div>
 
                 {ex.sets.map((set, sIdx) => (
-                  <SwipeToDelete key={set.id} onDelete={() => deleteSet(ex.id, set.id)}>
+                  <SwipeToDelete key={set.id} onDelete={() => {
+                    if (window.confirm(`Eliminare la serie ${set.isDropset ? 'Drop' : sIdx + 1}?`)) {
+                      deleteSet(ex.id, set.id);
+                    }
+                  }}>
                     <div style={{
                       display: 'grid', gridTemplateColumns: '24px 1fr 1fr 42px',
                       gap: '6px', alignItems: 'center', marginBottom: '5px',

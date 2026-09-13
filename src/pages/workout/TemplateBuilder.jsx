@@ -288,7 +288,12 @@ function TemplateBuilder() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => rmEx(ex.id)}
+                      onClick={() => {
+                        const exName = ex.name?.trim() ? `l'esercizio "${ex.name}"` : 'questo esercizio';
+                        if (window.confirm(`Sei sicuro di voler eliminare ${exName} dalla scheda?`)) {
+                          rmEx(ex.id);
+                        }
+                      }}
                       title="Elimina"
                       style={{
                         background: 'rgba(255,59,48,0.1)',

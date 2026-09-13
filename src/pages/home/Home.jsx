@@ -153,7 +153,12 @@ function Home() {
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
-                      onClick={(e) => { e.stopPropagation(); deleteTemplate(template.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Sei sicuro di voler eliminare la scheda "${template.name}"?\nQuesta azione è irreversibile.`)) {
+                          deleteTemplate(template.id);
+                        }
+                      }}
                       style={{
                         background: 'rgba(255, 59, 48, 0.1)',
                         border: '1px solid rgba(255, 59, 48, 0.3)', borderRadius: '14px',
