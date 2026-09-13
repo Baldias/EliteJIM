@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Plus, ArrowLeft, Check, Trash2, FileText, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Trash2, FileText, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
-import { SwipeToReorder } from '../../components/SwipeToReorder';
 
 const REPS_PRESETS = ['4-6', '6-8', '8-10', '10-12', '12-15', '15-20'];
 
@@ -38,6 +37,9 @@ function TemplateBuilder() {
       ? (editTemplateData.exercises || []).map((ex, i) => ({ ...ex, id: ex.id || `ex-${Date.now()}-${i}`, notes: ex.notes || '' }))
       : []
   );
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const dragTouchRef = useRef(null);
 
   const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90, notes: '' }]);
   const updEx = (id, field, val) => setExercises(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
@@ -131,124 +133,237 @@ function TemplateBuilder() {
                 ESERCIZI ({exercises.length})
               </p>
               <span style={{ fontSize: '0.65rem', color: '#00b8d4', fontWeight: '600' }}>
-                ← Scorri a sx per spostare l'ordine
+                Trascina o usa i tasti ▲ ▼
               </span>
             </div>
 
             {exercises.map((ex, idx) => (
-              <SwipeToReorder
+              <div
                 key={ex.id || idx}
-                isFirst={idx === 0}
-                isLast={idx === exercises.length - 1}
-                onMoveUp={() => moveEx(idx, idx - 1)}
-                onMoveDown={() => moveEx(idx, idx + 1)}
-              >
-                <div style={{
-                  background: 'rgba(255,255,255,0.025)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                data-exercise-index={idx}
+                draggable
+                onDragStart={(e) => {
+                  if (e.target.closest('input') || e.target.closest('button')) {
+                    e.preventDefault();
+                    return;
+                  }
+                  setDraggedIndex(idx);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dragOverIndex !== idx) setDragOverIndex(idx);
+                }}
+                onDragLeave={() => {
+                  if (dragOverIndex === idx) setDragOverIndex(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggedIndex !== null && draggedIndex !== idx) {
+                    moveEx(draggedIndex, idx);
+                  }
+                  setDraggedIndex(null);
+                  setDragOverIndex(null);
+                }}
+                onDragEnd={() => {
+                  setDraggedIndex(null);
+                  setDragOverIndex(null);
+                }}
+                style={{
+                  background: dragOverIndex === idx ? 'rgba(0, 184, 212, 0.08)' : 'rgba(255,255,255,0.025)',
+                  border: dragOverIndex === idx ? '2px dashed #00b8d4' : '1px solid rgba(255,255,255,0.06)',
                   borderRadius: '14px',
-                  position: 'relative', zIndex: exercises.length - idx
-                }}>
-                  {/* Name row */}
-                  <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    {/* Position and quick move buttons */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                      <span style={{ minWidth: '22px', height: '22px', borderRadius: '7px', background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)' }}>
-                        {idx + 1}
-                      </span>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); moveEx(idx, idx - 1); }}
-                          disabled={idx === 0}
-                          style={{
-                            background: 'transparent', border: 'none', padding: '0 2px',
-                            color: idx === 0 ? 'rgba(255,255,255,0.1)' : 'rgba(0,184,212,0.8)',
-                            cursor: idx === 0 ? 'default' : 'pointer', lineHeight: 1
-                          }}
-                        >
-                          <ChevronUp size={12} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); moveEx(idx, idx + 1); }}
-                          disabled={idx === exercises.length - 1}
-                          style={{
-                            background: 'transparent', border: 'none', padding: '0 2px',
-                            color: idx === exercises.length - 1 ? 'rgba(255,255,255,0.1)' : 'rgba(0,184,212,0.8)',
-                            cursor: idx === exercises.length - 1 ? 'default' : 'pointer', lineHeight: 1
-                          }}
-                        >
-                          <ChevronDown size={12} />
-                        </button>
-                      </div>
-                    </div>
+                  marginBottom: '12px',
+                  position: 'relative',
+                  zIndex: exercises.length - idx,
+                  opacity: draggedIndex === idx ? 0.4 : 1,
+                  transform: draggedIndex === idx ? 'scale(0.98)' : 'none',
+                  transition: 'all 0.2s cubic-bezier(0.2, 0, 0, 1)'
+                }}
+              >
+                {/* Name row */}
+                <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  {/* Drag handle and index number */}
+                  <div
+                    title="Trascina per riordinare"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'grab',
+                      touchAction: 'none'
+                    }}
+                    onTouchStart={(e) => {
+                      const touch = e.touches[0];
+                      dragTouchRef.current = { startY: touch.clientY, fromIndex: idx };
+                      setDraggedIndex(idx);
+                    }}
+                    onTouchMove={(e) => {
+                      if (!dragTouchRef.current) return;
+                      const touch = e.touches[0];
+                      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                      const targetCard = el?.closest('[data-exercise-index]');
+                      if (targetCard) {
+                        const targetIdx = parseInt(targetCard.getAttribute('data-exercise-index'), 10);
+                        if (!isNaN(targetIdx) && targetIdx !== dragOverIndex) {
+                          setDragOverIndex(targetIdx);
+                        }
+                      }
+                    }}
+                    onTouchEnd={() => {
+                      if (dragTouchRef.current && dragOverIndex !== null && dragOverIndex !== dragTouchRef.current.fromIndex) {
+                        moveEx(dragTouchRef.current.fromIndex, dragOverIndex);
+                      }
+                      dragTouchRef.current = null;
+                      setDragOverIndex(null);
+                      setDraggedIndex(null);
+                    }}
+                  >
+                    <GripVertical size={16} color="rgba(255,255,255,0.3)" />
+                    <span style={{
+                      minWidth: '24px',
+                      height: '24px',
+                      borderRadius: '7px',
+                      background: 'rgba(255,255,255,0.07)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.72rem',
+                      fontWeight: '800',
+                      color: 'rgba(255,255,255,0.6)'
+                    }}>
+                      {idx + 1}
+                    </span>
+                  </div>
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <ExerciseAutocomplete value={ex.name} onChange={val => updEx(ex.id, 'name', val)} placeholder="Cerca esercizio…" />
-                    </div>
-                    <button onClick={() => rmEx(ex.id)} style={{ background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: '8px', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,59,48,0.7)', flexShrink: 0 }}>
-                      <Trash2 size={13} />
+                  {/* Autocomplete input */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <ExerciseAutocomplete value={ex.name} onChange={val => updEx(ex.id, 'name', val)} placeholder="Cerca esercizio…" />
+                  </div>
+
+                  {/* Bigger Up & Down buttons + Trash button */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => moveEx(idx, idx - 1)}
+                      disabled={idx === 0}
+                      title="Sposta Su"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: idx === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(0,184,212,0.12)',
+                        border: idx === 0 ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,184,212,0.3)',
+                        color: idx === 0 ? 'rgba(255,255,255,0.15)' : '#00e5ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: idx === 0 ? 'default' : 'pointer',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <ChevronUp size={18} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveEx(idx, idx + 1)}
+                      disabled={idx === exercises.length - 1}
+                      title="Sposta Giù"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: idx === exercises.length - 1 ? 'rgba(255,255,255,0.02)' : 'rgba(0,184,212,0.12)',
+                        border: idx === exercises.length - 1 ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,184,212,0.3)',
+                        color: idx === exercises.length - 1 ? 'rgba(255,255,255,0.15)' : '#00e5ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: idx === exercises.length - 1 ? 'default' : 'pointer',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <ChevronDown size={18} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => rmEx(ex.id)}
+                      title="Elimina"
+                      style={{
+                        background: 'rgba(255,59,48,0.1)',
+                        border: '1px solid rgba(255,59,48,0.15)',
+                        borderRadius: '8px',
+                        width: '32px',
+                        height: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'rgba(255,59,48,0.8)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </div>
+                </div>
 
-                  {/* Controls */}
-                  <div style={{ padding: '10px 12px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-                      <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
-                      <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
-                    </div>
+                {/* Controls */}
+                <div style={{ padding: '10px 12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                    <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
+                    <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
+                  </div>
 
-                    {/* Reps chips */}
-                    <div style={{ marginBottom: '10px' }}>
-                      <p style={{ margin: '0 0 6px', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>REPS TARGET</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                        {REPS_PRESETS.map(p => {
-                          const active = ex.targetReps === p;
-                          return (
-                            <button key={p} onClick={() => updEx(ex.id, 'targetReps', p)} style={{
-                              padding: '5px 12px', borderRadius: '20px',
-                              background: active ? '#00b8d4' : 'rgba(255,255,255,0.06)',
-                              border: active ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                              color: active ? 'white' : 'rgba(255,255,255,0.4)',
-                              fontWeight: '700', fontSize: '0.78rem',
-                              transition: 'all 0.15s'
-                            }}>
-                              {p}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Notes field */}
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
-                        <FileText size={11} color="rgba(0,184,212,0.7)" />
-                        <p style={{ margin: 0, fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>NOTE ESERCIZIO</p>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Es. Impugnatura larga, fermo in basso 1 sec..."
-                        value={ex.notes || ''}
-                        onChange={e => updEx(ex.id, 'notes', e.target.value)}
-                        style={{
-                          width: '100%',
-                          boxSizing: 'border-box',
-                          padding: '8px 12px',
-                          background: 'rgba(255,255,255,0.05)',
-                          border: ex.notes ? '1px solid rgba(0,184,212,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: '8px',
-                          color: '#e0f7fa',
-                          fontSize: '0.82rem',
-                          outline: 'none',
-                          transition: 'border-color 0.2s'
-                        }}
-                      />
+                  {/* Reps chips */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <p style={{ margin: '0 0 6px', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>REPS TARGET</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                      {REPS_PRESETS.map(p => {
+                        const active = ex.targetReps === p;
+                        return (
+                          <button key={p} onClick={() => updEx(ex.id, 'targetReps', p)} style={{
+                            padding: '5px 12px', borderRadius: '20px',
+                            background: active ? '#00b8d4' : 'rgba(255,255,255,0.06)',
+                            border: active ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                            color: active ? 'white' : 'rgba(255,255,255,0.4)',
+                            fontWeight: '700', fontSize: '0.78rem',
+                            transition: 'all 0.15s'
+                          }}>
+                            {p}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* Notes field */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+                      <FileText size={11} color="rgba(0,184,212,0.7)" />
+                      <p style={{ margin: 0, fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>NOTE ESERCIZIO</p>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Es. Impugnatura larga, fermo in basso 1 sec..."
+                      value={ex.notes || ''}
+                      onChange={e => updEx(ex.id, 'notes', e.target.value)}
+                      style={{
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        padding: '8px 12px',
+                        background: 'rgba(255,255,255,0.05)',
+                        border: ex.notes ? '1px solid rgba(0,184,212,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '8px',
+                        color: '#e0f7fa',
+                        fontSize: '0.82rem',
+                        outline: 'none',
+                        transition: 'border-color 0.2s'
+                      }}
+                    />
+                  </div>
                 </div>
-              </SwipeToReorder>
+              </div>
             ))}
           </div>
         )}
