@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, X, ChevronLeft, Trash2, Clock } from 'lucide-react';
-import { useStore } from '../../store/useStore';
+import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap } from 'lucide-react';
+import { useStore, findLastBest1RMSet } from '../../store/useStore';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
@@ -12,12 +12,14 @@ function Workout() {
   const activeWorkout = useStore(state => state.activeWorkout);
   const finishStoreWorkout = useStore(state => state.finishWorkout);
   const updateSet = useStore(state => state.updateActiveWorkoutSet);
+  const updateExerciseNotes = useStore(state => state.updateActiveWorkoutExerciseNotes);
   const addExercise = useStore(state => state.addExerciseToActiveSession);
   const addSet = useStore(state => state.addSetToActiveExercise);
   const addDropset = useStore(state => state.addDropsetToActiveExercise);
   const deleteExercise = useStore(state => state.deleteExerciseFromActiveSession);
   const deleteSet = useStore(state => state.deleteSetFromActiveExercise);
   const cancelWorkout = useStore(state => state.cancelWorkout);
+  const history = useStore(state => state.history);
 
   const [sessionTimeStr, setSessionTimeStr] = useState('00:00');
   const isFinishing = useRef(false);
@@ -26,7 +28,9 @@ function Workout() {
   const clearGlobalRestTimer = useStore(state => state.clearGlobalRestTimer);
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [isResting, setIsResting] = useState(false);
-  const [exerciseFatigue, setExerciseFatigue] = useState({});
+  const [expandedNotes, setExpandedNotes] = useState({});
+
+  const toggleNotes = (id) => setExpandedNotes(p => ({ ...p, [id]: !p[id] }));
 
   useEffect(() => { requestNotificationPermission(); }, []);
 
@@ -58,18 +62,12 @@ function Workout() {
 
   const handleToggleSet = (exerciseId, setId, done) => {
     const nowDone = !done;
-    if (nowDone) updateSet(exerciseId, setId, 'fatigue', exerciseFatigue[exerciseId] || 'yellow');
     updateSet(exerciseId, setId, 'done', nowDone);
     if (nowDone) {
       const ex = activeWorkout.exercises.find(e => e.id === exerciseId);
       const secs = ex?.restTime !== undefined && ex.restTime !== '' ? parseInt(ex.restTime) : 60;
       if (secs > 0) { setGlobalRestEndTime(Date.now() + secs * 1000); setIsResting(true); }
     }
-  };
-
-  const cycleFatigue = (id) => {
-    const cycle = { green: 'yellow', yellow: 'red', red: 'green' };
-    setExerciseFatigue(p => ({ ...p, [id]: cycle[p[id] || 'yellow'] }));
   };
 
   const handleFinishWorkout = () => {
@@ -83,21 +81,34 @@ function Workout() {
   const handleUpdateExerciseNameLocally = (exerciseId, newName) => {
     useStore.setState(state => {
       if (!state.activeWorkout) return state;
-      const pastWk = state.history.find(w => w.exercises.some(e => normalizeName(e.name) === normalizeName(newName)));
-      const pastEx = pastWk?.exercises.find(e => normalizeName(e.name) === normalizeName(newName));
+      const hist = state.history || [];
+      const templates = state.templates || [];
+      const bestData = findLastBest1RMSet(hist, newName);
+      const bestSet = bestData?.set;
+
+      let initialNotes = bestData?.notes || '';
+      if (!initialNotes) {
+        for (const tpl of templates) {
+          const found = tpl.exercises?.find(e => normalizeName(e.name) === normalizeName(newName));
+          if (found?.notes) {
+            initialNotes = found.notes;
+            break;
+          }
+        }
+      }
+
       return {
         activeWorkout: {
           ...state.activeWorkout,
           exercises: state.activeWorkout.exercises.map(ex => {
             if (ex.id !== exerciseId) return ex;
-            const sets = ex.sets.map((s, i) => {
-              if (!s.kg && !s.reps && pastEx?.sets?.length > 0) {
-                const ps = pastEx.sets[i] || pastEx.sets[pastEx.sets.length - 1];
-                return { ...s, kg: ps.kg || '', reps: ps.reps || '' };
+            const sets = ex.sets.map((s) => {
+              if (!s.kg && !s.reps && bestSet) {
+                return { ...s, kg: bestSet.kg || '', reps: bestSet.reps || '' };
               }
               return s;
             });
-            return { ...ex, name: newName, sets };
+            return { ...ex, name: newName, notes: ex.notes || initialNotes, sets };
           })
         }
       };
@@ -107,7 +118,6 @@ function Workout() {
   const doneSets = activeWorkout.exercises.reduce((a, ex) => a + ex.sets.filter(s => s.done).length, 0);
   const totalSets = activeWorkout.exercises.reduce((a, ex) => a + ex.sets.length, 0);
   const fmtRest = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  const FATIGUE = { green: '#34c759', yellow: '#ff9500', red: '#ff3b30' };
 
   return (
     <div style={{ minHeight: '100vh', background: '#080c10', display: 'flex', flexDirection: 'column' }}>
@@ -206,8 +216,8 @@ function Workout() {
           const customExercises = useStore.getState().customExercises || [];
           const allDB = [...EXERCISES_DB, ...customExercises];
           const weightStep = getWeightStep(ex, allDB);
-          const fatigue = exerciseFatigue[ex.id] || 'yellow';
           const doneCount = ex.sets.filter(s => s.done).length;
+          const best1RMData = findLastBest1RMSet(history, ex.name);
 
           return (
             <div key={ex.id} style={{
@@ -217,7 +227,7 @@ function Workout() {
               position: 'relative', zIndex: activeWorkout.exercises.length - idx
             }}>
               {/* Exercise name row */}
-              <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <span style={{ minWidth: '24px', height: '24px', borderRadius: '8px', background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)' }}>
                   {idx + 1}
                 </span>
@@ -226,12 +236,83 @@ function Workout() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontWeight: '600' }}>{doneCount}/{ex.sets.length}</span>
-                  <button onClick={() => cycleFatigue(ex.id)} title="Fatica" style={{ width: '18px', height: '18px', borderRadius: '50%', background: FATIGUE[fatigue], border: 'none', cursor: 'pointer', boxShadow: `0 0 6px ${FATIGUE[fatigue]}80` }} />
+                  <button
+                    onClick={() => toggleNotes(ex.id)}
+                    title={ex.notes ? "Modifica nota" : "Aggiungi nota"}
+                    style={{
+                      background: ex.notes ? 'rgba(0,184,212,0.15)' : 'rgba(255,255,255,0.06)',
+                      border: ex.notes ? '1px solid rgba(0,184,212,0.35)' : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                      padding: '4px 8px',
+                      color: ex.notes ? '#00e5ff' : 'rgba(255,255,255,0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.72rem',
+                      fontWeight: '700'
+                    }}
+                  >
+                    <FileText size={13} />
+                    <span>{ex.notes ? 'Nota' : '+ Nota'}</span>
+                  </button>
                   <button onClick={() => { if (window.confirm('Eliminare?')) deleteExercise(ex.id); }} style={{ background: 'transparent', border: 'none', padding: '3px', color: 'rgba(255,59,48,0.5)', display: 'flex' }}>
                     <Trash2 size={14} />
                   </button>
                 </div>
               </div>
+
+              {/* Best 1RM reference row */}
+              {best1RMData && best1RMData.set && (
+                <div style={{
+                  padding: '6px 12px',
+                  background: 'rgba(0, 184, 212, 0.05)',
+                  borderBottom: '1px solid rgba(0, 184, 212, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '0.72rem',
+                  color: 'rgba(255, 255, 255, 0.8)'
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Zap size={12} color="#00e5ff" />
+                    <span style={{ color: '#00e5ff', fontWeight: '700' }}>Ultimo max 1RM:</span>
+                    <span style={{ fontWeight: '600' }}>{best1RMData.set.kg}kg × {best1RMData.set.reps} reps</span>
+                  </span>
+                  <span style={{ color: 'rgba(0, 229, 255, 0.95)', fontWeight: '800' }}>
+                    1RM ~ {best1RMData.max1RM}kg
+                  </span>
+                </div>
+              )}
+
+              {/* Notes row */}
+              {(expandedNotes[ex.id] || ex.notes) && (
+                <div style={{
+                  padding: '6px 12px',
+                  background: 'rgba(0, 184, 212, 0.02)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FileText size={12} color="#00b8d4" style={{ flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    placeholder="Aggiungi nota per questo esercizio (es. presa larga, fermo 1s)..."
+                    value={ex.notes || ''}
+                    onChange={e => updateExerciseNotes(ex.id, e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#e0f7fa',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      padding: 0
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Sets */}
               <div style={{ padding: '8px 12px 10px' }}>

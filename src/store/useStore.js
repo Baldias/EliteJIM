@@ -1,7 +1,41 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { checkStreakInactivity, calculateSessionScore, recalculateTotalXpFromHistory } from '../utils/gamification';
-import { EXERCISES_DB } from '../data/exercises';
+import { EXERCISES_DB, normalizeName } from '../data/exercises';
+
+export const calculate1RM = (kg, reps) => {
+  const w = parseFloat(kg) || 0;
+  const r = parseFloat(reps) || 0;
+  if (w <= 0 || r <= 0) return 0;
+  if (r === 1) return w;
+  return w * (1 + r / 30);
+};
+
+export const findLastBest1RMSet = (history, exerciseName) => {
+  if (!exerciseName || !history || history.length === 0) return null;
+  const norm = normalizeName(exerciseName);
+  for (const w of history) {
+    const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
+    if (pastEx && pastEx.sets && pastEx.sets.length > 0) {
+      let maxSet = null;
+      let max1RM = -1;
+      for (const s of pastEx.sets) {
+        const rm = calculate1RM(s.kg, s.reps);
+        if (rm > max1RM) {
+          max1RM = rm;
+          maxSet = s;
+        }
+      }
+      if (!maxSet) maxSet = pastEx.sets[pastEx.sets.length - 1];
+      return {
+        set: maxSet,
+        max1RM: max1RM > 0 ? parseFloat(max1RM.toFixed(1)) : 0,
+        notes: pastEx.notes || ''
+      };
+    }
+  }
+  return null;
+};
 
 export const useStore = create(
   persist(
@@ -116,17 +150,6 @@ export const useStore = create(
       startWorkout: (template) => {
         const history = get().history;
 
-        // Helper: find the most recent past sets for a given exercise name
-        const findLastSets = (exerciseName) => {
-          for (const w of history) {
-            const pastEx = w.exercises.find(e => e.name === exerciseName);
-            if (pastEx && pastEx.sets && pastEx.sets.length > 0) {
-              return pastEx.sets;
-            }
-          }
-          return null;
-        };
-
         // Build a fresh session from a template
         const session = {
           id: Date.now(),
@@ -134,17 +157,18 @@ export const useStore = create(
           name: template ? template.name : 'Allenamento Libero',
           startTime: Date.now(),
           exercises: template ? template.exercises.map(ex => {
-            const pastSets = findLastSets(ex.name);
+            const bestData = findLastBest1RMSet(history, ex.name);
+            const bestSet = bestData?.set;
             return {
               id: Date.now() + Math.random(),
               name: ex.name,
+              notes: ex.notes !== undefined ? ex.notes : (bestData?.notes || ''),
               restTime: ex.restTime || 60,
               sets: Array.from({ length: parseInt(ex.setsCount) || 1 }, (_, i) => {
-                const pastSet = pastSets && pastSets[i] ? pastSets[i] : (pastSets ? pastSets[pastSets.length - 1] : null);
                 return {
-                  id: Date.now() + i,
-                  kg: pastSet ? (pastSet.kg || '') : '',
-                  reps: pastSet ? (pastSet.reps || '') : '',
+                  id: Date.now() + i + Math.random(),
+                  kg: bestSet ? (bestSet.kg || '') : '',
+                  reps: bestSet ? (bestSet.reps || '') : '',
                   targetReps: ex.targetReps,
                   done: false
                 };
@@ -170,14 +194,48 @@ export const useStore = create(
         });
       },
 
+      updateActiveWorkoutExerciseNotes: (exerciseId, notes) => {
+        set((state) => {
+          if (!state.activeWorkout) return state;
+          const updatedExercises = state.activeWorkout.exercises.map((ex) => {
+            if (ex.id !== exerciseId) return ex;
+            return { ...ex, notes };
+          });
+          return { activeWorkout: { ...state.activeWorkout, exercises: updatedExercises } };
+        });
+      },
+
       addExerciseToActiveSession: (name) => {
         set((state) => {
           if (!state.activeWorkout) return state;
+          const history = state.history || [];
+          const templates = state.templates || [];
+          const bestData = name ? findLastBest1RMSet(history, name) : null;
+          const bestSet = bestData?.set;
+
+          let initialNotes = bestData?.notes || '';
+          if (!initialNotes && name) {
+            for (const tpl of templates) {
+              const found = tpl.exercises?.find(e => normalizeName(e.name) === normalizeName(name));
+              if (found?.notes) {
+                initialNotes = found.notes;
+                break;
+              }
+            }
+          }
+
           const newExercise = {
             id: Date.now(),
-            name,
+            name: name || '',
+            notes: initialNotes,
             restTime: 60, // default
-            sets: [{ id: Date.now() + 1, kg: '', reps: '', targetReps: '', done: false }]
+            sets: [{
+              id: Date.now() + 1,
+              kg: bestSet ? (bestSet.kg || '') : '',
+              reps: bestSet ? (bestSet.reps || '') : '',
+              targetReps: '',
+              done: false
+            }]
           };
           return {
             activeWorkout: {
@@ -272,7 +330,25 @@ export const useStore = create(
             streak: newStreak
           };
 
+          let updatedTemplates = state.templates;
+          if (completedWorkout.templateId) {
+            updatedTemplates = state.templates.map((tpl) => {
+              if (tpl.id !== completedWorkout.templateId) return tpl;
+              const updatedTplExercises = tpl.exercises.map((tEx) => {
+                const activeEx = completedWorkout.exercises.find(
+                  (e) => normalizeName(e.name) === normalizeName(tEx.name)
+                );
+                if (activeEx && activeEx.notes !== undefined) {
+                  return { ...tEx, notes: activeEx.notes };
+                }
+                return tEx;
+              });
+              return { ...tpl, exercises: updatedTplExercises };
+            });
+          }
+
           return {
+            templates: updatedTemplates,
             history: [completedWorkout, ...state.history],
             activeWorkout: null,
             globalRestEndTime: null,

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Plus, ArrowLeft, Check, Trash2 } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Trash2, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
+import { SwipeToReorder } from '../../components/SwipeToReorder';
 
 const REPS_PRESETS = ['4-6', '6-8', '8-10', '10-12', '12-15', '15-20'];
 
@@ -34,13 +35,23 @@ function TemplateBuilder() {
   const [name, setName] = useState(isEditing ? editTemplateData.name || '' : '');
   const [exercises, setExercises] = useState(
     isEditing 
-      ? (editTemplateData.exercises || []).map((ex, i) => ({ ...ex, id: ex.id || `ex-${Date.now()}-${i}` }))
+      ? (editTemplateData.exercises || []).map((ex, i) => ({ ...ex, id: ex.id || `ex-${Date.now()}-${i}`, notes: ex.notes || '' }))
       : []
   );
 
-  const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90 }]);
+  const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90, notes: '' }]);
   const updEx = (id, field, val) => setExercises(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
   const rmEx = id => setExercises(p => p.filter(e => e.id !== id));
+
+  const moveEx = (fromIndex, toIndex) => {
+    if (toIndex < 0 || toIndex >= exercises.length) return;
+    setExercises(prev => {
+      const copy = [...prev];
+      const [movedItem] = copy.splice(fromIndex, 1);
+      copy.splice(toIndex, 0, movedItem);
+      return copy;
+    });
+  };
 
   const handleSave = () => {
     if (!name.trim()) return alert('Inserisci il nome della scheda');
@@ -115,60 +126,129 @@ function TemplateBuilder() {
         {/* ── ESERCIZI ──────────────────────── */}
         {exercises.length > 0 && (
           <div style={{ marginBottom: '12px' }}>
-            <p style={{ margin: '0 0 10px', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-              ESERCIZI ({exercises.length})
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <p style={{ margin: 0, fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                ESERCIZI ({exercises.length})
+              </p>
+              <span style={{ fontSize: '0.65rem', color: '#00b8d4', fontWeight: '600' }}>
+                ← Scorri a sx per spostare l'ordine
+              </span>
+            </div>
 
             {exercises.map((ex, idx) => (
-              <div key={ex.id || idx} style={{
-                background: 'rgba(255,255,255,0.025)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: '14px', marginBottom: '10px', 
-                position: 'relative', zIndex: exercises.length - idx
-              }}>
-                {/* Name row */}
-                <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ minWidth: '22px', height: '22px', borderRadius: '7px', background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: '700', color: 'rgba(255,255,255,0.35)' }}>
-                    {idx + 1}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <ExerciseAutocomplete value={ex.name} onChange={val => updEx(ex.id, 'name', val)} placeholder="Cerca esercizio…" />
-                  </div>
-                  <button onClick={() => rmEx(ex.id)} style={{ background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: '8px', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,59,48,0.7)', flexShrink: 0 }}>
-                    <Trash2 size={13} />
-                  </button>
-                </div>
+              <SwipeToReorder
+                key={ex.id || idx}
+                isFirst={idx === 0}
+                isLast={idx === exercises.length - 1}
+                onMoveUp={() => moveEx(idx, idx - 1)}
+                onMoveDown={() => moveEx(idx, idx + 1)}
+              >
+                <div style={{
+                  background: 'rgba(255,255,255,0.025)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '14px',
+                  position: 'relative', zIndex: exercises.length - idx
+                }}>
+                  {/* Name row */}
+                  <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    {/* Position and quick move buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      <span style={{ minWidth: '22px', height: '22px', borderRadius: '7px', background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)' }}>
+                        {idx + 1}
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); moveEx(idx, idx - 1); }}
+                          disabled={idx === 0}
+                          style={{
+                            background: 'transparent', border: 'none', padding: '0 2px',
+                            color: idx === 0 ? 'rgba(255,255,255,0.1)' : 'rgba(0,184,212,0.8)',
+                            cursor: idx === 0 ? 'default' : 'pointer', lineHeight: 1
+                          }}
+                        >
+                          <ChevronUp size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); moveEx(idx, idx + 1); }}
+                          disabled={idx === exercises.length - 1}
+                          style={{
+                            background: 'transparent', border: 'none', padding: '0 2px',
+                            color: idx === exercises.length - 1 ? 'rgba(255,255,255,0.1)' : 'rgba(0,184,212,0.8)',
+                            cursor: idx === exercises.length - 1 ? 'default' : 'pointer', lineHeight: 1
+                          }}
+                        >
+                          <ChevronDown size={12} />
+                        </button>
+                      </div>
+                    </div>
 
-                {/* Controls */}
-                <div style={{ padding: '10px 12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-                    <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
-                    <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <ExerciseAutocomplete value={ex.name} onChange={val => updEx(ex.id, 'name', val)} placeholder="Cerca esercizio…" />
+                    </div>
+                    <button onClick={() => rmEx(ex.id)} style={{ background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: '8px', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,59,48,0.7)', flexShrink: 0 }}>
+                      <Trash2 size={13} />
+                    </button>
                   </div>
 
-                  {/* Reps chips */}
-                  <div>
-                    <p style={{ margin: '0 0 6px', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>REPS TARGET</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                      {REPS_PRESETS.map(p => {
-                        const active = ex.targetReps === p;
-                        return (
-                          <button key={p} onClick={() => updEx(ex.id, 'targetReps', p)} style={{
-                            padding: '5px 12px', borderRadius: '20px',
-                            background: active ? '#00b8d4' : 'rgba(255,255,255,0.06)',
-                            border: active ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                            color: active ? 'white' : 'rgba(255,255,255,0.4)',
-                            fontWeight: '700', fontSize: '0.78rem',
-                            transition: 'all 0.15s'
-                          }}>
-                            {p}
-                          </button>
-                        );
-                      })}
+                  {/* Controls */}
+                  <div style={{ padding: '10px 12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                      <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
+                      <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
+                    </div>
+
+                    {/* Reps chips */}
+                    <div style={{ marginBottom: '10px' }}>
+                      <p style={{ margin: '0 0 6px', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>REPS TARGET</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                        {REPS_PRESETS.map(p => {
+                          const active = ex.targetReps === p;
+                          return (
+                            <button key={p} onClick={() => updEx(ex.id, 'targetReps', p)} style={{
+                              padding: '5px 12px', borderRadius: '20px',
+                              background: active ? '#00b8d4' : 'rgba(255,255,255,0.06)',
+                              border: active ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                              color: active ? 'white' : 'rgba(255,255,255,0.4)',
+                              fontWeight: '700', fontSize: '0.78rem',
+                              transition: 'all 0.15s'
+                            }}>
+                              {p}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Notes field */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+                        <FileText size={11} color="rgba(0,184,212,0.7)" />
+                        <p style={{ margin: 0, fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>NOTE ESERCIZIO</p>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Es. Impugnatura larga, fermo in basso 1 sec..."
+                        value={ex.notes || ''}
+                        onChange={e => updEx(ex.id, 'notes', e.target.value)}
+                        style={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          padding: '8px 12px',
+                          background: 'rgba(255,255,255,0.05)',
+                          border: ex.notes ? '1px solid rgba(0,184,212,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '8px',
+                          color: '#e0f7fa',
+                          fontSize: '0.82rem',
+                          outline: 'none',
+                          transition: 'border-color 0.2s'
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
-              </div>
+              </SwipeToReorder>
             ))}
           </div>
         )}
