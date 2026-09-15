@@ -125,9 +125,9 @@ function Home() {
           {/* Free session CTA */}
           <button onClick={handleStartEmpty} className="glass" style={{
             width: '100%', padding: '1.25rem',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px dashed rgba(255, 255, 255, 0.15)',
-            borderRadius: '24px', color: 'var(--primary-color)',
+            background: 'rgba(255, 255, 255, 0.025)',
+            border: '1px dashed rgba(0, 195, 255, 0.22)',
+            borderRadius: '24px', color: '#00c8ff',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
             fontSize: '1rem', fontWeight: '800', transition: 'all 0.2s',
             marginBottom: templates.length > 0 ? '16px' : '0'

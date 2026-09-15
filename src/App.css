@@ -18,24 +18,40 @@
   border-bottom: none;
 }
 
-/* Global Mesh Gradient Background */
+/* Global Ambient Glow Background */
 .app-container .app-header::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 30%, rgba(var(--primary-color-rgb), 0.4) 0%, transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(245, 93, 62, 0.3) 0%, transparent 50%);
-  animation: mesh-rotate 20s linear infinite;
+  top: -15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 130%;
+  height: 130%;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 10%, rgba(0, 195, 255, 0.18) 0%, rgba(0, 130, 190, 0.08) 45%, transparent 72%),
+    radial-gradient(ellipse 100% 65% at 50% 25%, rgba(14, 80, 140, 0.14) 0%, rgba(10, 30, 60, 0.04) 50%, transparent 80%),
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+  animation: ambient-pulse 10s ease-in-out infinite alternate;
   z-index: 0;
-  filter: blur(40px);
+  filter: blur(42px);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
 }
 
-@keyframes mesh-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes ambient-pulse {
+  0% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.03);
+  }
+  100% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(0.98);
+  }
 }
 
 .header-content {
@@ -49,22 +65,23 @@
   letter-spacing: -0.06em;
   font-style: italic;
   text-transform: uppercase;
-  background: linear-gradient(to bottom, #ffffff 30%, #a0a0a0 100%);
+  background: linear-gradient(180deg, #ffffff 15%, #e2e8f0 60%, #94a3b8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 24px rgba(0, 195, 255, 0.28));
   line-height: 0.9;
   margin-bottom: 0.5rem;
   margin-top: 0;
 }
 
 .header-content .subtitle {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.4em;
-  color: var(--primary-color);
+  letter-spacing: 0.35em;
+  color: #00c8ff;
   font-weight: 800;
-  opacity: 0.9;
+  text-shadow: 0 0 14px rgba(0, 200, 255, 0.45);
   margin-top: 0;
 }
 

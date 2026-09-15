@@ -32,33 +32,35 @@ export function BackupReminderBanner() {
 
   return (
     <div className={`backup-banner-container ${savedSuccess ? 'is-success' : ''}`}>
-      <div className="backup-banner-accent-bar" />
-      <div className="backup-banner-header">
-        <div className="backup-banner-info">
-          <div className="backup-banner-icon">
-            {savedSuccess ? <Check size={22} /> : <ShieldCheck size={22} />}
-          </div>
-          <div>
+      <div className="backup-banner-content">
+        <div className="backup-banner-icon-box">
+          {savedSuccess ? <Check size={20} className="icon-check" /> : <ShieldCheck size={20} />}
+        </div>
+        
+        <div className="backup-banner-text">
+          <div className="backup-banner-header-row">
             <h4 className="backup-banner-title">
-              {savedSuccess ? 'Backup Salvato!' : 'Proteggi i tuoi Dati'}
-              <span className="backup-banner-badge">EliteJIM_Backup.json</span>
+              {savedSuccess ? 'Backup completato' : 'Proteggi i tuoi dati'}
             </h4>
-            <p className="backup-banner-desc">
-              {savedSuccess 
-                ? 'File scaricato e aggiornato sul tuo dispositivo.'
-                : 'Salva una copia offline per non perdere mai schede e XP.'}
-            </p>
+            <span className="backup-banner-status-tag">
+              {savedSuccess ? 'Salvato' : 'Consigliato'}
+            </span>
           </div>
+          <p className="backup-banner-desc">
+            {savedSuccess 
+              ? 'Copia scaricata con successo sul tuo dispositivo.'
+              : 'Salva una copia offline per non perdere mai schede, note e XP.'}
+          </p>
         </div>
       </div>
 
       {!savedSuccess && (
         <div className="backup-banner-actions">
           <button className="backup-banner-btn-save" onClick={handleQuickBackup}>
-            <Download size={17} /> Salva Backup (1 tap)
+            <Download size={15} /> Salva ora
           </button>
           <button className="backup-banner-btn-later" onClick={handleSnooze}>
-            Più tardi
+            Ricordamelo dopo
           </button>
         </div>
       )}

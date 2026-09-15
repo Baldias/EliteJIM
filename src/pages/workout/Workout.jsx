@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap } from 'lucide-react';
 import { useStore, findLastBest1RMSet } from '../../store/useStore';
@@ -6,6 +6,7 @@ import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
+import './Workout.css';
 
 function Workout() {
   const navigate = useNavigate();
@@ -20,6 +21,9 @@ function Workout() {
   const deleteSet = useStore(state => state.deleteSetFromActiveExercise);
   const cancelWorkout = useStore(state => state.cancelWorkout);
   const history = useStore(state => state.history);
+  const customExercises = useStore(state => state.customExercises || []);
+  const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
+  const allDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
   const [sessionTimeStr, setSessionTimeStr] = useState('00:00');
   const isFinishing = useRef(false);
@@ -225,146 +229,114 @@ function Workout() {
         )}
 
         {activeWorkout.exercises.map((ex, idx) => {
-          const customExercises = useStore.getState().customExercises || [];
-          const exerciseOverrides = useStore.getState().exerciseOverrides || {};
-          const allDB = getAllExercises(customExercises, exerciseOverrides);
           const weightStep = getWeightStep(ex, allDB);
           const doneCount = ex.sets.filter(s => s.done).length;
           const best1RMData = findLastBest1RMSet(history, ex.name);
 
           return (
-            <div key={ex.id} style={{
-              background: 'rgba(255,255,255,0.025)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: '16px', marginBottom: '10px', 
-              position: 'relative', zIndex: activeWorkout.exercises.length - idx
-            }}>
-              {/* Exercise name row */}
-              <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <span style={{ minWidth: '24px', height: '24px', borderRadius: '8px', background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: '700', color: 'rgba(255,255,255,0.4)' }}>
+            <div 
+              key={ex.id} 
+              className="workout-exercise-card"
+              style={{ zIndex: activeWorkout.exercises.length - idx }}
+            >
+              {/* Exercise header row */}
+              <div className="workout-exercise-header">
+                <span className="workout-exercise-idx">
                   {idx + 1}
                 </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <ExerciseAutocomplete value={ex.name} onChange={val => handleUpdateExerciseNameLocally(ex.id, val)} placeholder="Seleziona esercizio…" />
+                <div className="workout-exercise-title">
+                  <ExerciseAutocomplete 
+                    value={ex.name} 
+                    onChange={val => handleUpdateExerciseNameLocally(ex.id, val)} 
+                    placeholder="Seleziona esercizio…" 
+                  />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontWeight: '600' }}>{doneCount}/{ex.sets.length}</span>
+                <div className="workout-exercise-meta">
+                  <span className={`workout-progress-pill ${doneCount === ex.sets.length && ex.sets.length > 0 ? 'all-done' : ''}`}>
+                    {doneCount}/{ex.sets.length}
+                  </span>
                   <button
+                    type="button"
                     onClick={() => toggleNotes(ex.id)}
                     title={ex.notes ? "Modifica nota" : "Aggiungi nota"}
-                    style={{
-                      background: ex.notes ? 'rgba(0,184,212,0.15)' : 'rgba(255,255,255,0.06)',
-                      border: ex.notes ? '1px solid rgba(0,184,212,0.35)' : '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                      padding: '4px 8px',
-                      color: ex.notes ? '#00e5ff' : 'rgba(255,255,255,0.4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.72rem',
-                      fontWeight: '700'
-                    }}
+                    className={`workout-note-btn ${ex.notes ? 'has-note' : ''}`}
                   >
                     <FileText size={13} />
                     <span>{ex.notes ? 'Nota' : '+ Nota'}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
                       const exName = ex.name?.trim() ? `l'esercizio "${ex.name}"` : 'questo esercizio';
                       if (window.confirm(`Sei sicuro di voler eliminare ${exName} dalla sessione?`)) {
                         deleteExercise(ex.id);
                       }
                     }}
-                    style={{ background: 'transparent', border: 'none', padding: '3px', color: 'rgba(255,59,48,0.5)', display: 'flex' }}
+                    className="workout-delete-ex-btn"
+                    title="Rimuovi esercizio"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={15} />
                   </button>
                 </div>
               </div>
 
               {/* Best 1RM reference row - only for added exercises */}
               {ex.isAdded && best1RMData && best1RMData.set && (
-                <div style={{
-                  padding: '6px 12px',
-                  background: 'rgba(0, 184, 212, 0.05)',
-                  borderBottom: '1px solid rgba(0, 184, 212, 0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '0.72rem',
-                  color: 'rgba(255, 255, 255, 0.8)'
-                }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Zap size={12} color="#00e5ff" />
-                    <span style={{ color: '#00e5ff', fontWeight: '700' }}>Ultimo max 1RM:</span>
-                    <span style={{ fontWeight: '600' }}>{best1RMData.set.kg}kg × {best1RMData.set.reps} reps</span>
-                  </span>
-                  <span style={{ color: 'rgba(0, 229, 255, 0.95)', fontWeight: '800' }}>
+                <div className="workout-1rm-banner">
+                  <div className="workout-1rm-left">
+                    <Zap size={13} color="#00e5ff" />
+                    <span className="workout-1rm-tag">Ultimo max:</span>
+                    <span className="workout-1rm-val">{best1RMData.set.kg}kg × {best1RMData.set.reps} reps</span>
+                  </div>
+                  <span className="workout-1rm-right">
                     1RM ~ {best1RMData.max1RM}kg
                   </span>
                 </div>
               )}
 
-              {/* Notes row */}
+              {/* Notes drawer */}
               {(expandedNotes[ex.id] || ex.notes) && (
-                <div style={{
-                  padding: '6px 12px',
-                  background: 'rgba(0, 184, 212, 0.02)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <FileText size={12} color="#00b8d4" style={{ flexShrink: 0 }} />
+                <div className="workout-notes-drawer">
+                  <FileText size={13} color="#00b8d4" style={{ flexShrink: 0 }} />
                   <input
                     type="text"
-                    placeholder="Aggiungi nota per questo esercizio (es. presa larga, fermo 1s)..."
+                    placeholder="Aggiungi nota (es. presa larga, fermo al petto 1s)..."
                     value={ex.notes || ''}
                     onChange={e => updateExerciseNotes(ex.id, e.target.value)}
-                    style={{
-                      flex: 1,
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#e0f7fa',
-                      fontSize: '0.78rem',
-                      outline: 'none',
-                      padding: 0
-                    }}
+                    className="workout-notes-input"
                   />
                 </div>
               )}
 
-              {/* Sets */}
-              <div style={{ padding: '8px 12px 10px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '24px 1fr 1fr 42px', gap: '6px', marginBottom: '6px', padding: '0 2px' }}>
-                  {['#', 'kg', 'reps', ''].map((h, i) => (
-                    <span key={i} style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.25)', textAlign: 'center', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{h}</span>
-                  ))}
+              {/* Sets section */}
+              <div className="workout-sets-section">
+                <div className="workout-sets-header">
+                  <span className="workout-sets-col-title">#</span>
+                  <span className="workout-sets-col-title">KG</span>
+                  <span className="workout-sets-col-title">REPS</span>
+                  <span className="workout-sets-col-title">✓</span>
                 </div>
 
                 {ex.sets.map((set, sIdx) => (
-                  <SwipeToDelete key={set.id} onDelete={() => {
-                    if (window.confirm(`Eliminare la serie ${set.isDropset ? 'Drop' : sIdx + 1}?`)) {
-                      deleteSet(ex.id, set.id);
-                    }
-                  }}>
-                    <div style={{
-                      display: 'grid', gridTemplateColumns: '24px 1fr 1fr 42px',
-                      gap: '6px', alignItems: 'center', marginBottom: '5px',
-                      padding: '4px 2px',
-                      background: set.done ? 'rgba(52,199,89,0.07)' : 'transparent',
-                      borderRadius: '8px', transition: 'background 0.2s'
-                    }}>
-                      <span style={{ textAlign: 'center', fontSize: '0.72rem', fontWeight: '700', color: set.isDropset ? '#00b8d4' : (set.done ? '#34c759' : 'rgba(255,255,255,0.3)') }}>
+                  <SwipeToDelete 
+                    key={set.id} 
+                    onDelete={() => {
+                      if (window.confirm(`Eliminare la serie ${set.isDropset ? 'Drop' : sIdx + 1}?`)) {
+                        deleteSet(ex.id, set.id);
+                      }
+                    }}
+                  >
+                    <div className={`workout-set-row-item ${set.done ? 'is-completed' : ''}`}>
+                      <span className={`workout-set-badge ${set.isDropset ? 'is-dropset' : ''}`}>
                         {set.isDropset ? 'D' : sIdx + 1}
                       </span>
 
                       {/* KG input */}
-                      <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden', height: '36px' }}>
+                      <div className="workout-stepper">
                         <button
+                          type="button"
+                          className="workout-stepper-btn"
                           onClick={() => updateSet(ex.id, set.id, 'kg', Math.max(0, (parseFloat(set.kg) || 0) - weightStep).toString())}
-                          style={{ padding: '0 10px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', fontWeight: '700', fontSize: '1rem', lineHeight: 1 }}
                         >−</button>
                         <input
                           type="text"
@@ -372,19 +344,21 @@ function Workout() {
                           placeholder="—"
                           value={set.kg || ''}
                           onChange={e => updateSet(ex.id, set.id, 'kg', e.target.value.replace(/[^0-9.]/g, ''))}
-                          style={{ flex: 1, textAlign: 'center', background: 'transparent', border: 'none', color: 'white', fontWeight: '700', fontSize: '0.9rem', minWidth: 0, outline: 'none', width: '100%' }}
+                          className="workout-stepper-input"
                         />
                         <button
+                          type="button"
+                          className="workout-stepper-btn"
                           onClick={() => updateSet(ex.id, set.id, 'kg', ((parseFloat(set.kg) || 0) + weightStep).toString())}
-                          style={{ padding: '0 10px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', fontWeight: '700', fontSize: '1rem', lineHeight: 1 }}
                         >+</button>
                       </div>
 
                       {/* REPS input */}
-                      <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden', height: '36px' }}>
+                      <div className="workout-stepper">
                         <button
+                          type="button"
+                          className="workout-stepper-btn"
                           onClick={() => updateSet(ex.id, set.id, 'reps', Math.max(0, (parseFloat(set.reps) || 0) - 1).toString())}
-                          style={{ padding: '0 10px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', fontWeight: '700', fontSize: '1rem', lineHeight: 1 }}
                         >−</button>
                         <input
                           type="text"
@@ -393,32 +367,40 @@ function Workout() {
                           placeholder={set.targetReps || '—'}
                           value={set.reps || ''}
                           onChange={e => updateSet(ex.id, set.id, 'reps', e.target.value.replace(/[^0-9]/g, ''))}
-                          style={{ flex: 1, textAlign: 'center', background: 'transparent', border: 'none', color: 'white', fontWeight: '700', fontSize: '0.9rem', minWidth: 0, outline: 'none', width: '100%' }}
+                          className="workout-stepper-input"
                         />
                         <button
+                          type="button"
+                          className="workout-stepper-btn"
                           onClick={() => updateSet(ex.id, set.id, 'reps', ((parseFloat(set.reps) || 0) + 1).toString())}
-                          style={{ padding: '0 10px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', fontWeight: '700', fontSize: '1rem', lineHeight: 1 }}
                         >+</button>
                       </div>
 
-                      <button onClick={() => handleToggleSet(ex.id, set.id, set.done)} style={{
-                        width: '40px', height: '36px', borderRadius: '8px', border: 'none',
-                        background: set.done ? '#34c759' : 'rgba(255,255,255,0.06)',
-                        color: set.done ? 'white' : 'rgba(255,255,255,0.25)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 0.18s'
-                      }}>
-                        <Check size={16} strokeWidth={set.done ? 3 : 1.5} />
+                      <button 
+                        type="button"
+                        onClick={() => handleToggleSet(ex.id, set.id, set.done)} 
+                        className={`workout-check-btn ${set.done ? 'checked' : ''}`}
+                        title={set.done ? "Segna come da completare" : "Completa serie"}
+                      >
+                        <Check size={17} strokeWidth={set.done ? 3 : 2} />
                       </button>
                     </div>
                   </SwipeToDelete>
                 ))}
 
-                <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-                  <button onClick={() => addSet(ex.id)} style={{ flex: 1, padding: '7px', background: 'rgba(0,184,212,0.08)', border: '1px solid rgba(0,184,212,0.15)', borderRadius: '8px', color: '#00b8d4', fontWeight: '700', fontSize: '0.8rem' }}>
+                <div className="workout-card-actions">
+                  <button 
+                    type="button"
+                    onClick={() => addSet(ex.id)} 
+                    className="workout-add-set-btn"
+                  >
                     + Serie
                   </button>
-                  <button onClick={() => addDropset(ex.id)} style={{ flex: 1, padding: '7px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', color: 'rgba(255,255,255,0.3)', fontWeight: '600', fontSize: '0.8rem' }}>
+                  <button 
+                    type="button"
+                    onClick={() => addDropset(ex.id)} 
+                    className="workout-add-drop-btn"
+                  >
                     + Drop
                   </button>
                 </div>

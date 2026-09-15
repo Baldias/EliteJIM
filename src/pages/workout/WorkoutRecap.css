@@ -287,3 +287,112 @@
   0% { opacity: 0; transform: scale(0.9); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+/* Quick Backup Card in Workout Recap */
+.recap-backup-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 1.15rem 1.25rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 1.3s;
+}
+
+.recap-backup-card.is-saved {
+  border-color: rgba(52, 199, 89, 0.4);
+  background: linear-gradient(180deg, rgba(16, 36, 24, 0.85) 0%, rgba(10, 22, 15, 0.95) 100%);
+  box-shadow: 0 8px 24px rgba(52, 199, 89, 0.15);
+}
+
+.recap-backup-info {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.recap-backup-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--primary-color-rgb), 0.12);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(var(--primary-color-rgb), 0.2);
+  transition: all 0.3s ease;
+}
+
+.recap-backup-card.is-saved .recap-backup-icon-box {
+  background: rgba(52, 199, 89, 0.15);
+  border-color: rgba(52, 199, 89, 0.4);
+  color: #34c759;
+  box-shadow: 0 0 16px rgba(52, 199, 89, 0.3);
+  transform: scale(1.05);
+}
+
+.recap-backup-text {
+  min-width: 0;
+}
+
+.recap-backup-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #fff;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recap-backup-desc {
+  margin: 3px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.recap-backup-btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, rgba(var(--primary-color-rgb), 0.85) 100%);
+  border: none;
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(var(--primary-color-rgb), 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.recap-backup-btn:hover {
+  filter: brightness(1.08);
+}
+
+.recap-backup-btn:active {
+  transform: scale(0.96);
+}
+
+.recap-backup-btn.is-saved {
+  background: rgba(52, 199, 89, 0.15);
+  border: 1px solid rgba(52, 199, 89, 0.4);
+  color: #34c759;
+  box-shadow: none;
+  cursor: default;
+}
+

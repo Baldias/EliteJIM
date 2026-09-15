@@ -22,15 +22,21 @@
 .settings-header::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 30%, rgba(var(--primary-color-rgb), 0.4) 0%, transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(245, 93, 62, 0.3) 0%, transparent 50%);
-  animation: mesh-rotate 20s linear infinite;
+  top: -15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 130%;
+  height: 130%;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 10%, rgba(0, 195, 255, 0.18) 0%, rgba(0, 130, 190, 0.08) 45%, transparent 72%),
+    radial-gradient(ellipse 100% 65% at 50% 25%, rgba(14, 80, 140, 0.14) 0%, rgba(10, 30, 60, 0.04) 50%, transparent 80%),
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+  animation: ambient-pulse 10s ease-in-out infinite alternate;
   z-index: 0;
-  filter: blur(40px);
+  filter: blur(42px);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
 }
 
 .settings-header h2 {
@@ -595,8 +601,8 @@
   border-radius: 24px;
   margin-top: 2rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
-  border: 1px solid rgba(var(--primary-color-rgb), 0.2);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.25);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -604,21 +610,53 @@
   overflow: hidden;
 }
 
-.backup-hub-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(var(--primary-color-rgb), 0.1) 0%, transparent 70%);
-  pointer-events: none;
+.backup-hub-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.backup-hub-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.backup-hub-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--primary-color-rgb), 0.12);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.backup-hub-title {
+  font-size: 1.15rem;
+  margin: 0;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.backup-hub-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+  line-height: 1.4;
 }
 
 .backup-status-panel {
   background: rgba(0, 0, 0, 0.35);
-  padding: 1.1rem;
-  border-radius: 18px;
+  padding: 1rem 1.15rem;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   margin-bottom: 1.25rem;
   display: flex;
@@ -631,7 +669,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
 }
 
 .backup-status-label {
@@ -648,13 +686,34 @@
   font-size: 0.88rem;
 }
 
+.backup-status-badge {
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.backup-status-badge.is-recent {
+  background: rgba(52, 199, 89, 0.15);
+  color: #34c759;
+  border: 1px solid rgba(52, 199, 89, 0.3);
+}
+
+.backup-status-badge.is-warning {
+  background: rgba(255, 149, 0, 0.15);
+  color: #ff9500;
+  border: 1px solid rgba(255, 149, 0, 0.3);
+}
+
 .backup-storage-pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 3px 9px;
   border-radius: 20px;
 }
 
@@ -670,20 +729,104 @@
   border: 1px solid rgba(255, 149, 0, 0.25);
 }
 
+.backup-storage-cta {
+  margin-top: 6px;
+  background: rgba(255, 149, 0, 0.1);
+  border: 1px solid rgba(255, 149, 0, 0.25);
+  color: #ff9500;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all 0.2s ease;
+}
+
+.backup-storage-cta:hover {
+  background: rgba(255, 149, 0, 0.18);
+  border-color: #ff9500;
+}
+
+.backup-reminder-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.25rem;
+}
+
+.backup-reminder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.backup-reminder-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.backup-reminder-sub {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+.backup-toggle-switch {
+  width: 46px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.backup-toggle-switch.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 12px rgba(var(--primary-color-rgb), 0.4);
+}
+
+.backup-toggle-thumb {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.backup-toggle-switch.active .backup-toggle-thumb {
+  transform: translateX(20px);
+}
+
 .backup-frequency-selector {
   display: flex;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.35);
   padding: 4px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .backup-freq-btn {
   flex: 1;
-  padding: 9px 6px;
-  border-radius: 10px;
+  padding: 8px 6px;
+  border-radius: 8px;
   font-size: 0.78rem;
   font-weight: 700;
   border: none;
@@ -701,21 +844,27 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+.backup-actions-grid {
+  display: flex;
+  gap: 10px;
+}
+
 .backup-btn-export {
   flex: 1;
-  padding: 13px;
-  border-radius: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, rgba(var(--primary-color-rgb), 0.85) 100%);
-  border: none;
-  color: #000;
+  gap: 7px;
+  background-color: var(--primary-color);
+  background: linear-gradient(135deg, #0096c7 0%, #007ea7 100%);
+  border: 1px solid rgba(0, 184, 212, 0.4);
+  color: #ffffff;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(var(--primary-color-rgb), 0.35);
+  box-shadow: 0 4px 14px rgba(0, 126, 167, 0.45);
   transition: all 0.2s ease;
 }
 
@@ -726,32 +875,33 @@
 .backup-btn-export.success {
   background: linear-gradient(135deg, #34c759 0%, #28a745 100%);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(52, 199, 89, 0.35);
+  box-shadow: 0 4px 14px rgba(52, 199, 89, 0.35);
 }
 
 .backup-btn-import {
   flex: 1;
-  padding: 13px;
-  border-radius: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .backup-btn-import:hover {
   background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .backup-btn-import:active {
   transform: scale(0.97);
 }
+
 

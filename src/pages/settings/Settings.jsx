@@ -205,10 +205,20 @@ function Settings() {
 
         {/* Sync & Backup Section */}
         <div className="card glass backup-hub-card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', letterSpacing: '-0.3px' }}>
-              <ShieldCheck size={22} color="var(--primary-color)" /> Sicurezza & Backup Dati
-            </h3>
+          <div className="backup-hub-header">
+            <div className="backup-hub-title-group">
+              <div className="backup-hub-icon-box">
+                <ShieldCheck size={22} />
+              </div>
+              <div>
+                <h3 className="backup-hub-title">
+                  Sicurezza & Backup Dati
+                </h3>
+                <p className="backup-hub-desc">
+                  Salva una copia offline per proteggere schede, progressi e XP anche cambiando dispositivo.
+                </p>
+              </div>
+            </div>
             {isStoragePersisted && (
               <span className="backup-storage-pill persisted">
                 ● Memoria Protetta
@@ -216,28 +226,20 @@ function Settings() {
             )}
           </div>
 
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.45 }}>
-            Salva una copia offline per proteggere schede, progressi e XP anche se elimini la PWA.
-          </p>
-
           {/* Ultimo Backup & Stato Memoria */}
           <div className="backup-status-panel">
             <div className="backup-status-row">
               <span className="backup-status-label">
                 <Clock size={16} /> Ultimo backup:
               </span>
-              <strong className="backup-status-val">
-                {formatLastBackupDate(lastBackupDate)}
-              </strong>
-            </div>
-
-            <div className="backup-status-row">
-              <span className="backup-status-label">
-                <HardDrive size={16} /> File di destinazione:
-              </span>
-              <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}>
-                EliteJIM_Backup.json
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <strong className="backup-status-val">
+                  {formatLastBackupDate(lastBackupDate)}
+                </strong>
+                <span className={`backup-status-badge ${lastBackupDate && (Date.now() - lastBackupDate < 7 * 86400000) ? 'is-recent' : 'is-warning'}`}>
+                  {lastBackupDate && (Date.now() - lastBackupDate < 7 * 86400000) ? 'Recente' : 'Consigliato'}
+                </span>
+              </div>
             </div>
 
             <div className="backup-status-row">
@@ -251,51 +253,36 @@ function Settings() {
 
             {!isStoragePersisted && (
               <button
+                type="button"
+                className="backup-storage-cta"
                 onClick={handleRequestStoragePersistence}
                 disabled={persistenceLoading}
-                style={{
-                  marginTop: '6px',
-                  background: 'rgba(255,149,0,0.12)',
-                  border: '1px solid rgba(255,149,0,0.3)',
-                  color: '#ff9500',
-                  padding: '8px 12px',
-                  borderRadius: '12px',
-                  fontSize: '0.78rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease'
-                }}
               >
-                {persistenceLoading ? 'Verifica in corso...' : '🔒 Attiva Protezione Memoria Permanente'}
+                <HardDrive size={15} />
+                <span>{persistenceLoading ? 'Verifica in corso...' : 'Attiva Protezione Memoria Permanente'}</span>
               </button>
             )}
           </div>
 
           {/* Impostazioni Promemoria Backup */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>
-                Promemoria Backup Automatico
-              </span>
-              <div 
-                onClick={() => setAutoBackupSettings({ autoBackupEnabled: !autoBackupEnabled })}
-                style={{
-                  width: '48px', height: '28px', 
-                  background: autoBackupEnabled ? 'var(--primary-color)' : 'rgba(255,255,255,0.12)',
-                  borderRadius: '20px', position: 'relative', cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  border: '1px solid rgba(255,255,255,0.1)'
-                }}
-              >
-                <div style={{
-                  width: '22px', height: '22px', background: '#fff',
-                  borderRadius: '50%', position: 'absolute', top: '2px',
-                  left: autoBackupEnabled ? '23px' : '2px',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
-                }} />
+          <div className="backup-reminder-section">
+            <div className="backup-reminder-header">
+              <div>
+                <span className="backup-reminder-title">
+                  Promemoria Automatico
+                </span>
+                <p className="backup-reminder-sub">
+                  Mostra un promemoria per salvare i dati
+                </p>
               </div>
+              <button
+                type="button"
+                className={`backup-toggle-switch ${autoBackupEnabled ? 'active' : ''}`}
+                onClick={() => setAutoBackupSettings({ autoBackupEnabled: !autoBackupEnabled })}
+                aria-label="Attiva promemoria automatico"
+              >
+                <div className="backup-toggle-thumb" />
+              </button>
             </div>
 
             {autoBackupEnabled && (
@@ -307,6 +294,7 @@ function Settings() {
                 ].map(opt => (
                   <button
                     key={opt.key}
+                    type="button"
                     onClick={() => setAutoBackupSettings({ autoBackupFrequency: opt.key })}
                     className={`backup-freq-btn ${autoBackupFrequency === opt.key ? 'active' : ''}`}
                   >
@@ -318,20 +306,22 @@ function Settings() {
           </div>
 
           {/* Azioni Esporta & Importa */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '1rem' }}>
+          <div className="backup-actions-grid">
             <button 
+              type="button"
               className={`backup-btn-export ${exportSuccess ? 'success' : ''}`}
               onClick={handleExport} 
             >
               {exportSuccess ? <Check size={18} /> : <Download size={18} />} 
-              {exportSuccess ? 'Scaricato!' : 'Salva Backup'}
+              <span>{exportSuccess ? 'Scaricato!' : 'Salva Backup'}</span>
             </button>
 
             <button 
+              type="button"
               className="backup-btn-import"
               onClick={() => fileInputRef.current?.click()} 
             >
-              <Upload size={18} /> Ripristina
+              <Upload size={18} /> <span>Ripristina</span>
             </button>
             <input
               type="file"

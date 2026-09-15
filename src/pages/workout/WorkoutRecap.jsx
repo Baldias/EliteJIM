@@ -322,44 +322,17 @@ function WorkoutRecap() {
         </div>
 
         {/* Quick Backup Card */}
-        <div className="recap-card glass" style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          padding: '1.25rem',
-          borderRadius: '22px',
-          border: backupSaved ? '1px solid rgba(52, 199, 89, 0.4)' : '1px solid rgba(var(--primary-color-rgb), 0.25)',
-          background: backupSaved 
-            ? 'linear-gradient(135deg, rgba(15, 35, 22, 0.85) 0%, rgba(10, 22, 15, 0.95) 100%)' 
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
-          boxShadow: backupSaved ? '0 8px 24px rgba(52, 199, 89, 0.15)' : '0 8px 24px rgba(0, 0, 0, 0.25)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ 
-              width: '44px', 
-              height: '44px', 
-              borderRadius: '14px', 
-              background: backupSaved ? 'rgba(52, 199, 89, 0.15)' : 'rgba(var(--primary-color-rgb), 0.12)',
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              border: `1px solid ${backupSaved ? 'rgba(52, 199, 89, 0.4)' : 'rgba(var(--primary-color-rgb), 0.3)'}`,
-              boxShadow: backupSaved ? '0 0 16px rgba(52, 199, 89, 0.3)' : '0 0 14px rgba(var(--primary-color-rgb), 0.2)',
-              flexShrink: 0,
-              transition: 'all 0.3s ease'
-            }}>
-              {backupSaved ? <Check size={22} color="#34c759" /> : <ShieldCheck size={22} color="var(--primary-color)" />}
+        <div className={`recap-card glass recap-backup-card ${backupSaved ? 'is-saved' : ''}`}>
+          <div className="recap-backup-info">
+            <div className="recap-backup-icon-box">
+              {backupSaved ? <Check size={20} /> : <ShieldCheck size={20} />}
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: '800', fontSize: '0.96rem', color: '#fff', letterSpacing: '-0.2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {backupSaved ? 'Backup Aggiornato!' : 'Salvataggio Dati'}
-                <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', padding: '2px 6px', borderRadius: '5px', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)' }}>.json</span>
+            <div className="recap-backup-text">
+              <p className="recap-backup-title">
+                {backupSaved ? 'Sessione salvata' : 'Metti al sicuro la sessione'}
               </p>
-              <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-                {backupSaved ? 'Copia offline scaricata sul dispositivo' : 'Salva offline la sessione e l\'XP guadagnato'}
+              <p className="recap-backup-desc">
+                {backupSaved ? 'Copia offline aggiornata sul dispositivo' : 'Salva i record odierni e l\'XP guadagnato'}
               </p>
             </div>
           </div>
@@ -369,24 +342,7 @@ function WorkoutRecap() {
               if (res) setBackupSaved(true);
             }}
             disabled={backupSaved}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '14px',
-              background: backupSaved 
-                ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.25) 0%, rgba(52, 199, 89, 0.15) 100%)' 
-                : 'linear-gradient(135deg, var(--primary-color) 0%, rgba(var(--primary-color-rgb), 0.85) 100%)',
-              border: backupSaved ? '1px solid rgba(52, 199, 89, 0.5)' : 'none',
-              color: backupSaved ? '#34c759' : '#000',
-              fontSize: '0.85rem',
-              fontWeight: '800',
-              cursor: backupSaved ? 'default' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: backupSaved ? 'none' : '0 4px 14px rgba(var(--primary-color-rgb), 0.35)',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-              flexShrink: 0
-            }}
+            className={`recap-backup-btn ${backupSaved ? 'is-saved' : ''}`}
           >
             {backupSaved ? <Check size={16} /> : <Download size={16} />}
             {backupSaved ? 'Salvato' : 'Salva'}
