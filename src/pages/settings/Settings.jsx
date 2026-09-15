@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { ArrowLeft, ChevronRight, Dumbbell, Dna, Info, Download, Upload, Zap, ShieldCheck, HardDrive, Check, Clock } from 'lucide-react';
-import { EXERCISES_DB } from '../../data/exercises';
+import { EXERCISES_DB, getAllExercises } from '../../data/exercises';
 import { recalculateTotalXpFromHistory } from '../../utils/gamification';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import './Settings.css';
@@ -109,7 +109,8 @@ function Settings() {
     });
 
     const newHistory = mockHistory.reverse();
-    const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, [...EXERCISES_DB, ...(useStore.getState().customExercises || [])]);
+    const allKnown = getAllExercises(useStore.getState().customExercises, useStore.getState().exerciseOverrides);
+    const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, allKnown);
 
     useStore.setState({ 
       history: newHistory,

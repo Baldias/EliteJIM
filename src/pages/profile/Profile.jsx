@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore';
 import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Trash2, X, Flame, Trophy, Check, Edit2 } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../utils/rpVolume';
-import { EXERCISES_DB, getExerciseCategories, normalizeName } from '../../data/exercises';
+import { EXERCISES_DB, getAllExercises, getExerciseCategories, normalizeName } from '../../data/exercises';
 import { getRankByXp } from '../../utils/gamification';
 import './Profile.css';
 
@@ -18,6 +18,8 @@ function Profile() {
   const showScience = useStore(state => state.showScience);
   const _customExercises = useStore(state => state.customExercises);
   const customExercises = useMemo(() => _customExercises || [], [_customExercises]);
+  const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
+  const allKnownExercises = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
   const [expandedSessions, setExpandedSessions] = useState({});
   const [visibleWeeks, setVisibleWeeks] = useState(2);
@@ -88,8 +90,8 @@ function Profile() {
   // --- RP Volume Logic ---
   const rpVolumes = useMemo(() => {
     if (!history || history.length === 0) return null;
-    return calculateLast7DaysVolume(history, [...EXERCISES_DB, ...customExercises]);
-  }, [history, customExercises]);
+    return calculateLast7DaysVolume(history, allKnownExercises);
+  }, [history, allKnownExercises]);
 
   const welcomePhrase = useMemo(() => {
     if (history.length === 0) return "Inizia la tua sfida";
@@ -149,7 +151,7 @@ function Profile() {
       // Force Number conversion for robust comparison
       if (Number(w.startTime) >= startOfCurrentWeek) {
         w.exercises.forEach(ex => {
-          const allKnown = [...EXERCISES_DB, ...customExercises];
+          const allKnown = allKnownExercises;
           const normalizedExName = normalizeName(ex.name);
           let foundEx = allKnown.find(e => normalizeName(e.name) === normalizedExName);
           
@@ -238,7 +240,7 @@ function Profile() {
       startOfCurrentWeek,
       goals
     };
-  }, [scienceReport, history, customExercises]);
+  }, [scienceReport, history, allKnownExercises]);
 
   // --- Journey Logic (Weekly Grouping) ---
   const groupedHistory = useMemo(() => {

@@ -3,7 +3,7 @@ import Model from 'react-body-highlighter';
 import { useStore } from '../store/useStore';
 import './InteractiveBody.css';
 
-import { EXERCISES_DB, EXERCISE_CATEGORIES } from '../data/exercises';
+import { EXERCISES_DB, EXERCISE_CATEGORIES, getAllExercises, normalizeName } from '../data/exercises';
 
 // Maps our internal EXERCISE_CATEGORIES to the react-body-highlighter valid muscle names
 const mapCategoryToMuscles = (category, exerciseName) => {
@@ -72,9 +72,10 @@ const mapCategoryToMuscles = (category, exerciseName) => {
   }
 };
 
-const getMusclesFromExercise = (exerciseName, customExercises = []) => {
-  // Find the exact exercise in our DB or custom exercises
-  const exerciseDef = EXERCISES_DB.find(ex => ex.name === exerciseName) || customExercises.find(ex => ex.name === exerciseName);
+const getMusclesFromExercise = (exerciseName, allExercises = []) => {
+  // Find the exact exercise in allExercises
+  const norm = normalizeName(exerciseName);
+  const exerciseDef = allExercises.find(ex => normalizeName(ex.name) === norm);
   
   if (exerciseDef) {
     const categories = [exerciseDef.category, ...(exerciseDef.secondaryCategories || [])].filter(Boolean);
@@ -110,6 +111,8 @@ export const InteractiveBody = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const history = useStore(state => state.history);
   const customExercises = useStore(state => state.customExercises);
+  const exerciseOverrides = useStore(state => state.exerciseOverrides);
+  const allExercises = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
   const workoutData = useMemo(() => {
     // Look at workouts from the last 7 days
@@ -123,7 +126,7 @@ export const InteractiveBody = () => {
         // Only count if there were actual completed sets
         const completedSets = ex.sets ? ex.sets.filter(s => s.done) : [];
         if (completedSets.length > 0) {
-          const muscles = getMusclesFromExercise(ex.name, customExercises || []);
+          const muscles = getMusclesFromExercise(ex.name, allExercises);
           muscles.forEach(m => {
             muscleFrequencies[m] = (muscleFrequencies[m] || 0) + completedSets.length;
           });
@@ -141,7 +144,7 @@ export const InteractiveBody = () => {
         frequency: getIntensity(sets)
       };
     });
-  }, [history, customExercises]);
+  }, [history, allExercises]);
 
   return (
     <div className="interactive-body-container">

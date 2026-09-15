@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { RefreshCw, Zap, Target, BookOpen, Calendar, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
-import { EXERCISES_DB } from '../../data/exercises';
+import { EXERCISES_DB, getAllExercises } from '../../data/exercises';
 import { calculateScienceVolume } from '../../utils/rpVolume';
 import './Science.css';
 import './BossFight.css';
@@ -123,7 +123,8 @@ function Dashboard({ report, reset }) {
   // Access history and exercises for actual sets calculation
   const history = useStore(state => state.history);
   const customExercises = useStore(state => state.customExercises || []);
-  const allExercisesDB = useMemo(() => [...EXERCISES_DB, ...customExercises], [customExercises]);
+  const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
+  const allExercisesDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
   // Calculate actual completed sets per muscle group for each week of the mesocycle
   // Uses the same counting logic as the Profile page (primary category only + fuzzy matching)

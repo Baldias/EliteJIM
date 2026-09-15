@@ -67,6 +67,34 @@ export const getWeightStep = (exercise, allExercisesDb) => {
   return 2.5; // barbell/machine default
 };
 
+export const getAllExercises = (customExercises = [], exerciseOverrides = {}) => {
+  const overrides = exerciseOverrides || {};
+  const dbExercises = EXERCISES_DB.map(ex => {
+    const override = overrides[ex.id];
+    if (override) {
+      return {
+        ...ex,
+        ...override,
+        isModified: true,
+        defaultValues: {
+          name: ex.name,
+          category: ex.category,
+          secondaryCategories: ex.secondaryCategories || [],
+          equipmentType: ex.equipmentType
+        }
+      };
+    }
+    return ex;
+  });
+
+  const customs = (customExercises || []).map(ex => ({
+    ...ex,
+    isCustom: true
+  }));
+
+  return [...dbExercises, ...customs];
+};
+
 const D = EQUIPMENT_TYPES.DUMBBELL;
 const B = EQUIPMENT_TYPES.BARBELL;
 

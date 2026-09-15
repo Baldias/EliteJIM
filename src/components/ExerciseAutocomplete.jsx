@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { EXERCISES_DB, getExerciseCategories } from '../data/exercises';
+import { EXERCISES_DB, getAllExercises, getExerciseCategories } from '../data/exercises';
 import './Autocomplete.css';
 
 export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca esercizio...", options = null }) {
   const customExercises = useStore(state => state.customExercises || []);
+  const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef(null);
@@ -24,7 +25,7 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
     };
   }, []);
 
-  const sourceData = options || [...EXERCISES_DB, ...customExercises];
+  const sourceData = options || getAllExercises(customExercises, exerciseOverrides);
 
   const filteredExercises = sourceData.filter(ex => {
     const name = typeof ex === 'string' ? ex : ex.name;

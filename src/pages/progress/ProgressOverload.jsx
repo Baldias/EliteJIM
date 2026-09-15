@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { EXERCISE_CATEGORIES, EXERCISES_DB, getExerciseCategories } from '../../data/exercises';
+import { EXERCISE_CATEGORIES, EXERCISES_DB, getAllExercises, getExerciseCategories } from '../../data/exercises';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { getMuscleLevelByXp } from '../../utils/gamification';
@@ -10,6 +10,7 @@ import './ProgressOverload.css';
 function ProgressOverload() {
     const history = useStore(state => state.history);
     const customExercises = useStore(state => state.customExercises || []);
+    const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
     const muscleXP = useStore(state => state.muscleXP) || {};
     
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -18,7 +19,7 @@ function ProgressOverload() {
     // Get all categories as an array of { key, label }
     const categories = Object.entries(EXERCISE_CATEGORIES).map(([key, label]) => ({ key, label }));
 
-    const allExercisesDB = useMemo(() => [...EXERCISES_DB, ...customExercises], [customExercises]);
+    const allExercisesDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
     // Extract unique exercises from history, optionally filtered by category
     const availableExercises = useMemo(() => {

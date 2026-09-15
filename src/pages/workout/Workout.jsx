@@ -5,7 +5,7 @@ import { useStore, findLastBest1RMSet } from '../../store/useStore';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
-import { normalizeName, EXERCISES_DB, getWeightStep } from '../../data/exercises';
+import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 
 function Workout() {
   const navigate = useNavigate();
@@ -226,7 +226,8 @@ function Workout() {
 
         {activeWorkout.exercises.map((ex, idx) => {
           const customExercises = useStore.getState().customExercises || [];
-          const allDB = [...EXERCISES_DB, ...customExercises];
+          const exerciseOverrides = useStore.getState().exerciseOverrides || {};
+          const allDB = getAllExercises(customExercises, exerciseOverrides);
           const weightStep = getWeightStep(ex, allDB);
           const doneCount = ex.sets.filter(s => s.done).length;
           const best1RMData = findLastBest1RMSet(history, ex.name);

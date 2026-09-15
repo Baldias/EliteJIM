@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { checkStreakInactivity, calculateSessionScore, recalculateTotalXpFromHistory } from '../utils/gamification';
-import { EXERCISES_DB, normalizeName } from '../data/exercises';
+import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises';
 
 export const calculate1RM = (kg, reps) => {
   const w = parseFloat(kg) || 0;
@@ -77,6 +77,8 @@ export const useStore = create(
       history: [],
       // Array of custom exercises created by user
       customExercises: [],
+      // Map of overrides for default DB exercises: { [id]: { name, category, secondaryCategories, equipmentType } }
+      exerciseOverrides: {},
       // Currently active workout session
       activeWorkout: null,
       // Saved science assessment report
@@ -119,7 +121,8 @@ export const useStore = create(
       },
       syncGamificationWithHistory: () => {
         set((state) => {
-          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(state.history, [...EXERCISES_DB, ...(state.customExercises || [])]);
+          const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(state.history, allKnown);
           return { userXP, muscleXP, currentStreak, highestStreak };
         });
       },
@@ -132,11 +135,179 @@ export const useStore = create(
       saveScienceReport: (report) => set({ scienceReport: report }),
       toggleScience: () => set((state) => ({ showScience: !state.showScience })),
       
-      // --- Custom Exercises Actions ---
+      // --- Exercise Management Actions ---
       addCustomExercise: (exercise) =>
-        set((state) => ({ customExercises: [...(state.customExercises || []), { ...exercise, id: `custom-${Date.now()}` }] })),
+        set((state) => ({ customExercises: [...(state.customExercises || []), { ...exercise, id: `custom-${Date.now()}`, isCustom: true }] })),
+
       removeCustomExercise: (id) =>
         set((state) => ({ customExercises: (state.customExercises || []).filter((ex) => ex.id !== id) })),
+
+      updateExercise: ({ id, name, category, secondaryCategories = [], equipmentType, updateHistoryAndTemplates = true }) => {
+        set((state) => {
+          const customExercises = state.customExercises || [];
+          const exerciseOverrides = state.exerciseOverrides || {};
+          const currentAll = getAllExercises(customExercises, exerciseOverrides);
+          const currentEx = currentAll.find(e => e.id === id);
+          if (!currentEx) return state;
+
+          const oldName = currentEx.name;
+          const newName = (name || '').trim();
+          const cleanSecondary = (secondaryCategories || []).filter(c => c && c !== category);
+
+          let nextCustom = customExercises;
+          let nextOverrides = { ...exerciseOverrides };
+
+          if (currentEx.isCustom || String(id).startsWith('custom-')) {
+            nextCustom = customExercises.map(ex => {
+              if (ex.id === id) {
+                return {
+                  ...ex,
+                  name: newName || ex.name,
+                  category,
+                  secondaryCategories: cleanSecondary,
+                  equipmentType
+                };
+              }
+              return ex;
+            });
+          } else {
+            // Default exercise from EXERCISES_DB
+            nextOverrides[id] = {
+              name: newName || currentEx.name,
+              category,
+              secondaryCategories: cleanSecondary,
+              equipmentType
+            };
+          }
+
+          let nextTemplates = state.templates;
+          let nextHistory = state.history;
+          let nextActiveWorkout = state.activeWorkout;
+
+          // Propagate rename to templates, history and active session
+          if (updateHistoryAndTemplates && oldName && newName && normalizeName(oldName) !== normalizeName(newName)) {
+            const oldNorm = normalizeName(oldName);
+
+            nextTemplates = state.templates.map(tpl => ({
+              ...tpl,
+              exercises: (tpl.exercises || []).map(ex => {
+                if (normalizeName(ex.name) === oldNorm) {
+                  return { ...ex, name: newName };
+                }
+                return ex;
+              })
+            }));
+
+            nextHistory = state.history.map(w => ({
+              ...w,
+              exercises: (w.exercises || []).map(ex => {
+                if (normalizeName(ex.name) === oldNorm) {
+                  return { ...ex, name: newName };
+                }
+                return ex;
+              })
+            }));
+
+            if (nextActiveWorkout && nextActiveWorkout.exercises) {
+              nextActiveWorkout = {
+                ...nextActiveWorkout,
+                exercises: nextActiveWorkout.exercises.map(ex => {
+                  if (normalizeName(ex.name) === oldNorm) {
+                    return { ...ex, name: newName };
+                  }
+                  return ex;
+                })
+              };
+            }
+          }
+
+          const updatedAllExercises = getAllExercises(nextCustom, nextOverrides);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(nextHistory, updatedAllExercises);
+
+          return {
+            customExercises: nextCustom,
+            exerciseOverrides: nextOverrides,
+            templates: nextTemplates,
+            history: nextHistory,
+            activeWorkout: nextActiveWorkout,
+            userXP,
+            muscleXP,
+            currentStreak,
+            highestStreak
+          };
+        });
+      },
+
+      resetExerciseToDefault: (id, updateHistoryAndTemplates = true) => {
+        set((state) => {
+          const exerciseOverrides = state.exerciseOverrides || {};
+          if (!exerciseOverrides[id]) return state;
+
+          const defaultEx = EXERCISES_DB.find(e => e.id === id);
+          if (!defaultEx) return state;
+
+          const currentOverride = exerciseOverrides[id];
+          const oldName = currentOverride.name || defaultEx.name;
+          const defaultName = defaultEx.name;
+
+          const nextOverrides = { ...exerciseOverrides };
+          delete nextOverrides[id];
+
+          let nextTemplates = state.templates;
+          let nextHistory = state.history;
+          let nextActiveWorkout = state.activeWorkout;
+
+          if (updateHistoryAndTemplates && oldName && defaultName && normalizeName(oldName) !== normalizeName(defaultName)) {
+            const oldNorm = normalizeName(oldName);
+
+            nextTemplates = state.templates.map(tpl => ({
+              ...tpl,
+              exercises: (tpl.exercises || []).map(ex => {
+                if (normalizeName(ex.name) === oldNorm) {
+                  return { ...ex, name: defaultName };
+                }
+                return ex;
+              })
+            }));
+
+            nextHistory = state.history.map(w => ({
+              ...w,
+              exercises: (w.exercises || []).map(ex => {
+                if (normalizeName(ex.name) === oldNorm) {
+                  return { ...ex, name: defaultName };
+                }
+                return ex;
+              })
+            }));
+
+            if (nextActiveWorkout && nextActiveWorkout.exercises) {
+              nextActiveWorkout = {
+                ...nextActiveWorkout,
+                exercises: nextActiveWorkout.exercises.map(ex => {
+                  if (normalizeName(ex.name) === oldNorm) {
+                    return { ...ex, name: defaultName };
+                  }
+                  return ex;
+                })
+              };
+            }
+          }
+
+          const updatedAllExercises = getAllExercises(state.customExercises, nextOverrides);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(nextHistory, updatedAllExercises);
+
+          return {
+            exerciseOverrides: nextOverrides,
+            templates: nextTemplates,
+            history: nextHistory,
+            activeWorkout: nextActiveWorkout,
+            userXP,
+            muscleXP,
+            currentStreak,
+            highestStreak
+          };
+        });
+      },
 
       // --- Template Actions ---
       addTemplate: (template) =>
@@ -317,7 +488,8 @@ export const useStore = create(
             endTime: Date.now()
           };
 
-          const sessionScore = calculateSessionScore(completedWorkout, state.history, [...EXERCISES_DB, ...(state.customExercises || [])]);
+          const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
+          const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown);
           
           let newStreak = state.currentStreak || 0;
           // Increment streak logic: if they completed at least 3 sets
@@ -381,7 +553,8 @@ export const useStore = create(
       deleteWorkout: (workoutId) => {
         set((state) => {
           const newHistory = state.history.filter(w => w.id !== workoutId);
-          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, [...EXERCISES_DB, ...(state.customExercises || [])]);
+          const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, allKnown);
           return {
             history: newHistory,
             userXP,

@@ -16,6 +16,7 @@ export function exportDataBackup() {
           templates: currentState.templates || [],
           history: currentState.history || [],
           customExercises: currentState.customExercises || [],
+          exerciseOverrides: currentState.exerciseOverrides || {},
           scienceReport: currentState.scienceReport || null,
           userXP: currentState.userXP || 0,
           muscleXP: currentState.muscleXP || {},

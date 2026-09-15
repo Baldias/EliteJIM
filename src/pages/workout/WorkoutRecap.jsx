@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { Trophy, Clock, Zap, Target, Flame, ChevronRight, Check, ShieldCheck, Download } from 'lucide-react';
 import { getRankByXp, getMuscleLevelByXp } from '../../utils/gamification';
-import { EXERCISES_DB } from '../../data/exercises';
+import { EXERCISES_DB, getAllExercises, normalizeName } from '../../data/exercises';
 import { RP_LANDMARKS } from '../../utils/rpVolume';
 import { exportDataBackup } from '../../utils/backup';
 import './WorkoutRecap.css';
@@ -15,6 +15,12 @@ function WorkoutRecap() {
   const scienceReport = useStore(state => state.scienceReport);
   const history = useStore(state => state.history);
   const muscleXPState = useStore(state => state.muscleXP) || {};
+  const customExercises = useStore(state => state.customExercises || []);
+  const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
+
+  const allKnownExercises = useMemo(() => {
+    return getAllExercises(customExercises, exerciseOverrides);
+  }, [customExercises, exerciseOverrides]);
 
   const [showAnimations, setShowAnimations] = useState(false);
   const [backupSaved, setBackupSaved] = useState(false);
@@ -56,7 +62,7 @@ function WorkoutRecap() {
     // 1. Trova i muscoli allenati in QUESTA sessione
     const setsDoneInWorkout = {};
     recapData.workout.exercises.forEach(ex => {
-      const foundEx = EXERCISES_DB.find(e => e.name === ex.name);
+      const foundEx = allKnownExercises.find(e => normalizeName(e.name) === normalizeName(ex.name));
       const muscle = foundEx ? foundEx.category : null;
       if (muscle) {
         setsDoneInWorkout[muscle] = (setsDoneInWorkout[muscle] || 0) + ex.sets.filter(s => s.done && !s.isDropset).length;
@@ -73,7 +79,7 @@ function WorkoutRecap() {
     history.forEach(w => {
       if (w.id !== recapData.workout.id && w.startTime >= startOfCurrentWeek) {
         w.exercises.forEach(ex => {
-          const foundEx = EXERCISES_DB.find(e => e.name === ex.name);
+          const foundEx = allKnownExercises.find(e => normalizeName(e.name) === normalizeName(ex.name));
           const muscle = foundEx ? foundEx.category : null;
           if (muscle && setsDoneBeforeWorkout[muscle] !== undefined) {
             setsDoneBeforeWorkout[muscle] += ex.sets.filter(s => s.done && !s.isDropset).length;
@@ -137,7 +143,7 @@ function WorkoutRecap() {
     });
 
     return goals;
-  }, [scienceReport, recapData, history]);
+  }, [scienceReport, recapData, history, allKnownExercises]);
 
 
   if (!recapData) {
