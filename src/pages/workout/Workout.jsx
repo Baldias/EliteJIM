@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap } from 'lucide-react';
-import { useStore, findLastBest1RMSet } from '../../store/useStore';
+import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy } from 'lucide-react';
+import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/useStore';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
@@ -48,13 +48,22 @@ function Workout() {
   }, [activeWorkout]);
 
   useEffect(() => {
-    if (!globalRestEndTime) { setIsResting(false); setRestTimeLeft(0); return; }
-    setIsResting(true);
-
+    if (!globalRestEndTime) {
+      setIsResting(false);
+      setRestTimeLeft(0);
+      return;
+    }
     const check = () => {
       const rem = Math.ceil((globalRestEndTime - Date.now()) / 1000);
-      if (rem <= 0) { setIsResting(false); setRestTimeLeft(0); clearGlobalRestTimer(); notifyTimerComplete(); }
-      else setRestTimeLeft(rem);
+      if (rem <= 0) {
+        setIsResting(false);
+        setRestTimeLeft(0);
+        clearGlobalRestTimer();
+        notifyTimerComplete();
+      } else {
+        setIsResting(true);
+        setRestTimeLeft(rem);
+      }
     };
     check();
     const id = setInterval(check, 1000);
@@ -94,7 +103,7 @@ function Workout() {
       const pastWk = hist.find(w => w.exercises?.some(e => normalizeName(e.name) === norm));
       const pastEx = pastWk?.exercises?.find(e => normalizeName(e.name) === norm);
 
-      const bestData = isAdded ? findLastBest1RMSet(hist, newName) : null;
+      const bestData = findLastBest1RMSet(hist, newName);
       const bestSet = bestData?.set;
 
       let initialNotes = bestData?.notes || pastEx?.notes || '';
@@ -231,68 +240,105 @@ function Workout() {
         {activeWorkout.exercises.map((ex, idx) => {
           const weightStep = getWeightStep(ex, allDB);
           const doneCount = ex.sets.filter(s => s.done).length;
-          const best1RMData = findLastBest1RMSet(history, ex.name);
+          const stats1RM = getExercise1RMStats(history, ex.name);
+          const hasLast1RM = !!(stats1RM.lastSession?.set && stats1RM.lastSession.max1RM > 0);
+          const hasAllTime1RM = !!(stats1RM.allTime?.set && stats1RM.allTime.max1RM > 0);
+          const has1RM = hasLast1RM || hasAllTime1RM;
 
           return (
             <div 
               key={ex.id} 
-              className="workout-exercise-card"
+              className="workout-exercise-group"
               style={{ zIndex: activeWorkout.exercises.length - idx }}
             >
-              {/* Exercise header row */}
-              <div className="workout-exercise-header">
-                <span className="workout-exercise-idx">
-                  {idx + 1}
+              {/* Unified Exercise Title Bar ABOVE the card */}
+              <div className="workout-exercise-title-bar">
+                <span className="workout-exercise-idx-pill">
+                  <span className="workout-exercise-idx-hash">#</span>
+                  <span className="workout-exercise-idx-num">{idx + 1}</span>
                 </span>
-                <div className="workout-exercise-title">
+                <div className="workout-exercise-title-input-wrap">
                   <ExerciseAutocomplete 
                     value={ex.name} 
                     onChange={val => handleUpdateExerciseNameLocally(ex.id, val)} 
                     placeholder="Seleziona esercizio…" 
                   />
                 </div>
-                <div className="workout-exercise-meta">
-                  <span className={`workout-progress-pill ${doneCount === ex.sets.length && ex.sets.length > 0 ? 'all-done' : ''}`}>
-                    {doneCount}/{ex.sets.length}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => toggleNotes(ex.id)}
-                    title={ex.notes ? "Modifica nota" : "Aggiungi nota"}
-                    className={`workout-note-btn ${ex.notes ? 'has-note' : ''}`}
-                  >
-                    <FileText size={13} />
-                    <span>{ex.notes ? 'Nota' : '+ Nota'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const exName = ex.name?.trim() ? `l'esercizio "${ex.name}"` : 'questo esercizio';
-                      if (window.confirm(`Sei sicuro di voler eliminare ${exName} dalla sessione?`)) {
-                        deleteExercise(ex.id);
-                      }
-                    }}
-                    className="workout-delete-ex-btn"
-                    title="Rimuovi esercizio"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
               </div>
 
-              {/* Best 1RM reference row - only for added exercises */}
-              {ex.isAdded && best1RMData && best1RMData.set && (
-                <div className="workout-1rm-banner">
-                  <div className="workout-1rm-left">
-                    <Zap size={13} color="#00e5ff" />
-                    <span className="workout-1rm-tag">Ultimo max:</span>
-                    <span className="workout-1rm-val">{best1RMData.set.kg}kg × {best1RMData.set.reps} reps</span>
+              {/* Workout Exercise Card */}
+              <div className="workout-exercise-card">
+                {/* Meta & actions toolbar */}
+                <div className="workout-exercise-subbar">
+                  <div className="workout-exercise-meta-left">
+                    <span className={`workout-progress-pill ${doneCount === ex.sets.length && ex.sets.length > 0 ? 'all-done' : ''}`}>
+                      {doneCount}/{ex.sets.length} {doneCount === ex.sets.length && ex.sets.length > 0 ? 'completate' : 'serie'}
+                    </span>
                   </div>
-                  <span className="workout-1rm-right">
-                    1RM ~ {best1RMData.max1RM}kg
-                  </span>
+                  <div className="workout-exercise-meta-right">
+                    <button
+                      type="button"
+                      onClick={() => toggleNotes(ex.id)}
+                      title={ex.notes ? "Modifica nota" : "Aggiungi nota"}
+                      className={`workout-note-btn ${ex.notes ? 'has-note' : ''}`}
+                    >
+                      <FileText size={13} />
+                      <span>{ex.notes ? 'Nota' : '+ Nota'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const exName = ex.name?.trim() ? `l'esercizio "${ex.name}"` : 'questo esercizio';
+                        if (window.confirm(`Sei sicuro di voler eliminare ${exName} dalla sessione?`)) {
+                          deleteExercise(ex.id);
+                        }
+                      }}
+                      className="workout-delete-ex-btn"
+                      title="Rimuovi esercizio"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                {/* Best 1RM reference row - visible for ALL exercises on the same line */}
+                {has1RM && (
+                  <div className="workout-1rm-banner">
+                    {hasLast1RM && (
+                      <div className="workout-1rm-item">
+                        <div className="workout-1rm-label-group">
+                          <Zap size={11} className="workout-1rm-icon-zap" />
+                          <span className="workout-1rm-tag">Ult:</span>
+                        </div>
+                        <span className="workout-1rm-val">
+                          {stats1RM.lastSession.set.kg}kg × {stats1RM.lastSession.set.reps}
+                        </span>
+                        <span className="workout-1rm-badge">
+                          1RM {stats1RM.lastSession.max1RM}kg
+                        </span>
+                      </div>
+                    )}
+
+                    {hasLast1RM && hasAllTime1RM && (
+                      <div className="workout-1rm-sep" />
+                    )}
+
+                    {hasAllTime1RM && (
+                      <div className="workout-1rm-item">
+                        <div className="workout-1rm-label-group">
+                          <Trophy size={11} className="workout-1rm-icon-zap" />
+                          <span className="workout-1rm-tag">PR:</span>
+                        </div>
+                        <span className="workout-1rm-val">
+                          {stats1RM.allTime.set.kg}kg × {stats1RM.allTime.set.reps}
+                        </span>
+                        <span className="workout-1rm-badge">
+                          1RM {stats1RM.allTime.max1RM}kg
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
               {/* Notes drawer */}
               {(expandedNotes[ex.id] || ex.notes) && (
@@ -406,8 +452,9 @@ function Workout() {
                 </div>
               </div>
             </div>
-          );
-        })}
+          </div>
+        );
+      })}
 
         <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
           <button onClick={() => addExercise('')} style={{

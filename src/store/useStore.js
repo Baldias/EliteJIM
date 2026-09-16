@@ -37,6 +37,41 @@ export const findLastBest1RMSet = (history, exerciseName) => {
   return null;
 };
 
+export const findAllTimeBest1RMSet = (history, exerciseName) => {
+  if (!exerciseName || !history || history.length === 0) return null;
+  const norm = normalizeName(exerciseName);
+  let allTimeMaxSet = null;
+  let allTimeMax1RM = -1;
+  let allTimeNotes = '';
+
+  for (const w of history) {
+    const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
+    if (pastEx && pastEx.sets && pastEx.sets.length > 0) {
+      for (const s of pastEx.sets) {
+        const rm = calculate1RM(s.kg, s.reps);
+        if (rm > allTimeMax1RM) {
+          allTimeMax1RM = rm;
+          allTimeMaxSet = s;
+          allTimeNotes = pastEx.notes || '';
+        }
+      }
+    }
+  }
+
+  if (!allTimeMaxSet || allTimeMax1RM <= 0) return null;
+  return {
+    set: allTimeMaxSet,
+    max1RM: parseFloat(allTimeMax1RM.toFixed(1)),
+    notes: allTimeNotes
+  };
+};
+
+export const getExercise1RMStats = (history, exerciseName) => {
+  const lastSession = findLastBest1RMSet(history, exerciseName);
+  const allTime = findAllTimeBest1RMSet(history, exerciseName);
+  return { lastSession, allTime };
+};
+
 export const useStore = create(
   persist(
     (set, get) => ({
