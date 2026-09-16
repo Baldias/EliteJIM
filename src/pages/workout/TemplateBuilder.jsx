@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Plus, ArrowLeft, Check, Trash2, FileText, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Trash2, FileText, ChevronUp, ChevronDown, GripVertical, Share2 } from 'lucide-react';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
+import { ShareTemplateModal } from '../../components/ShareTemplateModal';
 
 const REPS_PRESETS = ['4-6', '6-8', '8-10', '10-12', '12-15', '15-20'];
 
@@ -39,6 +40,7 @@ function TemplateBuilder() {
   );
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [showShare, setShowShare] = useState(false);
   const dragTouchRef = useRef(null);
 
   const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90, notes: '' }]);
@@ -90,6 +92,21 @@ function TemplateBuilder() {
           <ArrowLeft size={20} />
         </button>
         <span style={{ flex: 1, fontWeight: '800', fontSize: '1rem', color: 'white' }}>{isEditing ? 'Modifica Scheda' : 'Nuova Scheda'}</span>
+        {isValid && (
+          <button 
+            type="button" 
+            title="Condividi ed esporta" 
+            onClick={() => setShowShare(true)} 
+            style={{ 
+              background: 'rgba(0, 229, 255, 0.08)', 
+              border: '1px solid rgba(0, 229, 255, 0.25)', 
+              borderRadius: '10px', padding: '8px 10px', 
+              color: '#00e5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+            }}
+          >
+            <Share2 size={16} />
+          </button>
+        )}
         <button onClick={handleSave} style={{
           background: isValid ? 'linear-gradient(135deg, #00b8d4 0%, #0090b0 100%)' : 'rgba(255,255,255,0.07)',
           border: 'none', borderRadius: '10px', padding: '8px 16px',
@@ -390,6 +407,13 @@ function TemplateBuilder() {
           </p>
         )}
       </div>
+
+      {/* Share Template Modal */}
+      <ShareTemplateModal
+        isOpen={showShare}
+        onClose={() => setShowShare(false)}
+        template={{ name: name.trim() || 'Nuova Scheda', exercises }}
+      />
     </div>
   );
 }

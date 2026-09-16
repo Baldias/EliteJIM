@@ -351,6 +351,24 @@ export const useStore = create(
         set((state) => ({ templates: state.templates.map(t => t.id === updatedTemplate.id ? updatedTemplate : t) })),
       deleteTemplate: (id) =>
         set((state) => ({ templates: state.templates.filter((t) => t.id !== id) })),
+      importTemplates: (newTemplates) => {
+        const list = Array.isArray(newTemplates) ? newTemplates : [newTemplates];
+        if (list.length === 0) return 0;
+        const normalizedList = list.map((t, idx) => ({
+          ...t,
+          id: `tpl-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+          name: (t.name || 'Scheda Importata').trim(),
+          exercises: (t.exercises || []).map(ex => ({
+            name: (ex.name || '').trim(),
+            setsCount: parseInt(ex.setsCount) || 3,
+            targetReps: String(ex.targetReps || '8-10').trim(),
+            restTime: parseInt(ex.restTime) || 90,
+            notes: (ex.notes || '').trim()
+          }))
+        }));
+        set((state) => ({ templates: [...(state.templates || []), ...normalizedList] }));
+        return normalizedList.length;
+      },
 
       // --- Workout Actions ---
       startWorkout: (template) => {

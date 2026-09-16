@@ -326,6 +326,14 @@ function Exercises() {
             );
           })}
         </div>
+
+        {/* Mini Guida Esercizi */}
+        <div className="settings-guide-box" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+          <p className="settings-guide-title">Come funzionano gli esercizi?</p>
+          <p className="settings-guide-text">
+            Puoi modificare qualsiasi esercizio predefinito o crearne di nuovi con <strong>Nuovo Esercizio</strong> in alto. Vengono tutti integrati istantaneamente nel generatore di schede AI e nel calcolo automatico dei tuoi massimali (1RM).
+          </p>
+        </div>
       </main>
 
       {/* Edit Exercise Modal */}

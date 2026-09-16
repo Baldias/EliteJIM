@@ -904,4 +904,34 @@
   transform: scale(0.97);
 }
 
+/* Settings Guide Box (Consistent Mini Tutorial) */
+.settings-guide-box {
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.settings-guide-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #00e5ff;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-guide-text {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.settings-guide-text strong {
+  color: #ffffff;
+}
+
+
 

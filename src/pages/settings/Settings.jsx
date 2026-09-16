@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ArrowLeft, ChevronRight, Dumbbell, Dna, Info, Download, Upload, Zap, ShieldCheck, HardDrive, Check, Clock } from 'lucide-react';
-import { EXERCISES_DB, getAllExercises } from '../../data/exercises';
-import { recalculateTotalXpFromHistory } from '../../utils/gamification';
+import { ArrowLeft, ChevronRight, Dumbbell, Dna, Info, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles } from 'lucide-react';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
+import { AiTemplateModal } from '../../components/AiTemplateModal';
 import './Settings.css';
 
 function Settings() {
   const navigate = useNavigate();
   const showScience = useStore(state => state.showScience);
   const toggleScience = useStore(state => state.toggleScience);
-  const syncGamificationWithHistory = useStore(state => state.syncGamificationWithHistory);
   
   const autoBackupEnabled = useStore(state => state.autoBackupEnabled ?? true);
   const autoBackupFrequency = useStore(state => state.autoBackupFrequency || 'after_workout');
@@ -19,6 +17,7 @@ function Settings() {
   const isStoragePersisted = useStore(state => state.isStoragePersisted);
   const setAutoBackupSettings = useStore(state => state.setAutoBackupSettings);
 
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [persistenceLoading, setPersistenceLoading] = useState(false);
   const fileInputRef = React.useRef(null);
@@ -49,81 +48,6 @@ function Settings() {
     }
   };
 
-  const loadTestData = () => {
-    if (!window.confirm("Attenzione: questo sovrascriverà il tuo storico attuale con dati di test realistici. Sei sicuro?")) return;
-
-    const now = Date.now();
-    const day = 24 * 60 * 60 * 1000;
-
-    const sessionTemplates = [
-      {
-        name: 'Spinta (Petto/Spalle/Tricipiti)',
-        exercises: [
-          { name: 'Panca Piana Bilanciere', sets: 3, baseKg: 60 },
-          { name: 'Military Press', sets: 3, baseKg: 35 },
-          { name: 'Alzate Laterali Manubri', sets: 3, baseKg: 10 },
-          { name: 'Pushdown Tricipiti ai Cavi', sets: 3, baseKg: 20 }
-        ]
-      },
-      {
-        name: 'Trazione (Dorso/Bicipiti)',
-        exercises: [
-          { name: 'Trazioni alla Sbarra (Pull-up)', sets: 3, baseKg: 0 },
-          { name: 'Rematore con Bilanciere', sets: 3, baseKg: 50 },
-          { name: 'Pulley Basso', sets: 3, baseKg: 45 },
-          { name: 'Curl Bilanciere', sets: 3, baseKg: 25 }
-        ]
-      },
-      {
-        name: 'Gambe (Leg Day)',
-        exercises: [
-          { name: 'Squat con Bilanciere', sets: 3, baseKg: 80 },
-          { name: 'Leg Extension', sets: 3, baseKg: 50 },
-          { name: 'Leg Curl', sets: 3, baseKg: 40 },
-          { name: 'Calf Raise Seduto', sets: 3, baseKg: 30 }
-        ]
-      }
-    ];
-
-    const mockHistory = Array.from({ length: 18 }).map((_, i) => {
-      const workoutTime = now - (30 - i * 1.6) * day;
-      const template = sessionTemplates[i % sessionTemplates.length];
-      const progressFactor = Math.floor(i / 3) * 2.5;
-
-      return {
-        id: `mock-w-${i}`,
-        name: template.name,
-        startTime: workoutTime,
-        endTime: workoutTime + (45 + Math.random() * 20) * 60 * 1000,
-        exercises: template.exercises.map((ex, exIdx) => ({
-          id: `mock-ex-${i}-${exIdx}`,
-          name: ex.name,
-          sets: Array.from({ length: ex.sets }).map((_, sIdx) => ({
-            id: Date.now() + i + exIdx + sIdx,
-            kg: String(ex.baseKg > 0 ? ex.baseKg + Math.floor(progressFactor) : 0),
-            reps: String(8 + (sIdx % 2)),
-            done: true
-          }))
-        }))
-      };
-    });
-
-    const newHistory = mockHistory.reverse();
-    const allKnown = getAllExercises(useStore.getState().customExercises, useStore.getState().exerciseOverrides);
-    const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, allKnown);
-
-    useStore.setState({ 
-      history: newHistory,
-      userXP,
-      muscleXP,
-      currentStreak,
-      highestStreak,
-      lastWorkoutDate: now - 1 * day
-    });
-
-    alert("Dati demo realistici caricati con successo!");
-  };
-
   return (
     <div className="settings-container">
       <header className="settings-header">
@@ -134,6 +58,33 @@ function Settings() {
 
       <main className="settings-content" style={{ marginTop: '0.5rem' }}>
         <div className="settings-group">
+          {/* Card AI Routine & JSON Import */}
+          <div 
+            className="settings-item clickable" 
+            onClick={() => setIsAiModalOpen(true)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '1.25rem', background: 'linear-gradient(135deg, rgba(0, 184, 212, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              borderRadius: '16px', border: '1px solid rgba(0, 184, 212, 0.25)',
+              marginBottom: '1rem', cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ background: 'rgba(0, 184, 212, 0.15)', padding: '8px', borderRadius: '10px' }}>
+                <Sparkles size={20} color="#00e5ff" />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <p style={{ margin: 0, fontWeight: '700', color: '#fff' }}>Crea Scheda con AI & JSON</p>
+                  <span style={{ fontSize: '0.62rem', fontWeight: '800', background: '#00e5ff', color: '#081018', padding: '1px 6px', borderRadius: '6px', letterSpacing: '0.3px' }}>NUOVO</span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Genera prompt per ChatGPT o importa schede da JSON</p>
+              </div>
+            </div>
+            <ChevronRight size={18} color="#00e5ff" />
+          </div>
+
           <div 
             className="settings-item clickable" 
             onClick={() => navigate('/settings/exercises')}
@@ -194,12 +145,13 @@ function Settings() {
           </div>
         </div>
 
-        <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', marginTop: '2rem' }}>
-          <p style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 8px' }}>
-            <Info size={16} /> Info
+        <div className="settings-guide-box" style={{ marginTop: '1.5rem' }}>
+          <p className="settings-guide-title">
+            <Info size={14} />
+            <span>Come funziona la Sezione Scienza?</span>
           </p>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Disattivando la Sezione Scienza, verranno nascosti i tracker del mesociclo e i landmark di Mike Israetel per un'esperienza di tracciamento più semplice.
+          <p className="settings-guide-text">
+            Attivando questa opzione avrai accesso all'analisi del mesociclo, al volume minimo e massimo (MEV/MRV di Mike Israetel) e ai grafici di sovraccarico progressivo. Se preferisci un'esperienza essenziale puoi disattivarla in qualsiasi momento.
           </p>
         </div>
 
@@ -332,33 +284,19 @@ function Settings() {
             />
           </div>
 
-          {/* Dati Demo e Sincronizzazione */}
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
-              className="btn-ghost" 
-              onClick={loadTestData} 
-              style={{ flex: 1, padding: '10px', borderRadius: '12px', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)', background: 'transparent' }}
-            >
-              Dati Demo
-            </button>
-            <button 
-              className="btn-ghost" 
-              onClick={() => {
-                try {
-                  syncGamificationWithHistory();
-                  alert("Rank, Livelli e Streak sincronizzati con la cronologia!");
-                } catch (err) {
-                  console.error("Sync error:", err);
-                  alert("Errore durante la sincronizzazione: " + err.message);
-                }
-              }}
-              style={{ flex: 1, padding: '10px', borderRadius: '12px', fontSize: '0.8rem', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', background: 'rgba(var(--primary-color-rgb), 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-            >
-              <Zap size={14} /> Sincronizza
-            </button>
+          {/* Mini Guida Salvataggio e Ripristino */}
+          <div className="settings-guide-box" style={{ marginTop: '1.25rem' }}>
+            <p className="settings-guide-title">Come funziona il salvataggio & ripristino?</p>
+            <p className="settings-guide-text">
+              1. Clicca su <strong>Salva Backup</strong> per scaricare una copia di sicurezza (.json) sul tuo telefono o computer.<br />
+              2. Se cambi telefono o cancelli la cronologia, premi <strong>Ripristina</strong> e seleziona il file: ritroverai subito tutte le tue schede, massimali e livelli XP!
+            </p>
           </div>
         </div>
       </main>
+
+      {/* AI Template Modal */}
+      <AiTemplateModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
     </div>
   );
 }

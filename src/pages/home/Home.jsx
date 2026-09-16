@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Plus, Play, Dumbbell, ChevronRight, Zap, Bell, CheckCircle2, Trash2, Edit3 } from 'lucide-react';
+import { Plus, Play, Dumbbell, ChevronRight, Zap, Bell, CheckCircle2, Trash2, Edit3, Share2 } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { InteractiveBody } from '../../components/InteractiveBody';
 import { WelcomeBack } from '../../components/WelcomeBack';
 import { BackupReminderBanner } from '../../components/BackupReminderBanner';
+import { ShareTemplateModal } from '../../components/ShareTemplateModal';
 import { EXERCISES_DB } from '../../data/exercises';
 import pkg from '../../../package.json';
 
@@ -30,6 +31,7 @@ function Home() {
   const showScience = useStore(state => state.showScience);
 
   const [showWelcome, setShowWelcome] = useState(false);
+  const [sharingTemplate, setSharingTemplate] = useState(null);
 
 
   const handleStartTemplate = (template) => {
@@ -170,6 +172,22 @@ function Home() {
                       <Trash2 size={18} />
                     </button>
                     <button
+                      title="Condividi ed esporta scheda"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSharingTemplate(template);
+                      }}
+                      style={{
+                        background: 'rgba(0, 229, 255, 0.08)',
+                        border: '1px solid rgba(0, 229, 255, 0.25)', borderRadius: '14px',
+                        width: '44px', height: '44px', color: '#00e5ff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'background 0.2s', flexShrink: 0
+                      }}
+                    >
+                      <Share2 size={18} />
+                    </button>
+                    <button
                       onClick={(e) => { e.stopPropagation(); navigate('/build', { state: { template } }); }}
                       style={{
                         background: 'rgba(255, 255, 255, 0.05)',
@@ -231,6 +249,13 @@ function Home() {
         {/* ── FOOTER ───────────────────────────────────── */}
         <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem', marginTop: '3rem', fontWeight: '600', letterSpacing: '1px' }}>ELITEJIM v{pkg.version}</p>
       </main>
+
+      {/* Share Template Modal */}
+      <ShareTemplateModal 
+        isOpen={!!sharingTemplate} 
+        onClose={() => setSharingTemplate(null)} 
+        template={sharingTemplate} 
+      />
     </>
   );
 
