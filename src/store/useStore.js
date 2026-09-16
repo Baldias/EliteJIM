@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { checkStreakInactivity, calculateSessionScore, recalculateTotalXpFromHistory } from '../utils/gamification';
+import { checkStreakInactivity, calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
 import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises';
 
 export const calculate1RM = (kg, reps) => {
@@ -544,13 +544,9 @@ export const useStore = create(
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
           const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown);
           
-          let newStreak = state.currentStreak || 0;
-          // Increment streak logic: if they completed at least 3 sets
-          if (sessionScore.doneSets >= 3) {
-            newStreak += 1;
-          }
-
-          const highestStreak = Math.max(state.highestStreak || 0, newStreak);
+          const updatedHistory = [completedWorkout, ...state.history];
+          const { currentStreak: newStreak, highestStreak: calculatedHighest } = calculateWeeklyStreak(updatedHistory);
+          const highestStreak = Math.max(state.highestStreak || 0, calculatedHighest, newStreak);
           const newXP = (state.userXP || 0) + sessionScore.xp;
           
           // Merge Muscle XP
@@ -588,7 +584,7 @@ export const useStore = create(
 
           return {
             templates: updatedTemplates,
-            history: [completedWorkout, ...state.history],
+            history: updatedHistory,
             activeWorkout: null,
             globalRestEndTime: null,
             userXP: newXP,

@@ -73,7 +73,7 @@ export function WelcomeBack({ onClose }) {
         ) : (
           <div style={{ background: 'rgba(52,199,89,0.1)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(52,199,89,0.3)', marginBottom: '1.5rem', textAlign: 'center' }}>
             <h4 style={{ color: '#34c759', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <Flame size={20} /> Streak Attivo: {currentStreak}
+              <Flame size={20} /> Streak Attivo: {currentStreak} {currentStreak === 1 ? 'settimana' : 'settimane'}
             </h4>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', margin: 0 }}>Rimani costante per non perdere il moltiplicatore extra e i progressi muscolari.</p>
           </div>

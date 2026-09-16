@@ -54,12 +54,28 @@ function Home() {
 
       <header className="app-header">
         <div style={{ position: 'absolute', top: 'max(1rem, env(safe-area-inset-top))', right: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 10 }}>
-          {currentStreak > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,149,0,0.15)', padding: '5px 10px', borderRadius: '20px', border: '1px solid rgba(255,149,0,0.3)' }}>
-              <span style={{ fontSize: '1rem' }}>🔥</span>
-              <span style={{ fontWeight: '700', color: '#ff9500', fontSize: '0.9rem' }}>{currentStreak}</span>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => navigate('/activity')}
+            title="Visualizza attività e streak"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              background: currentStreak > 0 ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              border: currentStreak > 0 ? '1px solid rgba(255, 149, 0, 0.35)' : '1px solid rgba(255, 255, 255, 0.1)',
+              cursor: 'pointer',
+              boxShadow: currentStreak > 0 ? '0 0 12px rgba(255, 149, 0, 0.2)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <span style={{ fontSize: '1rem', lineHeight: 1 }}>🔥</span>
+            <span style={{ fontWeight: '800', color: currentStreak > 0 ? '#ff9500' : 'rgba(255, 255, 255, 0.6)', fontSize: '0.86rem' }}>
+              {currentStreak} {currentStreak === 1 ? 'sett' : 'sett'}
+            </span>
+          </button>
           {lastWorkoutDate && (
             <button onClick={() => setShowWelcome(true)} style={{
               background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
@@ -142,76 +158,144 @@ function Home() {
           {templates.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {templates.map(template => (
-                <div key={template.id} className="glass" style={{
-                  borderRadius: '24px', padding: '1.25rem 1.5rem',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  border: '1px solid rgba(255, 255, 255, 0.06)'
-                }}>
-                  <div style={{ flex: 1, paddingRight: '1rem' }}>
-                    <p style={{ fontWeight: '800', fontSize: '1.15rem', margin: 0, color: '#fff', letterSpacing: '-0.3px' }}>{template.name}</p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: '500', margin: '4px 0 0' }}>
-                      {template.exercises.length} esercizi · {template.exercises.reduce((a, ex) => a + ex.setsCount, 0)} serie
-                    </p>
+                <div
+                  key={template.id}
+                  className="glass"
+                  style={{
+                    borderRadius: '22px',
+                    padding: '1.15rem 1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.06)'
+                  }}
+                >
+                  {/* Nome scheda in alto */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                    <h3 style={{
+                      fontWeight: '800',
+                      fontSize: '1.2rem',
+                      margin: 0,
+                      color: '#ffffff',
+                      letterSpacing: '-0.3px',
+                      lineHeight: 1.25
+                    }}>
+                      {template.name}
+                    </h3>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm(`Sei sicuro di voler eliminare la scheda "${template.name}"?\nQuesta azione è irreversibile.`)) {
-                          deleteTemplate(template.id);
-                        }
-                      }}
-                      style={{
-                        background: 'rgba(255, 59, 48, 0.1)',
-                        border: '1px solid rgba(255, 59, 48, 0.3)', borderRadius: '14px',
-                        width: '44px', height: '44px', color: '#ff3b30',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'background 0.2s', flexShrink: 0
-                      }}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                    <button
-                      title="Condividi ed esporta scheda"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSharingTemplate(template);
-                      }}
-                      style={{
-                        background: 'rgba(0, 229, 255, 0.08)',
-                        border: '1px solid rgba(0, 229, 255, 0.25)', borderRadius: '14px',
-                        width: '44px', height: '44px', color: '#00e5ff',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'background 0.2s', flexShrink: 0
-                      }}
-                    >
-                      <Share2 size={18} />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigate('/build', { state: { template } }); }}
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px',
-                        width: '44px', height: '44px', color: 'white',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'background 0.2s', flexShrink: 0
-                      }}
-                    >
-                      <Edit3 size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleStartTemplate(template)}
-                      style={{
-                        background: 'rgba(0, 126, 167, 0.85)',
-                        border: '1px solid rgba(0, 126, 167, 0.5)', borderRadius: '14px',
-                        width: '44px', height: '44px', color: 'white',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 4px 12px rgba(0, 126, 167, 0.25)',
-                        transition: 'transform 0.2s ease-out', flexShrink: 0
-                      }}
-                    >
-                      <Play size={20} fill="white" />
-                    </button>
+
+                  {/* Sotto: Meta a sinistra e pulsanti a destra */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingTop: '8px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+                  }}>
+                    <span style={{
+                      color: 'var(--text-muted)',
+                      fontSize: '0.84rem',
+                      fontWeight: '500'
+                    }}>
+                      {template.exercises.length} esercizi · {template.exercises.reduce((a, ex) => a + ex.setsCount, 0)} serie
+                    </span>
+
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Sei sicuro di voler eliminare la scheda "${template.name}"?\nQuesta azione è irreversibile.`)) {
+                            deleteTemplate(template.id);
+                          }
+                        }}
+                        style={{
+                          background: 'rgba(255, 59, 48, 0.1)',
+                          border: '1px solid rgba(255, 59, 48, 0.25)',
+                          borderRadius: '10px',
+                          width: '34px',
+                          height: '34px',
+                          color: '#ff3b30',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s',
+                          flexShrink: 0
+                        }}
+                        title="Elimina scheda"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+
+                      <button
+                        title="Condividi ed esporta scheda"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSharingTemplate(template);
+                        }}
+                        style={{
+                          background: 'rgba(0, 229, 255, 0.08)',
+                          border: '1px solid rgba(0, 229, 255, 0.22)',
+                          borderRadius: '10px',
+                          width: '34px',
+                          height: '34px',
+                          color: '#00e5ff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s',
+                          flexShrink: 0
+                        }}
+                      >
+                        <Share2 size={15} />
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate('/build', { state: { template } });
+                        }}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '10px',
+                          width: '34px',
+                          height: '34px',
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s',
+                          flexShrink: 0
+                        }}
+                        title="Modifica scheda"
+                      >
+                        <Edit3 size={15} />
+                      </button>
+
+                      <button
+                        onClick={() => handleStartTemplate(template)}
+                        style={{
+                          background: 'linear-gradient(135deg, #007EA7 0%, #00b4d8 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '0 16px',
+                          height: '40px',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontWeight: '800',
+                          fontSize: '0.9rem',
+                          boxShadow: '0 4px 14px rgba(0, 180, 216, 0.35)',
+                          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                          flexShrink: 0
+                        }}
+                        title="Inizia allenamento"
+                      >
+                        <Play size={16} fill="white" />
+                        <span>Inizia</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

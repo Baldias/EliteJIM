@@ -339,9 +339,13 @@ function Profile() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <div 
+              onClick={() => navigate('/activity')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', cursor: 'pointer' }}
+              title="Apri pagina attività e streak"
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ff9500', fontWeight: '800', fontSize: '1.2rem' }}>
-                {currentStreak > 0 ? currentStreak : '-'} <Flame size={20} fill={currentStreak >= 3 ? "#ff9500" : "none"} />
+                {currentStreak > 0 ? `${currentStreak} sett.` : '0 sett.'} <Flame size={20} fill={currentStreak >= 1 ? "#ff9500" : "none"} />
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Streak</div>
             </div>

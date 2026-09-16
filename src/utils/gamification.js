@@ -251,22 +251,134 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   };
 };
 
+export const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+export const getMondayOfWeek = (dateOrTimestamp) => {
+  const d = new Date(dateOrTimestamp);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+};
+
+export const getMondayTimestamp = (dateOrTimestamp) => {
+  return getMondayOfWeek(dateOrTimestamp).getTime();
+};
+
+/**
+ * Calcola la streak a settimane e lo storico delle settimane attive:
+ * - Ogni settimana (Lun-Dom) con almeno un workout valido aggiunge +1 alla streak.
+ * - Se passano >= 7 giorni dall'ultimo allenamento, la streak attuale si azzera.
+ */
+export const calculateWeeklyStreak = (history = [], referenceDate = Date.now()) => {
+  if (!history || history.length === 0) {
+    return { currentStreak: 0, highestStreak: 0, isStreakActive: false, daysSinceLastWorkout: null };
+  }
+
+  // Filtra i workout con timestamp valido e ordina dal più vecchio al più recente
+  const validWorkouts = history
+    .filter(w => w && (w.startTime || w.endTime))
+    .map(w => ({
+      ...w,
+      time: Number(w.startTime || w.endTime)
+    }))
+    .sort((a, b) => a.time - b.time);
+
+  if (validWorkouts.length === 0) {
+    return { currentStreak: 0, highestStreak: 0, isStreakActive: false, daysSinceLastWorkout: null };
+  }
+
+  const latestWorkout = validWorkouts[validWorkouts.length - 1];
+  const daysSinceLastWorkout = Math.max(0, Math.floor((referenceDate - latestWorkout.time) / MS_PER_DAY));
+
+  // Raggruppa i workout per lunedì della settimana
+  const weekMap = new Map();
+  validWorkouts.forEach(w => {
+    const mondayMs = getMondayTimestamp(w.time);
+    if (!weekMap.has(mondayMs)) {
+      weekMap.set(mondayMs, []);
+    }
+    weekMap.get(mondayMs).push(w);
+  });
+
+  // Elenco ordinato dei lunedì con allenamenti
+  const sortedMondays = Array.from(weekMap.keys()).sort((a, b) => a - b);
+
+  if (sortedMondays.length === 0) {
+    return { currentStreak: 0, highestStreak: 0, isStreakActive: false, daysSinceLastWorkout };
+  }
+
+  // Calcolo highestStreak storico
+  let highestStreak = 0;
+  let runningStreak = 0;
+  let prevMonday = null;
+
+  for (let i = 0; i < sortedMondays.length; i++) {
+    const currentMonday = sortedMondays[i];
+    if (prevMonday === null) {
+      runningStreak = 1;
+    } else {
+      const diffWeeks = Math.round((currentMonday - prevMonday) / (7 * MS_PER_DAY));
+      if (diffWeeks === 1) {
+        runningStreak++;
+      } else {
+        runningStreak = 1;
+      }
+    }
+    highestStreak = Math.max(highestStreak, runningStreak);
+    prevMonday = currentMonday;
+  }
+
+  // Calcolo currentStreak attivo al momento del referenceDate
+  // Se sono passati >= 7 giorni dall'ultimo workout, la streak è persa (0)
+  if (daysSinceLastWorkout >= 7) {
+    return {
+      currentStreak: 0,
+      highestStreak,
+      isStreakActive: false,
+      daysSinceLastWorkout
+    };
+  }
+
+  // Calcola quante settimane consecutive terminano nell'ultima settimana allenata
+  let activeStreakCount = 1;
+  for (let i = sortedMondays.length - 1; i > 0; i--) {
+    const curr = sortedMondays[i];
+    const prev = sortedMondays[i - 1];
+    const diffWeeks = Math.round((curr - prev) / (7 * MS_PER_DAY));
+    if (diffWeeks === 1) {
+      activeStreakCount++;
+    } else {
+      break;
+    }
+  }
+
+  highestStreak = Math.max(highestStreak, activeStreakCount);
+
+  return {
+    currentStreak: activeStreakCount,
+    highestStreak,
+    isStreakActive: true,
+    daysSinceLastWorkout
+  };
+};
+
 export const checkStreakInactivity = (lastWorkoutDateMs, currentStreak, xp) => {
   if (!lastWorkoutDateMs) return { newStreak: 0, newXp: xp, penalty: 0 };
   
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
   const daysInactive = Math.floor((Date.now() - lastWorkoutDateMs) / MS_PER_DAY);
   
   let newStreak = currentStreak;
   let newXp = xp;
   let penalty = 0;
 
-  if (daysInactive >= 3) {
-    // Break streak
+  if (daysInactive >= 7) {
+    // Azzera streak dopo 7 giorni di inattività
     newStreak = 0;
     
-    // Penalize XP: 100 XP per each day inactive past 2 days, cap at -2000
-    penalty = Math.min(2000, (daysInactive - 2) * 100);
+    // Penalità XP oltre i 7 giorni
+    penalty = Math.min(2000, (daysInactive - 6) * 100);
     newXp = Math.max(0, xp - penalty);
   }
 
@@ -280,50 +392,29 @@ export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {
       return { userXP: 0, muscleXP: {}, currentStreak: 0, highestStreak: 0 };
     }
 
-  // Sort by date ascending to process oldest sessions first
-  const sortedHistory = [...history].sort((a, b) => Number(a.startTime) - Number(b.startTime));
-  
-  let totalXP = 0;
-  const totalMuscleXP = {};
-  const rollingHistory = [];
-  
-  let currentStreak = 0;
-  let highestStreak = 0;
-  let lastWorkoutTime = null;
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    // Sort by date ascending to process oldest sessions first
+    const sortedHistory = [...history].sort((a, b) => Number(a.startTime) - Number(b.startTime));
+    
+    let totalXP = 0;
+    const totalMuscleXP = {};
+    const rollingHistory = [];
 
-  sortedHistory.forEach(workout => {
-    // 1. Streak reset check
-    if (lastWorkoutTime) {
-      const startT = Number(workout.startTime) || 0;
-      const lastT = Number(lastWorkoutTime) || 0;
-      const daysInactive = Math.floor((startT - lastT) / MS_PER_DAY);
-      if (daysInactive >= 3) {
-        currentStreak = 0;
+    sortedHistory.forEach(workout => {
+      // Calcola XP della sessione
+      const score = calculateSessionScore(workout, rollingHistory, exercisesDb);
+      totalXP += score.xp;
+      
+      if (score.muscleXpGained) {
+        Object.keys(score.muscleXpGained).forEach(muscle => {
+          totalMuscleXP[muscle] = (totalMuscleXP[muscle] || 0) + score.muscleXpGained[muscle];
+        });
       }
-    }
+      
+      rollingHistory.push(workout);
+    });
 
-    // 2. Calculate session score
-    const score = calculateSessionScore(workout, rollingHistory, exercisesDb);
-    totalXP += score.xp;
-    
-    // 3. Increment streak if workout is significant
-    if (score.doneSets >= 3) {
-      currentStreak++;
-    }
-    
-    highestStreak = Math.max(highestStreak, currentStreak);
-    lastWorkoutTime = Number(workout.startTime) || 0;
-
-    if (score.muscleXpGained) {
-      Object.keys(score.muscleXpGained).forEach(muscle => {
-        totalMuscleXP[muscle] = (totalMuscleXP[muscle] || 0) + score.muscleXpGained[muscle];
-      });
-    }
-    
-    // Add current workout to rolling history for future overload checks
-    rollingHistory.push(workout);
-  });
+    // Calcolo streak a settimane
+    const { currentStreak, highestStreak } = calculateWeeklyStreak(history);
 
     return {
       userXP: totalXP,
@@ -336,3 +427,4 @@ export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {
     throw err;
   }
 };
+

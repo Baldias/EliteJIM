@@ -15,6 +15,7 @@ import WorkoutRecap from './pages/workout/WorkoutRecap';
 import MuscleLevels from './pages/profile/MuscleLevels';
 import History from './pages/profile/History';
 import EditWorkout from './pages/profile/EditWorkout';
+import Activity from './pages/activity/Activity';
 import ReloadPrompt from './components/ReloadPrompt';
 import GlobalWorkoutBanner from './components/GlobalWorkoutBanner';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -23,8 +24,8 @@ import './App.css';
 function Navigation() {
   const location = useLocation();
   const showScience = useStore(state => state.showScience);
-  // Hide bottom nav on active workout session, template builder, settings, recap, history, and levels
-  if (['/workout', '/build', '/settings', '/recap', '/levels', '/settings/exercises', '/history'].includes(location.pathname) || location.pathname.startsWith('/edit-workout')) return null;
+  // Hide bottom nav on active workout session, template builder, settings, recap, history, levels, and activity
+  if (['/workout', '/build', '/settings', '/recap', '/levels', '/settings/exercises', '/history', '/activity'].includes(location.pathname) || location.pathname.startsWith('/edit-workout')) return null;
 
   return (
     <nav className="bottom-nav">
@@ -73,6 +74,7 @@ function App() {
           <Route path="/levels" element={<MuscleLevels />} />
           <Route path="/history" element={<History />} />
           <Route path="/edit-workout/:workoutId" element={<EditWorkout />} />
+          <Route path="/activity" element={<Activity />} />
         </Routes>
         <Navigation />
         <SpeedInsights />
