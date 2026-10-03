@@ -21,7 +21,7 @@ const mapCategoryToMuscles = (category, exerciseName) => {
       // Standard rows/pulls
       return ['upper-back', 'biceps', 'back-deltoids'];
 
-    case EXERCISE_CATEGORIES.LEGS:
+    case 'Gambe':
       if (name.includes('calf')) return ['calves'];
       if (name.includes('femorali') || name.includes('curl') || name.includes('stacc')) {
         return ['hamstring', 'gluteal', 'lower-back'];

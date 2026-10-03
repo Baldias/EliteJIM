@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore';
 import { Trophy, Clock, Zap, Target, Flame, ChevronRight, Check, ShieldCheck, Download } from 'lucide-react';
 import { getRankByXp, getMuscleLevelByXp } from '../../utils/gamification';
 import { EXERCISES_DB, getAllExercises, normalizeName } from '../../data/exercises';
-import { RP_LANDMARKS } from '../../utils/rpVolume';
+import { RP_LANDMARKS, getScienceTargetForMuscle, getActualSetsForScienceWeek, mapCategoryToScienceLandmark } from '../../utils/rpVolume';
 import { exportDataBackup } from '../../utils/backup';
 import './WorkoutRecap.css';
 
@@ -13,6 +13,7 @@ function WorkoutRecap() {
   const recapData = useStore(state => state.recapData);
   const clearRecapData = useStore(state => state.clearRecapData);
   const scienceReport = useStore(state => state.scienceReport);
+  const showScience = useStore(state => state.showScience);
   const history = useStore(state => state.history);
   const muscleXPState = useStore(state => state.muscleXP) || {};
   const customExercises = useStore(state => state.customExercises || []);
@@ -41,109 +42,44 @@ function WorkoutRecap() {
   };
 
   const scienceGoalsThisWeek = useMemo(() => {
-    if (!recapData) return [];
-
-    const now = Date.now();
-    const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
-    
-    // Se c'è un scienceReport, usa la sua data di inizio per la settimana
-    let startOfCurrentWeek = now - MS_PER_WEEK; 
-    let currentWeek = 1;
-    let currentMonth = 1;
-
-    if (scienceReport) {
-      const weeksElapsed = Math.floor((now - scienceReport.timestamp) / MS_PER_WEEK);
-      currentWeek = Math.min(Math.max(1, weeksElapsed + 1), 12);
-      startOfCurrentWeek = scienceReport.timestamp + (currentWeek - 1) * MS_PER_WEEK;
-      if (currentWeek > 4 && currentWeek <= 8) currentMonth = 2;
-      if (currentWeek > 8) currentMonth = 3;
+    if (!showScience || !recapData || !scienceReport || scienceReport.status === 'completed' || scienceReport.status === 'pending') {
+      return [];
     }
 
-    // 1. Trova i muscoli allenati in QUESTA sessione
+    const cw = scienceReport.currentWeek || 1;
+    const currentWeekTotalSets = getActualSetsForScienceWeek(history, allKnownExercises, scienceReport, cw);
+
+    // 1. Trova i muscoli allenati in QUESTA sessione associati ai landmarks di scienza
     const setsDoneInWorkout = {};
-    recapData.workout.exercises.forEach(ex => {
+    (recapData.workout.exercises || []).forEach(ex => {
       const foundEx = allKnownExercises.find(e => normalizeName(e.name) === normalizeName(ex.name));
-      const muscle = foundEx ? foundEx.category : null;
+      const muscle = mapCategoryToScienceLandmark(foundEx?.category, scienceReport.baseLandmarks);
       if (muscle) {
-        setsDoneInWorkout[muscle] = (setsDoneInWorkout[muscle] || 0) + ex.sets.filter(s => s.done && !s.isDropset).length;
+        const completedSets = (ex.sets || []).filter(s => s.done && !s.isDropset).length;
+        setsDoneInWorkout[muscle] = (setsDoneInWorkout[muscle] || 0) + completedSets;
       }
     });
 
     const trainingMuscles = Object.keys(setsDoneInWorkout);
     if (trainingMuscles.length === 0) return [];
 
-    // 2. Trova le serie fatte per questi stessi muscoli negli ultimi 7 giorni (escluso questo workout)
-    const setsDoneBeforeWorkout = {};
-    trainingMuscles.forEach(m => setsDoneBeforeWorkout[m] = 0);
-
-    history.forEach(w => {
-      if (w.id !== recapData.workout.id && w.startTime >= startOfCurrentWeek) {
-        w.exercises.forEach(ex => {
-          const foundEx = allKnownExercises.find(e => normalizeName(e.name) === normalizeName(ex.name));
-          const muscle = foundEx ? foundEx.category : null;
-          if (muscle && setsDoneBeforeWorkout[muscle] !== undefined) {
-            setsDoneBeforeWorkout[muscle] += ex.sets.filter(s => s.done && !s.isDropset).length;
-          }
-        });
-      }
-    });
-
-    const getTargetForMuscle = (muscle) => {
-      // Legacy mapping support for old report keys vs DB categories
-      const legacyMapping = {
-        'Dorso': 'Schiena',
-        'Spalle': 'Spalle (Deltoidi)',
-        'Gambe': 'Quadricipiti',
-        'Addome': 'Addominali'
-      };
-
-      let scienceKey = null;
-      if (scienceReport && scienceReport.baseLandmarks) {
-        if (scienceReport.baseLandmarks[muscle]) {
-          scienceKey = muscle;
-        } else if (legacyMapping[muscle] && scienceReport.baseLandmarks[legacyMapping[muscle]]) {
-          scienceKey = legacyMapping[muscle];
-        } else if (muscle === 'Schiena' && scienceReport.baseLandmarks['Dorso']) {
-          scienceKey = 'Dorso';
-        }
-      }
-      
-      // Target dal Science Report (se disponibile e valido)
-      if (scienceReport && scienceKey && scienceReport.baseLandmarks[scienceKey]) {
-        const lm = scienceReport.baseLandmarks[scienceKey];
-        if (currentMonth === 3 && (currentWeek === 9 || currentWeek === 10)) return Math.max(0, lm.mev - 2);
-        
-        const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(scienceKey)) || 
-                        (currentMonth === 2 && (scienceReport.focus2 || []).includes(scienceKey));
-        
-        if (!isFocus) return lm.mev;
-
-        const relativeWeek = currentWeek - ((currentMonth - 1) * 4);
-        const gap = lm.mrv - lm.mav;
-        const weeklyIncrement = gap / 3;
-        return Math.round(lm.mav + (weeklyIncrement * (relativeWeek - 1)));
-      }
-
-      // Fallback a RP_LANDMARKS generici se non c'è Science Report!
-      if (RP_LANDMARKS[muscle]) {
-        return RP_LANDMARKS[muscle].MAV_MIN || 12;
-      }
-
-      return 10; // Fallback generico
-    };
-
     const goals = [];
     trainingMuscles.forEach(muscle => {
+      const target = getScienceTargetForMuscle(scienceReport, muscle, cw);
+      const totalDone = currentWeekTotalSets[muscle] || 0;
+      const addedNow = setsDoneInWorkout[muscle] || 0;
+      const previousDone = Math.max(0, totalDone - addedNow);
+
       goals.push({
         muscle,
-        target: getTargetForMuscle(muscle),
-        previousDone: setsDoneBeforeWorkout[muscle],
-        addedNow: setsDoneInWorkout[muscle]
+        target,
+        previousDone,
+        addedNow
       });
     });
 
     return goals;
-  }, [scienceReport, recapData, history, allKnownExercises]);
+  }, [showScience, scienceReport, recapData, history, allKnownExercises]);
 
 
   if (!recapData) {

@@ -7,6 +7,7 @@ export function WelcomeBack({ onClose }) {
   const currentStreak = useStore(state => state.currentStreak);
   const lastWorkoutDate = useStore(state => state.lastWorkoutDate);
   const scienceReport = useStore(state => state.scienceReport);
+  const showScience = useStore(state => state.showScience);
 
   const [isVisible, setIsVisible] = useState(false);
 
@@ -20,17 +21,14 @@ export function WelcomeBack({ onClose }) {
   };
 
   let weekInfo = null;
-  if (scienceReport) {
-    const elapsedDays = (Date.now() - scienceReport.timestamp) / (1000 * 60 * 60 * 24);
-    const weekNum = Math.min(Math.max(1, Math.floor(elapsedDays / 7) + 1), 12);
-    let month = 1;
-    if (weekNum > 4 && weekNum <= 8) month = 2;
-    if (weekNum > 8) month = 3;
+  if (showScience && scienceReport && scienceReport.status === 'active') {
+    const weekNum = scienceReport.currentWeek || 1;
+    const month = weekNum <= 4 ? 1 : (weekNum <= 8 ? 2 : 3);
     
     let phase = 'Fase di Accumulo';
     if (weekNum === 4 || weekNum === 8) phase = 'BOSS FIGHT (Max Volume)';
     if (month === 3 && (weekNum === 9 || weekNum === 10)) phase = 'Settimana di Scarico (Deload)';
-    if (month === 3 && weekNum >= 11) phase = 'Mantenimento';
+    if (month === 3 && weekNum >= 11) phase = 'Mantenimento / Risensibilizzazione';
 
     weekInfo = { week: weekNum, month, phase };
   }
@@ -79,26 +77,28 @@ export function WelcomeBack({ onClose }) {
           </div>
         )}
 
-        {weekInfo ? (
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.8rem', color: 'var(--text-main)' }}>
-              <Calendar size={18} color="var(--primary-color)" /> La tua Programmazione
-            </h4>
-            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Settimana Corrente:</span>
-                <strong style={{ color: 'var(--primary-color)' }}>W{weekInfo.week} (Mese {weekInfo.month})</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Fase:</span>
-                <strong style={{ color: 'white', fontSize: '0.95rem' }}>{weekInfo.phase}</strong>
+        {showScience && (
+          weekInfo ? (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.8rem', color: 'var(--text-main)' }}>
+                <Calendar size={18} color="var(--primary-color)" /> La tua Programmazione
+              </h4>
+              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Settimana Corrente:</span>
+                  <strong style={{ color: 'var(--primary-color)' }}>W{weekInfo.week} (Mese {weekInfo.month})</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Fase:</span>
+                  <strong style={{ color: 'white', fontSize: '0.95rem' }}>{weekInfo.phase}</strong>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <p style={{ textAlign: 'center', fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-            Non hai ancora creato una programmazione nel quiz Scienza!
-          </p>
+          ) : (
+            <p style={{ textAlign: 'center', fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              Non hai ancora creato una programmazione nel quiz Scienza!
+            </p>
+          )
         )}
 
         <button 

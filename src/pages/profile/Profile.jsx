@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Trash2, X, Flame, Trophy, Check, Edit2 } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
-import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../utils/rpVolume';
+import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS, getScienceTargetForMuscle, getSciencePhaseBadge, getActualSetsForScienceWeek } from '../../utils/rpVolume';
 import { EXERCISES_DB, getAllExercises, getExerciseCategories, normalizeName } from '../../data/exercises';
 import { getRankByXp } from '../../utils/gamification';
 import './Profile.css';
@@ -101,143 +101,28 @@ function Profile() {
   }, [history.length]);
 
   const rank = getRankByXp(userXP || 0);
-  const isBossFight = scienceReport && (() => {
-    const wElapsed = Math.floor((Date.now() - scienceReport.timestamp) / (7 * 24 * 60 * 60 * 1000));
-    const cw = Math.min(Math.max(1, wElapsed + 1), 12);
-    return cw === 4 || cw === 8;
-  })();
+  const activeScienceWeek = scienceReport ? (scienceReport.currentWeek || 1) : 1;
+  const isBossFight = scienceReport && (activeScienceWeek === 4 || activeScienceWeek === 8);
 
-  // --- Scienza V2: Weekly Goals Logic ---
+  // --- Scienza V2: Weekly Goals Logic (Usa helper centralizzati) ---
   const scienceGoals = useMemo(() => {
-    if (!scienceReport) return null;
+    if (!scienceReport || scienceReport.status === 'completed' || scienceReport.status === 'pending') return null;
 
-    const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
-    const now = Date.now();
-    const weeksElapsed = Math.floor((now - scienceReport.timestamp) / MS_PER_WEEK);
-    const currentWeek = Math.min(Math.max(1, weeksElapsed + 1), 12);
+    const cw = scienceReport.currentWeek || 1;
+    const actualSetsMap = getActualSetsForScienceWeek(history, allKnownExercises, scienceReport, cw);
+    const month = cw <= 4 ? 1 : (cw <= 8 ? 2 : 3);
+    const focusMuscles = month === 1 ? (scienceReport.focus1 || []) : (month === 2 ? (scienceReport.focus2 || []) : []);
 
-    // Calculate start of THIS biological week
-    // Add 12-hour buffer (43200000 ms) so today's early workouts are included even if report was just made
-    const startOfCurrentWeek = (scienceReport.timestamp + (currentWeek - 1) * MS_PER_WEEK) - (12 * 60 * 60 * 1000);
-
-    let currentMonth = 1;
-    if (currentWeek > 4 && currentWeek <= 8) currentMonth = 2;
-    if (currentWeek > 8) currentMonth = 3;
-
-    // Helper to calc target
-    const getTargetForMuscle = (muscle) => {
-      const lm = scienceReport.baseLandmarks[muscle];
-      if (!lm) return null;
-
-      if (currentMonth === 3) {
-        if (currentWeek === 9 || currentWeek === 10) return Math.max(0, lm.mev - 2);
-        return lm.mev;
-      }
-
-      const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(muscle)) ||
-        (currentMonth === 2 && (scienceReport.focus2 || []).includes(muscle));
-
-      if (!isFocus) return lm.mev;
-
-      const relativeWeek = currentWeek - ((currentMonth - 1) * 4);
-      const gap = lm.mrv - lm.mav;
-      const weeklyIncrement = gap / 3;
-      return Math.round(lm.mav + (weeklyIncrement * (relativeWeek - 1)));
-    };
-
-    // Gather sets done THIS week
-    const setsDoneThisWeek = {};
-    history.forEach(w => {
-      // Force Number conversion for robust comparison
-      if (Number(w.startTime) >= startOfCurrentWeek) {
-        w.exercises.forEach(ex => {
-          const allKnown = allKnownExercises;
-          const normalizedExName = normalizeName(ex.name);
-          let foundEx = allKnown.find(e => normalizeName(e.name) === normalizedExName);
-          
-          // Only use primary category for Science to avoid counting secondary groups
-          let muscles = foundEx?.category ? [foundEx.category] : [];
-          
-          // Fuzzy fallback for Shoudlers, Abs & Back (Schiena)
-          if (muscles.length === 0) {
-            const fuzzyName = normalizedExName.toLowerCase();
-            if (fuzzyName.includes('spalle') || fuzzyName.includes('shoulder') || fuzzyName.includes('military') || fuzzyName.includes('lento avanti')) {
-              muscles = ['Spalle'];
-              console.log(`[DEBUG_SHOULDERS] Fuzzy match for "${ex.name}" -> Spalle`);
-            } else if (fuzzyName.includes('addome') || fuzzyName.includes('core') || fuzzyName.includes('crunch') || fuzzyName.includes('addominali')) {
-              muscles = ['Addome'];
-              console.log(`[DEBUG_CORE] Fuzzy match for "${ex.name}" -> Addome`);
-            } else if (fuzzyName.includes('schiena') || fuzzyName.includes('back') || fuzzyName.includes('lat machine') || fuzzyName.includes('rematore')) {
-              muscles = ['Dorso'];
-              console.log(`[DEBUG_BACK] Fuzzy match for "${ex.name}" -> Dorso`);
-            }
-          }
-
-          // Map database categories to potential legacy keys in user's science report
-          const legacyMapping = {
-            'Dorso': 'Schiena',
-            'Spalle': 'Spalle (Deltoidi)',
-            'Gambe': 'Quadricipiti'
-          };
-
-          muscles.forEach(muscle => {
-            let targetKey = null;
-            
-            // 1. Check if the exact muscle exists in the report
-            if (scienceReport.baseLandmarks[muscle]) {
-              targetKey = muscle;
-            } 
-            // 2. Check if a legacy mapped muscle exists in the report
-            else if (legacyMapping[muscle] && scienceReport.baseLandmarks[legacyMapping[muscle]]) {
-              targetKey = legacyMapping[muscle];
-            } 
-            // 3. Fallbacks for reverse edge cases
-            else if (muscle === 'Schiena' && scienceReport.baseLandmarks['Dorso']) {
-              targetKey = 'Dorso';
-            } else if (muscle === 'Addominali' && scienceReport.baseLandmarks['Addome']) {
-              targetKey = 'Addome';
-            }
-
-            if (targetKey) {
-              const count = ex.sets.filter(s => s.done && !s.isDropset).length;
-              setsDoneThisWeek[targetKey] = (setsDoneThisWeek[targetKey] || 0) + count;
-            }
-          });
-        });
-      }
-    });
-
-    // Build the goals array
     const goals = Object.keys(scienceReport.baseLandmarks || {}).map(muscle => {
-      const target = getTargetForMuscle(muscle);
-      const done = setsDoneThisWeek[muscle] || 0;
-      const isFocus = (currentMonth === 1 && (scienceReport.focus1 || []).includes(muscle)) ||
-        (currentMonth === 2 && (scienceReport.focus2 || []).includes(muscle));
-
-      const lm = scienceReport.baseLandmarks[muscle];
-      let badge = null;
-      if (lm && target !== null) {
-        if (currentMonth === 3 && (currentWeek === 9 || currentWeek === 10)) {
-          badge = { label: 'Deload', color: '#34c759', bg: 'rgba(52, 199, 89, 0.15)' };
-        } else if (target <= lm.mev) {
-          badge = { label: 'MEV', color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.05)' };
-        } else if (target >= lm.mrv) {
-          badge = { label: 'MRV', color: '#ff3b30', bg: 'rgba(255, 59, 48, 0.15)' };
-        } else {
-          if (Math.abs(target - lm.mav) < Math.abs(target - lm.mrv)) {
-            badge = { label: 'MAV', color: '#ff9500', bg: 'rgba(255, 149, 0, 0.15)' };
-          } else {
-            badge = { label: 'Overreach', color: '#ff2d55', bg: 'rgba(255, 45, 85, 0.15)' };
-          }
-        }
-      }
-
+      const target = getScienceTargetForMuscle(scienceReport, muscle, cw);
+      const done = actualSetsMap[muscle] || 0;
+      const isFocus = focusMuscles.includes(muscle);
+      const badge = getSciencePhaseBadge(scienceReport, muscle, cw, target);
       return { muscle, target, done, isFocus, badge };
     }).filter(g => g.target !== null).sort((a, b) => (b.isFocus ? 1 : 0) - (a.isFocus ? 1 : 0));
 
     return {
-      currentWeek,
-      startOfCurrentWeek,
+      currentWeek: cw,
       goals
     };
   }, [scienceReport, history, allKnownExercises]);
@@ -415,29 +300,30 @@ function Profile() {
                 </h2>
               </div>
               
-              {scienceGoals.currentWeek < 12 && (
-                <button
-                  onClick={() => {
-                    if (window.confirm("Sei sicuro di voler terminare l'attuale settimana scientifica e passare alla successiva? L'azione è irreversibile.")) {
-                      useStore.getState().advanceScienceWeek();
-                    }
-                  }}
-                  style={{
-                    background: 'rgba(255,149,0,0.15)',
-                    color: '#ff9500',
-                    border: '1px solid rgba(255,149,0,0.3)',
-                    padding: '8px 14px',
-                    borderRadius: '12px',
-                    fontSize: '0.8rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  Termina Sett.
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  const msg = scienceGoals.currentWeek >= 12 
+                    ? "Sei alla Settimana 12. Vuoi concludere il mesociclo di 12 settimane?" 
+                    : `Sei sicuro di voler terminare la Settimana ${scienceGoals.currentWeek} e passare alla successiva? L'azione è irreversibile.`;
+                  if (window.confirm(msg)) {
+                    useStore.getState().advanceScienceWeek();
+                  }
+                }}
+                style={{
+                  background: scienceGoals.currentWeek >= 12 ? 'rgba(52,199,89,0.15)' : 'rgba(255,149,0,0.15)',
+                  color: scienceGoals.currentWeek >= 12 ? '#34c759' : '#ff9500',
+                  border: `1px solid ${scienceGoals.currentWeek >= 12 ? 'rgba(52,199,89,0.3)' : 'rgba(255,149,0,0.3)'}`,
+                  padding: '8px 14px',
+                  borderRadius: '12px',
+                  fontSize: '0.8rem',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {scienceGoals.currentWeek >= 12 ? 'Concludi Mesociclo' : 'Termina Sett.'}
+              </button>
             </div>
 
             <div className="card glass" style={{ padding: '1.5rem', borderRadius: '24px', border: '1px solid var(--primary-color)' }}>

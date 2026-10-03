@@ -24,11 +24,9 @@ function Home() {
   const deleteTemplate = useStore(state => state.deleteTemplate);
   const activeWorkout = useStore(state => state.activeWorkout);
   const history = useStore(state => state.history);
-  const scienceReport = useStore(state => state.scienceReport);
   const lastWorkoutDate = useStore(state => state.lastWorkoutDate);
   const userXP = useStore(state => state.userXP) || 0;
   const currentStreak = useStore(state => state.currentStreak) || 0;
-  const showScience = useStore(state => state.showScience);
 
   const [showWelcome, setShowWelcome] = useState(false);
   const [sharingTemplate, setSharingTemplate] = useState(null);

@@ -99,7 +99,7 @@ export const useStore = create(
         },
         {
           id: 'tpl-3',
-          name: 'Gambe (Leg Day)',
+          name: 'Leg Day (Quadricipiti & Femorali)',
           exercises: [
             { name: 'Squat con Bilanciere', setsCount: 3, targetReps: '6-8', restTime: 120 },
             { name: 'Leg Extension', setsCount: 3, targetReps: '12-15', restTime: 60 },
@@ -168,6 +168,29 @@ export const useStore = create(
 
       // --- Science Actions ---
       saveScienceReport: (report) => set({ scienceReport: report }),
+      startScienceMesocycle: (startDateTimestamp) => set(state => {
+        if (!state.scienceReport) return state;
+        const start = startDateTimestamp || Date.now();
+        return {
+          scienceReport: {
+            ...state.scienceReport,
+            status: 'active',
+            startDate: start,
+            currentWeek: 1,
+            currentWeekStartDate: start,
+            weekHistory: state.scienceReport.weekHistory || {}
+          }
+        };
+      }),
+      completeScienceMesocycle: () => set(state => {
+        if (!state.scienceReport) return state;
+        return {
+          scienceReport: {
+            ...state.scienceReport,
+            status: 'completed'
+          }
+        };
+      }),
       toggleScience: () => set((state) => ({ showScience: !state.showScience })),
       
       // --- Exercise Management Actions ---
@@ -635,20 +658,34 @@ export const useStore = create(
 
       advanceScienceWeek: () => set(state => {
         if (!state.scienceReport) return state;
-        const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+        const currentW = state.scienceReport.currentWeek || 1;
         const now = Date.now();
-        const weeksElapsed = Math.floor((now - state.scienceReport.timestamp) / MS_PER_WEEK);
-        const currentWeek = Math.min(Math.max(1, weeksElapsed + 1), 12);
-        
-        if (currentWeek >= 12) return state; // Already at max week
+        const weekStart = state.scienceReport.currentWeekStartDate || state.scienceReport.startDate || state.scienceReport.timestamp;
 
-        // Shift the timestamp so that the NEXT week starts exactly today (with the 12h buffer in mind)
-        const newTimestamp = now - (currentWeek * MS_PER_WEEK);
-        
+        const updatedHistory = {
+          ...(state.scienceReport.weekHistory || {}),
+          [currentW]: {
+            startDate: weekStart,
+            completedDate: now
+          }
+        };
+
+        if (currentW >= 12) {
+          return {
+            scienceReport: {
+              ...state.scienceReport,
+              status: 'completed',
+              weekHistory: updatedHistory
+            }
+          };
+        }
+
         return {
           scienceReport: {
             ...state.scienceReport,
-            timestamp: newTimestamp
+            currentWeek: currentW + 1,
+            currentWeekStartDate: now,
+            weekHistory: updatedHistory
           }
         };
       }),

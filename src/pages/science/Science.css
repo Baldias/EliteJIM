@@ -139,7 +139,7 @@
 
 .report-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .report-header h2 {
@@ -157,21 +157,26 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.reset-btn:hover {
+  color: #ff3b30;
 }
 
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .summary-card {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -188,162 +193,35 @@
 }
 
 .summary-value {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-main);
 }
 
-.glossary-section {
-  background-color: rgba(0, 126, 167, 0.05);
-  border: 1px solid rgba(0, 126, 167, 0.2);
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 2rem;
-}
-
-.glossary-title {
+/* Anti-Junk Volume Card */
+.anti-junk-card {
+  background: rgba(0, 126, 167, 0.08);
+  border: 1px solid rgba(0, 126, 167, 0.25);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.5rem;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--primary-color);
-  font-weight: 600;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
+  gap: 12px;
+  align-items: flex-start;
 }
 
-.glossary-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.glossary-item span:first-child {
+.anti-junk-title {
+  font-size: 0.88rem;
   font-weight: 700;
-  color: var(--text-main);
-  margin-right: 6px;
-}
-
-.glossary-item span:last-child {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.timeline-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  position: relative;
-  padding-bottom: 2rem;
-}
-
-.timeline-container::before {
-  content: '';
-  position: absolute;
-  top: 1rem;
-  bottom: 2rem;
-  left: 1.25rem;
-  width: 2px;
-  background-color: var(--border-color);
-  z-index: 0;
-}
-
-.month-card {
-  position: relative;
-  z-index: 1;
-  background-color: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-left: 3rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-}
-
-.month-card::before {
-  content: '';
-  position: absolute;
-  left: -2.15rem;
-  top: 1.5rem;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background-color: var(--bg-color);
-  border: 3px solid var(--primary-color);
-  z-index: 2;
-}
-
-.month-card.resensitization::before {
-  border-color: #34c759;
-}
-
-.month-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.75rem;
-}
-
-.month-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.month-badge {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  background-color: rgba(0, 126, 167, 0.15);
   color: var(--primary-color);
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: 600;
+  margin: 0 0 4px;
 }
 
-.month-badge.green {
-  background-color: rgba(52, 199, 89, 0.15);
-  color: #34c759;
-}
-
-.month-desc {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-  line-height: 1.5;
-}
-
-.focus-list {
-  background-color: var(--surface-color-elevated);
-  border-radius: 8px;
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.focus-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-}
-
-.focus-item-label {
-  color: var(--text-muted);
-}
-
-.focus-item-value {
-  font-weight: 600;
+.anti-junk-desc {
+  font-size: 0.8rem;
   color: var(--text-main);
-}
-
-.rate-box {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background-color: rgba(0, 126, 167, 0.05);
-  border: 1px dashed rgba(0, 126, 167, 0.3);
-  border-radius: 8px;
-  text-align: center;
-  font-size: 0.9rem;
-  color: var(--primary-color);
-  font-weight: 600;
+  margin: 0;
+  line-height: 1.45;
 }
 
 /* Inputs Grid V2 */
@@ -370,7 +248,7 @@
 .science-input {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 1rem;
   font-size: 1rem;
   color: var(--text-main);
@@ -393,38 +271,40 @@
 
 .cal-week {
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.9rem;
   border: 1px solid var(--border-color);
   background-color: var(--surface-color);
   color: var(--text-muted);
   position: relative;
   overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .cal-week.past {
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 .cal-week.current {
   border: 2px solid var(--primary-color);
   color: var(--text-main);
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 126, 167, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 126, 167, 0.3);
   z-index: 10;
 }
 
 .cal-week.overreaching {
-  background-color: rgba(0, 126, 167, 0.1);
+  background-color: rgba(0, 126, 167, 0.12);
 }
 
 .cal-week.deload {
-  background-color: rgba(52, 199, 89, 0.1);
-  border-color: rgba(52, 199, 89, 0.3);
+  background-color: rgba(52, 199, 89, 0.12);
+  border-color: rgba(52, 199, 89, 0.35);
+  color: #34c759;
 }
 
 .cal-week.resens {
@@ -456,4 +336,247 @@
 }
 .calendar-legend .dot.resens {
   background-color: var(--text-muted);
+}
+
+.glossary-section {
+  background-color: rgba(0, 126, 167, 0.05);
+  border: 1px solid rgba(0, 126, 167, 0.2);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.glossary-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary-color);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.glossary-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.glossary-item span:first-child {
+  font-weight: 700;
+  color: var(--text-main);
+  margin-right: 6px;
+}
+
+.glossary-item span:last-child {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Advance Week Action Button */
+.advance-week-btn {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary-color), #0099cc);
+  color: white;
+  border: none;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 126, 167, 0.35);
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+}
+
+.advance-week-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 126, 167, 0.45);
+}
+
+/* Muscle Target Cards with Progress Bars */
+.muscle-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.muscle-target-card {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  transition: all 0.2s ease;
+}
+
+.muscle-target-card.is-focus {
+  border-color: rgba(255, 149, 0, 0.4);
+  background: rgba(255, 149, 0, 0.04);
+  box-shadow: 0 2px 10px rgba(255, 149, 0, 0.08);
+}
+
+.muscle-target-card.is-completed {
+  border-color: rgba(52, 199, 89, 0.35);
+}
+
+.muscle-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.muscle-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-flame-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 149, 0, 0.2);
+  color: #ff9500;
+  letter-spacing: 0.5px;
+}
+
+.target-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.muscle-sets-counter {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.target-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.target-progress-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+
+.target-reached-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #34c759;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+/* Pending Start Screen */
+.pending-start-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0 2rem;
+}
+
+.pending-hero-card {
+  background: linear-gradient(135deg, rgba(0, 126, 167, 0.15), rgba(0, 0, 0, 0.4));
+  border: 1px solid var(--primary-color);
+  border-radius: 24px;
+  padding: 1.8rem;
+  text-align: center;
+}
+
+.pending-hero-card h2 {
+  font-size: 1.6rem;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-weight: 800;
+}
+
+.pending-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin: 1.5rem 0;
+}
+
+.pending-option-btn {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pending-option-btn.selected {
+  background: rgba(0, 126, 167, 0.15);
+  border-color: var(--primary-color);
+}
+
+.start-meso-btn {
+  width: 100%;
+  padding: 1.1rem;
+  border-radius: 16px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 18px rgba(0, 126, 167, 0.4);
+}
+
+/* Completed Mesocycle Screen */
+.completed-container {
+  padding: 2rem 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.completed-hero-card {
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.15), rgba(0, 0, 0, 0.5));
+  border: 1px solid #ffcc00;
+  border-radius: 24px;
+  padding: 2.2rem 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(255, 204, 0, 0.15);
+}
+
+.completed-hero-card h2 {
+  font-size: 1.8rem;
+  color: #ffcc00;
+  margin: 1rem 0 0.5rem;
+  font-weight: 900;
 }

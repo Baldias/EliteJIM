@@ -5,7 +5,6 @@
 export const EXERCISE_CATEGORIES = {
   CHEST: 'Petto',
   BACK: 'Dorso',
-  LEGS: 'Gambe', // Keep for backward compatibility if needed, but we'll use specific ones
   QUADRICEPS: 'Quadricipiti',
   HAMSTRINGS: 'Femorali',
   GLUTES: 'Glutei',

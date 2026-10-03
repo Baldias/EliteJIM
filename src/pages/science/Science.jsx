@@ -1,8 +1,26 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
-import { RefreshCw, Zap, Target, BookOpen, Calendar, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
-import { EXERCISES_DB, getAllExercises } from '../../data/exercises';
-import { calculateScienceVolume } from '../../utils/rpVolume';
+import { 
+  RefreshCw, 
+  Zap, 
+  Target, 
+  BookOpen, 
+  Calendar, 
+  ChevronRight, 
+  ChevronLeft, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Play, 
+  Flame, 
+  Trophy, 
+  Info 
+} from 'lucide-react';
+import { getAllExercises, normalizeName } from '../../data/exercises';
+import { 
+  getScienceTargetForMuscle, 
+  getSciencePhaseBadge, 
+  getActualSetsForScienceWeek 
+} from '../../utils/rpVolume';
 import './Science.css';
 import './BossFight.css';
 
@@ -12,14 +30,15 @@ const RP_BASE_LANDMARKS = {
   'Quadricipiti': { mev: 8, mav: 12, mrv: 18 },
   'Femorali': { mev: 6, mav: 10, mrv: 16 },
   'Glutei': { mev: 0, mav: 8, mrv: 16 },
+  'Polpacci': { mev: 8, mav: 12, mrv: 20 },
   'Spalle': { mev: 8, mav: 12, mrv: 22 },
   'Bicipiti': { mev: 8, mav: 10, mrv: 20 },
   'Tricipiti': { mev: 6, mav: 10, mrv: 18 },
-  'Polpacci': { mev: 8, mav: 12, mrv: 20 },
   'Addome': { mev: 8, mav: 12, mrv: 20 }
 };
 
 const MUSCLE_GROUPS = Object.keys(RP_BASE_LANDMARKS);
+const LEG_MUSCLES = ['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci'];
 
 const QUESTIONS = [
   {
@@ -32,24 +51,19 @@ const QUESTIONS = [
     ]
   },
   {
-    id: 'stats',
-    title: 'Dati Corporei & Forza',
-    subtitle: 'Usa massimali (1RM) reali o stimati.',
-    type: 'inputs',
-    fields: [
-      { id: 'bw', label: 'Peso Corporeo (kg)', placeholder: 'Es. 80' },
-      { id: 'bench', label: 'Massimale Panca Piana (kg)', placeholder: 'Es. 100' },
-      { id: 'squat', label: 'Massimale Squat (kg)', placeholder: 'Es. 140' },
-      { id: 'deadlift', label: 'Massimale Stacco (kg)', placeholder: 'Es. 160' }
+    id: 'legs',
+    title: 'Vuoi allenare la parte inferiore in questo mesociclo?',
+    subtitle: 'Include Quadricipiti, Femorali, Glutei e Polpacci.',
+    options: [
+      { value: 'yes', label: 'Sì, allena tutto il corpo (Full / Upper-Lower)' },
+      { value: 'no', label: 'No, solo Upper Body', desc: 'Esclude carichi e obiettivi per le gambe.' }
     ]
   },
   {
-    id: 'legs',
-    title: 'Vuoi includere le GAMBE in questo mesociclo?',
-    options: [
-      { value: 'yes', label: 'Sì, voglio allenarle' },
-      { value: 'no', label: 'No, solo Upper Body', desc: 'Esclude Glutei, Femorali, Quadricipiti e Polpacci.' }
-    ]
+    id: 'stats',
+    title: 'Dati Corporei & Forza',
+    subtitle: 'Usa massimali (1RM) reali o stimati.',
+    type: 'inputs'
   },
   {
     id: 'focus1',
@@ -79,75 +93,231 @@ const QUESTIONS = [
   }
 ];
 
-function determineStrengthLevel(bw, bench, squat, deadlift, gender) {
-  // Approximate strength standards ratios (Men)
-  // Beginner: Bench < 1.0x, Squat < 1.2x, DL < 1.5x
-  // Intermediate: Bench 1.0-1.5x, Squat 1.2-1.8x, DL 1.5-2.0x
-  // Advanced: Bench > 1.5x, Squat > 1.8x, DL > 2.0x
-  // Women standards are generally ~60-70% of men's ratios
-  
+function determineStrengthLevel(bw, bench, squat, deadlift, gender, legsIncluded) {
   const mult = gender === 'female' ? 0.7 : 1.0;
-  let points = 0; // 0=Beginner, 1=Intermediate, 2=Advanced
+  const bwVal = parseFloat(bw) || 80;
+  const benchVal = parseFloat(bench) || 0;
+  const benchRatio = bwVal > 0 ? benchVal / bwVal : 0;
 
-  const benchRatio = bench / bw;
-  const squatRatio = squat / bw;
-  const dlRatio = deadlift / bw;
+  let points = 0;
+  let liftsCount = 1;
 
   if (benchRatio >= 1.5 * mult) points += 2;
   else if (benchRatio >= 1.0 * mult) points += 1;
 
-  if (squatRatio >= 1.8 * mult) points += 2;
-  else if (squatRatio >= 1.2 * mult) points += 1;
+  if (legsIncluded) {
+    const squatVal = parseFloat(squat) || 0;
+    const dlVal = parseFloat(deadlift) || 0;
 
-  if (dlRatio >= 2.0 * mult) points += 2;
-  else if (dlRatio >= 1.5 * mult) points += 1;
+    if (squatVal > 0) {
+      liftsCount++;
+      const squatRatio = squatVal / bwVal;
+      if (squatRatio >= 1.8 * mult) points += 2;
+      else if (squatRatio >= 1.2 * mult) points += 1;
+    }
 
-  const avg = points / 3;
+    if (dlVal > 0) {
+      liftsCount++;
+      const dlRatio = dlVal / bwVal;
+      if (dlRatio >= 2.0 * mult) points += 2;
+      else if (dlRatio >= 1.5 * mult) points += 1;
+    }
+  }
+
+  const avg = points / liftsCount;
   if (avg < 0.6) return 'beginner';
   if (avg < 1.5) return 'intermediate';
   return 'advanced';
 }
 
+/**
+ * Schermata di attesa avvio: permette di scegliere quando far partire il mesociclo
+ */
+function PendingStartScreen({ report, reset }) {
+  const startScienceMesocycle = useStore(state => state.startScienceMesocycle);
+  const [startChoice, setStartChoice] = useState('today');
+  const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Calcola prossimo lunedì
+  const nextMonday = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    const diff = (day === 0 ? 1 : 8 - day);
+    d.setDate(d.getDate() + diff);
+    return d;
+  }, []);
+
+  const handleStart = () => {
+    let startTimestamp = Date.now();
+    if (startChoice === 'next_monday') {
+      startTimestamp = nextMonday.getTime();
+    } else if (startChoice === 'custom' && customDate) {
+      const parts = customDate.split('-');
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      startTimestamp = d.getTime();
+    }
+    startScienceMesocycle(startTimestamp);
+  };
+
+  const expLabel = { 
+    'beginner': 'Principiante', 
+    'intermediate': 'Intermedio', 
+    'advanced': 'Avanzato' 
+  }[report.experienceLevel];
+
+  return (
+    <div className="science-container">
+      <div className="pending-start-container">
+        <div className="pending-hero-card">
+          <Zap size={36} color="var(--primary-color)" style={{ marginBottom: '8px' }} />
+          <h2>Protocollo Generato! 🧬</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0 auto 1.5rem', maxWidth: '340px' }}>
+            Il tuo mesociclo di 12 settimane è pronto. Scegli quando farlo partire:
+          </p>
+
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+            <span style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(255,255,255,0.08)', borderRadius: '20px', color: 'white' }}>
+              Livello: <strong>{expLabel}</strong>
+            </span>
+            <span style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(0, 126, 167, 0.2)', borderRadius: '20px', color: 'var(--primary-color)' }}>
+              Frequenza: <strong>{report.daysPerWeek} gg/sett</strong>
+            </span>
+            <span style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(255, 149, 0, 0.15)', borderRadius: '20px', color: '#ff9500' }}>
+              Mese 1 Focus: <strong>{(report.focus1 || []).join(', ')}</strong>
+            </span>
+          </div>
+
+          <div className="pending-options">
+            <button 
+              type="button"
+              className={`pending-option-btn ${startChoice === 'today' ? 'selected' : ''}`}
+              onClick={() => setStartChoice('today')}
+            >
+              <div>
+                <strong style={{ display: 'block', color: 'var(--text-main)' }}>🚀 Inizia Subito (Oggi)</strong>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Gli allenamenti di oggi conteranno per la W1</span>
+              </div>
+              {startChoice === 'today' && <CheckCircle2 size={20} color="var(--primary-color)" />}
+            </button>
+
+            <button 
+              type="button"
+              className={`pending-option-btn ${startChoice === 'next_monday' ? 'selected' : ''}`}
+              onClick={() => setStartChoice('next_monday')}
+            >
+              <div>
+                <strong style={{ display: 'block', color: 'var(--text-main)' }}>📅 Inizia Lunedì Prossimo</strong>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  {nextMonday.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' })}
+                </span>
+              </div>
+              {startChoice === 'next_monday' && <CheckCircle2 size={20} color="var(--primary-color)" />}
+            </button>
+
+            <button 
+              type="button"
+              className={`pending-option-btn ${startChoice === 'custom' ? 'selected' : ''}`}
+              onClick={() => setStartChoice('custom')}
+            >
+              <div>
+                <strong style={{ display: 'block', color: 'var(--text-main)' }}>🗓️ Scegli Data di Inizio</strong>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Seleziona un giorno specifico</span>
+              </div>
+              {startChoice === 'custom' && <CheckCircle2 size={20} color="var(--primary-color)" />}
+            </button>
+          </div>
+
+          {startChoice === 'custom' && (
+            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+              <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Data di Partenza:</label>
+              <input 
+                type="date" 
+                value={customDate}
+                onChange={e => setCustomDate(e.target.value)}
+                className="science-input"
+                style={{ width: '100%' }}
+              />
+            </div>
+          )}
+
+          <button className="start-meso-btn" onClick={handleStart}>
+            <Play size={20} /> Avvia Mesociclo W1
+          </button>
+
+          <button 
+            type="button"
+            className="reset-btn" 
+            onClick={() => {
+              if (window.confirm("Vuoi modificare i dati del quiz?")) reset();
+            }}
+            style={{ marginTop: '1.2rem' }}
+          >
+            <RefreshCw size={14} /> Modifica parametri quiz
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Schermata di mesociclo completato (dopo W12)
+ */
+function CompletedScreen({ reset }) {
+  return (
+    <div className="science-container">
+      <div className="completed-container">
+        <div className="completed-hero-card">
+          <Trophy size={60} color="#ffcc00" style={{ filter: 'drop-shadow(0 0 16px rgba(255,204,0,0.5))' }} />
+          <h2>Mesociclo Completato! 🎉</h2>
+          <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.6, margin: '1rem 0 1.8rem' }}>
+            Congratulazioni! Hai portato a termine tutte le <strong>12 settimane</strong> del protocollo Israetel.
+            <br /><br />
+            La fase di risensibilizzazione è terminata: i tuoi recettori muscolari sono ora al <strong>massimo potenziale</strong> di risposta ipertrofica. È il momento ideale per testare i nuovi massimali e avviare un nuovo ciclo!
+          </p>
+
+          <button 
+            className="start-meso-btn" 
+            style={{ background: '#ffcc00', color: 'black' }}
+            onClick={reset}
+          >
+            <RefreshCw size={20} color="black" /> Ricalcola Massimali & Avvia Nuovo Ciclo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Dashboard Principale della Sezione Scienza
+ */
 function Dashboard({ report, reset }) {
   if (!report) return null;
 
-  // Calculate current week (1 to 12)
-  const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
-  const weeksElapsed = Math.floor((Date.now() - report.timestamp) / MS_PER_WEEK);
-  const currentWeekNum = Math.min(Math.max(1, weeksElapsed + 1), 12); // Bound 1-12
-  
+  const currentWeekNum = report.currentWeek || 1;
+  const advanceScienceWeek = useStore(state => state.advanceScienceWeek);
+
   // Forecasting State
   const [selectedWeek, setSelectedWeek] = useState(currentWeekNum);
   const weekToDisplay = selectedWeek;
 
-  // Access history and exercises for actual sets calculation
+  // Carica storico ed esercizi
   const history = useStore(state => state.history);
   const customExercises = useStore(state => state.customExercises || []);
   const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
   const allExercisesDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
-  // Calculate actual completed sets per muscle group for each week of the mesocycle
-  // Uses the same counting logic as the Profile page (primary category only + fuzzy matching)
-  const getActualSetsForWeek = useMemo(() => {
-    const MS_PER_WEEK_CONST = 7 * 24 * 60 * 60 * 1000;
-    const mesoStart = report.timestamp;
-    const weekMuscleMap = {};
+  // Calcola serie reali per la settimana selezionata usando l'helper centralizzato (zero overlap)
+  const actualSetsForSelectedWeek = useMemo(() => {
+    return getActualSetsForScienceWeek(history, allExercisesDB, report, weekToDisplay);
+  }, [history, allExercisesDB, report, weekToDisplay]);
 
-    for (let w = 1; w <= 12; w++) {
-      // Add 12-hour buffer same as Profile
-      const weekStart = (mesoStart + (w - 1) * MS_PER_WEEK_CONST) - (12 * 60 * 60 * 1000);
-      const weekEnd = mesoStart + w * MS_PER_WEEK_CONST;
-      const volumes = calculateScienceVolume(history, allExercisesDB, report.baseLandmarks, weekStart, weekEnd);
-      const hasData = Object.values(volumes).some(v => v > 0);
-      if (hasData) weekMuscleMap[w] = volumes;
-    }
-
-    return weekMuscleMap;
-  }, [history, allExercisesDB, report.timestamp, report.baseLandmarks]);
-
-  let currentMonth = 1;
-  if (weekToDisplay > 4 && weekToDisplay <= 8) currentMonth = 2;
-  if (weekToDisplay > 8) currentMonth = 3;
+  // Mese della settimana visualizzata
+  const displayedMonth = weekToDisplay <= 4 ? 1 : (weekToDisplay <= 8 ? 2 : 3);
+  // Mese reale attivo
+  const realCurrentMonth = currentWeekNum <= 4 ? 1 : (currentWeekNum <= 8 ? 2 : 3);
 
   const isBossFight = weekToDisplay === 4 || weekToDisplay === 8;
 
@@ -157,66 +327,44 @@ function Dashboard({ report, reset }) {
     'advanced': 'Avanzato' 
   }[report.experienceLevel];
 
-  // Helper to get exactly how many sets we need THIS week for a specific muscle
-  const getTargetForMuscle = (muscle) => {
-    const lm = report.baseLandmarks[muscle];
-    if (!lm) return 0;
-    
-    // Mesocycle 3 (Weeks 9-12) is resensitization/deload
-    if (currentMonth === 3) {
-      if (weekToDisplay === 9 || weekToDisplay === 10) return Math.max(0, lm.mev - 2); // Deload
-      return lm.mev; // Back to MEV to retain
-    }
+  // Identifica i muscoli in focus per la settimana visualizzata
+  const focusMuscles = displayedMonth === 1 ? (report.focus1 || []) : (displayedMonth === 2 ? (report.focus2 || []) : []);
 
-    // Determine if it's currently focused
-    const isFocus = (currentMonth === 1 && report.focus1.includes(muscle)) || 
-                    (currentMonth === 2 && report.focus2.includes(muscle));
-    
-    if (!isFocus) {
-      // Maintenance
-      return lm.mev;
-    }
+  // Ordina i muscoli: prima quelli in focus, poi il mantenimento
+  const sortedMuscles = useMemo(() => {
+    const all = Object.keys(report.baseLandmarks || {});
+    return all.sort((a, b) => {
+      const aFocus = focusMuscles.includes(a);
+      const bFocus = focusMuscles.includes(b);
+      if (aFocus && !bFocus) return -1;
+      if (!aFocus && bFocus) return 1;
+      return a.localeCompare(b);
+    });
+  }, [report.baseLandmarks, focusMuscles]);
 
-    // It's in focus. We span from MAV to MRV over 4 weeks.
-    // Week relative to the month (1, 2, 3, 4)
-    const relativeWeek = weekToDisplay - ((currentMonth - 1) * 4);
-    
-    // Total series to add across the 4 weeks
-    // Target calc logic
-    const gap = lm.mrv - lm.mav;
-    const weeklyIncrement = gap / 3;
-    let target = lm.mav + (weeklyIncrement * (relativeWeek - 1));
-    return Math.round(target);
-  };
+  const handleAdvanceWeek = () => {
+    const msg = currentWeekNum >= 12
+      ? "Sei alla Settimana 12. Concludere il mesociclo archivierà le 12 settimane e completerà il programma. Confermi?"
+      : `Sei sicuro di voler concludere la Settimana ${currentWeekNum} e passare alla Settimana ${currentWeekNum + 1}? I volumi di questa settimana verranno archiviati.`;
 
-  const getPhaseBadge = (muscle, targetSets) => {
-    const lm = report.baseLandmarks[muscle];
-    if (!lm) return null;
-
-    if (currentMonth === 3 && (weekToDisplay === 9 || weekToDisplay === 10)) {
-      return { label: 'Deload', color: '#34c759', bg: 'rgba(52, 199, 89, 0.15)' };
-    }
-
-    if (targetSets <= lm.mev) {
-      return { label: 'MEV', color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.05)' };
-    }
-    if (targetSets >= lm.mrv) {
-      return { label: 'MRV', color: '#ff3b30', bg: 'rgba(255, 59, 48, 0.15)' };
-    }
-
-    // Between MAV and MRV
-    if (Math.abs(targetSets - lm.mav) < Math.abs(targetSets - lm.mrv)) {
-      return { label: 'MAV', color: '#ff9500', bg: 'rgba(255, 149, 0, 0.15)' };
-    } else {
-      return { label: 'Overreach', color: '#ff2d55', bg: 'rgba(255, 45, 85, 0.15)' };
+    if (window.confirm(msg)) {
+      advanceScienceWeek();
+      if (currentWeekNum < 12) {
+        setSelectedWeek(currentWeekNum + 1);
+      }
     }
   };
 
   const getWeekLabels = () => {
     const arr = [];
-    for(let i = 1; i <= 12; i++) arr.push(i);
+    for (let i = 1; i <= 12; i++) arr.push(i);
     return arr;
   };
+
+  // Stima serie medie per seduta sui muscoli focus (Anti-Junk Volume rule)
+  const focusTargetSample = focusMuscles.length > 0 ? getScienceTargetForMuscle(report, focusMuscles[0], weekToDisplay) : 12;
+  const sessionsPerWeek = report.daysPerWeek || 4;
+  const estimatedSetsPerSession = Math.round(focusTargetSample / (sessionsPerWeek > 3 ? 2 : 1));
 
   return (
     <>
@@ -227,29 +375,63 @@ function Dashboard({ report, reset }) {
         </div>
       </header>
       
-      <main className="app-main">
+      <main className="app-main" style={{ paddingBottom: '120px' }}>
         <div className="science-container" style={{ animation: 'none' }}>
           
           <div className="report-header">
-            <h2>Il tuo Mesociclo V2</h2>
+            <h2>Mesociclo Israetel V2</h2>
             <p style={{ color: 'var(--text-muted)' }}>Status Coefficiente Forza: <strong>{expLabel}</strong></p>
-            <button className="reset-btn" onClick={() => reset()}>
+            <button 
+              className="reset-btn" 
+              onClick={() => {
+                if (window.confirm("Attenzione: reimpostare il quiz cancellerà il mesociclo attivo. Vuoi davvero procedere?")) {
+                  reset();
+                }
+              }}
+            >
               <RefreshCw size={14} /> Ricalcola parametri
             </button>
           </div>
 
           <div className="summary-grid">
             <div className="summary-card">
-              <span className="summary-label">Mese Stimato</span>
-              <span className="summary-value" style={{ fontSize: '1.4rem' }}>{currentMonth} <span style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>/ 3</span></span>
+              <span className="summary-label">Settimana Attiva</span>
+              <span className="summary-value" style={{ color: 'var(--primary-color)' }}>
+                W{currentWeekNum} <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>/ 12</span>
+              </span>
             </div>
             <div className="summary-card">
-              <span className="summary-label">Settimana Attuale</span>
-              <span className="summary-value" style={{ fontSize: '1.4rem', color: 'var(--primary-color)' }}>{currentWeekNum} <span style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>/ 12</span></span>
+              <span className="summary-label">Mese in Corso</span>
+              <span className="summary-value">
+                Mese {realCurrentMonth} <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>/ 3</span>
+              </span>
             </div>
           </div>
 
-          {/* Forecasting Week Selector */}
+          {/* Card Regola Anti-Junk Volume & Frequenza (Consiglio 4) */}
+          <div className="anti-junk-card">
+            <Info size={22} color="var(--primary-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <p className="anti-junk-title">Frequenza: {sessionsPerWeek} Giorni / Settimana</p>
+              <p className="anti-junk-desc">
+                Distribuisci il volume dei muscoli in focus su <strong>2 sedute settimanali (~{estimatedSetsPerSession} serie a seduta)</strong>.
+                <br />
+                💡 <em>Regola RP: Evita di superare 8-10 serie sullo stesso muscolo in un unico allenamento per non generare Junk Volume.</em>
+              </p>
+            </div>
+          </div>
+
+          {/* Pulsante Avanzamento Settimanale Manuale */}
+          {selectedWeek === currentWeekNum && (
+            <button className="advance-week-btn" onClick={handleAdvanceWeek}>
+              <CheckCircle2 size={20} />
+              {currentWeekNum >= 12 
+                ? "🏆 Concludi Mesociclo (Settimana 12)" 
+                : `Concludi Settimana ${currentWeekNum} & Passa alla W${currentWeekNum + 1}`}
+            </button>
+          )}
+
+          {/* Selettore Proiezione Settimanale */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <button 
               onClick={() => setSelectedWeek(prev => Math.max(1, prev - 1))}
@@ -258,9 +440,11 @@ function Dashboard({ report, reset }) {
               <ChevronLeft size={24} />
             </button>
             <div style={{ textAlign: 'center' }}>
-              <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Proiezione</span>
-              <strong style={{ fontSize: '1.2rem', color: selectedWeek === currentWeekNum ? 'var(--text-main)' : 'var(--primary-color)' }}>
-                Settimana {selectedWeek}
+              <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {selectedWeek === currentWeekNum ? 'In Corso' : 'Proiezione'}
+              </span>
+              <strong style={{ fontSize: '1.2rem', color: selectedWeek === currentWeekNum ? 'var(--primary-color)' : 'var(--text-main)' }}>
+                Settimana {selectedWeek} (Mese {displayedMonth})
               </strong>
             </div>
             <button 
@@ -271,64 +455,88 @@ function Dashboard({ report, reset }) {
             </button>
           </div>
 
-          <div className={`card glass target-card ${isBossFight ? 'boss-fight' : ''}`} style={{ marginBottom: '2rem', borderColor: isBossFight ? '#ff3b30' : 'var(--primary-color)' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem', color: isBossFight ? '#ff3b30' : 'var(--text-main)', fontSize: '1.1rem', fontWeight: '800' }}>
-              <Target size={18} color={isBossFight ? '#ff3b30' : "var(--primary-color)"} />
+          {/* Scheda Obiettivi Settimanali con Barre di Progresso (Consiglio 6) */}
+          <div className={`card glass target-card ${isBossFight ? 'boss-fight' : ''}`} style={{ marginBottom: '2rem', borderColor: isBossFight ? '#ff3b30' : 'var(--border-color)' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem', color: isBossFight ? '#ff3b30' : 'var(--text-main)', fontSize: '1.1rem', fontWeight: '800' }}>
+              <Target size={20} color={isBossFight ? '#ff3b30' : "var(--primary-color)"} />
               {isBossFight ? "BOSS FIGHT: Settimana MRV" : `Obiettivi Settimana ${selectedWeek}`}
             </h3>
             
             {isBossFight && (
               <p style={{ color: '#ff3b30', fontSize: '0.85rem', marginBottom: '1rem', fontWeight: '600', animation: 'pulse 2s infinite' }}>
                 <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}/>
-                Raggiungi il Massimo Volume Recuperabile. Usa tutto lo sforzo che hai.
+                Raggiungi il Massimo Volume Recuperabile. Cedimento tecnico completo su ogni serie!
               </p>
             )}
 
-            <div className="focus-list">
-              {Object.keys(report.baseLandmarks).map(muscle => {
-                const targetSets = getTargetForMuscle(muscle);
-                const isFocus = (currentMonth === 1 && report.focus1.includes(muscle)) || 
-                                (currentMonth === 2 && report.focus2.includes(muscle));
-                const badge = getPhaseBadge(muscle, targetSets);
-                                
+            <div className="muscle-cards-list">
+              {sortedMuscles.map(muscle => {
+                const targetSets = getScienceTargetForMuscle(report, muscle, weekToDisplay);
+                const actualSets = actualSetsForSelectedWeek[muscle] || 0;
+                const isFocus = focusMuscles.includes(muscle);
+                const badge = getSciencePhaseBadge(report, muscle, weekToDisplay, targetSets);
+                const isCompleted = actualSets >= targetSets && targetSets > 0;
+                const percent = Math.min(100, Math.round((actualSets / Math.max(1, targetSets)) * 100));
+
+                let barColor = isCompleted ? '#34c759' : 'var(--primary-color)';
+                if (isFocus) barColor = isCompleted ? '#34c759' : '#ff9500';
+
                 return (
-                  <div key={muscle} className="focus-item" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', marginBottom: '4px', alignItems: 'center' }}>
-                    <span className="focus-item-label" style={{ color: isFocus ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: isFocus ? '600' : 'normal', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {muscle}
-                      {badge && (
-                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', color: badge.color, backgroundColor: badge.bg, textTransform: 'uppercase' }}>
-                          {badge.label}
-                        </span>
-                      )}
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {weekToDisplay <= currentWeekNum && getActualSetsForWeek[weekToDisplay] && getActualSetsForWeek[weekToDisplay][muscle] !== undefined && (
-                        <span style={{ 
-                          fontSize: '0.85rem', 
-                          fontWeight: '700',
-                          color: getActualSetsForWeek[weekToDisplay][muscle] >= targetSets ? 'var(--success-color, #34c759)' : 'var(--error-color, #ff3b30)',
-                          background: getActualSetsForWeek[weekToDisplay][muscle] >= targetSets ? 'rgba(52, 199, 89, 0.12)' : 'rgba(255, 59, 48, 0.12)',
-                          padding: '2px 8px',
-                          borderRadius: '6px'
-                        }}>
-                          {getActualSetsForWeek[weekToDisplay][muscle]}
-                        </span>
-                      )}
-                      <span className="focus-item-value" style={{ color: isFocus ? 'var(--primary-color)' : 'var(--text-main)', fontSize: '1.1rem' }}>
-                        {targetSets} serie
-                      </span>
+                  <div 
+                    key={muscle} 
+                    className={`muscle-target-card ${isFocus ? 'is-focus' : ''} ${isCompleted ? 'is-completed' : ''}`}
+                  >
+                    <div className="muscle-card-header">
+                      <div className="muscle-card-name">
+                        <span>{muscle}</span>
+                        {isFocus && (
+                          <span className="focus-flame-badge">
+                            🔥 FOCUS
+                          </span>
+                        )}
+                        {badge && (
+                          <span 
+                            className="target-badge"
+                            style={{ color: badge.color, backgroundColor: badge.bg }}
+                          >
+                            {badge.label}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="muscle-sets-counter">
+                        <strong style={{ color: isCompleted ? '#34c759' : (isFocus ? '#ff9500' : 'var(--text-main)') }}>
+                          {actualSets}
+                        </strong>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}> / {targetSets} serie</span>
+                      </div>
                     </div>
+
+                    {/* Progress Bar Fluida */}
+                    <div className="target-progress-bar">
+                      <div 
+                        className="target-progress-fill"
+                        style={{ 
+                          width: `${percent}%`, 
+                          background: barColor 
+                        }}
+                      />
+                    </div>
+
+                    {isCompleted && (
+                      <div className="target-reached-pill">
+                        <CheckCircle2 size={13} /> Target Completato
+                      </div>
+                    )}
                   </div>
-                )
+                );
               })}
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '1rem', textAlign: 'center' }}>
-              Questi obiettivi sono sincronizzati nel tuo Profilo.
+            
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '1.2rem', textAlign: 'center' }}>
+              Questi obiettivi sono sincronizzati nel tuo Profilo e nel Workout Recap.
             </p>
           </div>
-
-
-
 
           <h3 style={{ margin: '1rem 0', color: 'var(--text-main)', fontSize: '1.2rem' }}>Calendario Periodizzazione</h3>
           
@@ -353,7 +561,7 @@ function Dashboard({ report, reset }) {
                 >
                   <span className="cal-week-num">W{w}</span>
                 </div>
-              )
+              );
             })}
           </div>
 
@@ -391,13 +599,12 @@ function Dashboard({ report, reset }) {
 function Science() {
   const scienceReport = useStore(state => state.scienceReport);
   const saveScienceReport = useStore(state => state.saveScienceReport);
-  const initializeMuscleXP = useStore(state => state.initializeMuscleXP);
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({
     gender: null,
-    stats: { bw: '', bench: '', squat: '', deadlift: '' },
     legs: null,
+    stats: { bw: '', bench: '', squat: '', deadlift: '' },
     focus1: [],
     focus2: [],
     daysPerWeek: null
@@ -405,9 +612,9 @@ function Science() {
 
   const history = useStore(state => state.history);
 
-  // Auto-fill 1RM stats from history
+  // Auto-fill 1RM stats from history con matching robusto
   useEffect(() => {
-    if (step === 1 && history.length > 0) {
+    if (step === 2 && history.length > 0) {
       const best1RMs = {
         bench: 0,
         squat: 0,
@@ -423,14 +630,15 @@ function Science() {
       };
 
       history.forEach(workout => {
-        workout.exercises.forEach(ex => {
+        (workout.exercises || []).forEach(ex => {
+          const norm = normalizeName(ex.name);
           let type = '';
-          if (ex.name === 'Panca Piana Bilanciere') type = 'bench';
-          else if (ex.name === 'Squat con Bilanciere') type = 'squat';
-          else if (ex.name === 'Stacchi da Terra (Deadlift)') type = 'deadlift';
+          if (norm.includes('panca piana') && norm.includes('bilanciere')) type = 'bench';
+          else if (norm.includes('squat') && (norm.includes('bilanciere') || norm.includes('back squat'))) type = 'squat';
+          else if (norm.includes('stacc') && norm.includes('terra')) type = 'deadlift';
 
           if (type) {
-            ex.sets.forEach(s => {
+            (ex.sets || []).forEach(s => {
               if (s.done) {
                 const rm = calculate1RM(s.kg, s.reps);
                 if (rm > best1RMs[type]) {
@@ -443,7 +651,6 @@ function Science() {
       });
 
       setAnswers(prev => {
-        // Only update if current values are empty to avoid overwriting user manual tweaks
         const newStats = { ...prev.stats };
         let changed = false;
 
@@ -451,13 +658,15 @@ function Science() {
           newStats.bench = Math.round(best1RMs.bench).toString();
           changed = true;
         }
-        if (!newStats.squat && best1RMs.squat > 0) {
-          newStats.squat = Math.round(best1RMs.squat).toString();
-          changed = true;
-        }
-        if (!newStats.deadlift && best1RMs.deadlift > 0) {
-          newStats.deadlift = Math.round(best1RMs.deadlift).toString();
-          changed = true;
+        if (prev.legs === 'yes') {
+          if (!newStats.squat && best1RMs.squat > 0) {
+            newStats.squat = Math.round(best1RMs.squat).toString();
+            changed = true;
+          }
+          if (!newStats.deadlift && best1RMs.deadlift > 0) {
+            newStats.deadlift = Math.round(best1RMs.deadlift).toString();
+            changed = true;
+          }
         }
 
         return changed ? { ...prev, stats: newStats } : prev;
@@ -490,70 +699,68 @@ function Science() {
   };
 
   const generateReport = () => {
-    // 1. Determine Level dynamically
     const bw = parseFloat(answers.stats.bw) || 80;
     const bench = parseFloat(answers.stats.bench) || 0;
     const squat = parseFloat(answers.stats.squat) || 0;
     const deadlift = parseFloat(answers.stats.deadlift) || 0;
+    const legsIncluded = answers.legs === 'yes';
     
-    const level = determineStrengthLevel(bw, bench, squat, deadlift, answers.gender);
+    const level = determineStrengthLevel(bw, bench, squat, deadlift, answers.gender, legsIncluded);
 
-    // 2. Adjust MEV/MAV/MRV based on Level & Gender
-    // Females generally need +1 MEV and can tolerate +2 MRV due to CNS fatigue differences
-    // Beginners need less MAV, but MRV is higher relative to their MAV (they recover from total sets easier since load is absolutely lighter)
-    // Advanced need more MAV to stimulate, but MRV ceiling is lower (loads are absolutely very high)
-    
-      const availableMuscles = answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci'].includes(m));
+    const availableMuscles = legsIncluded ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !LEG_MUSCLES.includes(m));
 
-      const finalLandmarks = availableMuscles.reduce((acc, m) => {
-        let b = RP_BASE_LANDMARKS[m];
-        
-        // Safety check if base landmarks unexpectedly fail
-        if (!b) return acc;
-        
-        let mev = b.mev;
-        let mav = b.mav;
-        let mrv = b.mrv;
+    const finalLandmarks = availableMuscles.reduce((acc, m) => {
+      const b = RP_BASE_LANDMARKS[m];
+      if (!b) return acc;
+      
+      let mev = b.mev;
+      let mav = b.mav;
+      let mrv = b.mrv;
 
-        if (answers.gender === 'female') {
-          mev += 1;
-          mrv += 2;
-          mav += 1;
-        }
+      if (answers.gender === 'female') {
+        mev += 1;
+        mrv += 2;
+        mav += 1;
+      }
 
-        if (level === 'beginner') {
-          mav -= 2; // Needs less to grow
-          mrv += 1; // Can tolerate more sets because absolute load is low
-        } else if (level === 'advanced') {
-          mav += 2; // Needs more stimulus to grow
-          mrv -= 2; // Can't tolerate as many sets because absolute load destroys CNS
-        }
+      if (level === 'beginner') {
+        mav -= 2;
+        mrv += 1;
+      } else if (level === 'advanced') {
+        mav += 2;
+        mrv -= 2;
+      }
 
-        acc[m] = { 
-          mev: Math.max(0, mev), 
-          mav: Math.max(0, mav), 
-          mrv: Math.max(0, mrv) 
-        };
-        return acc;
-      }, {});
-
-      // Sanity check: Ensure if legs='no', they are ABSOLUTELY excluded from final focus arrays to prevent ghost targets
-      const cleanFocus1 = answers.focus1.filter(m => finalLandmarks[m]);
-      const cleanFocus2 = answers.focus2.filter(m => finalLandmarks[m]);
-
-      const report = {
-        timestamp: Date.now(),
-        gender: answers.gender,
-        inputStats: answers.stats,
-        experienceLevel: level,
-        legsIncluded: answers.legs === 'yes',
-        focus1: cleanFocus1,
-        focus2: cleanFocus2,
-        baseLandmarks: finalLandmarks,
-        daysPerWeek: parseInt(answers.daysPerWeek, 10) || 4
+      acc[m] = { 
+        mev: Math.max(0, mev), 
+        mav: Math.max(0, mav), 
+        mrv: Math.max(0, mrv) 
       };
+      return acc;
+    }, {});
 
-      saveScienceReport(report);
+    const cleanFocus1 = (answers.focus1 || []).filter(m => finalLandmarks[m]);
+    const cleanFocus2 = (answers.focus2 || []).filter(m => finalLandmarks[m]);
+
+    const report = {
+      id: `meso-${Date.now()}`,
+      timestamp: Date.now(),
+      startDate: null,
+      status: 'pending', // In attesa che l'utente scelga quando iniziare!
+      currentWeek: 1,
+      currentWeekStartDate: null,
+      weekHistory: {},
+      gender: answers.gender,
+      inputStats: answers.stats,
+      experienceLevel: level,
+      legsIncluded,
+      focus1: cleanFocus1,
+      focus2: cleanFocus2,
+      baseLandmarks: finalLandmarks,
+      daysPerWeek: parseInt(answers.daysPerWeek, 10) || 4
+    };
+
+    saveScienceReport(report);
   };
 
   const resetQuiz = () => {
@@ -561,39 +768,62 @@ function Science() {
     setStep(0);
     setAnswers({
       gender: null,
-      stats: { bw: '', bench: '', squat: '', deadlift: '' },
       legs: null,
+      stats: { bw: '', bench: '', squat: '', deadlift: '' },
       focus1: [],
       focus2: [],
       daysPerWeek: null
     });
   };
 
+  // Se c'è un report:
   if (scienceReport) {
+    if (scienceReport.status === 'pending') {
+      return <PendingStartScreen report={scienceReport} reset={resetQuiz} />;
+    }
+    if (scienceReport.status === 'completed') {
+      return <CompletedScreen reset={resetQuiz} />;
+    }
     return <Dashboard report={scienceReport} reset={resetQuiz} />;
   }
 
+  // Quiz Form
   const currentQ = QUESTIONS[step] || QUESTIONS[0];
   
   let isNextDisabled = false;
   
   if (currentQ.type === 'inputs') {
-    // Validate inputs
     const s = answers.stats;
-    isNextDisabled = !s.bw || !s.bench || !s.squat || !s.deadlift;
+    if (answers.legs === 'no') {
+      isNextDisabled = !s.bw || !s.bench;
+    } else {
+      isNextDisabled = !s.bw || !s.bench || !s.squat || !s.deadlift;
+    }
   } else {
-    // Standard validation
     let displayOptions = currentQ.options;
     if (!displayOptions) {
-      const available = answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci'].includes(m));
+      const available = answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !LEG_MUSCLES.includes(m));
       const filtered = currentQ.id === 'focus2' ? available.filter(m => !(answers.focus1 || []).includes(m)) : available;
       displayOptions = filtered.map(m => ({ value: m, label: m, desc: '' }));
     }
 
     const currentAnswer = answers[currentQ.id];
     isNextDisabled = currentQ.isMulti 
-      ? (currentAnswer ? currentAnswer.length : 0) === 0 // At least 1 to max N
+      ? (currentAnswer ? currentAnswer.length : 0) === 0 
       : !currentAnswer;
+  }
+
+  // Campi per la domanda 3 (stats)
+  const inputFields = [
+    { id: 'bw', label: 'Peso Corporeo (kg)', placeholder: 'Es. 80' },
+    { id: 'bench', label: 'Massimale Panca Piana (kg)', placeholder: 'Es. 100' }
+  ];
+
+  if (answers.legs === 'yes') {
+    inputFields.push(
+      { id: 'squat', label: 'Massimale Squat (kg)', placeholder: 'Es. 140' },
+      { id: 'deadlift', label: 'Massimale Stacco (kg)', placeholder: 'Es. 160' }
+    );
   }
 
   return (
@@ -605,7 +835,7 @@ function Science() {
         </div>
       </header>
 
-      <main className="app-main">
+      <main className="app-main" style={{ paddingBottom: '120px' }}>
         <div className="science-container">
           <div className="quiz-header">
             <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Passo {step + 1} di {QUESTIONS.length}</span>
@@ -623,14 +853,14 @@ function Science() {
 
             {currentQ.type === 'inputs' ? (
               <div className="inputs-grid">
-                {currentQ.fields.map(f => (
+                {inputFields.map(f => (
                   <div className="input-field" key={f.id}>
                     <label>{f.label}</label>
                     <input 
                       type="number" 
                       inputMode="decimal"
                       placeholder={f.placeholder}
-                      value={answers.stats[f.id]}
+                      value={answers.stats[f.id] || ''}
                       onChange={(e) => setAnswers(prev => ({ ...prev, stats: { ...prev.stats, [f.id]: e.target.value } }))}
                       className="science-input"
                     />
@@ -639,7 +869,7 @@ function Science() {
               </div>
             ) : (
               <div className="answers-grid">
-                {(currentQ.options || (answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci'].includes(m))).filter(m => currentQ.id === 'focus2' ? !answers.focus1.includes(m) : true).map(m => ({ value: m, label: m }))).map(opt => {
+                {(currentQ.options || (answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !LEG_MUSCLES.includes(m))).filter(m => currentQ.id === 'focus2' ? !(answers.focus1 || []).includes(m) : true).map(m => ({ value: m, label: m }))).map(opt => {
                   const isSelected = currentQ.isMulti 
                     ? (answers[currentQ.id] || []).includes(opt.value)
                     : answers[currentQ.id] === opt.value;
