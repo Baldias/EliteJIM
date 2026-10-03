@@ -70,12 +70,14 @@ function WorkoutRecap() {
       const addedNow = setsDoneInWorkout[muscle] || 0;
       const previousDone = Math.max(0, totalDone - addedNow);
 
-      goals.push({
-        muscle,
-        target,
-        previousDone,
-        addedNow
-      });
+      if (target > 0 || addedNow > 0) {
+        goals.push({
+          muscle,
+          target,
+          previousDone,
+          addedNow
+        });
+      }
     });
 
     return goals;

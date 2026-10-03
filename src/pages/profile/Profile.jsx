@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Target, Zap, Trash2, X, Flame, Trophy, Check, Edit2 } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ChevronDown, ChevronUp, User, Settings as SettingsIcon, Zap, Trash2, X, Flame, Trophy, Check, Edit2 } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
-import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS, getScienceTargetForMuscle, getSciencePhaseBadge, getActualSetsForScienceWeek } from '../../utils/rpVolume';
+import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../utils/rpVolume';
 import { EXERCISES_DB, getAllExercises, getExerciseCategories, normalizeName } from '../../data/exercises';
 import { getRankByXp } from '../../utils/gamification';
 import './Profile.css';
@@ -11,7 +11,6 @@ import './Profile.css';
 function Profile() {
   const navigate = useNavigate();
   const history = useStore(state => state.history);
-  const scienceReport = useStore(state => state.scienceReport);
   const deleteWorkout = useStore(state => state.deleteWorkout);
   const userXP = useStore(state => state.userXP);
   const currentStreak = useStore(state => state.currentStreak);
@@ -101,31 +100,6 @@ function Profile() {
   }, [history.length]);
 
   const rank = getRankByXp(userXP || 0);
-  const activeScienceWeek = scienceReport ? (scienceReport.currentWeek || 1) : 1;
-  const isBossFight = scienceReport && (activeScienceWeek === 4 || activeScienceWeek === 8);
-
-  // --- Scienza V2: Weekly Goals Logic (Usa helper centralizzati) ---
-  const scienceGoals = useMemo(() => {
-    if (!scienceReport || scienceReport.status === 'completed' || scienceReport.status === 'pending') return null;
-
-    const cw = scienceReport.currentWeek || 1;
-    const actualSetsMap = getActualSetsForScienceWeek(history, allKnownExercises, scienceReport, cw);
-    const month = cw <= 4 ? 1 : (cw <= 8 ? 2 : 3);
-    const focusMuscles = month === 1 ? (scienceReport.focus1 || []) : (month === 2 ? (scienceReport.focus2 || []) : []);
-
-    const goals = Object.keys(scienceReport.baseLandmarks || {}).map(muscle => {
-      const target = getScienceTargetForMuscle(scienceReport, muscle, cw);
-      const done = actualSetsMap[muscle] || 0;
-      const isFocus = focusMuscles.includes(muscle);
-      const badge = getSciencePhaseBadge(scienceReport, muscle, cw, target);
-      return { muscle, target, done, isFocus, badge };
-    }).filter(g => g.target !== null).sort((a, b) => (b.isFocus ? 1 : 0) - (a.isFocus ? 1 : 0));
-
-    return {
-      currentWeek: cw,
-      goals
-    };
-  }, [scienceReport, history, allKnownExercises]);
 
   // --- Journey Logic (Weekly Grouping) ---
   const groupedHistory = useMemo(() => {
@@ -202,18 +176,12 @@ function Profile() {
         <div className="card glass gamification-dash" style={{
           marginBottom: '2rem',
           borderRadius: '24px',
-          border: `1px solid ${isBossFight ? '#ff3b30' : rank.color}`,
-          background: isBossFight ? 'linear-gradient(135deg, rgba(255, 59, 48, 0.1), rgba(0,0,0,0.4))' : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${rank.color}`,
+          background: 'rgba(255,255,255,0.03)',
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {isBossFight && (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: '#ff3b30', color: '#fff', fontSize: '0.75rem', fontWeight: '800', textAlign: 'center', padding: '4px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              ⚠️ MRV Boss Fight Week ⚠️
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: isBossFight ? '1rem' : '0', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${rank.color}` }}>
                 <Trophy size={24} color={rank.color} />
@@ -289,93 +257,6 @@ function Profile() {
         )}
 
 
-        {/* Science Mesocycle Sync Section */}
-        {showScience && scienceGoals && (
-          <div style={{ marginTop: '2rem' }}>
-            <div className="section-header" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Target size={24} color="var(--primary-color)" />
-                <h2 className="section-title-premium" style={{ margin: 0, color: isBossFight ? '#ff3b30' : 'var(--text-main)' }}>
-                  Obiettivi W{scienceGoals.currentWeek} {isBossFight && "💀"}
-                </h2>
-              </div>
-              
-              <button
-                onClick={() => {
-                  const msg = scienceGoals.currentWeek >= 12 
-                    ? "Sei alla Settimana 12. Vuoi concludere il mesociclo di 12 settimane?" 
-                    : `Sei sicuro di voler terminare la Settimana ${scienceGoals.currentWeek} e passare alla successiva? L'azione è irreversibile.`;
-                  if (window.confirm(msg)) {
-                    useStore.getState().advanceScienceWeek();
-                  }
-                }}
-                style={{
-                  background: scienceGoals.currentWeek >= 12 ? 'rgba(52,199,89,0.15)' : 'rgba(255,149,0,0.15)',
-                  color: scienceGoals.currentWeek >= 12 ? '#34c759' : '#ff9500',
-                  border: `1px solid ${scienceGoals.currentWeek >= 12 ? 'rgba(52,199,89,0.3)' : 'rgba(255,149,0,0.3)'}`,
-                  padding: '8px 14px',
-                  borderRadius: '12px',
-                  fontSize: '0.8rem',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {scienceGoals.currentWeek >= 12 ? 'Concludi Mesociclo' : 'Termina Sett.'}
-              </button>
-            </div>
-
-            <div className="card glass" style={{ padding: '1.5rem', borderRadius: '24px', border: '1px solid var(--primary-color)' }}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.4 }}>
-                Progresso delle serie in base al tuo mesociclo scientifico.
-              </p>
-
-              <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                {scienceGoals.goals.map(g => {
-                  const percent = Math.min(100, Math.round((g.done / g.target) * 100)) || 0;
-                  const isCompleted = g.done >= g.target;
-                  let color = isCompleted ? '#34c759' : 'var(--primary-color)';
-                  if (!g.isFocus) color = 'var(--text-muted)';
-                  if (g.isFocus && isCompleted) color = '#34c759';
-
-                  return (
-                    <div key={g.muscle} style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      padding: '1rem',
-                      borderRadius: '16px',
-                      border: `1px solid ${isCompleted ? 'rgba(52, 199, 89, 0.3)' : 'rgba(255,255,255,0.05)'}`
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
-                        <span style={{ fontWeight: '600', color: g.isFocus ? 'var(--text-main)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {g.muscle}
-                          {g.badge && (
-                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', color: g.badge.color, backgroundColor: g.badge.bg, textTransform: 'uppercase' }}>
-                              {g.badge.label}
-                            </span>
-                          )}
-                        </span>
-                        <span style={{ fontSize: '0.9rem', fontWeight: '700', color: color }}>
-                          {g.done} / {g.target}
-                        </span>
-                      </div>
-
-                      <div style={{ width: '100%', height: '8px', background: 'var(--surface-color)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%',
-                          width: `${percent}%`,
-                          background: color,
-                          borderRadius: '4px',
-                          transition: 'width 0.5s ease-out'
-                        }}></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* RP Volume Section */}
         {showScience && rpVolumes && (

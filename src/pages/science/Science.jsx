@@ -330,17 +330,22 @@ function Dashboard({ report, reset }) {
   // Identifica i muscoli in focus per la settimana visualizzata
   const focusMuscles = displayedMonth === 1 ? (report.focus1 || []) : (displayedMonth === 2 ? (report.focus2 || []) : []);
 
-  // Ordina i muscoli: prima quelli in focus, poi il mantenimento
-  const sortedMuscles = useMemo(() => {
+  // Ordina i muscoli: prima quelli in focus, poi il mantenimento.
+  // Esclude i muscoli che hanno 0 serie da fare (es. Glutei per gli uomini) a meno che non vi siano serie registrate
+  const visibleMuscles = useMemo(() => {
     const all = Object.keys(report.baseLandmarks || {});
-    return all.sort((a, b) => {
+    return all.filter(muscle => {
+      const targetSets = getScienceTargetForMuscle(report, muscle, weekToDisplay);
+      const actualSets = actualSetsForSelectedWeek[muscle] || 0;
+      return targetSets > 0 || actualSets > 0;
+    }).sort((a, b) => {
       const aFocus = focusMuscles.includes(a);
       const bFocus = focusMuscles.includes(b);
       if (aFocus && !bFocus) return -1;
       if (!aFocus && bFocus) return 1;
       return a.localeCompare(b);
     });
-  }, [report.baseLandmarks, focusMuscles]);
+  }, [report.baseLandmarks, focusMuscles, report, weekToDisplay, actualSetsForSelectedWeek]);
 
   const handleAdvanceWeek = () => {
     const msg = currentWeekNum >= 12
@@ -408,19 +413,6 @@ function Dashboard({ report, reset }) {
             </div>
           </div>
 
-          {/* Card Regola Anti-Junk Volume & Frequenza (Consiglio 4) */}
-          <div className="anti-junk-card">
-            <Info size={22} color="var(--primary-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <p className="anti-junk-title">Frequenza: {sessionsPerWeek} Giorni / Settimana</p>
-              <p className="anti-junk-desc">
-                Distribuisci il volume dei muscoli in focus su <strong>2 sedute settimanali (~{estimatedSetsPerSession} serie a seduta)</strong>.
-                <br />
-                💡 <em>Regola RP: Evita di superare 8-10 serie sullo stesso muscolo in un unico allenamento per non generare Junk Volume.</em>
-              </p>
-            </div>
-          </div>
-
           {/* Pulsante Avanzamento Settimanale Manuale */}
           {selectedWeek === currentWeekNum && (
             <button className="advance-week-btn" onClick={handleAdvanceWeek}>
@@ -470,7 +462,7 @@ function Dashboard({ report, reset }) {
             )}
 
             <div className="muscle-cards-list">
-              {sortedMuscles.map(muscle => {
+              {visibleMuscles.map(muscle => {
                 const targetSets = getScienceTargetForMuscle(report, muscle, weekToDisplay);
                 const actualSets = actualSetsForSelectedWeek[muscle] || 0;
                 const isFocus = focusMuscles.includes(muscle);
@@ -573,7 +565,7 @@ function Dashboard({ report, reset }) {
           </div>
 
           <div className="glossary-section" style={{ marginTop: '2rem' }}>
-            <div className="glossary-title"><BookOpen size={18} /> Pillole RP</div>
+            <div className="glossary-title"><BookOpen size={18} /> Pillole RP & Consigli</div>
             <div className="glossary-items">
               <div className="glossary-item">
                 <span>MEV:</span>
@@ -586,6 +578,10 @@ function Dashboard({ report, reset }) {
               <div className="glossary-item">
                 <span>MRV:</span>
                 <span>Maximum Recoverable Volume. Il limite di recupero. Si tocca a fine mese e poi si cambia target.</span>
+              </div>
+              <div className="glossary-item">
+                <span>Anti-Junk Volume:</span>
+                <span>Con {sessionsPerWeek} giorni a settimana, distribuisci i muscoli in focus su 2 sedute (~{estimatedSetsPerSession} serie a seduta). Evita di superare 8-10 serie sullo stesso muscolo in una singola sessione per massimizzare la qualità dello stimolo.</span>
               </div>
             </div>
           </div>
@@ -742,6 +738,11 @@ function Science() {
     const cleanFocus1 = (answers.focus1 || []).filter(m => finalLandmarks[m]);
     const cleanFocus2 = (answers.focus2 || []).filter(m => finalLandmarks[m]);
 
+    // Se l'utente è uomo e non ha inserito i Glutei tra i focus, rimuovili dai landmarks
+    if (answers.gender === 'male' && !cleanFocus1.includes('Glutei') && !cleanFocus2.includes('Glutei')) {
+      delete finalLandmarks['Glutei'];
+    }
+
     const report = {
       id: `meso-${Date.now()}`,
       timestamp: Date.now(),
@@ -802,7 +803,11 @@ function Science() {
   } else {
     let displayOptions = currentQ.options;
     if (!displayOptions) {
-      const available = answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !LEG_MUSCLES.includes(m));
+      let available = answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !LEG_MUSCLES.includes(m));
+      // Se l'utente è uomo, escludi i Glutei dalle opzioni dei focus (MEV = 0)
+      if (answers.gender === 'male') {
+        available = available.filter(m => m !== 'Glutei');
+      }
       const filtered = currentQ.id === 'focus2' ? available.filter(m => !(answers.focus1 || []).includes(m)) : available;
       displayOptions = filtered.map(m => ({ value: m, label: m, desc: '' }));
     }
