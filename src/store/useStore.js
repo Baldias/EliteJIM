@@ -565,7 +565,7 @@ export const useStore = create(
           };
 
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
-          const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown);
+          const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown, state.scienceReport);
           
           const updatedHistory = [completedWorkout, ...state.history];
           const { currentStreak: newStreak, highestStreak: calculatedHighest } = calculateWeeklyStreak(updatedHistory);

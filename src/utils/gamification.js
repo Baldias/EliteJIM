@@ -72,28 +72,35 @@ export const getMuscleLevelByXp = (xp) => {
   };
 };
 
-export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) => {
+export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], scienceReport = null) => {
   if (!workout || !workout.exercises || workout.exercises.length === 0) {
-    return { xp: 0, grade: 'D', setsPerHour: 0, breakdown: [], muscleXpGained: {} };
+    return {
+      xp: 0,
+      grade: 'D',
+      gradeLabel: 'Volume Insufficiente',
+      gradeDescription: 'Nessun esercizio completato nella sessione.',
+      nextTip: 'Completa almeno un esercizio per iniziare a guadagnare punti.',
+      exercisesAnalysis: [],
+      overloadRatio: 0,
+      totalExercises: 0,
+      setsPerHour: '0.0',
+      doneSets: 0,
+      overloadCount: 0,
+      breakdown: [],
+      muscleXpGained: {}
+    };
   }
 
   const start = Number(workout.startTime) || 0;
   const end = Number(workout.endTime) || 0;
   const durationMs = end - start;
   const durationHours = durationMs / (1000 * 60 * 60);
-  
-  let doneSets = 0;
-  let overloadCount = 0;
-  const rawMuscleXp = {};
-  // --- PASS 1: Determine which exercises achieved progressive overload ---
-  const overloadedExercises = new Set();
-  
-  if (!workout.exercises) return { xp: 0, grade: 'D', setsPerHour: 0, breakdown: [], muscleXpGained: {} };
 
-  // Flatten exercisesDb and any others passed (like customExercises)
+  let doneSets = 0;
+  const rawMuscleXp = {};
+
+  // Flatten exercisesDb
   const allKnownExercises = Array.isArray(exercisesDb) ? exercisesDb : [];
-  
-  // Map for fast lookup of categories [primary, ...secondary]
   const exerciseMetaMap = {};
   allKnownExercises.forEach(ex => {
     const cats = [ex.category];
@@ -101,31 +108,165 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
     exerciseMetaMap[normalizeName(ex.name)] = cats.filter(Boolean);
   });
 
-  workout.exercises.forEach(ex => {
-    if (pastHistory && pastHistory.length > 0) {
-      const pastWorkout = pastHistory.find(w => w.exercises.some(e => normalizeName(e.name) === normalizeName(ex.name)));
-      if (pastWorkout) {
-        const pastEx = pastWorkout.exercises.find(e => normalizeName(e.name) === normalizeName(ex.name));
-        const pastVolume = pastEx.sets
-          .filter(s => s.done && !s.isDropset)
-          .reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
-        const currentVolume = ex.sets
-          .filter(s => s.done && !s.isDropset)
-          .reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
-        if (currentVolume > pastVolume && pastVolume > 0) {
-          overloadedExercises.add(normalizeName(ex.name));
-          overloadCount++;
+  // Sort past history descending by date and exclude current workout if present
+  const sortedPast = Array.isArray(pastHistory)
+    ? [...pastHistory].filter(w => w && w.id !== workout.id).sort((a, b) => (Number(b.startTime) || 0) - (Number(a.startTime) || 0))
+    : [];
+
+  // Consider only exercises with at least 1 completed non-dropset set
+  const activeExercises = workout.exercises.filter(ex =>
+    ex.sets && ex.sets.some(s => s.done && !s.isDropset)
+  );
+
+  const exercisesAnalysis = [];
+  const overloadedExercises = new Set();
+  let overloadCount = 0;
+
+  // --- PASS 1: Detailed Hybrid Overload Analysis per Exercise ---
+  activeExercises.forEach(ex => {
+    const normName = normalizeName(ex.name);
+    const currentDoneSets = ex.sets.filter(s => s.done && !s.isDropset);
+
+    // Find latest past workout containing this exercise with completed sets
+    let pastEx = null;
+    for (const pw of sortedPast) {
+      if (pw.exercises) {
+        const match = pw.exercises.find(e => normalizeName(e.name) === normName);
+        if (match && match.sets && match.sets.some(s => s.done && !s.isDropset)) {
+          pastEx = match;
+          break;
         }
       }
     }
+
+    if (!pastEx) {
+      // First time doing this exercise
+      exercisesAnalysis.push({
+        name: ex.name,
+        status: 'new',
+        overloaded: false,
+        badge: '✨ Nuova Baseline',
+        badgeColor: '#3b82f6',
+        detail: 'Prima sessione registrata: servirà da riferimento per i prossimi allenamenti',
+        currentMetric: `${currentDoneSets.length} serie fatte`,
+        pastMetric: null
+      });
+      return;
+    }
+
+    const pastDoneSets = pastEx.sets.filter(s => s.done && !s.isDropset);
+
+    const currentMaxKg = Math.max(...currentDoneSets.map(s => parseFloat(s.kg) || 0));
+    const pastMaxKg = Math.max(...pastDoneSets.map(s => parseFloat(s.kg) || 0));
+
+    const currentBestReps = Math.max(...currentDoneSets.map(s => parseInt(s.reps, 10) || 0));
+    const pastBestReps = Math.max(...pastDoneSets.map(s => parseInt(s.reps, 10) || 0));
+
+    const currentTotalReps = currentDoneSets.reduce((acc, s) => acc + (parseInt(s.reps, 10) || 0), 0);
+    const pastTotalReps = pastDoneSets.reduce((acc, s) => acc + (parseInt(s.reps, 10) || 0), 0);
+
+    const currentVolume = currentDoneSets.reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
+    const pastVolume = pastDoneSets.reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
+
+    // Epley Estimated 1RM
+    const calcE1rm = (sets) => Math.max(0, ...sets.map(s => {
+      const w = parseFloat(s.kg) || 0;
+      const r = parseInt(s.reps, 10) || 0;
+      return (w > 0 && r > 0) ? w * (1 + r / 30) : 0;
+    }));
+
+    const currentE1rm = calcE1rm(currentDoneSets);
+    const pastE1rm = calcE1rm(pastDoneSets);
+
+    const isBodyweight = currentMaxKg === 0 && pastMaxKg === 0;
+    let isOverload = false;
+    let reasonDetail = '';
+    let badge = '⚖️ Mantenimento';
+    let badgeColor = '#8e8e93';
+    let status = 'maintained';
+
+    if (isBodyweight) {
+      // Bodyweight: compare repetitions
+      if (currentBestReps > pastBestReps) {
+        isOverload = true;
+        status = 'pr';
+        badge = '⚡ Nuovo Record Reps';
+        badgeColor = '#34c759';
+        reasonDetail = `+${currentBestReps - pastBestReps} reps sul miglior set (${currentBestReps} vs ${pastBestReps})`;
+      } else if (currentTotalReps > pastTotalReps) {
+        isOverload = true;
+        status = 'overload';
+        badge = '🔥 Più Reps Totali';
+        badgeColor = '#34c759';
+        reasonDetail = `+${currentTotalReps - pastTotalReps} reps complessive (${currentTotalReps} vs ${pastTotalReps})`;
+      } else if (currentTotalReps < pastTotalReps * 0.88) {
+        status = 'decreased';
+        badge = '🔻 Sotto Target';
+        badgeColor = '#ff9500';
+        reasonDetail = `Reps inferiori alla scorsa sessione (${currentTotalReps} vs ${pastTotalReps})`;
+      } else {
+        reasonDetail = `Volume reps stabile rispetto alla scorsa volta (${currentTotalReps} reps)`;
+      }
+    } else {
+      // Weighted exercises: Hybrid evaluation (1RM, peak weight, reps at weight, total tonnage)
+      if (currentE1rm >= pastE1rm * 1.015 && currentE1rm > 0) {
+        isOverload = true;
+        status = 'pr';
+        badge = '⚡ Record Forza (1RM)';
+        badgeColor = '#ffd700';
+        const diff = (currentE1rm - pastE1rm).toFixed(1);
+        reasonDetail = `+${diff} kg 1RM stimato (${currentE1rm.toFixed(1)}kg vs ${pastE1rm.toFixed(1)}kg)`;
+      } else if (currentMaxKg > pastMaxKg && currentBestReps >= 3) {
+        isOverload = true;
+        status = 'pr';
+        badge = '⚡ Nuovo Carico Max';
+        badgeColor = '#ffd700';
+        reasonDetail = `Carico max aumentato a ${currentMaxKg}kg (prec. ${pastMaxKg}kg)`;
+      } else if (currentMaxKg === pastMaxKg && currentBestReps > pastBestReps) {
+        isOverload = true;
+        status = 'overload';
+        badge = '🔥 Più Ripetizioni';
+        badgeColor = '#34c759';
+        reasonDetail = `+${currentBestReps - pastBestReps} reps a parità di peso (${currentMaxKg}kg)`;
+      } else if (currentVolume > pastVolume && pastVolume > 0 && currentE1rm >= pastE1rm * 0.95) {
+        isOverload = true;
+        status = 'overload';
+        badge = '🔥 Volume Totale';
+        badgeColor = '#34c759';
+        const volDiff = Math.round(currentVolume - pastVolume);
+        reasonDetail = `+${volDiff} kg tonnellaggio (${currentVolume}kg vs ${pastVolume}kg)`;
+      } else if (currentVolume < pastVolume * 0.85 || (pastE1rm > 0 && currentE1rm < pastE1rm * 0.90)) {
+        status = 'decreased';
+        badge = '🔻 Sotto Target';
+        badgeColor = '#ff9500';
+        reasonDetail = `Carico o volume inferiori (${currentVolume}kg vs ${pastVolume}kg)`;
+      } else {
+        reasonDetail = `Carichi e volume stabili (${currentMaxKg}kg × ${currentBestReps} reps)`;
+      }
+    }
+
+    if (isOverload) {
+      overloadedExercises.add(normName);
+      overloadCount++;
+    }
+
+    exercisesAnalysis.push({
+      name: ex.name,
+      status,
+      overloaded: isOverload,
+      badge,
+      badgeColor,
+      detail: reasonDetail,
+      currentMetric: isBodyweight ? `${currentBestReps} reps` : `${currentMaxKg}kg × ${currentBestReps}`,
+      pastMetric: isBodyweight ? `${pastBestReps} reps` : `${pastMaxKg}kg × ${pastBestReps}`
+    });
   });
 
   // --- PASS 2: Assign XP per set based on absolute tonnage ---
   workout.exercises.forEach(ex => {
-    console.log(`[DEBUG] Processing exercise in score: "${ex.name}"`);
     const categories = [...(exerciseMetaMap[normalizeName(ex.name)] || [])];
-    
-    // Fuzzy fallback for Shoudlers & Addome in gamification
+
+    // Fuzzy fallback for Shoulders & Addome in gamification
     if (categories.length === 0) {
       const fuzzyName = normalizeName(ex.name).toLowerCase();
       if (fuzzyName.includes('spalle') || fuzzyName.includes('shoulder') || fuzzyName.includes('military') || fuzzyName.includes('lento avanti')) {
@@ -138,12 +279,6 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
     }
 
     const hadOverload = overloadedExercises.has(normalizeName(ex.name));
-    
-    // Safety check for categories to help debug
-    if (categories.length === 0 && ex.name) {
-      // If no categories found, we try one more attempt with absolute raw trim just in case 
-      // but usually normalizeName handles it.
-    }
 
     ex.sets.forEach(set => {
       if (set.done && !set.isDropset) {
@@ -153,8 +288,6 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
 
         if (categories.length > 0) {
           const setXp = hadOverload ? Math.round((kg * reps) / 10) : 5;
-          
-          // Distribute XP among all muscles (primary gets 100%, secondary gets 100% too for simplicity/fun)
           categories.forEach(cat => {
             rawMuscleXp[cat] = (rawMuscleXp[cat] || 0) + setXp;
           });
@@ -164,57 +297,84 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   });
 
   const setsPerHour = durationHours > 0 ? (doneSets / durationHours) : 0;
-  
-  // --- GRADE CALCULATION ---
-  // Based on: overload ratio + adequate volume
-  // NOT based on pacing (how fast you did the workout — irrelevant)
-  
-  const totalExercises = workout.exercises.length;
-  const overloadedCount = overloadedExercises.size;
-  const overloadRatio = totalExercises > 0 ? overloadedCount / totalExercises : 0;
 
-  // "Junk volume" = fewer than 5 sets completed (basically nothing done)
+  // --- GRADE CALCULATION ---
+  const totalExercises = activeExercises.length;
+  const overloadRatio = totalExercises > 0 ? overloadCount / totalExercises : 0;
   const isJunk = doneSets < 5;
-  // "First timer" = no history to compare against (all exercises are new)
-  const allNew = totalExercises > 0 && overloadedCount === 0 && 
-    workout.exercises.every(ex => !pastHistory?.find(w => w.exercises.some(e => normalizeName(e.name) === normalizeName(ex.name))));
+  const allNew = totalExercises > 0 && overloadCount === 0 && exercisesAnalysis.every(e => e.status === 'new');
+
+  // Check if user is in an active Science Mesocycle Deload Week (Weeks 4, 8, 12)
+  const currentScienceWeek = scienceReport?.currentWeek || 1;
+  const isDeloadWeek = Boolean(scienceReport && scienceReport.status === 'active' && (currentScienceWeek === 4 || currentScienceWeek === 8 || currentScienceWeek === 12));
 
   let grade;
   let gradeLabel;
+  let gradeDescription;
+  let nextTip;
 
-  if (isJunk) {
-    // Junk volume — barely any sets, no real training stimulus
+  if (isDeloadWeek) {
+    if (doneSets >= 4 && doneSets <= 16) {
+      grade = 'S';
+      gradeLabel = 'Scarico Perfetto (Deload)';
+      gradeDescription = `Hai completato ${doneSets} serie controllate, rispettando alla perfezione il recupero sistemico del mesociclo.`;
+      nextTip = 'Ottimo lavoro! Ripartirai fresco e con i tessuti muscolari supercompensati per la prossima fase.';
+    } else if (doneSets > 16) {
+      grade = 'B';
+      gradeLabel = 'Volume Elevato per Deload';
+      gradeDescription = `Hai eseguito ${doneSets} serie: in settimana di scarico è consigliabile mantenersi sotto le 12-14 serie per smaltire la fatica.`;
+      nextTip = 'Non spingere troppe serie durante lo scarico, l\'obiettivo scientifico è far riposare il sistema nervoso.';
+    } else {
+      grade = 'C';
+      gradeLabel = 'Scarico Troppo Breve';
+      gradeDescription = `Hai completato meno di 4 serie totali (${doneSets} serie).`;
+      nextTip = 'Fai almeno 1-2 serie leggere per gruppo muscolare per mantenere attivi i pattern motori.';
+    }
+  } else if (isJunk) {
     grade = 'D';
     gradeLabel = 'Volume Insufficiente';
+    gradeDescription = `Hai completato solo ${doneSets} ${doneSets === 1 ? 'serie' : 'serie'}. Sotto le 5 serie lo stimolo ipertrofico è troppo basso.`;
+    nextTip = 'Completa almeno 6-8 serie allenanti con impegno per stimolare la crescita muscolare e guadagnare un grado superiore.';
   } else if (allNew) {
-    // First time doing all these exercises — give them a B as baseline
     grade = 'B';
-    gradeLabel = 'Prima Sessione';
-  } else if (overloadRatio >= 0.8) {
-    // 80%+ of exercises had progressive overload — exceptional
+    gradeLabel = 'Prima Sessione (Baseline)';
+    gradeDescription = `Tutti i ${totalExercises} esercizi sono nuovi: i risultati odierni sono stati salvati come punto di riferimento per le prossime progressioni.`;
+    nextTip = 'Nel prossimo allenamento prova ad aggiungere 1 ripetizione o 1-2 kg su questi stessi esercizi per puntare al Grado S!';
+  } else if (overloadRatio >= 0.75) {
     grade = 'S';
     gradeLabel = 'Sovraccarico Totale';
+    gradeDescription = `Prestazione eccezionale: hai ottenuto un sovraccarico progressivo su ${overloadCount} esercizi su ${totalExercises} (${Math.round(overloadRatio * 100)}%).`;
+    nextTip = 'Sei al massimo del rendimento! Continua così e cura recupero, alimentazione e sonno.';
   } else if (overloadRatio >= 0.5) {
-    // More than half the exercises had overload — excellent
     grade = 'A';
     gradeLabel = 'Grande Progressione';
+    gradeDescription = `Ottimo lavoro: progressione netta su oltre la metà degli esercizi (${overloadCount} su ${totalExercises}).`;
+    nextTip = 'Per raggiungere il leggendario Grado S, prova a forzare anche solo 1 ripetizione in più su uno degli altri esercizi.';
   } else if (overloadRatio > 0) {
-    // Some overload, decent session
     grade = 'B';
-    gradeLabel = 'Qualche Progressione';
+    gradeLabel = 'Buona Sessione';
+    gradeDescription = `Hai superato i tuoi standard su ${overloadCount} ${overloadCount === 1 ? 'esercizio' : 'esercizi'} su ${totalExercises}. C'è ancora margine sugli altri movimenti.`;
+    nextTip = 'Focalizzati sui primi 2 esercizi base della scheda per aumentare il carico e raggiungere il Grado A.';
   } else {
-    // Stagnazione — no overload on any tracked exercise
-    // Only give C if volume was at least decent
-    grade = doneSets >= 10 ? 'C' : 'D';
-    gradeLabel = doneSets >= 10 ? 'Mantenimento (Nessun Overload)' : 'Junk Volume';
+    if (doneSets >= 10) {
+      grade = 'C';
+      gradeLabel = 'Mantenimento / Stagnazione';
+      gradeDescription = `Buon volume totale (${doneSets} serie), ma non ci sono stati miglioramenti di carico o ripetizioni rispetto all'ultima volta.`;
+      nextTip = 'Basta anche solo 1 ripetizione in più su una singola serie per rompere lo stallo e trasformare la sessione in progressione.';
+    } else {
+      grade = 'D';
+      gradeLabel = 'Stimolo Sotto Target';
+      gradeDescription = `Nessun sovraccarico registrato e volume complessivo basso (${doneSets} serie).`;
+      nextTip = 'Aumenta il focus: spingi di più sulla prima serie di ogni esercizio o aggiungi serie per dare uno stimolo efficace.';
+    }
   }
 
-  // XP Calculation — primarily driven by muscle XP (which is based on tonnage)
+  // XP Calculation
   let xp = 0;
-  const baseXP = doneSets * 30; // Only 30 base XP per set for account-level XP
+  const baseXP = doneSets * 30;
   xp += baseXP;
 
-  const overloadXP = overloadedCount * 200;
+  const overloadXP = overloadCount * 200;
   xp += overloadXP;
 
   // Grade Multiplier
@@ -227,7 +387,7 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
 
   xp = Math.round(xp * gradeMult);
 
-  // Apply grade multiplier to muscle XP as well
+  // Apply grade multiplier to muscle XP
   const muscleXpGained = {};
   Object.keys(rawMuscleXp).forEach(cat => {
     muscleXpGained[cat] = Math.round(rawMuscleXp[cat] * gradeMult);
@@ -236,13 +396,19 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = []) =>
   const breakdown = [
     { label: gradeLabel, value: `Grado ${grade}` },
     { label: 'Serie Completate', value: `+${baseXP} XP` },
-    ...(overloadedCount > 0 ? [{ label: `Sovraccarico su ${overloadedCount} esercizi`, value: `+${overloadXP} XP` }] : []),
+    ...(overloadCount > 0 ? [{ label: `Sovraccarico su ${overloadCount} esercizi`, value: `+${overloadXP} XP` }] : []),
     ...(gradeMult !== 1 ? [{ label: `Moltiplicatore Grado`, value: `×${gradeMult}` }] : [])
   ];
 
   return {
     xp,
     grade,
+    gradeLabel,
+    gradeDescription,
+    nextTip,
+    exercisesAnalysis,
+    overloadRatio,
+    totalExercises,
     setsPerHour: setsPerHour.toFixed(1),
     doneSets,
     overloadCount,

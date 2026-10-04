@@ -53,17 +53,50 @@
   animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-.grade-card {
+.grade-card,
+.grade-card-enhanced {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation-delay: 0.2s;
+  transition: all 0.3s ease;
+}
+
+.grade-card-enhanced[data-grade="S"] {
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.12);
+}
+
+.grade-card-enhanced[data-grade="A"] {
+  border: 1px solid rgba(52, 199, 89, 0.35);
+  box-shadow: 0 8px 32px rgba(52, 199, 89, 0.12);
+}
+
+.grade-card-enhanced[data-grade="B"] {
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.12);
+}
+
+.grade-card-enhanced[data-grade="C"] {
+  border: 1px solid rgba(255, 149, 0, 0.35);
+  box-shadow: 0 8px 32px rgba(255, 149, 0, 0.12);
+}
+
+.grade-card-enhanced[data-grade="D"] {
+  border: 1px solid rgba(255, 59, 48, 0.35);
+  box-shadow: 0 8px 32px rgba(255, 59, 48, 0.12);
+}
+
+.grade-main-row {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  animation-delay: 0.2s;
+  gap: 1.25rem;
 }
 
 .grade-badge {
   flex-shrink: 0;
-  width: 70px;
-  height: 70px;
+  width: 72px;
+  height: 72px;
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -71,6 +104,7 @@
   font-size: 2.5rem;
   font-weight: 900;
   text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
 }
 
 .grade-badge[data-grade="S"] { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; }
@@ -79,8 +113,194 @@
 .grade-badge[data-grade="C"] { background: linear-gradient(135deg, #ff9500, #e68600); color: #fff; }
 .grade-badge[data-grade="D"] { background: linear-gradient(135deg, #ff3b30, #e6352b); color: #fff; }
 
-.grade-info h3 { margin: 0 0 0.25rem 0; font-size: 1.2rem; }
-.grade-info p { margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.4; }
+.grade-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grade-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.grade-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.grade-tag[data-grade="S"] { color: #ffd700; background: rgba(255, 215, 0, 0.15); border: 1px solid rgba(255, 215, 0, 0.3); }
+.grade-tag[data-grade="A"] { color: #34c759; background: rgba(52, 199, 89, 0.15); border: 1px solid rgba(52, 199, 89, 0.3); }
+.grade-tag[data-grade="B"] { color: #3b82f6; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); }
+.grade-tag[data-grade="C"] { color: #ff9500; background: rgba(255, 149, 0, 0.15); border: 1px solid rgba(255, 149, 0, 0.3); }
+.grade-tag[data-grade="D"] { color: #ff3b30; background: rgba(255, 59, 48, 0.15); border: 1px solid rgba(255, 59, 48, 0.3); }
+
+.grade-overload-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ff9500;
+  background: rgba(255, 149, 0, 0.12);
+  border: 1px solid rgba(255, 149, 0, 0.25);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.grade-headline {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.grade-description {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.grade-expand-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.grade-expand-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.expand-btn-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grade-details-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.exercises-analysis-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.exercise-analysis-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.2s ease;
+}
+
+.exercise-analysis-card.is-overload {
+  border-color: rgba(52, 199, 89, 0.3);
+  background: linear-gradient(135deg, rgba(52, 199, 89, 0.06), rgba(0, 0, 0, 0.25));
+}
+
+.ex-analysis-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ex-analysis-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
+.ex-analysis-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.ex-analysis-detail {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.ex-analysis-compare {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  padding-top: 4px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.compare-sep {
+  opacity: 0.4;
+}
+
+.past-val {
+  color: #8e8e93;
+  opacity: 0.85;
+}
+
+.grade-pro-tip {
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.1), rgba(255, 149, 0, 0.04));
+  border: 1px solid rgba(255, 204, 0, 0.22);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ffcc00;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tip-text {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
 
 .recap-stats-grid {
   display: grid;

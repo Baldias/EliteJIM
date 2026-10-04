@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Trophy, Clock, Zap, Target, Flame, ChevronRight, Check, ShieldCheck, Download } from 'lucide-react';
+import { Trophy, Clock, Zap, Target, Flame, ChevronRight, ChevronDown, ChevronUp, TrendingUp, Check, ShieldCheck, Download } from 'lucide-react';
 import { getRankByXp, getMuscleLevelByXp } from '../../utils/gamification';
 import { EXERCISES_DB, getAllExercises, normalizeName } from '../../data/exercises';
 import { RP_LANDMARKS, getScienceTargetForMuscle, getActualSetsForScienceWeek, mapCategoryToScienceLandmark } from '../../utils/rpVolume';
@@ -25,6 +25,7 @@ function WorkoutRecap() {
 
   const [showAnimations, setShowAnimations] = useState(false);
   const [backupSaved, setBackupSaved] = useState(false);
+  const [showGradeDetails, setShowGradeDetails] = useState(false);
 
   useEffect(() => {
     if (!recapData) {
@@ -115,15 +116,98 @@ function WorkoutRecap() {
       </div>
 
       <div className="recap-content">
-        {/* Grade Banner */}
-        <div className="recap-card grade-card glass">
-          <div className="grade-badge" data-grade={score.grade}>
-            {score.grade}
+        {/* Grade Banner & Interactive Diagnostics */}
+        <div className="recap-card grade-card-enhanced glass" data-grade={score.grade}>
+          <div className="grade-main-row">
+            <div className="grade-badge" data-grade={score.grade}>
+              {score.grade}
+            </div>
+            <div className="grade-info">
+              <div className="grade-tag-row">
+                <span className="grade-tag" data-grade={score.grade}>
+                  {score.gradeLabel || 'Grado Sessione'}
+                </span>
+                {score.overloadCount > 0 && (
+                  <span className="grade-overload-chip">
+                    🔥 {score.overloadCount}/{score.totalExercises || 1} Overload
+                  </span>
+                )}
+              </div>
+              <h3 className="grade-headline">
+                {score.grade === 'S' && 'Sessione Leggendaria 🔥'}
+                {score.grade === 'A' && 'Grande Progressione ⚡'}
+                {score.grade === 'B' && 'Ottimo Lavoro 👍'}
+                {score.grade === 'C' && 'Sessione di Mantenimento ⚖️'}
+                {score.grade === 'D' && 'Stimolo Insufficiente ⚠️'}
+              </h3>
+              <p className="grade-description">
+                {score.gradeDescription || 'Analisi dei parametri e del sovraccarico completata.'}
+              </p>
+            </div>
           </div>
-          <div className="grade-info">
-            <h3>Grado Sessione</h3>
-            <p>Ottimo lavoro, hai rispettato i parametri.</p>
-          </div>
+
+          {/* Toggle Button for Explorable Analysis */}
+          {score.exercisesAnalysis && score.exercisesAnalysis.length > 0 && (
+            <button 
+              type="button" 
+              className="grade-expand-btn"
+              onClick={() => setShowGradeDetails(prev => !prev)}
+            >
+              <div className="expand-btn-left">
+                <TrendingUp size={16} color="var(--primary-color)" />
+                <span>
+                  {showGradeDetails ? 'Nascondi analisi dettagliata' : `Perché Grado ${score.grade}? Mostra analisi (${score.overloadCount || 0}/${score.totalExercises || score.exercisesAnalysis.length} overload)`}
+                </span>
+              </div>
+              {showGradeDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          )}
+
+          {/* Collapsible / Explorable Breakdown Section */}
+          {showGradeDetails && score.exercisesAnalysis && (
+            <div className="grade-details-dropdown">
+              <div className="exercises-analysis-list">
+                {score.exercisesAnalysis.map((item, idx) => (
+                  <div key={idx} className={`exercise-analysis-card ${item.overloaded ? 'is-overload' : ''}`}>
+                    <div className="ex-analysis-top">
+                      <span className="ex-analysis-name">{item.name}</span>
+                      <span 
+                        className="ex-analysis-badge" 
+                        style={{ 
+                          color: item.badgeColor, 
+                          background: `${item.badgeColor}18`, 
+                          borderColor: `${item.badgeColor}40` 
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    </div>
+                    <div className="ex-analysis-detail">
+                      {item.detail}
+                    </div>
+                    {item.pastMetric && item.currentMetric && (
+                      <div className="ex-analysis-compare">
+                        <span>Oggi: <strong>{item.currentMetric}</strong></span>
+                        <span className="compare-sep">•</span>
+                        <span>Prec: <span className="past-val">{item.pastMetric}</span></span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Actionable Next Workout Tip */}
+              {score.nextTip && (
+                <div className="grade-pro-tip">
+                  <div className="tip-header">
+                    <Zap size={16} color="#ffcc00" fill="#ffcc00" />
+                    <span>Consiglio per il prossimo workout</span>
+                  </div>
+                  <p className="tip-text">{score.nextTip}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Core Stats */}
