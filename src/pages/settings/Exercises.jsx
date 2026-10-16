@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ArrowLeft, Plus, Search, Trash2, Dumbbell, Edit2, RotateCcw, X, Check } from 'lucide-react';
+import { ChevronLeft, Plus, Search, Trash2, Dumbbell, Edit2, RotateCcw, X, Check, Info } from 'lucide-react';
 import { EXERCISE_CATEGORIES, EQUIPMENT_TYPES, getAllExercises, getExerciseCategories, normalizeName } from '../../data/exercises';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import './Settings.css';
+import './Exercises.css';
 
 function Exercises() {
   const navigate = useNavigate();
@@ -144,16 +145,17 @@ function Exercises() {
   };
 
   return (
-    <div className="settings-container">
-      <header className="settings-header">
-        <button className="icon-btn" style={{ background: 'transparent', border: 'none' }} onClick={() => navigate(-1)}>
-          <ArrowLeft size={24} />
+    <div className="ej-page ex-page">
+      <div className="ej-glow" aria-hidden="true" />
+
+      <header className="ex-header">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round ex-back" onClick={() => navigate(-1)} title="Indietro">
+          <ChevronLeft size={20} />
         </button>
-        <h2>Database Esercizi</h2>
-        <div style={{ width: 44 }}></div> {/* Balance spacer */}
+        <h1 className="ex-title">Database Esercizi</h1>
       </header>
 
-      <main className="settings-content">
+      <main className="ex-content">
         <div className="search-bar-container">
           <Search size={20} className="search-icon" />
           <input 
@@ -209,7 +211,7 @@ function Exercises() {
                         className={`muscle-chip ${newExSecondary.includes(cat) ? 'selected' : ''}`}
                         onClick={() => handleToggleSecondary(cat, true)}
                       >
-                        {newExSecondary.includes(cat) && <Check size={12} style={{ display: 'inline', marginRight: 4 }} />}
+                        {newExSecondary.includes(cat) && <Check size={12} className="ex-chip-check" />}
                         {cat}
                       </button>
                     ))}
@@ -252,17 +254,14 @@ function Exercises() {
                     const content = (
                       <div 
                         className={`ex-list-item ${ex.isCustom ? 'custom-ex' : ''}`}
-                        style={{ cursor: 'pointer' }}
                         onClick={(e) => handleOpenEdit(ex, e)}
                       >
-                        <div className="ex-info" style={{ flex: 1, minWidth: 0 }}>
-                          {ex.isCustom ? (
-                            <Dumbbell size={18} className="ex-icon" style={{ flexShrink: 0 }} />
-                          ) : (
-                            <div className="ex-dot" style={{ flexShrink: 0 }}></div>
-                          )}
-                          <div className="ex-details" style={{ minWidth: 0, overflow: 'hidden' }}>
-                            <span className="ex-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div className="ex-info">
+                          <span className={`ex-icon-box ${ex.isCustom ? 'is-custom' : ''}`}>
+                            <Dumbbell size={16} />
+                          </span>
+                          <div className="ex-details">
+                            <span className="ex-name">
                               {ex.name}
                             </span>
                             <div className="ex-meta-row">
@@ -328,8 +327,8 @@ function Exercises() {
         </div>
 
         {/* Mini Guida Esercizi */}
-        <div className="settings-guide-box" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
-          <p className="settings-guide-title">Come funzionano gli esercizi?</p>
+        <div className="settings-guide-box">
+          <p className="settings-guide-title"><Info size={14} /> Come funzionano gli esercizi?</p>
           <p className="settings-guide-text">
             Puoi modificare qualsiasi esercizio predefinito o crearne di nuovi con <strong>Nuovo Esercizio</strong> in alto. Vengono tutti integrati istantaneamente nel generatore di schede AI e nel calcolo automatico dei tuoi massimali (1RM).
           </p>
@@ -342,7 +341,7 @@ function Exercises() {
           <div className="edit-modal-card" onClick={e => e.stopPropagation()}>
             <header className="modal-header">
               <h3>
-                <Edit2 size={20} color="var(--primary-color)" /> Modifica Esercizio
+                <Edit2 size={18} className="ex-modal-icon" /> Modifica Esercizio
               </h3>
               <button 
                 type="button" 
@@ -392,7 +391,7 @@ function Exercises() {
                         className={`muscle-chip ${editSecondary.includes(cat) ? 'selected' : ''}`}
                         onClick={() => handleToggleSecondary(cat, false)}
                       >
-                        {editSecondary.includes(cat) && <Check size={12} style={{ display: 'inline', marginRight: 4 }} />}
+                        {editSecondary.includes(cat) && <Check size={12} className="ex-chip-check" />}
                         {cat}
                       </button>
                     ))}

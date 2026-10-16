@@ -76,3 +76,20 @@
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
 }
+
+/* Redesign theme (tokens from styles/elite.css) */
+.global-workout-banner {
+  padding: 7px 12px;
+  color: var(--c-bg);
+  background: var(--c-primary);
+  box-shadow: 0 6px 18px rgba(var(--c-primary-rgb), 0.35);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.global-banner-icon {
+  color: var(--c-bg);
+}
+
+.global-banner-time {
+  font-weight: 900;
+}

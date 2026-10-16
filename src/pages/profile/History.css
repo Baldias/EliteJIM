@@ -234,3 +234,264 @@
 .best-badge {
   font-size: 0.9rem;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   History (redesign) — tokens from styles/elite.css.
+   Legacy rules above (.drop-badge, .delete-btn) are shared; keep them.
+   ───────────────────────────────────────────────────────────── */
+.hs-page {
+  gap: 12px;
+}
+
+.hs-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.hs-back {
+  color: var(--c-text);
+}
+
+.hs-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.hs-month {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hs-month + .hs-month {
+  margin-top: 8px;
+}
+
+.hs-month-label {
+  margin: 8px 0 0;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.hs-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.hs-card.is-open {
+  border-color: rgba(var(--c-primary-rgb), 0.35);
+}
+
+.hs-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.hs-card-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hs-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hs-card-title h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hs-edit {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--c-text-muted);
+}
+
+.hs-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--c-text-muted);
+}
+
+.hs-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hs-chevron {
+  color: var(--c-text-dim);
+  flex-shrink: 0;
+}
+
+.hs-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hs-ex {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hs-card.is-open .hs-ex {
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+}
+
+.hs-ex-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hs-ex-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.hs-card:not(.is-open) .hs-ex-name {
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.hs-ex-count {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: var(--c-text-dim);
+}
+
+.hs-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hs-thead,
+.hs-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr 76px;
+  align-items: center;
+  text-align: center;
+}
+
+.hs-thead {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.hs-thead span:last-child,
+.hs-row-rm {
+  text-align: right;
+}
+
+.hs-row {
+  padding: 6px 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.hs-row-num {
+  color: var(--c-text-muted);
+}
+
+.hs-row-rm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-weight: 800;
+  color: var(--c-text-muted);
+}
+
+.hs-row.is-best {
+  background: rgba(var(--c-streak-rgb), 0.1);
+  border-color: rgba(var(--c-streak-rgb), 0.35);
+}
+
+.hs-row.is-best .hs-row-rm {
+  color: var(--c-streak);
+}
+
+.hs-drop {
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  color: var(--c-accent);
+  background: rgba(var(--c-accent-rgb), 0.18);
+}
+
+.hs-empty {
+  padding: 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.hs-empty-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 6px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.12);
+}
+
+.hs-empty-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.hs-empty-sub {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+}
+
+.hs-hint {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  color: var(--c-text-dim);
+}

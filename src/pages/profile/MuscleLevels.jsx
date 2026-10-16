@@ -1,98 +1,69 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
-import { Zap, ChevronLeft, Info } from 'lucide-react';
+import { ChevronLeft, Info } from 'lucide-react';
 import { EXERCISE_CATEGORIES } from '../../data/exercises';
 import { getMuscleLevelByXp } from '../../utils/gamification';
 import { useNavigate } from 'react-router-dom';
+import './MuscleLevels.css';
 
 function MuscleLevels() {
   const navigate = useNavigate();
   const muscleXP = useStore(state => state.muscleXP) || {};
 
+  const muscles = Object.values(EXERCISE_CATEGORIES)
+    .map(muscle => ({ muscle, xp: muscleXP[muscle] || 0 }))
+    .sort((a, b) => b.xp - a.xp);
+
   return (
-    <>
-      {/* ── HEADER with back ─────────────── */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        background: 'var(--bg-color)', borderBottom: '1px solid rgba(255,255,255,0.07)',
-        padding: '12px 16px',
-        display: 'flex', alignItems: 'center', gap: '12px'
-      }}>
-        <button onClick={() => navigate('/profile')} style={{
-          background: 'rgba(255,255,255,0.07)', border: 'none',
-          borderRadius: '10px', padding: '8px 10px',
-          color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', flexShrink: 0
-        }}>
+    <div className="ej-page ml-page">
+      <div className="ej-glow" aria-hidden="true" />
+
+      <header className="ml-header">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round ml-back" onClick={() => navigate('/profile')} title="Torna al Profilo">
           <ChevronLeft size={20} />
         </button>
         <div>
-          <p style={{ margin: 0, fontWeight: '800', fontSize: '1.05rem', color: 'white' }}>Livelli Muscolari</p>
-          <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>Progressione RPG</p>
+          <h1 className="ml-title">Livelli Muscolari</h1>
+          <p className="ml-subtitle">Progressione RPG</p>
         </div>
-      </div>
+      </header>
 
-      <main className="app-main" style={{ paddingBottom: '100px' }}>
-        
-        <div style={{ padding: '1.2rem', background: 'rgba(255,204,0,0.1)', borderRadius: '16px', border: '1px solid rgba(255,204,0,0.3)', marginBottom: '2rem' }}>
-          <h3 style={{ color: '#ffcc00', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.8rem', fontSize: '1.1rem' }}>
-            <Info size={20} />
-            Come salire di Livello?
-          </h3>
-          <p style={{ color: 'var(--text-main)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-            I Livelli Muscolari si basano esclusivamente sul <strong>Volume Totale</strong> e sul <strong>Sovraccarico Progressivo</strong>. 
-            <br/><br/>
-            Completare serie normali fornisce una quantità minima di XP base. Ma se batti il tuo record di volume precedente su un esercizio (es. passando da 1000kg a 1200kg totali sollevati), riceverai una <strong>quantità enorme di XP</strong> proporzionata al tonnellaggio spostato!
-          </p>
-        </div>
+      <section className="ej-card ml-info">
+        <h3 className="ml-info-title"><Info size={18} /> Come si sale di livello</h3>
+        <p>
+          I livelli premiano il <strong>Sovraccarico Progressivo</strong>. Ogni serie completata vale pochi XP base,
+          ma quando su un esercizio superi la sessione precedente ogni sua serie vale molto di più,
+          in proporzione al carico sollevato.
+        </p>
+      </section>
 
-        <div className="card glass" style={{ padding: '1.5rem', borderRadius: '24px' }}>
-          <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-            {Object.values(EXERCISE_CATEGORIES)
-              .map(muscle => {
-                const xp = muscleXP[muscle] || 0;
-                return { muscle, xp };
-              })
-              .sort((a, b) => b.xp - a.xp)
-              .map(({ muscle, xp }) => {
-              const levelData = getMuscleLevelByXp(xp);
-              
-              return (
-                <div key={muscle} style={{ 
-                  background: 'rgba(255,255,255,0.03)', 
-                  padding: '1rem', 
-                  borderRadius: '16px',
-                  border: '1px solid rgba(255,255,255,0.05)'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
-                    <span style={{ fontWeight: '600', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {muscle} 
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{xp} XP</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ffcc00' }}>Lv. {levelData.level}</span>
-                    </div>
-                  </div>
-                  
-                  <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      height: '100%', 
-                      width: `${levelData.progressPercent}%`, 
-                      background: 'linear-gradient(90deg, var(--primary-color) 0%, #ffcc00 100%)', 
-                      borderRadius: '4px',
-                      transition: 'width 1s ease-out'
-                    }}></div>
-                  </div>
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'right' }}>
-                    Mancano {levelData.xpNeededForNext - levelData.xpInCurrentLevel} XP al prossimo
-                  </div>
+      <div className="ml-list">
+        {muscles.map(({ muscle, xp }, i) => {
+          const levelData = getMuscleLevelByXp(xp);
+          const toNext = levelData.xpNeededForNext - levelData.xpInCurrentLevel;
+          return (
+            <div key={muscle} className={`ej-card ml-item ${i === 0 && xp > 0 ? 'is-top' : ''}`}>
+              <div className="ml-item-head">
+                <span className="ml-level">
+                  <small>LV</small>
+                  {levelData.level}
+                </span>
+                <div className="ml-item-text">
+                  <span className="ml-name">{muscle}</span>
+                  <span className="ml-xp">{xp.toLocaleString('it-IT')} XP</span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-      </main>
-    </>
+                <div className="ml-next">
+                  <strong>{Math.round(levelData.progressPercent)}%</strong>
+                  <span>→ Lv. {levelData.level + 1}</span>
+                </div>
+              </div>
+              <div className="ej-track"><span style={{ width: `${levelData.progressPercent}%` }} /></div>
+              <span className="ml-remaining">Mancano {toNext.toLocaleString('it-IT')} XP al prossimo livello</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

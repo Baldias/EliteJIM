@@ -1,0 +1,391 @@
+/* ─────────────────────────────────────────────────────────────
+   Exercise database (redesign). Layout comes from the legacy
+   classes in Settings.css; everything here is scoped to .ex-page
+   and only restyles them with the tokens from styles/elite.css.
+   ───────────────────────────────────────────────────────────── */
+.ex-page {
+  gap: 14px;
+}
+
+.ex-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ex-back {
+  color: var(--c-text);
+}
+
+.ex-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.ex-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Search */
+.ex-page .search-bar-container {
+  margin: 0;
+}
+
+.ex-page .search-icon {
+  left: 14px;
+  color: var(--c-text-muted);
+}
+
+.ex-page .search-input {
+  padding: 13px 14px 13px 44px;
+  border-radius: 14px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  backdrop-filter: none;
+}
+
+.ex-page .search-input:focus {
+  border-color: var(--c-primary);
+}
+
+.ex-page .search-input::placeholder {
+  color: var(--c-text-dim);
+}
+
+/* Add exercise */
+.ex-page .add-exercise-section {
+  margin: 0;
+}
+
+.ex-page .btn-add-exercise {
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.1);
+  border: 1px solid rgba(var(--c-primary-rgb), 0.35);
+}
+
+.ex-page .add-exercise-form,
+.ex-page .edit-modal-card {
+  border-radius: var(--r-xl);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  backdrop-filter: none;
+  color: var(--c-text);
+}
+
+.ex-page .add-exercise-form {
+  margin: 0;
+  padding: 18px;
+}
+
+.ex-page .add-exercise-form h3 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.ex-page .form-group label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--c-text-dim);
+}
+
+.ex-page .form-group input[type="text"],
+.ex-page .form-group select {
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--c-text);
+  background-color: var(--c-surface-2);
+  border: 1px solid transparent;
+}
+
+.ex-page .form-group input[type="text"]:focus,
+.ex-page .form-group select:focus {
+  border-color: var(--c-primary);
+}
+
+.ex-page .muscle-chip {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border: 1px solid transparent;
+}
+
+.ex-page .muscle-chip.selected {
+  color: var(--c-primary);
+  font-weight: 800;
+  background: rgba(var(--c-primary-rgb), 0.14);
+  border-color: rgba(var(--c-primary-rgb), 0.5);
+}
+
+.ex-chip-check {
+  display: inline;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.ex-page .btn-cancel {
+  border-radius: 12px;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border: none;
+}
+
+.ex-page .btn-save {
+  border-radius: 12px;
+  font-weight: 800;
+  color: var(--c-bg);
+  background: var(--c-primary);
+  border: none;
+  box-shadow: none;
+}
+
+/* Catalog */
+.ex-page .category-group {
+  margin-bottom: 4px;
+}
+
+.ex-page .category-title {
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text);
+}
+
+.ex-page .category-count {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+}
+
+.ex-page .category-list {
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  backdrop-filter: none;
+}
+
+.ex-page .ex-list-item {
+  padding: 12px 14px;
+  gap: 10px;
+  cursor: pointer;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.ex-page .category-list > :last-child .ex-list-item,
+.ex-page .category-list > .ex-list-item:last-child {
+  border-bottom: none;
+}
+
+.ex-page .ex-list-item.custom-ex {
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+.ex-page .ex-info {
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+
+.ex-icon-box {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-dim);
+  background: var(--c-surface-2);
+}
+
+.ex-icon-box.is-custom {
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.14);
+}
+
+.ex-page .ex-details {
+  min-width: 0;
+  overflow: hidden;
+  gap: 3px;
+}
+
+.ex-page .ex-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.ex-page .ex-tag {
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+}
+
+.ex-page .ex-secondary-text {
+  font-size: 0.625rem;
+  color: var(--c-text-dim);
+}
+
+.ex-page .badge-custom,
+.ex-page .badge-modified {
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  border: none;
+}
+
+.ex-page .badge-custom {
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.15);
+}
+
+.ex-page .badge-modified {
+  color: var(--c-xp);
+  background: rgba(var(--c-xp-rgb), 0.15);
+}
+
+.ex-page .ex-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+}
+
+.ex-page .ex-action-btn.edit-btn {
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+}
+
+.ex-page .ex-action-btn.delete-btn {
+  color: var(--c-danger);
+  background: rgba(var(--c-danger-rgb), 0.1);
+}
+
+/* Guide */
+.ex-page .settings-guide-box {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(var(--c-primary-rgb), 0.06);
+  border: 1px solid rgba(var(--c-primary-rgb), 0.2);
+}
+
+.ex-page .settings-guide-title {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--c-text);
+}
+
+.ex-page .settings-guide-title svg {
+  color: var(--c-primary);
+}
+
+.ex-page .settings-guide-text {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  color: var(--c-text-muted);
+}
+
+.ex-page .settings-guide-text strong {
+  color: var(--c-text);
+}
+
+/* Edit modal */
+.ex-page .modal-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.ex-page .modal-header {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--c-text);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.ex-page .modal-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.ex-modal-icon {
+  color: var(--c-primary);
+}
+
+.ex-page .modal-close-btn {
+  border-radius: 50%;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border: none;
+}
+
+.ex-page .sync-option-container {
+  border-radius: 14px;
+  background: var(--c-surface-2);
+  border: 1px solid transparent;
+  accent-color: var(--c-primary);
+}
+
+.ex-page .sync-option-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.ex-page .sync-option-desc {
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+}
+
+.ex-page .modal-footer {
+  border-top: 1px solid var(--c-border);
+}
+
+.ex-page .modal-reset-btn {
+  border-radius: 12px;
+  color: var(--c-xp);
+  background: rgba(var(--c-xp-rgb), 0.1);
+  border: none;
+}
+
+.ex-page .modal-delete-btn {
+  border-radius: 12px;
+  color: var(--c-danger);
+  background: rgba(var(--c-danger-rgb), 0.1);
+  border: none;
+}

@@ -1,0 +1,147 @@
+/* Muscle levels (redesign) — tokens from styles/elite.css */
+.ml-page {
+  --glow-rgb: var(--c-xp-rgb);
+  --glow-opacity: 0.2;
+  gap: 14px;
+}
+
+.ml-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ml-back {
+  color: var(--c-text);
+}
+
+.ml-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.ml-subtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-xp);
+}
+
+.ml-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(var(--c-xp-rgb), 0.06);
+  border-color: rgba(var(--c-xp-rgb), 0.25);
+}
+
+.ml-info-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--c-xp);
+}
+
+.ml-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--c-text-muted);
+}
+
+.ml-info strong {
+  color: var(--c-text);
+}
+
+.ml-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ml-item {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ml-item.is-top {
+  border-color: rgba(var(--c-xp-rgb), 0.4);
+}
+
+.ml-item-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ml-level {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.0625rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--c-xp);
+  background: rgba(var(--c-xp-rgb), 0.12);
+}
+
+.ml-level small {
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+
+.ml-item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ml-name {
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.ml-xp {
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+}
+
+.ml-next {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.ml-next strong {
+  font-size: 0.8125rem;
+  font-weight: 900;
+  color: var(--c-xp);
+}
+
+.ml-next span {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--c-text-dim);
+}
+
+.ml-remaining {
+  font-size: 0.625rem;
+  color: var(--c-text-dim);
+  text-align: right;
+}

@@ -258,3 +258,112 @@
 .share-guide-text strong {
   color: rgba(255, 255, 255, 0.9);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Redesign theme (tokens from styles/elite.css)
+   ───────────────────────────────────────────────────────────── */
+.share-modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.share-modal-container {
+  position: relative;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@media (min-width: 500px) {
+  .share-modal-container {
+    border-radius: 28px;
+  }
+}
+
+.share-modal-container::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  transform: translateX(-50%);
+  background: var(--c-border);
+}
+
+.share-modal-header {
+  padding-top: 22px;
+}
+
+.share-modal-icon {
+  box-sizing: content-box;
+  padding: 11px;
+  border-radius: 12px;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.14);
+}
+
+.share-modal-title {
+  color: var(--c-text);
+  font-weight: 800;
+}
+
+.share-modal-subtitle {
+  color: var(--c-text-muted);
+}
+
+.share-modal-close-btn {
+  border-radius: 50%;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border: none;
+}
+
+.share-routine-summary-card {
+  border-radius: 18px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+}
+
+.share-routine-name {
+  color: var(--c-text);
+  font-weight: 800;
+}
+
+.share-mini-chip {
+  color: var(--c-text-muted);
+  background: var(--c-surface);
+  border: none;
+}
+
+.share-btn-primary {
+  border-radius: 16px;
+  font-weight: 800;
+  color: var(--c-bg);
+  background: #25D366;
+  border: none;
+  box-shadow: none;
+}
+
+.share-btn-download {
+  border-radius: 14px;
+  color: var(--c-text);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+}
+
+.share-guide-box {
+  border-radius: 14px;
+  background: rgba(var(--c-primary-rgb), 0.06);
+  border: 1px solid rgba(var(--c-primary-rgb), 0.2);
+}
+
+.share-guide-title {
+  color: var(--c-text);
+}
+
+.share-guide-text {
+  color: var(--c-text-muted);
+}

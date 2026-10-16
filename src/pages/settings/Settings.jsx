@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ArrowLeft, ChevronRight, Dumbbell, Dna, Info, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles, Bell } from 'lucide-react';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import { AiTemplateModal } from '../../components/AiTemplateModal';
 import './Settings.css';
@@ -20,6 +20,8 @@ function Settings() {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [persistenceLoading, setPersistenceLoading] = useState(false);
+  const [showScienceInfo, setShowScienceInfo] = useState(false);
+  const [mountedAt] = useState(() => Date.now());
   const fileInputRef = React.useRef(null);
 
   const handleExport = () => {
@@ -48,254 +50,157 @@ function Settings() {
     }
   };
 
+  const backupIsRecent = lastBackupDate && (mountedAt - lastBackupDate < 7 * 86400000);
+
   return (
-    <div className="settings-container">
-      <header className="settings-header">
-        <button className="icon-btn" style={{ background: 'transparent', border: 'none' }} onClick={() => navigate(-1)}><ArrowLeft size={24} /></button>
-        <h2>Impostazioni</h2>
-        <div style={{ width: 44 }}></div>
+    <div className="ej-page st-page">
+      <div className="ej-glow" aria-hidden="true" />
+
+      <header className="st-header">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round st-back" onClick={() => navigate(-1)} title="Indietro">
+          <ChevronLeft size={20} />
+        </button>
+        <h1 className="st-title">Impostazioni</h1>
       </header>
 
-      <main className="settings-content" style={{ marginTop: '0.5rem' }}>
-        <div className="settings-group">
-          {/* Card AI Routine & JSON Import */}
-          <div 
-            className="settings-item clickable" 
-            onClick={() => setIsAiModalOpen(true)}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '1.25rem', background: 'linear-gradient(135deg, rgba(0, 184, 212, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-              borderRadius: '16px', border: '1px solid rgba(0, 184, 212, 0.25)',
-              marginBottom: '1rem', cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ background: 'rgba(0, 184, 212, 0.15)', padding: '8px', borderRadius: '10px' }}>
-                <Sparkles size={20} color="#00e5ff" />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <p style={{ margin: 0, fontWeight: '700', color: '#fff' }}>Crea Scheda con AI & JSON</p>
-                  <span style={{ fontSize: '0.62rem', fontWeight: '800', background: '#00e5ff', color: '#081018', padding: '1px 6px', borderRadius: '6px', letterSpacing: '0.3px' }}>NUOVO</span>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Genera prompt per ChatGPT o importa schede da JSON</p>
-              </div>
-            </div>
-            <ChevronRight size={18} color="#00e5ff" />
-          </div>
+      {/* Navigation rows */}
+      <div className="st-rows">
+        <button type="button" className="ej-card st-row" onClick={() => setIsAiModalOpen(true)}>
+          <span className="st-row-icon is-ai"><Sparkles size={20} /></span>
+          <span className="st-row-text">
+            <span className="st-row-title">Crea Scheda con AI &amp; JSON <span className="st-new">Nuovo</span></span>
+            <span className="st-row-sub">Genera prompt per ChatGPT o importa schede da JSON</span>
+          </span>
+          <ChevronRight size={18} className="st-row-chevron" />
+        </button>
 
-          <div 
-            className="settings-item clickable" 
-            onClick={() => navigate('/settings/exercises')}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '1.25rem', background: 'rgba(255,255,255,0.03)',
-              borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)',
-              marginBottom: '1rem', cursor: 'pointer'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ background: 'rgba(var(--primary-color-rgb), 0.1)', padding: '8px', borderRadius: '10px' }}>
-                <Dumbbell size={20} color="var(--primary-color)" />
-              </div>
-              <div>
-                <p style={{ margin: 0, fontWeight: '700', color: '#fff' }}>Database Esercizi</p>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Gestisci esercizi e gruppi muscolari</p>
-              </div>
-            </div>
-            <ChevronRight size={18} color="var(--text-muted)" />
-          </div>
+        <button type="button" className="ej-card st-row" onClick={() => navigate('/settings/exercises')}>
+          <span className="st-row-icon is-primary"><Dumbbell size={20} /></span>
+          <span className="st-row-text">
+            <span className="st-row-title">Database Esercizi</span>
+            <span className="st-row-sub">Gestisci esercizi e gruppi muscolari</span>
+          </span>
+          <ChevronRight size={18} className="st-row-chevron" />
+        </button>
 
-          <div 
-            className="settings-item" 
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '1.25rem', background: 'rgba(255,255,255,0.03)',
-              borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)',
-              marginBottom: '1rem'
-            }}
+        <div className="ej-card st-row">
+          <span className="st-row-icon is-science"><Dna size={20} /></span>
+          <span className="st-row-text">
+            <span className="st-row-title">Sezione Scienza</span>
+            <span className="st-row-sub">Abilita tracker e obiettivi mesociclo</span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showScience}
+            aria-label="Attiva Sezione Scienza"
+            className={`st-switch ${showScience ? 'is-on' : ''}`}
+            onClick={toggleScience}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ background: 'rgba(255, 45, 85, 0.1)', padding: '8px', borderRadius: '10px' }}>
-                <Dna size={20} color="#ff2d55" />
-              </div>
-              <div>
-                <p style={{ margin: 0, fontWeight: '700', color: '#fff' }}>Sezione Scienza</p>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Abilita tracker e obiettivi mesociclo</p>
-              </div>
-            </div>
-            <div 
-              onClick={toggleScience}
-              style={{
-                width: '50px', height: '28px', 
-                background: showScience ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)',
-                borderRadius: '20px', position: 'relative', cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            >
-              <div style={{
-                width: '22px', height: '22px', background: '#fff',
-                borderRadius: '50%', position: 'absolute', top: '3px',
-                left: showScience ? '25px' : '3px',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }} />
-            </div>
-          </div>
+            <span />
+          </button>
         </div>
+      </div>
 
-        <div className="settings-guide-box" style={{ marginTop: '1.5rem' }}>
-          <p className="settings-guide-title">
-            <Info size={14} />
-            <span>Come funziona la Sezione Scienza?</span>
-          </p>
-          <p className="settings-guide-text">
+      <div className="st-disclosure">
+        <button type="button" className="st-disclosure-btn" onClick={() => setShowScienceInfo(v => !v)} aria-expanded={showScienceInfo}>
+          Come funziona la Sezione Scienza?
+          <ChevronDown size={16} className={showScienceInfo ? 'is-open' : ''} />
+        </button>
+        {showScienceInfo && (
+          <p className="st-disclosure-text">
             Attivando questa opzione avrai accesso all'analisi del mesociclo, al volume minimo e massimo (MEV/MRV di Mike Israetel) e ai grafici di sovraccarico progressivo. Se preferisci un'esperienza essenziale puoi disattivarla in qualsiasi momento.
           </p>
-        </div>
+        )}
+      </div>
 
-        {/* Sync & Backup Section */}
-        <div className="card glass backup-hub-card">
-          <div className="backup-hub-header">
-            <div className="backup-hub-title-group">
-              <div className="backup-hub-icon-box">
-                <ShieldCheck size={22} />
-              </div>
-              <div>
-                <h3 className="backup-hub-title">
-                  Sicurezza & Backup Dati
-                </h3>
-                <p className="backup-hub-desc">
-                  Salva una copia offline per proteggere schede, progressi e XP anche cambiando dispositivo.
-                </p>
-              </div>
-            </div>
-            {isStoragePersisted && (
-              <span className="backup-storage-pill persisted">
-                ● Memoria Protetta
-              </span>
-            )}
-          </div>
-
-          {/* Ultimo Backup & Stato Memoria */}
-          <div className="backup-status-panel">
-            <div className="backup-status-row">
-              <span className="backup-status-label">
-                <Clock size={16} /> Ultimo backup:
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <strong className="backup-status-val">
-                  {formatLastBackupDate(lastBackupDate)}
-                </strong>
-                <span className={`backup-status-badge ${lastBackupDate && (Date.now() - lastBackupDate < 7 * 86400000) ? 'is-recent' : 'is-warning'}`}>
-                  {lastBackupDate && (Date.now() - lastBackupDate < 7 * 86400000) ? 'Recente' : 'Consigliato'}
-                </span>
-              </div>
-            </div>
-
-            <div className="backup-status-row">
-              <span className="backup-status-label">
-                <ShieldCheck size={16} /> Archiviazione PWA:
-              </span>
-              <span className={`backup-storage-pill ${isStoragePersisted ? 'persisted' : 'standard'}`}>
-                {isStoragePersisted ? '● Persistente (Protetta)' : '○ Standard'}
-              </span>
-            </div>
-
-            {!isStoragePersisted && (
-              <button
-                type="button"
-                className="backup-storage-cta"
-                onClick={handleRequestStoragePersistence}
-                disabled={persistenceLoading}
-              >
-                <HardDrive size={15} />
-                <span>{persistenceLoading ? 'Verifica in corso...' : 'Attiva Protezione Memoria Permanente'}</span>
-              </button>
-            )}
-          </div>
-
-          {/* Impostazioni Promemoria Backup */}
-          <div className="backup-reminder-section">
-            <div className="backup-reminder-header">
-              <div>
-                <span className="backup-reminder-title">
-                  Promemoria Automatico
-                </span>
-                <p className="backup-reminder-sub">
-                  Mostra un promemoria per salvare i dati
-                </p>
-              </div>
-              <button
-                type="button"
-                className={`backup-toggle-switch ${autoBackupEnabled ? 'active' : ''}`}
-                onClick={() => setAutoBackupSettings({ autoBackupEnabled: !autoBackupEnabled })}
-                aria-label="Attiva promemoria automatico"
-              >
-                <div className="backup-toggle-thumb" />
-              </button>
-            </div>
-
-            {autoBackupEnabled && (
-              <div className="backup-frequency-selector">
-                {[
-                  { key: 'after_workout', label: 'Fine Workout' },
-                  { key: 'weekly', label: 'Settimanale' },
-                  { key: 'monthly', label: 'Mensile' }
-                ].map(opt => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setAutoBackupSettings({ autoBackupFrequency: opt.key })}
-                    className={`backup-freq-btn ${autoBackupFrequency === opt.key ? 'active' : ''}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Azioni Esporta & Importa */}
-          <div className="backup-actions-grid">
-            <button 
-              type="button"
-              className={`backup-btn-export ${exportSuccess ? 'success' : ''}`}
-              onClick={handleExport} 
-            >
-              {exportSuccess ? <Check size={18} /> : <Download size={18} />} 
-              <span>{exportSuccess ? 'Scaricato!' : 'Salva Backup'}</span>
-            </button>
-
-            <button 
-              type="button"
-              className="backup-btn-import"
-              onClick={() => fileInputRef.current?.click()} 
-            >
-              <Upload size={18} /> <span>Ripristina</span>
-            </button>
-            <input
-              type="file"
-              accept=".json"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              onChange={handleImport}
-            />
-          </div>
-
-          {/* Mini Guida Salvataggio e Ripristino */}
-          <div className="settings-guide-box" style={{ marginTop: '1.25rem' }}>
-            <p className="settings-guide-title">Come funziona il salvataggio & ripristino?</p>
-            <p className="settings-guide-text">
-              1. Clicca su <strong>Salva Backup</strong> per scaricare una copia di sicurezza (.json) sul tuo telefono o computer.<br />
-              2. Se cambi telefono o cancelli la cronologia, premi <strong>Ripristina</strong> e seleziona il file: ritroverai subito tutte le tue schede, massimali e livelli XP!
-            </p>
+      {/* Sync & Backup */}
+      <section className="ej-card st-backup">
+        <div className="st-backup-head">
+          <span className="st-row-icon is-primary"><ShieldCheck size={20} /></span>
+          <div className="st-row-text">
+            <h3 className="st-backup-title">Sicurezza &amp; Backup Dati</h3>
+            <p className="st-row-sub">Salva una copia offline per proteggere schede, progressi e XP anche cambiando dispositivo.</p>
           </div>
         </div>
-      </main>
 
-      {/* AI Template Modal */}
+        <div className="st-status">
+          <div className="st-status-row">
+            <span className="st-status-label"><Clock size={15} /> Ultimo backup:</span>
+            <span className="st-status-value">
+              {formatLastBackupDate(lastBackupDate)}
+              <span className={`st-badge ${backupIsRecent ? 'is-good' : 'is-warn'}`}>{backupIsRecent ? 'Recente' : 'Consigliato'}</span>
+            </span>
+          </div>
+          <div className="st-status-row">
+            <span className="st-status-label"><ShieldCheck size={15} /> Archiviazione PWA:</span>
+            <span className={`st-status-value ${isStoragePersisted ? 'is-good' : ''}`}>
+              {isStoragePersisted ? 'Persistente (Protetta)' : 'Standard'}
+            </span>
+          </div>
+          {!isStoragePersisted && (
+            <button type="button" className="st-persist-btn" onClick={handleRequestStoragePersistence} disabled={persistenceLoading}>
+              <HardDrive size={15} />
+              {persistenceLoading ? 'Verifica in corso...' : 'Attiva Protezione Memoria Permanente'}
+            </button>
+          )}
+        </div>
+
+        <div className="st-reminder">
+          <div className="st-reminder-head">
+            <span className="st-status-label"><Bell size={15} /> <span><strong>Promemoria automatico</strong><br /><small>Mostra un promemoria per salvare i dati</small></span></span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={autoBackupEnabled}
+              aria-label="Attiva promemoria automatico"
+              className={`st-switch ${autoBackupEnabled ? 'is-on' : ''}`}
+              onClick={() => setAutoBackupSettings({ autoBackupEnabled: !autoBackupEnabled })}
+            >
+              <span />
+            </button>
+          </div>
+
+          {autoBackupEnabled && (
+            <div className="st-segmented">
+              {[
+                { key: 'after_workout', label: 'Fine Workout' },
+                { key: 'weekly', label: 'Settimanale' },
+                { key: 'monthly', label: 'Mensile' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setAutoBackupSettings({ autoBackupFrequency: opt.key })}
+                  className={autoBackupFrequency === opt.key ? 'is-active' : ''}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="st-actions">
+          <button type="button" className={`st-action is-primary ${exportSuccess ? 'is-done' : ''}`} onClick={handleExport}>
+            {exportSuccess ? <Check size={17} /> : <Download size={17} />}
+            {exportSuccess ? 'Scaricato!' : 'Salva Backup'}
+          </button>
+          <button type="button" className="st-action" onClick={() => fileInputRef.current?.click()}>
+            <Upload size={17} /> Ripristina
+          </button>
+          <input type="file" accept=".json" ref={fileInputRef} hidden onChange={handleImport} />
+        </div>
+
+        <div className="st-guide">
+          <p className="st-guide-title">Come funziona il salvataggio &amp; ripristino?</p>
+          <p className="st-guide-text">
+            1. Clicca su <strong>Salva Backup</strong> per scaricare una copia di sicurezza (.json) sul tuo telefono o computer.<br />
+            2. Se cambi telefono o cancelli la cronologia, premi <strong>Ripristina</strong> e seleziona il file: ritroverai subito tutte le tue schede, massimali e livelli XP!
+          </p>
+        </div>
+      </section>
+
       <AiTemplateModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
     </div>
   );

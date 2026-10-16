@@ -31,10 +31,9 @@ function EditWorkout() {
 
   if (!workout) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-        Allenamento non trovato.
-        <br />
-        <button onClick={() => navigate(-1)} style={{ marginTop: '1rem', color: 'var(--primary-color)', background: 'none', border: 'none', fontSize: '1rem' }}>Torna indietro</button>
+      <div className="edit-workout-page edit-not-found">
+        <p>Allenamento non trovato.</p>
+        <button type="button" onClick={() => navigate(-1)} className="edit-cancel-add">Torna indietro</button>
       </div>
     );
   }
@@ -98,11 +97,11 @@ function EditWorkout() {
     <div className="edit-workout-page">
       {/* Header */}
       <div className="edit-workout-header">
-        <button onClick={() => navigate(-1)} className="edit-workout-back">
+        <button type="button" onClick={() => navigate(-1)} className="edit-workout-back" title="Indietro">
           <ChevronLeft size={22} />
         </button>
         <h2>Modifica Sessione</h2>
-        <button onClick={handleSave} className="edit-workout-save">
+        <button type="button" onClick={handleSave} className="edit-workout-save">
           <Check size={20} />
           <span>Salva</span>
         </button>
@@ -123,8 +122,7 @@ function EditWorkout() {
               type="time"
               value={editForm.time}
               onChange={e => setEditForm({ ...editForm, time: e.target.value })}
-              className="edit-input"
-              style={{ maxWidth: '120px' }}
+              className="edit-input edit-input--time"
             />
           </div>
         </div>
@@ -136,8 +134,7 @@ function EditWorkout() {
             min="1"
             value={editForm.duration}
             onChange={e => setEditForm({ ...editForm, duration: parseInt(e.target.value) || 0 })}
-            className="edit-input"
-            style={{ maxWidth: '100px' }}
+            className="edit-input edit-input--short"
           />
         </div>
 
@@ -166,7 +163,7 @@ function EditWorkout() {
                 {ex.sets.map((set, setIdx) => (
                   <div key={set.id} className="edit-set-row">
                     <span className="edit-set-num">
-                      {set.isDropset ? <span className="drop-badge">Drop</span> : setIdx + 1}
+                      {set.isDropset ? <span className="edit-drop">Drop</span> : setIdx + 1}
                     </span>
                     <input
                       type="text"

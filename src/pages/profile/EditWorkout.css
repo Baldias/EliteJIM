@@ -1,74 +1,94 @@
+/* ─────────────────────────────────────────────────────────────
+   Edit session (redesign) — uses tokens from styles/elite.css
+   ───────────────────────────────────────────────────────────── */
 .edit-workout-page {
-  min-height: 100vh;
-  background: var(--bg-color);
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-.edit-workout-header {
-  display: flex;
+.edit-not-found {
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--surface-color);
-  border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  justify-content: center;
+  gap: 12px;
+  color: var(--c-text-muted);
 }
 
-.edit-workout-header h2 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-main);
+.edit-not-found p {
   margin: 0;
 }
 
+/* Header */
+.edit-workout-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: max(14px, env(safe-area-inset-top)) 16px 12px;
+  background: rgba(7, 9, 12, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.edit-workout-header h2 {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 1.0625rem;
+  font-weight: 800;
+}
+
 .edit-workout-back {
-  background: transparent;
-  border: none;
-  color: var(--primary-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  cursor: pointer;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
 }
 
 .edit-workout-save {
-  background: var(--primary-color);
-  border: none;
-  color: white;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
+  gap: 5px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--c-bg);
+  background: var(--c-primary);
+  border: none;
 }
 
 .edit-workout-content {
-  padding: 16px;
-  padding-bottom: 40px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  padding: 16px 16px 48px;
 }
 
+/* Session info */
 .edit-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .edit-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--c-text-dim);
 }
 
 .edit-row {
@@ -78,16 +98,34 @@
 
 .edit-input {
   flex: 1;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: var(--surface-color-elevated);
-  color: var(--text-main);
-  font-size: 0.95rem;
-  box-sizing: border-box;
   min-width: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color-scheme: dark;
 }
 
+.edit-input:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px rgba(var(--c-primary-rgb), 0.12);
+}
+
+.edit-input--time {
+  flex: 0 0 120px;
+}
+
+.edit-input--short {
+  flex: none;
+  width: 110px;
+}
+
+/* Exercises */
 .edit-exercises-list {
   display: flex;
   flex-direction: column;
@@ -95,17 +133,20 @@
 }
 
 .edit-exercise-card {
-  background: var(--surface-color);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 2px 8px var(--shadow-color);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
 }
 
 .edit-exercise-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 10px;
 }
 
 .edit-exercise-title {
@@ -113,156 +154,179 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  flex: 1;
 }
 
 .edit-exercise-num {
-  background-color: var(--primary-color-dim);
-  color: var(--primary-color);
-  font-size: 0.8rem;
-  font-weight: 700;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.14);
 }
 
 .edit-exercise-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--text-main);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
 }
 
 .edit-delete-btn {
-  background: transparent;
-  border: none;
-  color: rgba(255, 59, 48, 0.7);
-  padding: 6px;
-  cursor: pointer;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-danger);
+  background: rgba(var(--c-danger-rgb), 0.1);
+  border: none;
 }
 
 .edit-sets-table {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
-  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
+}
+
+.edit-sets-header,
+.edit-set-row {
+  display: grid;
+  grid-template-columns: 38px 1fr 1fr 30px;
+  gap: 8px;
+  align-items: center;
 }
 
 .edit-sets-header {
-  display: grid;
-  grid-template-columns: 36px 1fr 1fr 32px;
-  gap: 8px;
-  font-size: 0.7rem;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-align: center;
   text-transform: uppercase;
-  color: var(--text-muted);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.edit-set-row {
-  display: grid;
-  grid-template-columns: 36px 1fr 1fr 32px;
-  gap: 8px;
-  align-items: center;
-  padding: 4px 0;
+  color: var(--c-text-dim);
 }
 
 .edit-set-num {
-  font-weight: 500;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  text-align: center;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+}
+
+.edit-drop {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  color: var(--c-accent);
+}
+
+.edit-set-num:has(.edit-drop) {
+  background: rgba(var(--c-accent-rgb), 0.18);
 }
 
 .edit-set-input {
   width: 100%;
-  padding: 8px 6px;
-  border-radius: 8px;
-  border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
-  text-align: center;
-  font-size: 0.9rem;
-  box-sizing: border-box;
   min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  text-align: center;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--c-text);
+  background: var(--c-surface-2);
+  border: 1px solid transparent;
 }
 
 .edit-set-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--c-primary);
+}
+
+.edit-set-input::placeholder {
+  color: var(--c-text-dim);
+  font-weight: 600;
 }
 
 .edit-set-delete {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.35);
-  padding: 0;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  min-width: 0;
-}
-
-.edit-set-delete:hover {
-  color: rgba(255, 59, 48, 0.8);
+  border-radius: 8px;
+  color: var(--c-text-dim);
+  background: none;
+  border: none;
 }
 
 .edit-add-set-btn {
-  margin-top: 8px;
-  width: 100%;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: var(--text-muted);
-  font-size: 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  cursor: pointer;
+  gap: 5px;
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.08);
+  border: none;
 }
 
-.edit-add-exercise-area {
-  margin-top: 4px;
+/* Add exercise */
+.edit-add-exercise-area > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--c-surface);
+  border: 1px solid rgba(var(--c-primary-rgb), 0.4);
+}
+
+.edit-add-exercise-area .autocomplete-input {
+  background: var(--c-surface-2);
+  border-color: transparent;
+  border-radius: 12px;
+  font-weight: 700;
 }
 
 .edit-add-exercise-btn {
   width: 100%;
-  padding: 12px;
-  background: var(--primary-color-dim);
-  color: var(--primary-color);
-  border: none;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 0.875rem;
   font-weight: 700;
-  font-size: 0.9rem;
-  cursor: pointer;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.07);
+  border: 1.5px dashed rgba(var(--c-primary-rgb), 0.35);
 }
 
 .edit-cancel-add {
-  margin-top: 8px;
-  width: 100%;
-  padding: 8px;
-  background: transparent;
+  align-self: flex-end;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
   border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 0.85rem;
 }

@@ -4,20 +4,19 @@ import { useStore } from '../../store/useStore';
 import { Plus, ArrowLeft, Check, Trash2, FileText, ChevronUp, ChevronDown, GripVertical, Share2 } from 'lucide-react';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { ShareTemplateModal } from '../../components/ShareTemplateModal';
+import './TemplateBuilder.css';
 
 const REPS_PRESETS = ['4-6', '6-8', '8-10', '10-12', '12-15', '15-20'];
 
 function NumInput({ label, value, onChange, min = 0, step = 1, format }) {
   const display = format ? format(value) : value;
   return (
-    <div>
-      <p style={{ margin: '0 0 5px', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>{label}</p>
-      <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', height: '38px' }}>
-        <button type="button" onClick={() => onChange(Math.max(min, (parseFloat(value) || 0) - step))}
-          style={{ padding: '0 12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.35)', fontWeight: '800', fontSize: '1.1rem', lineHeight: 1 }}>−</button>
-        <span style={{ flex: 1, textAlign: 'center', color: 'white', fontWeight: '700', fontSize: '0.9rem' }}>{display}</span>
-        <button type="button" onClick={() => onChange((parseFloat(value) || 0) + step)}
-          style={{ padding: '0 12px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.35)', fontWeight: '800', fontSize: '1.1rem', lineHeight: 1 }}>+</button>
+    <div className="tb-num">
+      <p className="tb-label">{label}</p>
+      <div className="tb-stepper">
+        <button type="button" onClick={() => onChange(Math.max(min, (parseFloat(value) || 0) - step))}>−</button>
+        <span>{display}</span>
+        <button type="button" onClick={() => onChange((parseFloat(value) || 0) + step)}>+</button>
       </div>
     </div>
   );
@@ -78,80 +77,45 @@ function TemplateBuilder() {
   const isValid = name.trim() && exercises.length > 0;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080c10', display: 'flex', flexDirection: 'column' }}>
+    <div className="tb-page">
+      <div className="ej-glow tb-glow" aria-hidden="true" />
 
       {/* ── HEADER ─────────────────────────── */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(8,12,16,0.94)', backdropFilter: 'blur(24px)',
-        borderBottom: '1px solid rgba(0,184,212,0.12)',
-        padding: '12px 16px',
-        display: 'flex', alignItems: 'center', gap: '12px'
-      }}>
-        <button onClick={() => navigate('/')} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '10px', padding: '8px', color: 'rgba(255,255,255,0.6)', display: 'flex', width: 'auto' }}>
+      <div className="tb-header">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round tb-back" onClick={() => navigate('/')} title="Torna alla Home">
           <ArrowLeft size={20} />
         </button>
-        <span style={{ flex: 1, fontWeight: '800', fontSize: '1rem', color: 'white' }}>{isEditing ? 'Modifica Scheda' : 'Nuova Scheda'}</span>
+        <span className="tb-header-title">{isEditing ? 'Modifica Scheda' : 'Nuova Scheda'}</span>
         {isValid && (
-          <button 
-            type="button" 
-            title="Condividi ed esporta" 
-            onClick={() => setShowShare(true)} 
-            style={{ 
-              background: 'rgba(0, 229, 255, 0.08)', 
-              border: '1px solid rgba(0, 229, 255, 0.25)', 
-              borderRadius: '10px', padding: '8px 10px', 
-              color: '#00e5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' 
-            }}
-          >
-            <Share2 size={16} />
+          <button type="button" className="ej-icon-btn ej-icon-btn--primary tb-share" title="Condividi ed esporta" onClick={() => setShowShare(true)}>
+            <Share2 size={17} />
           </button>
         )}
-        <button onClick={handleSave} style={{
-          background: isValid ? 'linear-gradient(135deg, #00b8d4 0%, #0090b0 100%)' : 'rgba(255,255,255,0.07)',
-          border: 'none', borderRadius: '10px', padding: '8px 16px',
-          color: isValid ? 'white' : 'rgba(255,255,255,0.25)',
-          fontWeight: '800', fontSize: '0.88rem',
-          display: 'flex', alignItems: 'center', gap: '6px',
-          transition: 'all 0.2s', width: 'auto',
-          boxShadow: isValid ? '0 4px 14px rgba(0,184,212,0.3)' : 'none'
-        }}>
-          <Check size={15} /> Salva
+        <button type="button" className={`tb-save ${isValid ? 'is-valid' : ''}`} onClick={handleSave}>
+          <Check size={15} strokeWidth={3} /> Salva
         </button>
       </div>
 
-      <div style={{ flex: 1, padding: '16px 14px 120px' }}>
+      <div className="tb-body">
 
         {/* ── NOME ──────────────────────────── */}
-        <div style={{ marginBottom: '20px' }}>
-          <p style={{ margin: '0 0 6px', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>NOME SCHEDA</p>
+        <div className="tb-name">
+          <p className="tb-label">Nome scheda</p>
           <input
             type="text"
             placeholder="Es. Petto & Tricipiti"
             value={name}
             onChange={e => setName(e.target.value)}
-            style={{
-              width: '100%', boxSizing: 'border-box',
-              padding: '11px 14px',
-              background: 'rgba(255,255,255,0.05)',
-              border: name ? '1px solid rgba(0,184,212,0.3)' : '1px solid rgba(255,255,255,0.07)',
-              borderRadius: '12px', color: 'white',
-              fontSize: '1rem', fontWeight: '600', outline: 'none',
-              transition: 'border-color 0.2s'
-            }}
+            className={`tb-name-input ${name ? 'has-value' : ''}`}
           />
         </div>
 
         {/* ── ESERCIZI ──────────────────────── */}
         {exercises.length > 0 && (
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <p style={{ margin: 0, fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-                ESERCIZI ({exercises.length})
-              </p>
-              <span style={{ fontSize: '0.65rem', color: '#00b8d4', fontWeight: '600' }}>
-                Trascina o usa i tasti ▲ ▼
-              </span>
+          <div className="tb-list">
+            <div className="tb-list-head">
+              <p className="tb-label">Esercizi · {exercises.length}</p>
+              <span className="tb-list-hint">Trascina o usa ▲ ▼</span>
             </div>
 
             {exercises.map((ex, idx) => (
@@ -187,30 +151,14 @@ function TemplateBuilder() {
                   setDraggedIndex(null);
                   setDragOverIndex(null);
                 }}
-                style={{
-                  background: dragOverIndex === idx ? 'rgba(0, 184, 212, 0.08)' : 'rgba(255,255,255,0.025)',
-                  border: dragOverIndex === idx ? '2px dashed #00b8d4' : '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: '14px',
-                  marginBottom: '12px',
-                  position: 'relative',
-                  zIndex: exercises.length - idx,
-                  opacity: draggedIndex === idx ? 0.4 : 1,
-                  transform: draggedIndex === idx ? 'scale(0.98)' : 'none',
-                  transition: 'all 0.2s cubic-bezier(0.2, 0, 0, 1)'
-                }}
+                className={`tb-card ${dragOverIndex === idx ? 'is-drop-target' : ''} ${draggedIndex === idx ? 'is-dragging' : ''}`}
+                style={{ zIndex: exercises.length - idx }}
               >
                 {/* Name row */}
-                <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  {/* Drag handle and index number */}
+                <div className="tb-card-head">
                   <div
+                    className="tb-handle"
                     title="Trascina per riordinare"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      cursor: 'grab',
-                      touchAction: 'none'
-                    }}
                     onTouchStart={(e) => {
                       const touch = e.touches[0];
                       dragTouchRef.current = { startY: touch.clientY, fromIndex: idx };
@@ -237,74 +185,24 @@ function TemplateBuilder() {
                       setDraggedIndex(null);
                     }}
                   >
-                    <GripVertical size={16} color="rgba(255,255,255,0.3)" />
-                    <span style={{
-                      minWidth: '24px',
-                      height: '24px',
-                      borderRadius: '7px',
-                      background: 'rgba(255,255,255,0.07)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.72rem',
-                      fontWeight: '800',
-                      color: 'rgba(255,255,255,0.6)'
-                    }}>
-                      {idx + 1}
-                    </span>
+                    <GripVertical size={16} />
+                    <span className="tb-index">{idx + 1}</span>
                   </div>
 
-                  {/* Autocomplete input */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="tb-ex-name">
                     <ExerciseAutocomplete value={ex.name} onChange={val => updEx(ex.id, 'name', val)} placeholder="Cerca esercizio…" />
                   </div>
 
-                  {/* Bigger Up & Down buttons + Trash button */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
-                    <button
-                      type="button"
-                      onClick={() => moveEx(idx, idx - 1)}
-                      disabled={idx === 0}
-                      title="Sposta Su"
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
-                        background: idx === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(0,184,212,0.12)',
-                        border: idx === 0 ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,184,212,0.3)',
-                        color: idx === 0 ? 'rgba(255,255,255,0.15)' : '#00e5ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: idx === 0 ? 'default' : 'pointer',
-                        transition: 'all 0.15s'
-                      }}
-                    >
-                      <ChevronUp size={18} strokeWidth={2.5} />
+                  <div className="tb-card-actions">
+                    <button type="button" className="tb-mini-btn" onClick={() => moveEx(idx, idx - 1)} disabled={idx === 0} title="Sposta su">
+                      <ChevronUp size={17} strokeWidth={2.5} />
+                    </button>
+                    <button type="button" className="tb-mini-btn" onClick={() => moveEx(idx, idx + 1)} disabled={idx === exercises.length - 1} title="Sposta giù">
+                      <ChevronDown size={17} strokeWidth={2.5} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => moveEx(idx, idx + 1)}
-                      disabled={idx === exercises.length - 1}
-                      title="Sposta Giù"
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
-                        background: idx === exercises.length - 1 ? 'rgba(255,255,255,0.02)' : 'rgba(0,184,212,0.12)',
-                        border: idx === exercises.length - 1 ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,184,212,0.3)',
-                        color: idx === exercises.length - 1 ? 'rgba(255,255,255,0.15)' : '#00e5ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: idx === exercises.length - 1 ? 'default' : 'pointer',
-                        transition: 'all 0.15s'
-                      }}
-                    >
-                      <ChevronDown size={18} strokeWidth={2.5} />
-                    </button>
-                    <button
-                      type="button"
+                      className="tb-mini-btn is-danger"
                       onClick={() => {
                         const exName = ex.name?.trim() ? `l'esercizio "${ex.name}"` : 'questo esercizio';
                         if (window.confirm(`Sei sicuro di voler eliminare ${exName} dalla scheda?`)) {
@@ -312,18 +210,6 @@ function TemplateBuilder() {
                         }
                       }}
                       title="Elimina"
-                      style={{
-                        background: 'rgba(255,59,48,0.1)',
-                        border: '1px solid rgba(255,59,48,0.15)',
-                        borderRadius: '8px',
-                        width: '32px',
-                        height: '32px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'rgba(255,59,48,0.8)',
-                        cursor: 'pointer'
-                      }}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -331,59 +217,36 @@ function TemplateBuilder() {
                 </div>
 
                 {/* Controls */}
-                <div style={{ padding: '10px 12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-                    <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
-                    <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
-                  </div>
+                <div className="tb-controls">
+                  <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
+                  <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
+                </div>
 
-                  {/* Reps chips */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <p style={{ margin: '0 0 6px', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>REPS TARGET</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                      {REPS_PRESETS.map(p => {
-                        const active = ex.targetReps === p;
-                        return (
-                          <button key={p} onClick={() => updEx(ex.id, 'targetReps', p)} style={{
-                            padding: '5px 12px', borderRadius: '20px',
-                            background: active ? '#00b8d4' : 'rgba(255,255,255,0.06)',
-                            border: active ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                            color: active ? 'white' : 'rgba(255,255,255,0.4)',
-                            fontWeight: '700', fontSize: '0.78rem',
-                            transition: 'all 0.15s'
-                          }}>
-                            {p}
-                          </button>
-                        );
-                      })}
-                    </div>
+                <div className="tb-field">
+                  <p className="tb-label">Reps target</p>
+                  <div className="tb-reps">
+                    {REPS_PRESETS.map(p => (
+                      <button
+                        type="button"
+                        key={p}
+                        className={`tb-rep ${ex.targetReps === p ? 'is-active' : ''}`}
+                        onClick={() => updEx(ex.id, 'targetReps', p)}
+                      >
+                        {p}
+                      </button>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Notes field */}
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
-                      <FileText size={11} color="rgba(0,184,212,0.7)" />
-                      <p style={{ margin: 0, fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase' }}>NOTE ESERCIZIO</p>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Es. Impugnatura larga, fermo in basso 1 sec..."
-                      value={ex.notes || ''}
-                      onChange={e => updEx(ex.id, 'notes', e.target.value)}
-                      style={{
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        padding: '8px 12px',
-                        background: 'rgba(255,255,255,0.05)',
-                        border: ex.notes ? '1px solid rgba(0,184,212,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: '8px',
-                        color: '#e0f7fa',
-                        fontSize: '0.82rem',
-                        outline: 'none',
-                        transition: 'border-color 0.2s'
-                      }}
-                    />
-                  </div>
+                <div className="tb-field">
+                  <p className="tb-label"><FileText size={11} /> Note esercizio</p>
+                  <input
+                    type="text"
+                    placeholder="Es. Impugnatura larga, fermo in basso 1 sec..."
+                    value={ex.notes || ''}
+                    onChange={e => updEx(ex.id, 'notes', e.target.value)}
+                    className={`tb-notes ${ex.notes ? 'has-value' : ''}`}
+                  />
                 </div>
               </div>
             ))}
@@ -391,20 +254,12 @@ function TemplateBuilder() {
         )}
 
         {/* ── ADD EXERCISE ──────────────────── */}
-        <button onClick={addEx} style={{
-          width: '100%', padding: '11px',
-          background: 'rgba(0,184,212,0.07)', border: '1px dashed rgba(0,184,212,0.2)',
-          borderRadius: '12px', color: '#00b8d4',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          fontWeight: '700', fontSize: '0.92rem'
-        }}>
-          <Plus size={18} /> Aggiungi Esercizio
+        <button type="button" className="tb-add" onClick={addEx}>
+          <Plus size={18} strokeWidth={2.5} /> Aggiungi esercizio
         </button>
 
         {exercises.length === 0 && (
-          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '0.85rem', marginTop: '24px' }}>
-            Aggiungi il primo esercizio per iniziare 💪
-          </p>
+          <p className="tb-empty">Aggiungi il primo esercizio per iniziare</p>
         )}
       </div>
 

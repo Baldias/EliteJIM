@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ChevronLeft, Flame, Trophy, Dumbbell } from 'lucide-react';
+import { ChevronLeft, Flame, Trophy, Dumbbell, Info } from 'lucide-react';
 import { calculateWeeklyStreak, getMondayOfWeek } from '../../utils/gamification';
 import './Activity.css';
 
@@ -113,124 +113,118 @@ export default function Activity() {
     return count;
   }, [workoutsByDate, currentYear]);
 
+  // Sessions per week for the last 8 weeks (current week last)
+  const lastWeeks = useMemo(() => {
+    const thisMonday = getMondayOfWeek(new Date()).getTime();
+    const weekMs = 7 * 86400000;
+    return Array.from({ length: 8 }, (_, i) => {
+      const start = thisMonday - (7 - i) * weekMs;
+      const end = start + weekMs;
+      const count = history.filter(w => {
+        const t = Number(w.startTime || w.endTime);
+        return t >= start && t < end;
+      }).length;
+      return { start, count, isCurrent: i === 7 };
+    });
+  }, [history]);
+
   return (
-    <div className="activity-page">
-      {/* Header compatto con freccia indietro */}
-      <header className="activity-page-header">
-        <button
-          type="button"
-          className="activity-back-btn"
-          onClick={() => navigate(-1)}
-          aria-label="Torna indietro"
-        >
-          <ChevronLeft size={24} />
+    <div className="ej-page ac-page">
+      <div className="ej-glow" aria-hidden="true" />
+
+      <header className="ac-header">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round ac-back" onClick={() => navigate(-1)} aria-label="Torna indietro">
+          <ChevronLeft size={20} />
         </button>
-        <h1 className="activity-page-title">Attività</h1>
+        <h1 className="ac-title">Attività</h1>
       </header>
 
-      <main className="activity-page-content">
-        {/* Statistiche compatte - mai tagliate */}
-        <div className="activity-stats-bar">
-          <div className="activity-stat-pill streak-pill">
-            <Flame size={16} className="stat-icon flame-icon" />
-            <span className="stat-label">Streak:</span>
-            <strong className="stat-val flame-val">
-              {streakInfo.currentStreak} {streakInfo.currentStreak === 1 ? 'sett.' : 'sett.'}
-            </strong>
-          </div>
+      {/* Streak hero */}
+      <section className={`ej-card ac-hero ${streakInfo.currentStreak > 0 ? 'is-active' : ''}`}>
+        <Flame size={34} className="ac-hero-flame" fill={streakInfo.currentStreak > 0 ? 'currentColor' : 'none'} />
+        <p className="ac-hero-value">
+          {streakInfo.currentStreak} <span>{streakInfo.currentStreak === 1 ? 'settimana' : 'settimane'}</span>
+        </p>
+        <p className="ac-hero-sub">Settimane consecutive con almeno un allenamento</p>
+      </section>
 
-          <div className="activity-stat-pill">
-            <Trophy size={15} className="stat-icon trophy-icon" />
-            <span className="stat-label">Record:</span>
-            <strong className="stat-val">{streakInfo.highestStreak} sett.</strong>
-          </div>
+      {/* Stats */}
+      <div className="ac-stats">
+        <div className="ej-card ac-stat">
+          <span className="ac-stat-label"><Flame size={13} className="is-streak" /> Streak</span>
+          <strong>{streakInfo.currentStreak} sett.</strong>
+        </div>
+        <div className="ej-card ac-stat">
+          <span className="ac-stat-label"><Trophy size={13} className="is-xp" /> Record</span>
+          <strong>{streakInfo.highestStreak} sett.</strong>
+        </div>
+        <div className="ej-card ac-stat">
+          <span className="ac-stat-label"><Dumbbell size={13} className="is-primary" /> Workout</span>
+          <strong>{yearWorkoutsCount}</strong>
+        </div>
+      </div>
 
-          <div className="activity-stat-pill">
-            <Dumbbell size={15} className="stat-icon dumbbell-icon" />
-            <span className="stat-label">Workout:</span>
-            <strong className="stat-val">{yearWorkoutsCount}</strong>
-          </div>
+      {/* Yearly heatmap */}
+      <section className="ej-card ac-heatmap">
+        <div className="ac-heatmap-head">
+          <span className="ac-year">{currentYear}</span>
+          <span className="ac-year-count">{yearWorkoutsCount} allenamenti</span>
         </div>
 
-        {/* Heatmap dell'anno corrente (senza scroll, 100% integrata) */}
-        <section className="activity-heatmap-card">
-          <div className="activity-year-title">{currentYear}</div>
+        <div className="ac-months" style={{ gridTemplateColumns: `repeat(${weeksGrid.length}, 1fr)` }}>
+          {monthsConfig.map(m => (
+            <span key={m.name} style={{ gridColumn: `${m.gridCol} / span ${m.span}` }}>{m.name}</span>
+          ))}
+        </div>
 
-          {/* Intestazione mesi allineata colonna per colonna alla griglia sottostante */}
-          <div
-            className="activity-months-grid"
-            style={{ gridTemplateColumns: `repeat(${weeksGrid.length}, 1fr)` }}
-          >
-            {monthsConfig.map(m => (
+        <div className="ac-grid">
+          {[0, 1, 2, 3, 4, 5, 6].map(dayRowIdx => (
+            <div key={dayRowIdx} className="ac-grid-row" style={{ gridTemplateColumns: `repeat(${weeksGrid.length}, 1fr)` }}>
+              {weeksGrid.map((week, weekIdx) => {
+                const day = week[dayRowIdx];
+                if (!day || !day.inYear) return <span key={weekIdx} className="ac-dot is-empty" />;
+                let cls = 'ac-dot';
+                if (day.hasWorkout) cls += ' is-workout';
+                else if (day.isFuture) cls += ' is-future';
+                else cls += ' is-rest';
+                if (day.isToday) cls += ' is-today';
+                return <span key={weekIdx} className={cls} />;
+              })}
+            </div>
+          ))}
+        </div>
+
+        <div className="ac-legend">
+          <span><i className="ac-dot is-rest" /> Riposo</span>
+          <span><i className="ac-dot is-workout" /> Allenamento</span>
+        </div>
+      </section>
+
+      {/* Last 8 weeks */}
+      <section className="ej-card ac-weeks">
+        <h3 className="ac-weeks-title">Ultime 8 settimane</h3>
+        <div className="ac-weeks-row">
+          {lastWeeks.map(w => (
+            <div key={w.start} className="ac-week">
               <span
-                key={m.name}
-                className="activity-month-label"
-                style={{
-                  gridColumn: `${m.gridCol} / span ${m.span}`
-                }}
+                className={`ac-week-box ${w.count > 0 ? 'has-workout' : ''} ${w.isCurrent ? 'is-current' : ''}`}
+                style={w.count > 0 ? { '--week-alpha': Math.min(1, 0.3 + w.count * 0.2) } : undefined}
               >
-                {m.name}
+                {w.count > 0 ? w.count : '–'}
               </span>
-            ))}
-          </div>
-
-          {/* Griglia dei 7 giorni x settimane (senza scroll, puramente visiva) */}
-          <div className="activity-grid-fit">
-            {[0, 1, 2, 3, 4, 5, 6].map(dayRowIdx => (
-              <div
-                key={dayRowIdx}
-                className="activity-fit-row"
-                style={{ gridTemplateColumns: `repeat(${weeksGrid.length}, 1fr)` }}
-              >
-                {weeksGrid.map((week, weekIdx) => {
-                  const day = week[dayRowIdx];
-                  if (!day || !day.inYear) {
-                    return <span key={weekIdx} className="activity-fit-dot dot-empty" />;
-                  }
-
-                  let dotClass = 'activity-fit-dot';
-                  if (day.hasWorkout) {
-                    dotClass += ' dot-workout';
-                  } else if (day.isFuture) {
-                    dotClass += ' dot-future';
-                  } else {
-                    dotClass += ' dot-rest';
-                  }
-
-                  if (day.isToday) {
-                    dotClass += ' dot-today';
-                  }
-
-                  return <span key={weekIdx} className={dotClass} />;
-                })}
-              </div>
-            ))}
-          </div>
-
-          {/* Legenda in basso a destra */}
-          <div className="activity-inspo-legend">
-            <div className="activity-legend-item">
-              <span className="activity-legend-circle dot-rest" />
-              <span className="activity-legend-label">Riposo</span>
+              <span className="ac-week-label">{new Date(w.start).toLocaleDateString('it-IT', { day: 'numeric', month: 'numeric' })}</span>
             </div>
-            <div className="activity-legend-item">
-              <span className="activity-legend-circle dot-workout" />
-              <span className="activity-legend-label">Allenamento</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Mini-Tutorial in basso */}
-        <div className="settings-guide-box activity-tutorial-box">
-          <p className="settings-guide-title">
-            <Flame size={15} />
-            <span>Come funziona la streak a settimane?</span>
-          </p>
-          <p className="settings-guide-text">
-            Ogni settimana (Lun–Dom) in cui ti alleni almeno una volta aggiunge <strong>+1 alla streak</strong>. Più sessioni nella stessa settimana mantengono la streak attiva. Se passano <strong>7 giorni consecutivi</strong> dall'ultimo allenamento, la streak si azzera.
-          </p>
+          ))}
         </div>
-      </main>
+      </section>
+
+      {/* How it works */}
+      <section className="ej-card ac-guide">
+        <h3 className="ac-guide-title"><Info size={15} /> Come funziona la streak a settimane?</h3>
+        <p>
+          Ogni settimana (Lun–Dom) in cui ti alleni almeno una volta aggiunge <strong>+1 alla streak</strong>. Più sessioni nella stessa settimana mantengono la streak attiva. Se passano <strong>7 giorni consecutivi</strong> dall'ultimo allenamento, la streak si azzera.
+        </p>
+      </section>
     </div>
   );
 }

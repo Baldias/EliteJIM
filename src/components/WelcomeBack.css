@@ -1,0 +1,170 @@
+/* "Bentornato" dialog (redesign) — tokens from styles/elite.css */
+.wb-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.wb-overlay.is-visible {
+  opacity: 1;
+}
+
+.wb-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 26px 20px 20px;
+  border-radius: var(--r-xl);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid rgba(var(--c-primary-rgb), 0.4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  transform: translateY(20px) scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.wb-overlay.is-visible .wb-card {
+  transform: none;
+}
+
+.wb-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border: none;
+}
+
+.wb-title {
+  margin: 0;
+  text-align: center;
+  font-size: 1.625rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.wb-status {
+  padding: 14px;
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid;
+}
+
+.wb-status h4 {
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.wb-status p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--c-text-muted);
+}
+
+.wb-status.is-active {
+  background: rgba(var(--c-success-rgb), 0.08);
+  border-color: rgba(var(--c-success-rgb), 0.3);
+}
+
+.wb-status.is-active h4 {
+  color: var(--c-success);
+}
+
+.wb-status.is-lost {
+  background: rgba(var(--c-danger-rgb), 0.08);
+  border-color: rgba(var(--c-danger-rgb), 0.3);
+}
+
+.wb-status.is-lost h4 {
+  color: var(--c-danger);
+}
+
+.wb-plan h4 {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.wb-plan h4 svg {
+  color: var(--c-primary);
+}
+
+.wb-plan-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+}
+
+.wb-plan-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8125rem;
+}
+
+.wb-plan-row span {
+  color: var(--c-text-muted);
+}
+
+.wb-plan-row strong {
+  text-align: right;
+  font-weight: 800;
+}
+
+.wb-plan-row strong.is-primary {
+  color: var(--c-primary);
+}
+
+.wb-note {
+  margin: 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+}
+
+.wb-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--c-bg);
+  background: var(--c-primary);
+  border: none;
+}

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Calendar, Clock, ChevronDown, ChevronUp, Edit2, ChevronLeft } from 'lucide-react';
+import { Calendar, Clock, ChevronDown, ChevronUp, Edit2, ChevronLeft, Layers, Trophy } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import './History.css';
 
@@ -47,8 +47,7 @@ function History() {
     return new Date(timestamp).toLocaleDateString('it-IT', {
       weekday: 'short',
       day: 'numeric',
-      month: 'short',
-      year: 'numeric'
+      month: 'short'
     });
   };
 
@@ -82,119 +81,129 @@ function History() {
     return sets;
   };
 
+  // Newest first, grouped by calendar month
+  const months = useMemo(() => {
+    const groups = [];
+    [...history].sort((a, b) => b.startTime - a.startTime).forEach(w => {
+      const d = new Date(w.startTime);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      let g = groups.find(x => x.key === key);
+      if (!g) {
+        g = { key, label: d.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }), workouts: [] };
+        groups.push(g);
+      }
+      g.workouts.push(w);
+    });
+    return groups;
+  }, [history]);
+
   return (
-    <>
-      <header className="app-header" style={{ position: 'relative' }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <ChevronLeft size={28} />
+    <div className="ej-page hs-page">
+      <div className="ej-glow" aria-hidden="true" />
+
+      <header className="hs-header">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round hs-back" onClick={() => navigate(-1)} title="Indietro">
+          <ChevronLeft size={20} />
         </button>
-        <h1 style={{ marginLeft: '32px' }}>Storico</h1>
-        <p className="subtitle" style={{ marginLeft: '32px' }}>I tuoi allenamenti passati</p>
+        <div>
+          <h1 className="hs-title">Storico</h1>
+          <p className="ej-eyebrow">I tuoi allenamenti passati</p>
+        </div>
       </header>
 
-      <main className="app-main history-main">
-        {history.length === 0 ? (
-          <div className="card empty-history">
-            <Calendar size={48} color="var(--primary-color-dim)" style={{ marginBottom: '1rem' }} />
-            <p style={{ color: 'var(--text-muted)' }}>Non hai ancora registrato nessun allenamento.</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Esegui e termina una scheda per vederla qui.</p>
-          </div>
-        ) : (
-          <div className="history-list">
-            {history.map(workout => {
-              const isExpanded = expandedSessions[workout.id];
-              return (
-              <SwipeToDelete key={workout.id} onDelete={(e) => handleDelete(e, workout.id)}>
-                <div className="history-card" onClick={() => toggleSession(workout.id)} style={{ cursor: 'pointer' }}>
-                  <div className="history-header">
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h3 className="history-title">{workout.name}</h3>
-                        <button onClick={(e) => handleEdit(e, workout.id)} style={{ background: 'transparent', border: 'none', color: 'var(--primary-color)', padding: '4px' }}>
-                          <Edit2 size={16} />
-                        </button>
+      {history.length === 0 ? (
+        <div className="ej-card hs-empty">
+          <span className="hs-empty-icon"><Calendar size={28} /></span>
+          <p className="hs-empty-title">Non hai ancora registrato nessun allenamento.</p>
+          <p className="hs-empty-sub">Esegui e termina una scheda per vederla qui.</p>
+        </div>
+      ) : (
+        <>
+          {months.map(month => (
+            <section key={month.key} className="hs-month">
+              <p className="hs-month-label">{month.label}</p>
+
+              {month.workouts.map(workout => {
+                const isExpanded = expandedSessions[workout.id];
+                return (
+                  <SwipeToDelete key={workout.id} onDelete={(e) => handleDelete(e, workout.id)}>
+                    <div className={`ej-card hs-card ${isExpanded ? 'is-open' : ''}`} onClick={() => toggleSession(workout.id)}>
+                      <div className="hs-card-head">
+                        <div className="hs-card-text">
+                          <div className="hs-card-title">
+                            <h3>{workout.name}</h3>
+                            <button type="button" className="ej-icon-btn hs-edit" onClick={(e) => handleEdit(e, workout.id)} title="Modifica sessione">
+                              <Edit2 size={13} />
+                            </button>
+                          </div>
+                          <div className="hs-meta">
+                            <span><Calendar size={12} /> {formatDate(workout.startTime)} · {formatTime(workout.startTime)}</span>
+                            <span><Clock size={12} /> {formatDuration(workout.startTime, workout.endTime)}</span>
+                            <span><Layers size={12} /> {calculateCompletedSets(workout.exercises)} Set</span>
+                          </div>
+                        </div>
+                        {isExpanded ? <ChevronUp size={20} className="hs-chevron" /> : <ChevronDown size={20} className="hs-chevron" />}
                       </div>
-                      <div className="history-date">
-                        <Calendar size={14} /> {formatDate(workout.startTime)} alle {formatTime(workout.startTime)}
+
+                      <div className="hs-exercises">
+                        {workout.exercises.map(ex => {
+                          const visibleSets = ex.sets.filter(s => s.done);
+                          if (visibleSets.length === 0) return null;
+
+                          let bestSetId = null;
+                          let max1Rm = 0;
+                          visibleSets.forEach(s => {
+                            const est = calculateOneRepMax(s.kg, s.reps);
+                            if (est && est > max1Rm) { max1Rm = est; bestSetId = s.id; }
+                          });
+
+                          return (
+                            <div key={ex.id} className="hs-ex">
+                              <div className="hs-ex-head">
+                                <span className="hs-ex-name">{ex.name}</span>
+                                <span className="hs-ex-count">{visibleSets.length} set completati</span>
+                              </div>
+                              {isExpanded && (
+                                <div className="hs-table">
+                                  <div className="hs-thead">
+                                    <span>Set</span>
+                                    <span>Kg</span>
+                                    <span>Reps</span>
+                                    <span>1RM Est.</span>
+                                  </div>
+                                  {visibleSets.map((set, setIdx) => {
+                                    const est1rm = calculateOneRepMax(set.kg, set.reps);
+                                    const isBest = set.id === bestSetId && max1Rm > 0;
+                                    return (
+                                      <div key={set.id} className={`hs-row ${isBest ? 'is-best' : ''}`}>
+                                        <span className="hs-row-num">
+                                          {set.isDropset ? <span className="hs-drop">Drop</span> : setIdx + 1}
+                                        </span>
+                                        <span>{set.kg || '-'}</span>
+                                        <span>{set.reps || '-'}</span>
+                                        <span className="hs-row-rm">
+                                          {isBest && <Trophy size={11} />}
+                                          {est1rm ? est1rm.toFixed(1) : '-'}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  </div>
-
-                <div className="history-stats">
-                  <div className="stat-pill">
-                    <Clock size={16} />
-                    <span>{formatDuration(workout.startTime, workout.endTime)}</span>
-                  </div>
-                  <div className="stat-pill" style={{backgroundColor: 'var(--success-color-dim)', color: 'var(--success-color)'}}>
-                    <span>{calculateCompletedSets(workout.exercises)} Set</span>
-                  </div>
-                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}>
-                    {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  </div>
-                </div>
-
-                <div className="history-exercises">
-                  {workout.exercises.map((ex, exIdx) => {
-                    const visibleSets = ex.sets.filter(s => s.done);
-                    if (visibleSets.length === 0) return null;
-
-                    let bestSetId = null;
-                    let max1Rm = 0;
-                    visibleSets.forEach(s => {
-                       const est = calculateOneRepMax(s.kg, s.reps);
-                       if (est && est > max1Rm) { max1Rm = est; bestSetId = s.id; }
-                    });
-
-                    return (
-                      <div key={ex.id} className="history-ex-container">
-                        <div className="history-ex-header">
-                          <div className="h-ex-title">
-                            <span className="h-ex-num">{exIdx + 1}</span>
-                            <span className="h-ex-name">{ex.name}</span>
-                          </div>
-                          <span className="h-ex-details">{visibleSets.length} set completati</span>
-                        </div>
-                        {isExpanded && (
-                          <div className="history-ex-sets-table">
-                            <div className="history-set-thead">
-                              <span>Set</span>
-                              <span>kg</span>
-                              <span>Reps</span>
-                              <span style={{ textAlign: 'right' }}>1RM Est.</span>
-                            </div>
-                            {visibleSets.map((set, setIdx) => {
-                              const est1rm = calculateOneRepMax(set.kg, set.reps);
-                              const isBest = set.id === bestSetId && max1Rm > 0;
-                              return (
-                                <div key={set.id} className={`history-set-trow ${isBest ? 'best-set' : ''} ${set.isDropset ? 'drop-set' : ''}`}>
-                                  <span className="set-col-num">
-                                    {set.isDropset ? <span className="drop-badge">Drop</span> : setIdx + 1}
-                                  </span>
-                                  <span className="set-col-data">{set.kg || '-'}</span>
-                                  <span className="set-col-data">{set.reps || '-'}</span>
-                                  <span className="set-col-1rm">
-                                    {est1rm ? est1rm.toFixed(1) : '-'}
-                                    {isBest && <span className="best-badge" title="Miglior Set">🏆</span>}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  </div>
-                </div>
-              </SwipeToDelete>
-            )})}
-          </div>
-        )}
-      </main>
-    </>
+                  </SwipeToDelete>
+                );
+              })}
+            </section>
+          ))}
+          <p className="hs-hint">← Scorri una sessione verso sinistra per eliminarla</p>
+        </>
+      )}
+    </div>
   );
 }
 

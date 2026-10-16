@@ -935,3 +935,359 @@
 
 
 
+
+/* ─────────────────────────────────────────────────────────────
+   Settings (redesign) — tokens from styles/elite.css.
+   Legacy rules above are still used by other screens.
+   ───────────────────────────────────────────────────────────── */
+.st-page {
+  gap: 14px;
+}
+
+.st-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.st-back {
+  color: var(--c-text);
+}
+
+.st-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.st-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.st-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  text-align: left;
+  color: var(--c-text);
+}
+
+button.st-row {
+  cursor: pointer;
+}
+
+.st-row-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.st-row-icon.is-ai { color: #C77DFF; background: rgba(175, 82, 222, 0.18); }
+.st-row-icon.is-primary { color: var(--c-primary); background: rgba(var(--c-primary-rgb), 0.14); }
+.st-row-icon.is-science { color: var(--c-success); background: rgba(var(--c-success-rgb), 0.14); }
+
+.st-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.st-row-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.st-row-sub {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--c-text-muted);
+}
+
+.st-new {
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.5625rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #C77DFF;
+  background: rgba(175, 82, 222, 0.2);
+}
+
+.st-row-chevron {
+  color: var(--c-text-dim);
+  flex-shrink: 0;
+}
+
+/* Switch */
+.st-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+  border: none;
+  transition: background 0.25s ease;
+}
+
+.st-switch > span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.st-switch.is-on {
+  background: var(--c-success);
+}
+
+.st-switch.is-on > span {
+  transform: translateX(18px);
+}
+
+/* Disclosure */
+.st-disclosure {
+  padding: 0 4px;
+}
+
+.st-disclosure-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--c-primary);
+  background: none;
+  border: none;
+}
+
+.st-disclosure-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.st-disclosure-btn svg.is-open {
+  transform: rotate(180deg);
+}
+
+.st-disclosure-text {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--c-text-muted);
+}
+
+/* Backup hub */
+.st-backup {
+  padding: 18px;
+  border-radius: var(--r-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.st-backup-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.st-backup-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.st-status {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+}
+
+.st-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.st-status-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.st-status-label strong {
+  color: var(--c-text);
+  font-size: 0.8125rem;
+}
+
+.st-status-label small {
+  font-size: 0.6875rem;
+}
+
+.st-status-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--c-text);
+  text-align: right;
+}
+
+.st-status-value.is-good {
+  color: var(--c-success);
+}
+
+.st-badge {
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.st-badge.is-good { color: var(--c-success); background: rgba(var(--c-success-rgb), 0.15); }
+.st-badge.is-warn { color: var(--c-xp); background: rgba(var(--c-xp-rgb), 0.15); }
+
+.st-persist-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.1);
+  border: none;
+}
+
+.st-reminder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.st-reminder-head .st-status-label {
+  white-space: normal;
+  flex-shrink: 1;
+}
+
+.st-reminder-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.st-segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--c-surface-2);
+}
+
+.st-segmented button {
+  flex: 1;
+  padding: 8px 4px;
+  border-radius: 9px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  background: none;
+  border: none;
+}
+
+.st-segmented button.is-active {
+  font-weight: 800;
+  color: var(--c-bg);
+  background: var(--c-primary);
+}
+
+.st-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.st-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--c-text);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+}
+
+.st-action.is-primary {
+  color: var(--c-bg);
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+
+.st-action.is-done {
+  background: var(--c-success);
+  border-color: var(--c-success);
+}
+
+.st-guide {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(var(--c-primary-rgb), 0.06);
+}
+
+.st-guide-title {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.st-guide-text {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  color: var(--c-text-muted);
+}
+
+.st-guide-text strong {
+  color: var(--c-text);
+}
