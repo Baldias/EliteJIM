@@ -1,0 +1,233 @@
+/* ─────────────────────────────────────────────────────────────
+   EliteJIM design system (Figma: "EliteJIM — New Design")
+   Tokens + shared building blocks for redesigned pages.
+   Legacy pages still use the variables in index.css.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --c-bg: #07090C;
+  --c-surface: #11151B;
+  --c-surface-2: #1A2028;
+  --c-border: #252C36;
+  --c-primary: #00B4E6;
+  --c-primary-rgb: 0, 180, 230;
+  --c-primary-deep: #007EA7;
+  --c-accent: #FF6A3D;
+  --c-accent-rgb: 255, 106, 61;
+  --c-success: #30D158;
+  --c-success-rgb: 48, 209, 88;
+  --c-streak: #FF9F0A;
+  --c-streak-rgb: 255, 159, 10;
+  --c-xp: #FFD60A;
+  --c-xp-rgb: 255, 214, 10;
+  --c-danger: #FF453A;
+  --c-danger-rgb: 255, 69, 58;
+  --c-text: #F5F7FA;
+  --c-text-muted: #8A94A3;
+  --c-text-dim: #5A6370;
+
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 24px;
+}
+
+/* ── Page shell ─────────────────────────────────────────────── */
+.ej-page {
+  position: relative;
+  min-height: 100dvh;
+  /* .app-container already reserves 90px for the bottom nav */
+  padding: max(3.5rem, calc(env(safe-area-inset-top) + 2rem)) 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+.ej-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ej-page .ej-glow {
+  position: absolute;
+  z-index: 0;
+  top: -170px;
+  left: 50%;
+  width: 360px;
+  height: 260px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(var(--glow-rgb, var(--c-primary-rgb)), var(--glow-opacity, 0.3));
+  filter: blur(110px);
+  pointer-events: none;
+}
+
+.ej-eyebrow {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--c-text-muted);
+}
+
+.ej-title {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--c-text);
+}
+
+.ej-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ej-section-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--c-text);
+}
+
+/* ── Surfaces ───────────────────────────────────────────────── */
+.ej-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 16px;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.ej-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.ej-btn--primary {
+  background: var(--c-primary);
+  color: var(--c-bg);
+}
+
+.ej-btn--secondary {
+  background: var(--c-surface-2);
+  border-color: var(--c-border);
+  color: var(--c-text);
+  font-weight: 700;
+}
+
+.ej-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  border: 1px solid transparent;
+}
+
+.ej-icon-btn--round {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border-color: var(--c-border);
+  color: var(--c-text-muted);
+}
+
+.ej-icon-btn--danger {
+  background: rgba(var(--c-danger-rgb), 0.1);
+  color: var(--c-danger);
+}
+
+.ej-icon-btn--primary {
+  background: rgba(var(--c-primary-rgb), 0.1);
+  color: var(--c-primary);
+}
+
+/* ── Chips / pills ──────────────────────────────────────────── */
+.ej-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ej-chip.is-active {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-bg);
+  font-weight: 800;
+}
+
+.ej-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.ej-pill--up {
+  background: rgba(var(--c-success-rgb), 0.14);
+  color: var(--c-success);
+}
+
+.ej-pill--down {
+  background: rgba(var(--c-danger-rgb), 0.14);
+  color: var(--c-danger);
+}
+
+.ej-pill--flat {
+  background: var(--c-surface-2);
+  color: var(--c-text-muted);
+}
+
+/* ── Progress track ─────────────────────────────────────────── */
+.ej-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--c-surface-2);
+  overflow: hidden;
+}
+
+.ej-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c-xp);
+  transition: width 0.6s ease;
+}
+
+.ej-footer-version {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--c-text-dim);
+}

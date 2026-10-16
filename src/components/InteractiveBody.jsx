@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Model from 'react-body-highlighter';
 import { useStore } from '../store/useStore';
 import './InteractiveBody.css';
@@ -99,6 +99,8 @@ const INTENSITY_COLORS = [
   '#5ce1e6'  // Intensity 5 (20+ sets) - Neon cyan
 ];
 
+const INTENSITY_LEGEND = ['1-4', '5-9', '10-14', '15-19', '20+'];
+
 const getIntensity = (sets) => {
   if (sets < 5) return 1;
   if (sets < 10) return 2;
@@ -108,7 +110,6 @@ const getIntensity = (sets) => {
 };
 
 export const InteractiveBody = () => {
-  const [isFlipped, setIsFlipped] = useState(false);
   const history = useStore(state => state.history);
   const customExercises = useStore(state => state.customExercises);
   const exerciseOverrides = useStore(state => state.exerciseOverrides);
@@ -147,38 +148,31 @@ export const InteractiveBody = () => {
   }, [history, allExercises]);
 
   return (
-    <div className="interactive-body-container">
+    <div className="ej-card interactive-body-container">
       <div className="ib-header">
-        <div>
-          <h3>Mappa Muscolare</h3>
-          <p>Gruppi allenati negli ultimi 7 giorni</p>
-        </div>
+        <h3>Mappa Muscolare</h3>
+        <p>Gruppi allenati negli ultimi 7 giorni</p>
       </div>
 
-      <div className="ib-scene" onClick={() => setIsFlipped(!isFlipped)}>
-        <div className={`ib-card-inner ${isFlipped ? 'is-flipped' : ''}`}>
+      <div className="ib-views">
+        <figure className="ib-view">
+          <Model data={workoutData} type="anterior" highlightedColors={INTENSITY_COLORS} />
+          <figcaption>Vista Frontale</figcaption>
+        </figure>
+        <figure className="ib-view">
+          <Model data={workoutData} type="posterior" highlightedColors={INTENSITY_COLORS} />
+          <figcaption>Vista Posteriore</figcaption>
+        </figure>
+      </div>
 
-          <div className="ib-card-face ib-card-front">
-            <Model
-              data={workoutData}
-              style={{ width: '100%', height: '100%', padding: '1rem' }}
-              type="anterior"
-              highlightedColors={INTENSITY_COLORS}
-            />
-            <span className="ib-label">Vista Frontale</span>
-          </div>
-
-          <div className="ib-card-face ib-card-back">
-            <Model
-              data={workoutData}
-              style={{ width: '100%', height: '100%', padding: '1rem' }}
-              type="posterior"
-              highlightedColors={INTENSITY_COLORS}
-            />
-            <span className="ib-label">Vista Posteriore</span>
-          </div>
-
-        </div>
+      <div className="ib-legend">
+        <span className="ib-legend-label">Serie:</span>
+        {INTENSITY_LEGEND.map((label, i) => (
+          <span key={label} className="ib-legend-item">
+            <span className="ib-legend-swatch" style={{ background: INTENSITY_COLORS[i] }} />
+            {label}
+          </span>
+        ))}
       </div>
     </div>
   );

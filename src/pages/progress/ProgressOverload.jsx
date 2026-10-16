@@ -1,40 +1,71 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { EXERCISE_CATEGORIES, EXERCISES_DB, getAllExercises, getExerciseCategories } from '../../data/exercises';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { EXERCISE_CATEGORIES, getAllExercises, getExerciseCategories } from '../../data/exercises';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { getMuscleLevelByXp } from '../../utils/gamification';
-import { Zap } from 'lucide-react';
+import { Zap, Search, Trophy, TrendingUp, TrendingDown } from 'lucide-react';
 import './ProgressOverload.css';
+
+// Epley estimated 1RM
+const calculateOneRepMax = (weight, reps) => {
+    const w = parseFloat(weight);
+    const r = parseInt(reps, 10);
+    if (!w || !r || w <= 0 || r <= 0) return null;
+    if (r === 1) return w;
+    return w * (1 + r / 30);
+};
+
+const round1 = (n) => Math.round(n * 10) / 10;
+const fmtNum = (n) => round1(n).toLocaleString('it-IT', { maximumFractionDigits: 1 });
+const fmtSigned = (n) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${fmtNum(Math.abs(n))}`;
+const fmtShortDate = (t) => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '');
+const fmtAxisDate = (t) => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'numeric' });
+
+function ChartTooltip({ active, payload, unit }) {
+    if (!active || !payload || !payload.length) return null;
+    const d = payload[0].payload;
+    return (
+        <div className="pg-tooltip">
+            <p className="pg-tooltip-date">{fmtShortDate(d.time)}</p>
+            <p className="pg-tooltip-value">{fmtNum(d.value)} {unit}</p>
+            <p className="pg-tooltip-set">{d.kg > 0 ? `${fmtNum(d.kg)}kg × ${d.reps}` : `${d.reps} reps`}</p>
+            {d.isPR && <p className="pg-tooltip-pr"><Trophy size={11} /> Nuovo PR</p>}
+        </div>
+    );
+}
+
+function ChartDot({ cx, cy, payload }) {
+    if (cx == null || cy == null) return null;
+    if (payload.isPR) {
+        return <circle cx={cx} cy={cy} r={5} fill="var(--c-streak)" stroke="var(--c-bg)" strokeWidth={2} />;
+    }
+    return <circle cx={cx} cy={cy} r={3.5} fill="var(--c-bg)" stroke="var(--c-primary)" strokeWidth={2} />;
+}
 
 function ProgressOverload() {
     const history = useStore(state => state.history);
     const customExercises = useStore(state => state.customExercises || []);
     const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
     const muscleXP = useStore(state => state.muscleXP) || {};
-    
+
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedExercise, setSelectedExercise] = useState('');
 
-    // Get all categories as an array of { key, label }
     const categories = Object.entries(EXERCISE_CATEGORIES).map(([key, label]) => ({ key, label }));
 
     const allExercisesDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
-    // Extract unique exercises from history, optionally filtered by category
+    // Unique completed exercises, optionally filtered by muscle group
     const availableExercises = useMemo(() => {
         const exSet = new Set();
         history.forEach(workout => {
             workout.exercises.forEach(ex => {
-                if (ex.sets.some(s => s.done)) {
-                    exSet.add(ex.name);
-                }
+                if (ex.sets.some(s => s.done)) exSet.add(ex.name);
             });
         });
 
         let arr = Array.from(exSet);
-
-        // Filter by selected muscle group
         if (selectedCategory) {
             const categoryLabel = EXERCISE_CATEGORIES[selectedCategory];
             const categoryExNames = allExercisesDB
@@ -42,337 +73,269 @@ function ProgressOverload() {
                 .map(e => e.name);
             arr = arr.filter(name => categoryExNames.includes(name));
         }
-
         return arr.sort();
     }, [history, selectedCategory, allExercisesDB]);
 
-    // Auto-select first exercise when filter changes
-    useMemo(() => {
-        if (availableExercises.length > 0 && !availableExercises.includes(selectedExercise)) {
-            setSelectedExercise(availableExercises[0]);
-        }
-    }, [availableExercises]);
+    // Fall back to the first exercise when the filter hides the current pick
+    const currentExercise = availableExercises.includes(selectedExercise)
+        ? selectedExercise
+        : (availableExercises[0] || '');
 
-    const calculateOneRepMax = (weight, reps) => {
-        const w = parseFloat(weight);
-        const r = parseInt(reps, 10);
-        if (!w || !r || w <= 0 || r <= 0) return null;
-        if (r === 1) return w;
-        return w * (1 + r / 30);
-    };
-
-    const getMonday = (date) => {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = d.getDate() - (day === 0 ? 6 : day - 1);
-        const monday = new Date(d.setDate(diff));
-        monday.setHours(0, 0, 0, 0);
-        return monday;
-    };
-
-    const chartData = useMemo(() => {
-        if (!selectedExercise) return [];
-        
-        // Aggregazione per settimana
-        const weeklyMap = new Map();
-
+    // One point per session: the best set by estimated 1RM (reps for bodyweight work)
+    const sessions = useMemo(() => {
+        if (!currentExercise) return [];
+        const list = [];
         history.forEach(workout => {
-            const ex = workout.exercises.find(e => e.name === selectedExercise);
+            const ex = workout.exercises.find(e => e.name === currentExercise);
             if (!ex) return;
-            const doneSets = ex.sets.filter(s => s.done);
-            if (doneSets.length === 0) return;
-
-            const monday = getMonday(workout.startTime);
-            const timeKey = monday.getTime();
-
-            if (!weeklyMap.has(timeKey)) {
-                weeklyMap.set(timeKey, {
-                    monday: monday,
-                    setsCount: 0,
-                    tonnage: 0,
-                    max1RM: 0,
-                    maxReps: 0
-                });
-            }
-
-            const week = weeklyMap.get(timeKey);
-            doneSets.forEach(s => {
-                const w = parseFloat(s.kg) || 0;
-                const r = parseInt(s.reps, 10) || 0;
-                
-                week.tonnage += (w * r);
-                week.setsCount += 1;
-                
-                const rm = calculateOneRepMax(w, r);
-                if (rm > week.max1RM) week.max1RM = rm;
-                if (r > week.maxReps) week.maxReps = r;
+            let best = null;
+            ex.sets.filter(s => s.done).forEach(s => {
+                const kg = parseFloat(s.kg) || 0;
+                const reps = parseInt(s.reps, 10) || 0;
+                if (reps <= 0) return;
+                const rm = calculateOneRepMax(kg, reps);
+                const better = !best
+                    || (rm || 0) > (best.rm || 0)
+                    || (!rm && !best.rm && reps > best.reps);
+                if (better) best = { kg, reps, rm };
             });
+            if (best) list.push({ time: workout.startTime, ...best });
         });
+        list.sort((a, b) => a.time - b.time);
 
-        const dataPoints = Array.from(weeklyMap.values()).map(week => {
-            const start = week.monday;
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
-
-            const startDay = start.getDate();
-            const endDay = end.getDate();
-            const startMonth = start.toLocaleString('it-IT', { month: 'short' }).replace('.', '');
-            const endMonth = end.toLocaleString('it-IT', { month: 'short' }).replace('.', '');
-
-            const label = startMonth === endMonth 
-                ? `${startDay}-${endDay} ${startMonth}`
-                : `${startDay} ${startMonth}-${endDay} ${endMonth}`;
-
-            return {
-                date: label,
-                timestamp: start.getTime(),
-                setsCount: week.setsCount,
-                oneRepMax: parseFloat(week.max1RM.toFixed(1)),
-                maxReps: week.maxReps,
-                tonnage: parseFloat(week.tonnage.toFixed(1))
-            };
+        const hasLoad = list.some(s => s.rm);
+        let runningMax = 0;
+        return list.map((s, i) => {
+            const value = hasLoad ? round1(s.rm || 0) : s.reps;
+            const prev = i > 0 ? (hasLoad ? round1(list[i - 1].rm || 0) : list[i - 1].reps) : null;
+            const isPR = i > 0 && value > runningMax;
+            runningMax = Math.max(runningMax, value);
+            return { ...s, value, delta: prev == null ? null : round1(value - prev), isPR };
         });
+    }, [history, currentExercise]);
 
-        return dataPoints.sort((a, b) => a.timestamp - b.timestamp);
-    }, [history, selectedExercise]);
+    const hasLoad = sessions.some(s => s.rm);
+    const unit = hasLoad ? 'kg' : 'reps';
 
-    const insights = useMemo(() => {
-        if (chartData.length === 0) return null;
-        
-        const validPRs = chartData.map(d => d.oneRepMax).filter(val => val > 0);
-        const pb = validPRs.length > 0 ? Math.max(...validPRs) : 0;
-        const last1RM = chartData[chartData.length - 1].oneRepMax;
-        
-        let volumeProgress = { text: '0%', isPositive: true };
-        const lastTonnage = chartData[chartData.length - 1].tonnage;
+    const summary = useMemo(() => {
+        if (sessions.length === 0) return null;
+        const last = sessions[sessions.length - 1];
+        const best = Math.max(...sessions.map(s => s.value));
+        let streak = 0;
+        for (let i = sessions.length - 1; i >= 1 && sessions[i].delta > 0; i--) streak++;
+        const step = last.kg > 0 && last.kg < 20 ? 1 : 2.5;
+        const nextTarget = last.kg > 0 ? `${fmtNum(last.kg)}kg × ${last.reps + 1}` : `${last.reps + 1} reps`;
+        const altTarget = last.kg > 0 ? `${fmtNum(last.kg + step)}kg × ${last.reps}` : null;
+        return { last, best, streak, nextTarget, altTarget };
+    }, [sessions]);
 
-        if (chartData.length >= 2) {
-            const prevTonnage = chartData[chartData.length - 2].tonnage;
-            if (prevTonnage > 0) {
-                const diff = lastTonnage - prevTonnage;
-                const percent = (diff / prevTonnage) * 100;
-                volumeProgress = {
-                    text: `${percent > 0 ? '+' : ''}${percent.toFixed(1)}%`,
-                    isPositive: percent >= 0
-                };
-            }
-        }
-
-        return {
-            pb: pb > 0 ? `${pb}kg` : chartData[chartData.length - 1].maxReps + ' reps',
-            last: last1RM > 0 ? `${last1RM}kg` : '-',
-            volume: lastTonnage > 0 ? `${lastTonnage}kg` : '0kg',
-            volumeProgress
-        };
-    }, [chartData]);
-
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            const data = payload[0].payload;
-            const showsReps = data.oneRepMax === 0 && data.maxReps > 0;
-
-            return (
-                <div className="custom-tooltip glass">
-                    <p className="label">{label}</p>
-                    <div className="tooltip-content">
-                        {showsReps ? (
-                            <div className="tooltip-row">
-                                <span className="dot reps"></span>
-                                <span className="val">Max Reps: {data.maxReps}</span>
-                            </div>
-                        ) : (
-                            <div className="tooltip-row">
-                                <span className="dot rm"></span>
-                                <span className="val">1RM Est: {data.oneRepMax}kg</span>
-                            </div>
-                        )}
-                        {data.tonnage > 0 && (
-                            <div className="tooltip-row">
-                                <span className="dot volume" style={{ backgroundColor: 'var(--accent-color)' }}></span>
-                                <span className="val">Volume: {data.tonnage}kg</span>
-                            </div>
-                        )}
-                        <div className="tooltip-row">
-                            <span className="dot sets" style={{ backgroundColor: 'var(--text-muted)' }}></span>
-                            <span className="val">Serie: {data.setsCount}</span>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        return null;
-    };
+    const log = useMemo(() => sessions.slice(-6).reverse(), [sessions]);
 
     return (
-        <>
-            <header className="app-header">
-                <div className="header-content">
-                    <h1>Progressi</h1>
-                    <p className="subtitle">Performance & Insight</p>
-                </div>
+        <div className="ej-page pg-page">
+            <div className="ej-glow" aria-hidden="true" />
+
+            <header>
+                <h1 className="ej-title">Progressi</h1>
+                <p className="ej-eyebrow">Sovraccarico progressivo &amp; 1RM</p>
             </header>
 
-            <main className="app-main">
-                {/* Muscle Group Chips */}
-                <div className="muscle-chips-container">
+            {/* Muscle group chips */}
+            <div className="pg-chips">
+                <button type="button" className={`ej-chip ${!selectedCategory ? 'is-active' : ''}`} onClick={() => setSelectedCategory(null)}>
+                    Tutti
+                </button>
+                {categories.map(({ key, label }) => (
                     <button
-                        className={`muscle-chip ${!selectedCategory ? 'active' : ''}`}
-                        onClick={() => setSelectedCategory(null)}
+                        type="button"
+                        key={key}
+                        className={`ej-chip ${selectedCategory === key ? 'is-active' : ''}`}
+                        onClick={() => setSelectedCategory(selectedCategory === key ? null : key)}
                     >
-                        Tutti
+                        {label}
                     </button>
-                    {categories.map(({ key, label }) => {
-                        return (
-                            <button
-                                key={key}
-                                className={`muscle-chip ${selectedCategory === key ? 'active' : ''}`}
-                                onClick={() => setSelectedCategory(selectedCategory === key ? null : key)}
-                            >
-                                <span>{label}</span>
-                            </button>
-                        );
-                    })}
-                </div>
+                ))}
+            </div>
 
-                {/* Muscle Levels Info Box — only visible when a specific muscle group is selected */}
-                {selectedCategory && (
-                <div style={{ marginBottom: '2rem', padding: '1rem', background: 'rgba(255, 204, 0, 0.05)', borderRadius: '16px', border: '1px solid rgba(255, 204, 0, 0.2)' }}>
-                    <h3 style={{ fontSize: '1.1rem', color: '#ffcc00', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
-                        <Zap size={20} />
-                        Livelli RPG
-                    </h3>
-                    <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                        {Object.entries(EXERCISE_CATEGORIES)
-                            .filter(([key]) => !selectedCategory || selectedCategory === key)
-                            .map(([key, label]) => {
-                                const xp = muscleXP[label] || 0;
-                                const levelData = getMuscleLevelByXp(xp);
-                                
-                                return (
-                                    <div key={key} style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '12px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
-                                            <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{label}</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{xp} XP</span>
-                                                <span style={{ fontSize: '1rem', fontWeight: '800', color: '#ffcc00' }}>Lv. {levelData.level}</span>
-                                            </div>
-                                        </div>
-                                        <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                                            <div style={{ 
-                                                height: '100%', 
-                                                width: `${levelData.progressPercent}%`, 
-                                                background: 'linear-gradient(90deg, var(--primary-color) 0%, #ffcc00 100%)', 
-                                                borderRadius: '3px'
-                                            }}></div>
+            {/* RPG level of the selected muscle group */}
+            {selectedCategory && (() => {
+                const label = EXERCISE_CATEGORIES[selectedCategory];
+                const xp = muscleXP[label] || 0;
+                const levelData = getMuscleLevelByXp(xp);
+                return (
+                    <div className="ej-card pg-rpg">
+                        <h3 className="pg-rpg-title"><Zap size={18} /> Livelli RPG</h3>
+                        <div className="pg-rpg-level">
+                            <div className="pg-rpg-row">
+                                <span className="pg-rpg-name">{label}</span>
+                                <span className="pg-rpg-meta">
+                                    <span>{xp.toLocaleString('it-IT')} XP</span>
+                                    <strong>Lv. {levelData.level}</strong>
+                                </span>
+                            </div>
+                            <div className="ej-track"><span style={{ width: `${levelData.progressPercent}%` }} /></div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {availableExercises.length === 0 ? (
+                <div className="ej-card pg-empty">
+                    {selectedCategory
+                        ? `Nessun esercizio completato per ${EXERCISE_CATEGORIES[selectedCategory]}.`
+                        : 'Nessun dato disponibile. Inizia ad allenarti per vedere i tuoi progressi!'}
+                </div>
+            ) : (
+                <>
+                    <div className="pg-search">
+                        <Search size={18} className="pg-search-icon" />
+                        <ExerciseAutocomplete
+                            value={currentExercise}
+                            onChange={(val) => setSelectedExercise(val)}
+                            options={availableExercises}
+                            placeholder="Cerca esercizio..."
+                        />
+                    </div>
+
+                    {summary && (
+                        <>
+                            {/* 1RM hero + chart */}
+                            <section className="ej-card pg-hero">
+                                <div className="pg-hero-head">
+                                    <div>
+                                        <p className="pg-kicker">{hasLoad ? '1RM stimato · Epley' : 'Ripetizioni massime'}</p>
+                                        <p className="pg-hero-value">
+                                            {fmtNum(summary.last.value)} <span>{unit}</span>
+                                        </p>
+                                    </div>
+                                    {summary.last.isPR && (
+                                        <span className="pg-pr-badge"><Trophy size={14} /> Nuovo PR</span>
+                                    )}
+                                </div>
+
+                                <div className="pg-chart">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={sessions} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="pgArea" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="var(--c-primary)" stopOpacity={0.3} />
+                                                    <stop offset="100%" stopColor="var(--c-primary)" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                            <XAxis
+                                                dataKey="time"
+                                                tickFormatter={fmtAxisDate}
+                                                stroke="var(--c-text-dim)"
+                                                fontSize={10}
+                                                tickMargin={10}
+                                                axisLine={false}
+                                                tickLine={false}
+                                                minTickGap={16}
+                                            />
+                                            <YAxis
+                                                stroke="var(--c-text-dim)"
+                                                fontSize={10}
+                                                axisLine={false}
+                                                tickLine={false}
+                                                domain={[(min) => Math.floor(min - 2), (max) => Math.ceil(max + 2)]}
+                                                allowDecimals={false}
+                                            />
+                                            <Tooltip content={<ChartTooltip unit={unit} />} cursor={{ stroke: 'rgba(255,255,255,0.15)' }} />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="value"
+                                                stroke="var(--c-primary)"
+                                                strokeWidth={3}
+                                                fill="url(#pgArea)"
+                                                dot={<ChartDot />}
+                                                activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--c-primary)' }}
+                                                animationDuration={900}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                <div className="pg-legend">
+                                    <span><i style={{ background: 'var(--c-primary)' }} /> {hasLoad ? '1RM stimato' : 'Reps'}</span>
+                                    <span><i style={{ background: 'var(--c-streak)' }} /> Nuovo PR</span>
+                                </div>
+                            </section>
+
+                            {/* Insights */}
+                            <div className="pg-insights">
+                                <div className="ej-card pg-insight">
+                                    <span className="pg-insight-label">Personal Best</span>
+                                    <span className="pg-insight-value is-primary">{fmtNum(summary.best)}{unit === 'kg' ? 'kg' : ''}</span>
+                                    <span className="pg-insight-sub">{hasLoad ? '1RM stimato' : 'reps'}</span>
+                                </div>
+                                <div className="ej-card pg-insight">
+                                    <span className="pg-insight-label">Ultima Sessione</span>
+                                    <span className="pg-insight-value">
+                                        {summary.last.kg > 0 ? `${fmtNum(summary.last.kg)}kg × ${summary.last.reps}` : `${summary.last.reps} reps`}
+                                    </span>
+                                    <span className="pg-insight-sub">{fmtShortDate(summary.last.time)}</span>
+                                </div>
+                                <div className="ej-card pg-insight">
+                                    <span className="pg-insight-label">Overload</span>
+                                    <span className={`pg-insight-value ${summary.last.delta > 0 ? 'is-up' : summary.last.delta < 0 ? 'is-down' : ''}`}>
+                                        {summary.last.delta == null ? '—' : `${fmtSigned(summary.last.delta)}${unit === 'kg' ? 'kg' : ''}`}
+                                    </span>
+                                    <span className="pg-insight-sub">vs sessione prec.</span>
+                                </div>
+                            </div>
+
+                            {/* Overload status */}
+                            {sessions.length >= 2 && (
+                                summary.streak > 0 ? (
+                                    <div className="pg-status is-up">
+                                        <span className="pg-status-icon"><TrendingUp size={20} /></span>
+                                        <div>
+                                            <p className="pg-status-title">
+                                                {summary.streak === 1 ? 'Overload nell\'ultima sessione' : `${summary.streak} sessioni di fila in overload`}
+                                            </p>
+                                            <p className="pg-status-sub">Prossimo obiettivo: {summary.nextTarget}{summary.altTarget ? ` o ${summary.altTarget}` : ''}</p>
                                         </div>
                                     </div>
-                                );
-                            })}
-                    </div>
-                </div>
-                )}
+                                ) : (
+                                    <div className="pg-status is-flat">
+                                        <span className="pg-status-icon"><TrendingDown size={20} /></span>
+                                        <div>
+                                            <p className="pg-status-title">Nessun overload nell'ultima sessione</p>
+                                            <p className="pg-status-sub">Per sbloccarlo punta a {summary.nextTarget}{summary.altTarget ? ` o ${summary.altTarget}` : ''}</p>
+                                        </div>
+                                    </div>
+                                )
+                            )}
 
-                {availableExercises.length === 0 ? (
-                    <div className="card glass no-data-msg">
-                        {selectedCategory
-                            ? `Nessun esercizio completato per ${EXERCISE_CATEGORIES[selectedCategory]}.`
-                            : 'Nessun dato disponibile. Inizia ad allenarti per vedere i tuoi progressi!'}
-                    </div>
-                ) : (
-                    <>
-                        <div className="exercise-picker-row">
-                            <ExerciseAutocomplete
-                                value={selectedExercise}
-                                onChange={(val) => setSelectedExercise(val)}
-                                options={availableExercises}
-                                placeholder="Cerca esercizio..."
-                            />
-                        </div>
-
-                        {insights && (
-                            <div className="insights-grid">
-                                <div className="insight-card">
-                                    <span className="insight-label">Personal Best</span>
-                                    <span className="insight-value primary">{insights.pb}</span>
-                                </div>
-                                <div className="insight-card">
-                                    <span className="insight-label">Ultima Sessione</span>
-                                    <span className="insight-value">{insights.last}</span>
-                                </div>
-                                <div className="insight-card">
-                                    <span className="insight-label">Volume (Trend)</span>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                                        <span className="insight-value">{insights.volume}</span>
-                                        {insights.volume !== '0kg' && (
-                                            <span style={{ 
-                                                fontSize: '0.8rem', 
-                                                fontWeight: '600',
-                                                color: insights.volumeProgress.isPositive ? 'var(--success-color)' : 'var(--error-color)' 
-                                            }}>
-                                                {insights.volumeProgress.text}
+                            {/* Session log */}
+                            <h2 className="ej-section-title">Storico sovraccarico</h2>
+                            <div className="ej-card pg-log">
+                                {log.map((s) => (
+                                    <div key={s.time} className="pg-log-row">
+                                        <span className="pg-log-date">{fmtShortDate(s.time)}</span>
+                                        <div className="pg-log-main">
+                                            <span className="pg-log-set">{s.kg > 0 ? `${fmtNum(s.kg)}kg × ${s.reps}` : `${s.reps} reps`}</span>
+                                            <span className="pg-log-cap">Miglior serie</span>
+                                        </div>
+                                        <div className="pg-log-rm">
+                                            <span className="pg-log-set">
+                                                {s.isPR && <Trophy size={12} className="pg-log-trophy" />}
+                                                {fmtNum(s.value)} {unit}
                                             </span>
-                                        )}
+                                            <span className="pg-log-cap">{hasLoad ? '1RM' : 'Reps'}</span>
+                                        </div>
+                                        <span className={`ej-pill ${s.delta == null ? 'ej-pill--flat' : s.delta > 0 ? 'ej-pill--up' : s.delta < 0 ? 'ej-pill--down' : 'ej-pill--flat'}`}>
+                                            {s.delta == null ? 'Inizio' : fmtSigned(s.delta)}
+                                        </span>
                                     </div>
-                                </div>
+                                ))}
                             </div>
-                        )}
-
-                        <div className="card chart-card glass">
-                            <div className="chart-container">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={chartData} margin={{ top: 20, right: 5, left: -25, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorRM" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="var(--primary-color)" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="var(--primary-color)" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                        <XAxis
-                                            dataKey="date"
-                                            stroke="var(--text-muted)"
-                                            fontSize={11}
-                                            tickMargin={12}
-                                            axisLine={false}
-                                            tickLine={false}
-                                        />
-                                        <YAxis
-                                            stroke="var(--text-muted)"
-                                            fontSize={11}
-                                            axisLine={false}
-                                            tickLine={false}
-                                            domain={['auto', 'auto']}
-                                        />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="oneRepMax"
-                                            name="1RM Est."
-                                            stroke="var(--primary-color)"
-                                            strokeWidth={4}
-                                            dot={{ r: 4, strokeWidth: 2, fill: 'var(--surface-color)' }}
-                                            activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--primary-color)' }}
-                                            animationDuration={1500}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="setsCount"
-                                            name="Serie"
-                                            stroke="var(--accent-color)"
-                                            strokeWidth={2}
-                                            strokeDasharray="5 5"
-                                            dot={false}
-                                            activeDot={{ r: 4 }}
-                                            opacity={0.5}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </main>
-        </>
+                        </>
+                    )}
+                </>
+            )}
+        </div>
     );
 }
 
