@@ -13,7 +13,11 @@ import {
   Play, 
   Flame, 
   Trophy, 
-  Info 
+  Info,
+  Rocket,
+  CalendarDays,
+  Dna,
+  Check
 } from 'lucide-react';
 import { getAllExercises, normalizeName } from '../../data/exercises';
 import { 
@@ -166,97 +170,78 @@ function PendingStartScreen({ report, reset }) {
     'advanced': 'Avanzato' 
   }[report.experienceLevel];
 
+  const options = [
+    { key: 'today', icon: Rocket, title: 'Inizia Subito (Oggi)', sub: 'Gli allenamenti di oggi conteranno per la W1' },
+    { key: 'next_monday', icon: Calendar, title: 'Inizia Lunedì Prossimo', sub: nextMonday.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' }) },
+    { key: 'custom', icon: CalendarDays, title: 'Scegli Data di Inizio', sub: 'Seleziona un giorno specifico' }
+  ];
+
   return (
-    <div className="science-container">
-      <div className="pending-start-container">
-        <div className="pending-hero-card">
-          <Zap size={36} color="var(--primary-color)" style={{ marginBottom: '8px' }} />
-          <h2>Protocollo Generato! 🧬</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0 auto 1.5rem', maxWidth: '340px' }}>
-            Il tuo mesociclo di 12 settimane è pronto. Scegli quando farlo partire:
-          </p>
+    <div className="ej-page sci-page">
+      <div className="ej-glow" aria-hidden="true" />
+      <header>
+        <h1 className="ej-title">Scienza</h1>
+        <p className="ej-eyebrow">Il tuo protocollo personalizzato</p>
+      </header>
 
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-            <span style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(255,255,255,0.08)', borderRadius: '20px', color: 'white' }}>
-              Livello: <strong>{expLabel}</strong>
-            </span>
-            <span style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(0, 126, 167, 0.2)', borderRadius: '20px', color: 'var(--primary-color)' }}>
-              Frequenza: <strong>{report.daysPerWeek} gg/sett</strong>
-            </span>
-            <span style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(255, 149, 0, 0.15)', borderRadius: '20px', color: '#ff9500' }}>
-              Mese 1 Focus: <strong>{(report.focus1 || []).join(', ')}</strong>
-            </span>
-          </div>
+      <section className="ej-card sci-hero">
+        <span className="sci-hero-icon"><Dna size={28} /></span>
+        <h2 className="sci-hero-title">Protocollo Generato!</h2>
+        <p className="sci-muted">Il tuo mesociclo di 12 settimane è pronto. Scegli quando farlo partire:</p>
 
-          <div className="pending-options">
-            <button 
-              type="button"
-              className={`pending-option-btn ${startChoice === 'today' ? 'selected' : ''}`}
-              onClick={() => setStartChoice('today')}
-            >
-              <div>
-                <strong style={{ display: 'block', color: 'var(--text-main)' }}>🚀 Inizia Subito (Oggi)</strong>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Gli allenamenti di oggi conteranno per la W1</span>
-              </div>
-              {startChoice === 'today' && <CheckCircle2 size={20} color="var(--primary-color)" />}
-            </button>
-
-            <button 
-              type="button"
-              className={`pending-option-btn ${startChoice === 'next_monday' ? 'selected' : ''}`}
-              onClick={() => setStartChoice('next_monday')}
-            >
-              <div>
-                <strong style={{ display: 'block', color: 'var(--text-main)' }}>📅 Inizia Lunedì Prossimo</strong>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  {nextMonday.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' })}
-                </span>
-              </div>
-              {startChoice === 'next_monday' && <CheckCircle2 size={20} color="var(--primary-color)" />}
-            </button>
-
-            <button 
-              type="button"
-              className={`pending-option-btn ${startChoice === 'custom' ? 'selected' : ''}`}
-              onClick={() => setStartChoice('custom')}
-            >
-              <div>
-                <strong style={{ display: 'block', color: 'var(--text-main)' }}>🗓️ Scegli Data di Inizio</strong>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Seleziona un giorno specifico</span>
-              </div>
-              {startChoice === 'custom' && <CheckCircle2 size={20} color="var(--primary-color)" />}
-            </button>
-          </div>
-
-          {startChoice === 'custom' && (
-            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
-              <label style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Data di Partenza:</label>
-              <input 
-                type="date" 
-                value={customDate}
-                onChange={e => setCustomDate(e.target.value)}
-                className="science-input"
-                style={{ width: '100%' }}
-              />
-            </div>
-          )}
-
-          <button className="start-meso-btn" onClick={handleStart}>
-            <Play size={20} /> Avvia Mesociclo W1
-          </button>
-
-          <button 
-            type="button"
-            className="reset-btn" 
-            onClick={() => {
-              if (window.confirm("Vuoi modificare i dati del quiz?")) reset();
-            }}
-            style={{ marginTop: '1.2rem' }}
-          >
-            <RefreshCw size={14} /> Modifica parametri quiz
-          </button>
+        <div className="sci-chips">
+          <span className="sci-chip">Livello: <strong>{expLabel}</strong></span>
+          <span className="sci-chip is-primary">Frequenza: <strong>{report.daysPerWeek} gg/sett</strong></span>
+          <span className="sci-chip is-streak">Mese 1 Focus: <strong>{(report.focus1 || []).join(', ')}</strong></span>
         </div>
+      </section>
+
+      <div className="sci-start-options">
+        {options.map(({ key, icon, title, sub }) => {
+          const Icon = icon;
+          return (
+          <button
+            key={key}
+            type="button"
+            className={`sci-option ${startChoice === key ? 'is-selected' : ''}`}
+            onClick={() => setStartChoice(key)}
+          >
+            <span className="sci-option-icon"><Icon size={18} /></span>
+            <span className="sci-option-text">
+              <strong>{title}</strong>
+              <span>{sub}</span>
+            </span>
+            <span className="sci-option-check">{startChoice === key && <Check size={14} strokeWidth={3} />}</span>
+          </button>
+          );
+        })}
       </div>
+
+      {startChoice === 'custom' && (
+        <label className="sci-field">
+          <span className="sci-label">Data di partenza</span>
+          <input
+            type="date"
+            value={customDate}
+            onChange={e => setCustomDate(e.target.value)}
+            className="sci-input"
+          />
+        </label>
+      )}
+
+      <button type="button" className="sci-cta" onClick={handleStart}>
+        <Play size={18} fill="currentColor" /> Avvia Mesociclo W1
+      </button>
+
+      <button
+        type="button"
+        className="sci-link"
+        onClick={() => {
+          if (window.confirm("Vuoi modificare i dati del quiz?")) reset();
+        }}
+      >
+        <RefreshCw size={14} /> Modifica parametri quiz
+      </button>
     </div>
   );
 }
@@ -266,26 +251,26 @@ function PendingStartScreen({ report, reset }) {
  */
 function CompletedScreen({ reset }) {
   return (
-    <div className="science-container">
-      <div className="completed-container">
-        <div className="completed-hero-card">
-          <Trophy size={60} color="#ffcc00" style={{ filter: 'drop-shadow(0 0 16px rgba(255,204,0,0.5))' }} />
-          <h2>Mesociclo Completato! 🎉</h2>
-          <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.6, margin: '1rem 0 1.8rem' }}>
-            Congratulazioni! Hai portato a termine tutte le <strong>12 settimane</strong> del protocollo Israetel.
-            <br /><br />
-            La fase di risensibilizzazione è terminata: i tuoi recettori muscolari sono ora al <strong>massimo potenziale</strong> di risposta ipertrofica. È il momento ideale per testare i nuovi massimali e avviare un nuovo ciclo!
-          </p>
+    <div className="ej-page sci-page">
+      <div className="ej-glow" aria-hidden="true" />
+      <header>
+        <h1 className="ej-title">Scienza</h1>
+        <p className="ej-eyebrow">Il tuo protocollo personalizzato</p>
+      </header>
 
-          <button 
-            className="start-meso-btn" 
-            style={{ background: '#ffcc00', color: 'black' }}
-            onClick={reset}
-          >
-            <RefreshCw size={20} color="black" /> Ricalcola Massimali & Avvia Nuovo Ciclo
-          </button>
-        </div>
-      </div>
+      <section className="ej-card sci-hero sci-hero--done">
+        <span className="sci-hero-icon is-gold"><Trophy size={30} /></span>
+        <h2 className="sci-hero-title">Mesociclo Completato!</h2>
+        <p className="sci-muted">
+          Congratulazioni! Hai portato a termine tutte le <strong>12 settimane</strong> del protocollo Israetel.
+        </p>
+        <p className="sci-muted">
+          La fase di risensibilizzazione è terminata: i tuoi recettori muscolari sono ora al <strong>massimo potenziale</strong> di risposta ipertrofica. È il momento ideale per testare i nuovi massimali e avviare un nuovo ciclo!
+        </p>
+        <button type="button" className="sci-cta is-gold" onClick={reset}>
+          <RefreshCw size={18} /> Ricalcola Massimali &amp; Avvia Nuovo Ciclo
+        </button>
+      </section>
     </div>
   );
 }
@@ -294,8 +279,6 @@ function CompletedScreen({ reset }) {
  * Dashboard Principale della Sezione Scienza
  */
 function Dashboard({ report, reset }) {
-  if (!report) return null;
-
   const currentWeekNum = report.currentWeek || 1;
   const advanceScienceWeek = useStore(state => state.advanceScienceWeek);
 
@@ -371,224 +354,191 @@ function Dashboard({ report, reset }) {
   const sessionsPerWeek = report.daysPerWeek || 4;
   const estimatedSetsPerSession = Math.round(focusTargetSample / (sessionsPerWeek > 3 ? 2 : 1));
 
+  const phaseOf = (w) => {
+    if (w >= 9 && w <= 10) return { cls: 'deload', label: 'Deload' };
+    if (w >= 11) return { cls: 'resens', label: 'Mant.' };
+    if (w === 4 || w === 8) return { cls: 'bossfight', label: 'Boss' };
+    return { cls: 'overreaching', label: 'Focus' };
+  };
+
   return (
-    <>
-      <header className="app-header">
-        <div className="header-content">
-          <h1>Scienza</h1>
-          <p className="subtitle">Il tuo protocollo personalizzato</p>
-        </div>
+    <div className="ej-page sci-page">
+      <div className="ej-glow" aria-hidden="true" />
+      <header>
+        <h1 className="ej-title">Scienza</h1>
+        <p className="ej-eyebrow">Il tuo protocollo personalizzato</p>
       </header>
-      
-      <main className="app-main" style={{ paddingBottom: '120px' }}>
-        <div className="science-container" style={{ animation: 'none' }}>
-          
-          <div className="report-header">
-            <h2>Mesociclo Israetel V2</h2>
-            <p style={{ color: 'var(--text-muted)' }}>Status Coefficiente Forza: <strong>{expLabel}</strong></p>
-            <button 
-              className="reset-btn" 
-              onClick={() => {
-                if (window.confirm("Attenzione: reimpostare il quiz cancellerà il mesociclo attivo. Vuoi davvero procedere?")) {
-                  reset();
-                }
-              }}
-            >
-              <RefreshCw size={14} /> Ricalcola parametri
-            </button>
-          </div>
 
-          <div className="summary-grid">
-            <div className="summary-card">
-              <span className="summary-label">Settimana Attiva</span>
-              <span className="summary-value" style={{ color: 'var(--primary-color)' }}>
-                W{currentWeekNum} <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>/ 12</span>
-              </span>
-            </div>
-            <div className="summary-card">
-              <span className="summary-label">Mese in Corso</span>
-              <span className="summary-value">
-                Mese {realCurrentMonth} <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>/ 3</span>
-              </span>
-            </div>
-          </div>
+      {/* Report header */}
+      <section className="ej-card sci-report">
+        <h2 className="sci-report-title">Mesociclo Israetel V2</h2>
+        <p className="sci-muted">Status Coefficiente Forza: <strong>{expLabel}</strong></p>
+        <button
+          type="button"
+          className="sci-small-btn"
+          onClick={() => {
+            if (window.confirm("Attenzione: reimpostare il quiz cancellerà il mesociclo attivo. Vuoi davvero procedere?")) {
+              reset();
+            }
+          }}
+        >
+          <RefreshCw size={14} /> Ricalcola parametri
+        </button>
+      </section>
 
-          {/* Pulsante Avanzamento Settimanale Manuale */}
-          {selectedWeek === currentWeekNum && (
-            <button className="advance-week-btn" onClick={handleAdvanceWeek}>
-              <CheckCircle2 size={20} />
-              {currentWeekNum >= 12 
-                ? "🏆 Concludi Mesociclo (Settimana 12)" 
-                : `Concludi Settimana ${currentWeekNum} & Passa alla W${currentWeekNum + 1}`}
-            </button>
-          )}
+      {/* Summary */}
+      <div className="sci-summary">
+        <div className="ej-card sci-summary-card">
+          <span className="sci-kicker">Settimana attiva</span>
+          <span className="sci-summary-value is-primary">W{currentWeekNum} <small>/ 12</small></span>
+        </div>
+        <div className="ej-card sci-summary-card">
+          <span className="sci-kicker">Mese in corso</span>
+          <span className="sci-summary-value">Mese {realCurrentMonth} <small>/ 3</small></span>
+        </div>
+      </div>
 
-          {/* Selettore Proiezione Settimanale */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <button 
-              onClick={() => setSelectedWeek(prev => Math.max(1, prev - 1))}
-              disabled={selectedWeek === 1}
-              style={{ background: 'transparent', border: 'none', color: selectedWeek === 1 ? 'var(--text-muted)' : 'var(--primary-color)', cursor: selectedWeek === 1 ? 'not-allowed' : 'pointer' }}>
-              <ChevronLeft size={24} />
-            </button>
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {selectedWeek === currentWeekNum ? 'In Corso' : 'Proiezione'}
-              </span>
-              <strong style={{ fontSize: '1.2rem', color: selectedWeek === currentWeekNum ? 'var(--primary-color)' : 'var(--text-main)' }}>
-                Settimana {selectedWeek} (Mese {displayedMonth})
-              </strong>
-            </div>
-            <button 
-              onClick={() => setSelectedWeek(prev => Math.min(12, prev + 1))}
-              disabled={selectedWeek === 12}
-              style={{ background: 'transparent', border: 'none', color: selectedWeek === 12 ? 'var(--text-muted)' : 'var(--primary-color)', cursor: selectedWeek === 12 ? 'not-allowed' : 'pointer' }}>
-              <ChevronRight size={24} />
-            </button>
-          </div>
+      {/* Manual week progression */}
+      {selectedWeek === currentWeekNum && (
+        <button type="button" className="sci-advance" onClick={handleAdvanceWeek}>
+          <CheckCircle2 size={18} />
+          {currentWeekNum >= 12
+            ? 'Concludi Mesociclo (Settimana 12)'
+            : `Concludi Settimana ${currentWeekNum} & Passa alla W${currentWeekNum + 1}`}
+        </button>
+      )}
 
-          {/* Scheda Obiettivi Settimanali con Barre di Progresso (Consiglio 6) */}
-          <div className={`card glass target-card ${isBossFight ? 'boss-fight' : ''}`} style={{ marginBottom: '2rem', borderColor: isBossFight ? '#ff3b30' : 'var(--border-color)' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem', color: isBossFight ? '#ff3b30' : 'var(--text-main)', fontSize: '1.1rem', fontWeight: '800' }}>
-              <Target size={20} color={isBossFight ? '#ff3b30' : "var(--primary-color)"} />
-              {isBossFight ? "BOSS FIGHT: Settimana MRV" : `Obiettivi Settimana ${selectedWeek}`}
-            </h3>
-            
-            {isBossFight && (
-              <p style={{ color: '#ff3b30', fontSize: '0.85rem', marginBottom: '1rem', fontWeight: '600', animation: 'pulse 2s infinite' }}>
-                <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}/>
-                Raggiungi il Massimo Volume Recuperabile. Cedimento tecnico completo su ogni serie!
-              </p>
-            )}
+      {/* Week selector */}
+      <div className="sci-week-nav">
+        <button
+          type="button"
+          className="sci-week-arrow"
+          onClick={() => setSelectedWeek(prev => Math.max(1, prev - 1))}
+          disabled={selectedWeek === 1}
+          aria-label="Settimana precedente"
+        >
+          <ChevronLeft size={22} />
+        </button>
+        <div className="sci-week-center">
+          <span className="sci-kicker">{selectedWeek === currentWeekNum ? 'In corso' : 'Proiezione'}</span>
+          <strong className={selectedWeek === currentWeekNum ? 'is-current' : ''}>Settimana {selectedWeek} · Mese {displayedMonth}</strong>
+        </div>
+        <button
+          type="button"
+          className="sci-week-arrow"
+          onClick={() => setSelectedWeek(prev => Math.min(12, prev + 1))}
+          disabled={selectedWeek === 12}
+          aria-label="Settimana successiva"
+        >
+          <ChevronRight size={22} />
+        </button>
+      </div>
 
-            <div className="muscle-cards-list">
-              {visibleMuscles.map(muscle => {
-                const targetSets = getScienceTargetForMuscle(report, muscle, weekToDisplay);
-                const actualSets = actualSetsForSelectedWeek[muscle] || 0;
-                const isFocus = focusMuscles.includes(muscle);
-                const badge = getSciencePhaseBadge(report, muscle, weekToDisplay, targetSets);
-                const isCompleted = actualSets >= targetSets && targetSets > 0;
-                const percent = Math.min(100, Math.round((actualSets / Math.max(1, targetSets)) * 100));
+      {/* Weekly targets */}
+      <section className={`ej-card sci-targets ${isBossFight ? 'is-boss' : ''}`}>
+        <h3 className="sci-targets-title">
+          <Target size={18} />
+          {isBossFight ? 'Boss Fight: Settimana MRV' : `Obiettivi Settimana ${selectedWeek}`}
+        </h3>
 
-                let barColor = isCompleted ? '#34c759' : 'var(--primary-color)';
-                if (isFocus) barColor = isCompleted ? '#34c759' : '#ff9500';
+        {isBossFight && (
+          <p className="sci-boss-note">
+            <AlertTriangle size={14} /> Raggiungi il Massimo Volume Recuperabile. Cedimento tecnico completo su ogni serie!
+          </p>
+        )}
 
-                return (
-                  <div 
-                    key={muscle} 
-                    className={`muscle-target-card ${isFocus ? 'is-focus' : ''} ${isCompleted ? 'is-completed' : ''}`}
-                  >
-                    <div className="muscle-card-header">
-                      <div className="muscle-card-name">
-                        <span>{muscle}</span>
-                        {isFocus && (
-                          <span className="focus-flame-badge">
-                            🔥 FOCUS
-                          </span>
-                        )}
-                        {badge && (
-                          <span 
-                            className="target-badge"
-                            style={{ color: badge.color, backgroundColor: badge.bg }}
-                          >
-                            {badge.label}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="muscle-sets-counter">
-                        <strong style={{ color: isCompleted ? '#34c759' : (isFocus ? '#ff9500' : 'var(--text-main)') }}>
-                          {actualSets}
-                        </strong>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}> / {targetSets} serie</span>
-                      </div>
-                    </div>
+        <div className="sci-muscles">
+          {visibleMuscles.map(muscle => {
+            const targetSets = getScienceTargetForMuscle(report, muscle, weekToDisplay);
+            const actualSets = actualSetsForSelectedWeek[muscle] || 0;
+            const isFocus = focusMuscles.includes(muscle);
+            const badge = getSciencePhaseBadge(report, muscle, weekToDisplay, targetSets);
+            const isCompleted = actualSets >= targetSets && targetSets > 0;
+            const percent = Math.min(100, Math.round((actualSets / Math.max(1, targetSets)) * 100));
 
-                    {/* Progress Bar Fluida */}
-                    <div className="target-progress-bar">
-                      <div 
-                        className="target-progress-fill"
-                        style={{ 
-                          width: `${percent}%`, 
-                          background: barColor 
-                        }}
-                      />
-                    </div>
-
-                    {isCompleted && (
-                      <div className="target-reached-pill">
-                        <CheckCircle2 size={13} /> Target Completato
-                      </div>
+            return (
+              <div
+                key={muscle}
+                className={`sci-muscle ${isFocus ? 'is-focus' : ''} ${isCompleted ? 'is-done' : ''}`}
+              >
+                <div className="sci-muscle-head">
+                  <div className="sci-muscle-name">
+                    <span>{muscle}</span>
+                    {isFocus && <span className="sci-badge is-focus"><Flame size={10} fill="currentColor" /> Focus</span>}
+                    {badge && (
+                      <span className="sci-badge" style={{ color: badge.color, backgroundColor: badge.bg }}>
+                        {badge.label}
+                      </span>
                     )}
                   </div>
-                );
-              })}
-            </div>
-            
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '1.2rem', textAlign: 'center' }}>
-              Questi obiettivi sono sincronizzati nel tuo Profilo e nel Workout Recap.
-            </p>
-          </div>
-
-          <h3 style={{ margin: '1rem 0', color: 'var(--text-main)', fontSize: '1.2rem' }}>Calendario Periodizzazione</h3>
-          
-          <div className="calendar-grid">
-            {getWeekLabels().map(w => {
-              const isPast = w < currentWeekNum;
-              const isCurrent = w === currentWeekNum;
-              const isSelected = w === selectedWeek;
-              
-              let typeClass = 'maintenance';
-              if (w >= 9 && w <= 10) typeClass = 'deload';
-              else if (w >= 11) typeClass = 'resens';
-              else if (w === 4 || w === 8) typeClass = 'bossfight';
-              else typeClass = 'overreaching';
-
-              return (
-                <div 
-                  key={w} 
-                  onClick={() => setSelectedWeek(w)}
-                  className={`cal-week ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''} ${typeClass} ${isSelected ? 'selected-week' : ''}`}
-                  style={{ cursor: 'pointer', outline: isSelected ? '2px solid white' : 'none', outlineOffset: '2px' }}
-                >
-                  <span className="cal-week-num">W{w}</span>
+                  <div className="sci-muscle-count">
+                    <strong>{actualSets}</strong>
+                    <span> / {targetSets} serie</span>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
 
-          <div className="calendar-legend">
-            <div><span className="dot overreaching"></span> Overreaching Focus</div>
-            <div><span className="dot bossfight"></span> Boss Fight (MRV)</div>
-            <div><span className="dot deload"></span> Deload (Scarico)</div>
-            <div><span className="dot resens"></span> Mantenimento Basso</div>
-          </div>
+                <div className="sci-track">
+                  <span style={{ width: `${percent}%` }} />
+                </div>
 
-          <div className="glossary-section" style={{ marginTop: '2rem' }}>
-            <div className="glossary-title"><BookOpen size={18} /> Pillole RP & Consigli</div>
-            <div className="glossary-items">
-              <div className="glossary-item">
-                <span>MEV:</span>
-                <span>Minimum Effective Volume. Le serie minime per crescere. Target del mantenimento.</span>
+                {isCompleted && (
+                  <span className="sci-done-pill"><CheckCircle2 size={12} /> Target completato</span>
+                )}
               </div>
-              <div className="glossary-item">
-                <span>MAV:</span>
-                <span>Maximum Adaptive Volume. Sweet Spot. Iniziamo il mese Focus qua e saliamo gradualmente.</span>
-              </div>
-              <div className="glossary-item">
-                <span>MRV:</span>
-                <span>Maximum Recoverable Volume. Il limite di recupero. Si tocca a fine mese e poi si cambia target.</span>
-              </div>
-              <div className="glossary-item">
-                <span>Anti-Junk Volume:</span>
-                <span>Con {sessionsPerWeek} giorni a settimana, distribuisci i muscoli in focus su 2 sedute (~{estimatedSetsPerSession} serie a seduta). Evita di superare 8-10 serie sullo stesso muscolo in una singola sessione per massimizzare la qualità dello stimolo.</span>
-              </div>
-            </div>
-          </div>
-
+            );
+          })}
         </div>
-      </main>
-    </>
+
+        <p className="sci-footnote">Questi obiettivi sono sincronizzati nel Workout Recap.</p>
+      </section>
+
+      {/* Periodization calendar */}
+      <section className="sci-section">
+        <h2 className="ej-section-title">Calendario Periodizzazione</h2>
+        <div className="sci-calendar">
+          {getWeekLabels().map(w => {
+            const isPast = w < currentWeekNum;
+            const isCurrent = w === currentWeekNum;
+            const isSelected = w === selectedWeek;
+            const phase = phaseOf(w);
+
+            return (
+              <button
+                type="button"
+                key={w}
+                onClick={() => setSelectedWeek(w)}
+                className={`sci-cal-week ${phase.cls} ${isCurrent ? 'is-current' : ''} ${isPast ? 'is-past' : ''} ${isSelected ? 'is-selected' : ''}`}
+              >
+                <span className="sci-cal-num">W{w}</span>
+                <span className="sci-cal-phase">{phase.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="sci-legend">
+          <span><i className="overreaching" /> Overreaching Focus</span>
+          <span><i className="bossfight" /> Boss Fight (MRV)</span>
+          <span><i className="deload" /> Deload (Scarico)</span>
+          <span><i className="resens" /> Mantenimento Basso</span>
+        </div>
+      </section>
+
+      {/* Glossary */}
+      <section className="ej-card sci-glossary">
+        <h3 className="sci-glossary-title"><BookOpen size={18} /> Pillole RP &amp; Consigli</h3>
+        <dl>
+          <dt>MEV</dt>
+          <dd>Minimum Effective Volume. Le serie minime per crescere. Target del mantenimento.</dd>
+          <dt>MAV</dt>
+          <dd>Maximum Adaptive Volume. Sweet Spot. Iniziamo il mese Focus qua e saliamo gradualmente.</dd>
+          <dt>MRV</dt>
+          <dd>Maximum Recoverable Volume. Il limite di recupero. Si tocca a fine mese e poi si cambia target.</dd>
+          <dt>Anti-Junk</dt>
+          <dd>Con {sessionsPerWeek} giorni a settimana, distribuisci i muscoli in focus su 2 sedute (~{estimatedSetsPerSession} serie a seduta). Evita di superare 8-10 serie sullo stesso muscolo in una singola sessione per massimizzare la qualità dello stimolo.</dd>
+        </dl>
+      </section>
+    </div>
   );
 }
 
@@ -831,90 +781,98 @@ function Science() {
     );
   }
 
+  const quizOptions = currentQ.options || (answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !LEG_MUSCLES.includes(m)))
+    .filter(m => currentQ.id === 'focus2' ? !(answers.focus1 || []).includes(m) : true)
+    .map(m => ({ value: m, label: m }));
+  const selectedCount = currentQ.isMulti ? (answers[currentQ.id] || []).length : 0;
+
   return (
-    <>
-      <header className="app-header">
-        <div className="header-content">
-          <h1>Scienza</h1>
-          <p className="subtitle">L'algoritmo di Periodizzazione</p>
-        </div>
+    <div className="ej-page sci-page">
+      <div className="ej-glow" aria-hidden="true" />
+      <header>
+        <h1 className="ej-title">Scienza</h1>
+        <p className="ej-eyebrow">L'algoritmo di Periodizzazione</p>
       </header>
 
-      <main className="app-main" style={{ paddingBottom: '120px' }}>
-        <div className="science-container">
-          <div className="quiz-header">
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Passo {step + 1} di {QUESTIONS.length}</span>
-            <div className="progress-bar-container">
-              <div 
-                className="progress-bar-fill" 
-                style={{ width: `${((step + 1) / QUESTIONS.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="quiz-step" key={step}>
-            <h2 className="question-text">{currentQ.title}</h2>
-            {currentQ.subtitle && <p style={{ textAlign: 'center', color: '#ccc', marginBottom: '1rem', marginTop: '-0.5rem', fontSize: '0.9rem' }}>{currentQ.subtitle}</p>}
-
-            {currentQ.type === 'inputs' ? (
-              <div className="inputs-grid">
-                {inputFields.map(f => (
-                  <div className="input-field" key={f.id}>
-                    <label>{f.label}</label>
-                    <input 
-                      type="number" 
-                      inputMode="decimal"
-                      placeholder={f.placeholder}
-                      value={answers.stats[f.id] || ''}
-                      onChange={(e) => setAnswers(prev => ({ ...prev, stats: { ...prev.stats, [f.id]: e.target.value } }))}
-                      className="science-input"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="answers-grid">
-                {(currentQ.options || (answers.legs === 'yes' ? MUSCLE_GROUPS : MUSCLE_GROUPS.filter(m => !LEG_MUSCLES.includes(m))).filter(m => currentQ.id === 'focus2' ? !(answers.focus1 || []).includes(m) : true).map(m => ({ value: m, label: m }))).map(opt => {
-                  const isSelected = currentQ.isMulti 
-                    ? (answers[currentQ.id] || []).includes(opt.value)
-                    : answers[currentQ.id] === opt.value;
-                    
-                  return (
-                    <div 
-                      key={opt.value}
-                      className={`answer-card ${isSelected ? 'selected' : ''}`}
-                      onClick={() => handleSelect(currentQ.id, opt.value, currentQ.isMulti, currentQ.maxSelection)}
-                    >
-                      <div className="answer-title">
-                        {opt.label}
-                        {isSelected && <Zap size={18} color="var(--primary-color)" />}
-                      </div>
-                      {opt.desc && <div className="answer-desc">{opt.desc}</div>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="quiz-controls">
-              {step > 0 ? (
-                <button className="quiz-btn back" onClick={() => setStep(step - 1)}>
-                  Indietro
-                </button>
-              ) : <div></div>}
-              
-              <button 
-                className="quiz-btn next" 
-                disabled={isNextDisabled}
-                onClick={handleNext}
-              >
-                {step === QUESTIONS.length - 1 ? 'Genera Programma' : 'Avanti'}
-              </button>
-            </div>
-          </div>
+      <div className="sci-quiz-progress">
+        <div className="sci-quiz-progress-head">
+          <span>Domanda {step + 1} di {QUESTIONS.length}</span>
+          <span>{Math.round(((step + 1) / QUESTIONS.length) * 100)}%</span>
         </div>
-      </main>
-    </>
+        <div className="sci-quiz-segments">
+          {QUESTIONS.map((q, i) => <span key={q.id} className={i <= step ? 'is-on' : ''} />)}
+        </div>
+      </div>
+
+      <div className="sci-quiz-step" key={step}>
+        <div className="sci-question">
+          <h2>{currentQ.title}</h2>
+          {currentQ.subtitle && <p>{currentQ.subtitle}</p>}
+        </div>
+
+        {currentQ.isMulti && (
+          <span className="sci-count-pill">{selectedCount} / {currentQ.maxSelection} selezionati</span>
+        )}
+
+        {currentQ.type === 'inputs' ? (
+          <div className="sci-inputs">
+            {inputFields.map(f => (
+              <label className="sci-field" key={f.id}>
+                <span className="sci-label">{f.label}</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder={f.placeholder}
+                  value={answers.stats[f.id] || ''}
+                  onChange={(e) => setAnswers(prev => ({ ...prev, stats: { ...prev.stats, [f.id]: e.target.value } }))}
+                  className="sci-input"
+                />
+              </label>
+            ))}
+          </div>
+        ) : (
+          <div className={`sci-answers ${currentQ.isMulti ? 'is-grid' : ''}`}>
+            {quizOptions.map(opt => {
+              const isSelected = currentQ.isMulti
+                ? (answers[currentQ.id] || []).includes(opt.value)
+                : answers[currentQ.id] === opt.value;
+              const isLocked = currentQ.isMulti && !isSelected && selectedCount >= currentQ.maxSelection;
+
+              return (
+                <button
+                  type="button"
+                  key={opt.value}
+                  className={`sci-answer ${isSelected ? 'is-selected' : ''} ${isLocked ? 'is-locked' : ''}`}
+                  onClick={() => handleSelect(currentQ.id, opt.value, currentQ.isMulti, currentQ.maxSelection)}
+                >
+                  <span className="sci-answer-text">
+                    <strong>{opt.label}</strong>
+                    {opt.desc && <span>{opt.desc}</span>}
+                  </span>
+                  <span className="sci-answer-check">{isSelected && <Check size={14} strokeWidth={3} />}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="sci-quiz-controls">
+          {step > 0 && (
+            <button type="button" className="sci-quiz-btn is-back" onClick={() => setStep(step - 1)}>
+              <ChevronLeft size={16} /> Indietro
+            </button>
+          )}
+          <button
+            type="button"
+            className="sci-quiz-btn is-next"
+            disabled={isNextDisabled}
+            onClick={handleNext}
+          >
+            {step === QUESTIONS.length - 1 ? 'Genera Programma' : 'Avanti'} <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

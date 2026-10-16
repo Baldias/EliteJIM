@@ -291,3 +291,429 @@
   backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Profile (redesign) — uses tokens from styles/elite.css.
+   The legacy rules above are shared with other pages; keep them.
+   ───────────────────────────────────────────────────────────── */
+.pf-page {
+  --glow-rgb: var(--c-xp-rgb);
+  --glow-opacity: 0.16;
+}
+
+.pf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pf-settings {
+  width: 42px;
+  height: 42px;
+}
+
+/* Rank */
+.pf-rank {
+  padding: 18px;
+  border-radius: var(--r-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-color: color-mix(in srgb, var(--rank-color) 30%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--rank-color) 14%, transparent) 0%, var(--c-surface) 70%);
+}
+
+.pf-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pf-rank-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rank-color);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.pf-rank-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-kicker {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+.pf-rank-title {
+  font-size: 1.375rem;
+  font-weight: 900;
+  color: var(--rank-color);
+  line-height: 1.2;
+}
+
+.pf-streak {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--c-text);
+}
+
+.pf-streak-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.pf-streak-value svg {
+  color: #FF9500;
+}
+
+.pf-streak-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.pf-rank-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pf-rank-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.pf-rank-track,
+.pf-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--c-surface-2);
+  overflow: hidden;
+}
+
+.pf-rank-track > span,
+.pf-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.8s ease-out;
+}
+
+.pf-rank-track > span {
+  background: var(--rank-color);
+}
+
+/* Stats */
+.pf-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.pf-stat {
+  padding: 14px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pf-stat-value {
+  font-size: 1.375rem;
+  font-weight: 900;
+  color: var(--c-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-stat-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+/* Muscle levels CTA */
+.pf-levels {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  text-align: left;
+  color: var(--c-xp);
+  background: rgba(var(--c-xp-rgb), 0.08);
+  border: 1px solid rgba(var(--c-xp-rgb), 0.25);
+}
+
+.pf-levels-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--c-xp-rgb), 0.14);
+}
+
+.pf-levels-label {
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+/* Sections */
+.pf-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pf-muted {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--c-text-muted);
+}
+
+/* RP volume */
+.pf-rp {
+  padding: 18px;
+  border-radius: var(--r-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pf-rp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.pf-rp-head,
+.pf-rp-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pf-rp-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.pf-rp-sets {
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.pf-rp-foot {
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+}
+
+.pf-empty-inline {
+  margin: 1rem 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+}
+
+/* History */
+.pf-week {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pf-week + .pf-week {
+  margin-top: 8px;
+}
+
+.pf-week-label {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.pf-session {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.pf-session.is-open {
+  border-color: rgba(var(--c-primary-rgb), 0.35);
+}
+
+.pf-session-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf-session-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pf-session-name {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pf-session-meta {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--c-text-muted);
+}
+
+.pf-session-btn {
+  width: 32px;
+  height: 32px;
+  color: var(--c-text-muted);
+}
+
+.pf-session-btn.ej-icon-btn--danger {
+  color: var(--c-danger);
+}
+
+.pf-chevron {
+  color: var(--c-text-dim);
+  flex-shrink: 0;
+}
+
+.pf-session-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf-ex {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--c-surface-2);
+}
+
+.pf-ex-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.pf-ex-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pf-set {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-text);
+  background: var(--c-surface);
+}
+
+.pf-set-num {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+}
+
+.pf-set.is-drop .pf-set-num {
+  color: var(--c-accent);
+  background: rgba(var(--c-accent-rgb), 0.18);
+}
+
+.pf-set-rm {
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: var(--c-primary);
+}
+
+.pf-set-rm::before {
+  content: '1RM ';
+  font-weight: 600;
+  color: var(--c-text-dim);
+}
+
+.pf-empty {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--c-text-muted);
+}
+
+.pf-more,
+.pf-all-history {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px;
+  border-radius: 14px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.pf-more {
+  color: var(--c-primary);
+  background: transparent;
+  border: 1px dashed rgba(var(--c-primary-rgb), 0.35);
+}
+
+.pf-all-history {
+  color: var(--c-text);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+}

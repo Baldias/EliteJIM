@@ -4,11 +4,64 @@
   gap: 18px;
 }
 
-/* ── Chips ──────────────────────────────────────────────────── */
-.pg-chips {
+/* ── Muscle group filter (single scrollable row) ────────────── */
+.pg-filter {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
+  margin: 0 -16px;
+  padding: 2px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+}
+
+.pg-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.pg-filter-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 6px 0 14px;
+  border-radius: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.pg-filter-count {
+  min-width: 24px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  background: var(--c-surface-2);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.pg-filter-chip.is-active {
+  background: rgba(var(--c-primary-rgb), 0.14);
+  border-color: rgba(var(--c-primary-rgb), 0.55);
+  color: var(--c-text);
+}
+
+.pg-filter-chip.is-active .pg-filter-count {
+  background: var(--c-primary);
+  color: var(--c-bg);
 }
 
 /* ── RPG level ──────────────────────────────────────────────── */

@@ -148,45 +148,41 @@
   transform: translateX(-50%);
   width: calc(100% - 2.5rem);
   max-width: 440px;
-  background: rgba(17, 21, 27, 0.92);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--c-border);
+  background: rgba(15, 25, 35, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 64px;
-  padding: 0 12px;
+  justify-content: space-around;
+  padding: 0.85rem 0.5rem;
   z-index: 1000;
   border-radius: 28px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .nav-item {
-  color: var(--c-text-dim);
-  font-size: 0.625rem;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.7rem;
+  font-weight: 700;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 7px 14px;
-  border-radius: 20px;
-  transition: background 0.2s ease, color 0.2s ease;
+  gap: 0.35rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  flex: 1;
   text-decoration: none;
   position: relative;
 }
 
-.nav-item svg {
-  width: 22px;
-  height: 22px;
+.nav-item.active {
+  color: #fff;
 }
 
-.nav-item.active {
-  color: var(--c-primary);
-  font-weight: 700;
-  background: rgba(var(--c-primary-rgb), 0.14);
+.nav-item.active svg {
+  color: var(--primary-color);
+  filter: drop-shadow(0 0 8px rgba(var(--primary-color-rgb), 0.5));
+  transform: translateY(-2px);
 }
 
 /* PWA Reload Prompt Styles */

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy } from 'lucide-react';
+import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell } from 'lucide-react';
 import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/useStore';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
@@ -145,95 +145,54 @@ function Workout() {
   const fmtRest = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080c10', display: 'flex', flexDirection: 'column' }}>
+    <div className="wk-page">
+      <div className="ej-glow wk-glow" aria-hidden="true" />
 
       {/* ── STICKY HEADER & TIMER ─────────────────── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', flexDirection: 'column' }}>
-        <div style={{
-          background: 'rgba(8,12,16,0.97)', backdropFilter: 'blur(24px)',
-          borderBottom: isResting ? 'none' : '1px solid rgba(0,184,212,0.15)',
-          padding: '10px 14px',
-          display: 'flex', alignItems: 'center', gap: '8px'
-        }}>
-        {/* Back — fixed width */}
-        <button onClick={() => navigate('/')} style={{
-          flexShrink: 0,
-          background: 'rgba(255,255,255,0.06)', border: 'none',
-          borderRadius: '10px', padding: '8px 10px',
-          color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', width: 'auto'
-        }}>
-          <ChevronLeft size={20} />
-        </button>
+      <div className="wk-sticky">
+        <div className="wk-header">
+          <button type="button" className="ej-icon-btn ej-icon-btn--round wk-back" onClick={() => navigate('/')} title="Torna alla Home">
+            <ChevronLeft size={20} />
+          </button>
 
-        {/* Centre — name + timer */}
-        <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
-          <p style={{
-            margin: 0, fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)',
-            fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-          }}>
-            {activeWorkout.name || 'SESSIONE LIBERA'}
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center', marginTop: '2px' }}>
-            <Clock size={11} color="#00b8d4" />
-            <span style={{ fontWeight: '800', fontSize: '0.95rem', color: 'white', fontVariantNumeric: 'tabular-nums' }}>{sessionTimeStr}</span>
-            <span style={{ background: 'rgba(0,184,212,0.15)', color: '#00b8d4', padding: '1px 7px', borderRadius: '7px', fontSize: '0.68rem', fontWeight: '700' }}>{doneSets}/{totalSets}</span>
+          <div className="wk-header-center">
+            <p className="wk-header-name">{activeWorkout.name || 'Sessione Libera'}</p>
+            <div className="wk-header-time">
+              <span className="wk-clock">{sessionTimeStr}</span>
+              <span className="wk-sets-pill">{doneSets}/{totalSets}</span>
+            </div>
           </div>
-        </div>
 
-        {/* Termina — fixed width */}
-        <button 
-          onClick={handleFinishWorkout} 
-          style={{
-            flexShrink: 0,
-            background: 'linear-gradient(135deg, #00b8d4 0%, #00e5ff 100%)',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '8px 16px',
-            color: 'white',
-            fontSize: '0.85rem',
-            fontWeight: '800',
-            boxShadow: '0 4px 12px rgba(0,184,212,0.3)',
-            cursor: 'pointer',
-            zIndex: 110
-          }}
-        >
-          TERMINA
-        </button>
+          <button type="button" className="ej-btn ej-btn--primary wk-finish" onClick={handleFinishWorkout}>
+            Termina
+          </button>
         </div>
 
         {/* ── REST TIMER ────────────────────── */}
         {isResting && (
-          <div style={{
-            background: 'rgba(4, 25, 35, 0.95)', /* Darker, less transparent background so scrolled content isn't visible */
-            backdropFilter: 'blur(24px)',
-            borderBottom: '1px solid rgba(0,184,212,0.2)',
-            padding: '10px 16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-          }}>
-            <div>
-              <p style={{ margin: 0, fontSize: '0.62rem', color: '#00b8d4', fontWeight: '800', letterSpacing: '1px' }}>⏱ RECUPERO</p>
-              <p style={{ margin: '1px 0 0', fontWeight: '900', fontSize: '1.8rem', color: 'white', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{fmtRest(restTimeLeft)}</p>
+          <div className="wk-rest">
+            <Clock size={20} className="wk-rest-icon" />
+            <div className="wk-rest-text">
+              <span className="wk-rest-label">Recupero</span>
+              <span className="wk-rest-time">{fmtRest(restTimeLeft)}</span>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setGlobalRestEndTime(globalRestEndTime + 30000)} style={{ background: 'rgba(0,184,212,0.15)', border: '1px solid rgba(0,184,212,0.25)', borderRadius: '10px', padding: '7px 14px', color: '#00b8d4', fontWeight: '800', fontSize: '0.85rem' }}>+30s</button>
-              <button onClick={() => clearGlobalRestTimer()} style={{ background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.2)', borderRadius: '10px', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3b30' }}>
-                <X size={18} />
-              </button>
-            </div>
+            <button type="button" className="wk-rest-add" onClick={() => setGlobalRestEndTime(globalRestEndTime + 30000)}>+30s</button>
+            <button type="button" className="ej-icon-btn ej-icon-btn--danger wk-rest-stop" onClick={() => clearGlobalRestTimer()} title="Interrompi recupero">
+              <X size={18} />
+            </button>
           </div>
         )}
       </div>
 
       {/* ── EXERCISES ─────────────────────── */}
-      <div style={{ flex: 1, padding: '12px 14px 120px' }}>
+      <div className="wk-body">
 
         {/* Empty state */}
         {activeWorkout.exercises.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏋️</div>
-            <p style={{ color: 'white', fontWeight: '700', fontSize: '1.1rem', margin: '0 0 6px' }}>Nessun esercizio</p>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.88rem', margin: '0 0 1.5rem' }}>Tocca "+ Esercizio" qui sotto per iniziare la sessione</p>
+          <div className="wk-empty">
+            <span className="wk-empty-icon"><Dumbbell size={28} /></span>
+            <p className="wk-empty-title">Nessun esercizio</p>
+            <p className="wk-empty-sub">Tocca "+ Esercizio" qui sotto per iniziare la sessione</p>
           </div>
         )}
 
@@ -343,7 +302,7 @@ function Workout() {
               {/* Notes drawer */}
               {(expandedNotes[ex.id] || ex.notes) && (
                 <div className="workout-notes-drawer">
-                  <FileText size={13} color="#00b8d4" style={{ flexShrink: 0 }} />
+                  <FileText size={13} className="workout-notes-icon" />
                   <input
                     type="text"
                     placeholder="Aggiungi nota (es. presa larga, fermo al petto 1s)..."
@@ -456,21 +415,11 @@ function Workout() {
         );
       })}
 
-        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-          <button onClick={() => addExercise('')} style={{
-            flex: 1, padding: '11px',
-            background: 'rgba(0,184,212,0.07)', border: '1px dashed rgba(0,184,212,0.25)',
-            borderRadius: '12px', color: '#00b8d4',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            fontWeight: '700', fontSize: '0.9rem'
-          }}>
+        <div className="wk-footer">
+          <button type="button" className="wk-add-exercise" onClick={() => addExercise('')}>
             <Plus size={16} /> Esercizio
           </button>
-          <button onClick={() => { if (window.confirm('Annullare senza salvare?')) { cancelWorkout(); navigate('/'); } }} style={{
-            padding: '11px 18px',
-            background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.15)',
-            borderRadius: '12px', color: 'rgba(255,59,48,0.7)', fontWeight: '700', fontSize: '0.85rem'
-          }}>
+          <button type="button" className="wk-cancel" onClick={() => { if (window.confirm('Annullare senza salvare?')) { cancelWorkout(); navigate('/'); } }}>
             Annulla
           </button>
         </div>

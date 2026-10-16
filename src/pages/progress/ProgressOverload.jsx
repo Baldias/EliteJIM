@@ -52,29 +52,39 @@ function ProgressOverload() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedExercise, setSelectedExercise] = useState('');
 
-    const categories = Object.entries(EXERCISE_CATEGORIES).map(([key, label]) => ({ key, label }));
-
     const allExercisesDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
-    // Unique completed exercises, optionally filtered by muscle group
-    const availableExercises = useMemo(() => {
+    // Every exercise with at least one completed set
+    const trainedExercises = useMemo(() => {
         const exSet = new Set();
         history.forEach(workout => {
             workout.exercises.forEach(ex => {
                 if (ex.sets.some(s => s.done)) exSet.add(ex.name);
             });
         });
+        return Array.from(exSet).sort();
+    }, [history]);
 
-        let arr = Array.from(exSet);
-        if (selectedCategory) {
-            const categoryLabel = EXERCISE_CATEGORIES[selectedCategory];
-            const categoryExNames = allExercisesDB
-                .filter(e => getExerciseCategories(e).includes(categoryLabel))
-                .map(e => e.name);
-            arr = arr.filter(name => categoryExNames.includes(name));
-        }
-        return arr.sort();
-    }, [history, selectedCategory, allExercisesDB]);
+    // Only muscle groups that actually have trained exercises, with their count
+    const categories = useMemo(() => {
+        return Object.entries(EXERCISE_CATEGORIES)
+            .map(([key, label]) => {
+                const names = new Set(allExercisesDB.filter(e => getExerciseCategories(e).includes(label)).map(e => e.name));
+                return { key, label, count: trainedExercises.filter(n => names.has(n)).length };
+            })
+            .filter(c => c.count > 0);
+    }, [allExercisesDB, trainedExercises]);
+
+    const activeCategory = categories.some(c => c.key === selectedCategory) ? selectedCategory : null;
+
+    const availableExercises = useMemo(() => {
+        if (!activeCategory) return trainedExercises;
+        const categoryLabel = EXERCISE_CATEGORIES[activeCategory];
+        const categoryExNames = new Set(allExercisesDB
+            .filter(e => getExerciseCategories(e).includes(categoryLabel))
+            .map(e => e.name));
+        return trainedExercises.filter(name => categoryExNames.has(name));
+    }, [trainedExercises, activeCategory, allExercisesDB]);
 
     // Fall back to the first exercise when the filter hides the current pick
     const currentExercise = availableExercises.includes(selectedExercise)
@@ -140,26 +150,36 @@ function ProgressOverload() {
                 <p className="ej-eyebrow">Sovraccarico progressivo &amp; 1RM</p>
             </header>
 
-            {/* Muscle group chips */}
-            <div className="pg-chips">
-                <button type="button" className={`ej-chip ${!selectedCategory ? 'is-active' : ''}`} onClick={() => setSelectedCategory(null)}>
-                    Tutti
-                </button>
-                {categories.map(({ key, label }) => (
+            {/* Muscle group filter: one scrollable row, only trained groups */}
+            {categories.length > 0 && (
+                <div className="pg-filter" role="tablist" aria-label="Filtra per gruppo muscolare">
                     <button
                         type="button"
-                        key={key}
-                        className={`ej-chip ${selectedCategory === key ? 'is-active' : ''}`}
-                        onClick={() => setSelectedCategory(selectedCategory === key ? null : key)}
+                        role="tab"
+                        aria-selected={!activeCategory}
+                        className={`pg-filter-chip ${!activeCategory ? 'is-active' : ''}`}
+                        onClick={() => setSelectedCategory(null)}
                     >
-                        {label}
+                        Tutti <span className="pg-filter-count">{trainedExercises.length}</span>
                     </button>
-                ))}
-            </div>
+                    {categories.map(({ key, label, count }) => (
+                        <button
+                            type="button"
+                            role="tab"
+                            key={key}
+                            aria-selected={activeCategory === key}
+                            className={`pg-filter-chip ${activeCategory === key ? 'is-active' : ''}`}
+                            onClick={() => setSelectedCategory(activeCategory === key ? null : key)}
+                        >
+                            {label} <span className="pg-filter-count">{count}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* RPG level of the selected muscle group */}
-            {selectedCategory && (() => {
-                const label = EXERCISE_CATEGORIES[selectedCategory];
+            {activeCategory && (() => {
+                const label = EXERCISE_CATEGORIES[activeCategory];
                 const xp = muscleXP[label] || 0;
                 const levelData = getMuscleLevelByXp(xp);
                 return (
@@ -181,8 +201,8 @@ function ProgressOverload() {
 
             {availableExercises.length === 0 ? (
                 <div className="ej-card pg-empty">
-                    {selectedCategory
-                        ? `Nessun esercizio completato per ${EXERCISE_CATEGORIES[selectedCategory]}.`
+                    {activeCategory
+                        ? `Nessun esercizio completato per ${EXERCISE_CATEGORIES[activeCategory]}.`
                         : 'Nessun dato disponibile. Inizia ad allenarti per vedere i tuoi progressi!'}
                 </div>
             ) : (
