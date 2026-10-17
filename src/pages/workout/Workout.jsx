@@ -7,8 +7,18 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 import { sanitizeDecimalInput } from '../../utils/number';
-import { getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
+import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './Workout.css';
+
+const round1 = (n) => Math.round(n * 10) / 10;
+
+// Best completed working set of the session by estimated 1RM
+const findSessionBest = (sets, bodyweightLoad) => (sets || [])
+  .filter(s => s.done && !s.isDropset)
+  .reduce((best, s) => {
+    const rm = round1(estimate1RM(s.kg, s.reps, bodyweightLoad));
+    return rm > (best?.rm || 0) ? { set: s, rm } : best;
+  }, null);
 
 function Workout() {
   const navigate = useNavigate();
@@ -36,6 +46,11 @@ function Workout() {
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [isResting, setIsResting] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState({});
+  // Set that just beat the all-time PR: drives a short celebration animation
+  const [prCelebration, setPrCelebration] = useState(null);
+  const prTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(prTimer.current), []);
 
   const toggleNotes = (id) => setExpandedNotes(p => ({ ...p, [id]: !p[id] }));
 
@@ -76,11 +91,27 @@ function Workout() {
   useEffect(() => { if (!activeWorkout && !isFinishing.current) navigate('/'); }, [activeWorkout, navigate]);
   if (!activeWorkout) return null;
 
+  const celebrateIfNewPR = (ex, set) => {
+    if (!ex || !set || set.isDropset) return;
+    const bodyweightLoad = getBodyweightLoad(ex.name, allDB, bodyweight);
+    const previousPR = getExercise1RMStats(history, ex.name, bodyweightLoad).allTime?.max1RM || 0;
+    if (previousPR <= 0) return; // first time on this exercise: nothing to beat yet
+    const others = findSessionBest(ex.sets.filter(s => s.id !== set.id), bodyweightLoad);
+    const rm = round1(estimate1RM(set.kg, set.reps, bodyweightLoad));
+    if (rm <= Math.max(previousPR, others?.rm || 0)) return;
+
+    clearTimeout(prTimer.current);
+    setPrCelebration({ exerciseId: ex.id, setId: set.id, id: Date.now() });
+    prTimer.current = setTimeout(() => setPrCelebration(null), 2400);
+    try { navigator.vibrate?.([40, 60, 40]); } catch { /* vibration not supported */ }
+  };
+
   const handleToggleSet = (exerciseId, setId, done) => {
     const nowDone = !done;
     updateSet(exerciseId, setId, 'done', nowDone);
     if (nowDone) {
       const ex = activeWorkout.exercises.find(e => e.id === exerciseId);
+      celebrateIfNewPR(ex, ex?.sets.find(s => s.id === setId));
       const secs = ex?.restTime !== undefined && ex.restTime !== '' ? parseInt(ex.restTime) : 60;
       if (secs > 0) { setGlobalRestEndTime(Date.now() + secs * 1000); setIsResting(true); }
     }
@@ -211,6 +242,10 @@ function Workout() {
           const hasLast1RM = !!(stats1RM.lastSession?.set && stats1RM.lastSession.max1RM > 0);
           const hasAllTime1RM = !!(stats1RM.allTime?.set && stats1RM.allTime.max1RM > 0);
           const has1RM = hasLast1RM || hasAllTime1RM;
+          // Live PR: a set of this session that beats the all-time best
+          const sessionBest = findSessionBest(ex.sets, bodyweightLoad);
+          const newPR = hasAllTime1RM && sessionBest && sessionBest.rm > stats1RM.allTime.max1RM ? sessionBest : null;
+          const isCelebrating = !!newPR && prCelebration?.exerciseId === ex.id;
 
           return (
             <div 
@@ -270,7 +305,10 @@ function Workout() {
 
                 {/* Best 1RM reference row - visible for ALL exercises on the same line */}
                 {has1RM && (
-                  <div className="workout-1rm-banner">
+                  <div
+                    key={isCelebrating ? prCelebration.id : 'static'}
+                    className={`workout-1rm-banner ${newPR ? 'has-new-pr' : ''} ${isCelebrating ? 'is-celebrating' : ''}`}
+                  >
                     {hasLast1RM && (
                       <div className="workout-1rm-item">
                         <div className="workout-1rm-label-group">
@@ -290,7 +328,7 @@ function Workout() {
                       <div className="workout-1rm-sep" />
                     )}
 
-                    {hasAllTime1RM && (
+                    {hasAllTime1RM && !newPR && (
                       <div className="workout-1rm-item">
                         <div className="workout-1rm-label-group">
                           <Trophy size={11} className="workout-1rm-icon-zap" />
@@ -301,6 +339,24 @@ function Workout() {
                         </span>
                         <span className="workout-1rm-badge">
                           1RM {rmPrefix}{stats1RM.allTime.max1RM}kg
+                        </span>
+                      </div>
+                    )}
+
+                    {newPR && (
+                      <div className="workout-1rm-item is-new-pr">
+                        <div className="workout-1rm-label-group">
+                          <Trophy size={11} className="workout-1rm-icon-zap" />
+                          <span className="workout-1rm-tag">PR:</span>
+                        </div>
+                        <span className="workout-1rm-val">
+                          {newPR.set.kg || 0}kg × {newPR.set.reps}
+                        </span>
+                        <span className="workout-1rm-new">
+                          Nuovo +{round1(newPR.rm - stats1RM.allTime.max1RM)}
+                        </span>
+                        <span className="workout-1rm-badge">
+                          1RM {rmPrefix}{newPR.rm}kg
                         </span>
                       </div>
                     )}
@@ -339,9 +395,9 @@ function Workout() {
                       }
                     }}
                   >
-                    <div className={`workout-set-row-item ${set.done ? 'is-completed' : ''}`}>
+                    <div className={`workout-set-row-item ${set.done ? 'is-completed' : ''} ${newPR?.set.id === set.id ? 'is-pr' : ''} ${isCelebrating && prCelebration.setId === set.id ? 'is-pr-pop' : ''}`}>
                       <span className={`workout-set-badge ${set.isDropset ? 'is-dropset' : ''}`}>
-                        {set.isDropset ? 'D' : sIdx + 1}
+                        {set.isDropset ? 'D' : newPR?.set.id === set.id ? <Trophy size={13} /> : sIdx + 1}
                       </span>
 
                       {/* KG input */}
