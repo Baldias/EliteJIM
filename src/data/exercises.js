@@ -103,8 +103,8 @@ export const EXERCISES_DB = [
   { id: 'c2', name: 'Spinte Manubri Panca Inclinata', category: EXERCISE_CATEGORIES.CHEST, equipmentType: D },
   { id: 'c3', name: 'Croci ai Cavi', category: EXERCISE_CATEGORIES.CHEST, equipmentType: B },
   { id: 'c4', name: 'Chest Press', category: EXERCISE_CATEGORIES.CHEST, equipmentType: B },
-  { id: 'c5', name: 'Piegamenti sulle braccia (Push-up)', category: EXERCISE_CATEGORIES.CHEST, equipmentType: B },
-  { id: 'c6', name: 'Dip alle Parallele', category: EXERCISE_CATEGORIES.CHEST, secondaryCategories: [EXERCISE_CATEGORIES.TRICEPS], equipmentType: B },
+  { id: 'c5', name: 'Piegamenti sulle braccia (Push-up)', category: EXERCISE_CATEGORIES.CHEST, equipmentType: B, bodyweightRatio: 0.64 },
+  { id: 'c6', name: 'Dip alle Parallele', category: EXERCISE_CATEGORIES.CHEST, secondaryCategories: [EXERCISE_CATEGORIES.TRICEPS], equipmentType: B, bodyweightRatio: 1 },
   { id: 'c7', name: 'Croci Manubri Panca Piana', category: EXERCISE_CATEGORIES.CHEST, equipmentType: D },
   { id: 'c8', name: 'Panca Inclinata Bilanciere', category: EXERCISE_CATEGORIES.CHEST, equipmentType: B },
   { id: 'c9', name: 'Panca Declinata Bilanciere', category: EXERCISE_CATEGORIES.CHEST, equipmentType: B },
@@ -115,7 +115,7 @@ export const EXERCISES_DB = [
   { id: 'c14', name: 'Panca Inclinata MultiPower', category: EXERCISE_CATEGORIES.CHEST, equipmentType: B },
 
   // --- DORSO (BACK) ---
-  { id: 'b1', name: 'Trazioni alla Sbarra (Pull-up)', category: EXERCISE_CATEGORIES.BACK, secondaryCategories: [EXERCISE_CATEGORIES.BICEPS], equipmentType: B },
+  { id: 'b1', name: 'Trazioni alla Sbarra (Pull-up)', category: EXERCISE_CATEGORIES.BACK, secondaryCategories: [EXERCISE_CATEGORIES.BICEPS], equipmentType: B, bodyweightRatio: 1 },
   { id: 'b2', name: 'Lat Machine Avanti', category: EXERCISE_CATEGORIES.BACK, equipmentType: B },
   { id: 'b3', name: 'Rematore con Bilanciere', category: EXERCISE_CATEGORIES.BACK, equipmentType: B },
   { id: 'b4', name: 'Pulley Basso', category: EXERCISE_CATEGORIES.BACK, equipmentType: B },
@@ -128,7 +128,7 @@ export const EXERCISES_DB = [
   { id: 'b11', name: 'Pullover Manubrio', category: EXERCISE_CATEGORIES.BACK, equipmentType: D },
   { id: 'b12', name: 'Hyperextension', category: EXERCISE_CATEGORIES.BACK, equipmentType: B },
   { id: 'b13', name: 'Scrollate Bilanciere (Shrugs)', category: EXERCISE_CATEGORIES.BACK, equipmentType: B },
-  { id: 'b14', name: 'Trazioni zavorrate', category: EXERCISE_CATEGORIES.BACK, equipmentType: B },
+  { id: 'b14', name: 'Trazioni zavorrate', category: EXERCISE_CATEGORIES.BACK, equipmentType: B, bodyweightRatio: 1 },
   { id: 'b15', name: 'Pulley Basso Singolo', category: EXERCISE_CATEGORIES.BACK, equipmentType: B },
   { id: 'b16', name: 'Lat Machine Dietro Nuca', category: EXERCISE_CATEGORIES.BACK, equipmentType: B },
 

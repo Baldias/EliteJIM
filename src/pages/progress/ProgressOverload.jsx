@@ -5,16 +5,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { getMuscleLevelByXp } from '../../utils/gamification';
 import { Zap, Search, Trophy, TrendingUp, TrendingDown } from 'lucide-react';
+import { estimate1RM, getBodyweightLoad, resolveBodyweight, MAX_RELIABLE_REPS, REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './ProgressOverload.css';
-
-// Epley estimated 1RM
-const calculateOneRepMax = (weight, reps) => {
-    const w = parseFloat(weight);
-    const r = parseInt(reps, 10);
-    if (!w || !r || w <= 0 || r <= 0) return null;
-    if (r === 1) return w;
-    return w * (1 + r / 30);
-};
 
 const round1 = (n) => Math.round(n * 10) / 10;
 const fmtNum = (n) => round1(n).toLocaleString('it-IT', { maximumFractionDigits: 1 });
@@ -48,6 +40,7 @@ function ProgressOverload() {
     const customExercises = useStore(state => state.customExercises || []);
     const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
     const muscleXP = useStore(state => state.muscleXP) || {};
+    const bodyweight = useStore(resolveBodyweight);
 
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedExercise, setSelectedExercise] = useState('');
@@ -91,7 +84,13 @@ function ProgressOverload() {
         ? selectedExercise
         : (availableExercises[0] || '');
 
-    // One point per session: the best set by estimated 1RM (reps for bodyweight work)
+    // Bodyweight moved by pull-ups, dips, push-ups: their 1RM is the added weight
+    const bodyweightLoad = useMemo(
+        () => getBodyweightLoad(currentExercise, allExercisesDB, bodyweight),
+        [currentExercise, allExercisesDB, bodyweight]
+    );
+
+    // One point per session: the best working set by estimated 1RM (reps when no weight was ever added)
     const sessions = useMemo(() => {
         if (!currentExercise) return [];
         const list = [];
@@ -99,11 +98,11 @@ function ProgressOverload() {
             const ex = workout.exercises.find(e => e.name === currentExercise);
             if (!ex) return;
             let best = null;
-            ex.sets.filter(s => s.done).forEach(s => {
+            ex.sets.filter(s => s.done && !s.isDropset).forEach(s => {
                 const kg = parseFloat(s.kg) || 0;
                 const reps = parseInt(s.reps, 10) || 0;
                 if (reps <= 0) return;
-                const rm = calculateOneRepMax(kg, reps);
+                const rm = estimate1RM(kg, reps, bodyweightLoad);
                 const better = !best
                     || (rm || 0) > (best.rm || 0)
                     || (!rm && !best.rm && reps > best.reps);
@@ -113,7 +112,7 @@ function ProgressOverload() {
         });
         list.sort((a, b) => a.time - b.time);
 
-        const hasLoad = list.some(s => s.rm);
+        const hasLoad = list.some(s => s.kg > 0);
         let runningMax = 0;
         return list.map((s, i) => {
             const value = hasLoad ? round1(s.rm || 0) : s.reps;
@@ -122,9 +121,9 @@ function ProgressOverload() {
             runningMax = Math.max(runningMax, value);
             return { ...s, value, delta: prev == null ? null : round1(value - prev), isPR };
         });
-    }, [history, currentExercise]);
+    }, [history, currentExercise, bodyweightLoad]);
 
-    const hasLoad = sessions.some(s => s.rm);
+    const hasLoad = sessions.some(s => s.kg > 0);
     const unit = hasLoad ? 'kg' : 'reps';
 
     const summary = useMemo(() => {
@@ -223,9 +222,11 @@ function ProgressOverload() {
                             <section className="ej-card pg-hero">
                                 <div className="pg-hero-head">
                                     <div>
-                                        <p className="pg-kicker">{hasLoad ? '1RM stimato · Epley' : 'Ripetizioni massime'}</p>
+                                        <p className="pg-kicker">
+                                            {hasLoad ? (bodyweightLoad > 0 ? '1RM stimato · zavorra' : '1RM stimato') : 'Ripetizioni massime'}
+                                        </p>
                                         <p className="pg-hero-value">
-                                            {fmtNum(summary.last.value)} <span>{unit}</span>
+                                            {hasLoad && bodyweightLoad > 0 ? '+' : ''}{fmtNum(summary.last.value)} <span>{unit}</span>
                                         </p>
                                     </div>
                                     {summary.last.isPR && (
@@ -280,13 +281,24 @@ function ProgressOverload() {
                                     <span><i style={{ background: 'var(--c-primary)' }} /> {hasLoad ? '1RM stimato' : 'Reps'}</span>
                                     <span><i style={{ background: 'var(--c-streak)' }} /> Nuovo PR</span>
                                 </div>
+
+                                {hasLoad && summary.last.reps > MAX_RELIABLE_REPS && (
+                                    <p className="pg-hero-note">
+                                        Stima meno precisa: sopra le {MAX_RELIABLE_REPS} ripetizioni l'1RM stimato può scostarsi del 5-10%. Per un dato affidabile usa serie da 3-10 reps.
+                                    </p>
+                                )}
+                                {hasLoad && bodyweightLoad > 0 && !bodyweight && (
+                                    <p className="pg-hero-note">
+                                        Calcolato con un peso corporeo di {REFERENCE_BODYWEIGHT_KG} kg: impostalo in Impostazioni per una stima esatta.
+                                    </p>
+                                )}
                             </section>
 
                             {/* Insights */}
                             <div className="pg-insights">
                                 <div className="ej-card pg-insight">
                                     <span className="pg-insight-label">Personal Best</span>
-                                    <span className="pg-insight-value is-primary">{fmtNum(summary.best)}{unit === 'kg' ? 'kg' : ''}</span>
+                                    <span className="pg-insight-value is-primary">{hasLoad && bodyweightLoad > 0 ? '+' : ''}{fmtNum(summary.best)}{unit === 'kg' ? 'kg' : ''}</span>
                                     <span className="pg-insight-sub">{hasLoad ? '1RM stimato' : 'reps'}</span>
                                 </div>
                                 <div className="ej-card pg-insight">

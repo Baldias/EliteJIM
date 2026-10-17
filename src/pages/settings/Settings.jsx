@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ChevronLeft, ChevronRight, ChevronDown, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles, Bell } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles, Bell, Weight } from 'lucide-react';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import { AiTemplateModal } from '../../components/AiTemplateModal';
+import { sanitizeDecimalInput } from '../../utils/number';
+import { REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './Settings.css';
 
 function Settings() {
@@ -16,12 +18,16 @@ function Settings() {
   const lastBackupDate = useStore(state => state.lastBackupDate);
   const isStoragePersisted = useStore(state => state.isStoragePersisted);
   const setAutoBackupSettings = useStore(state => state.setAutoBackupSettings);
+  const bodyweight = useStore(state => state.bodyweight);
+  const quizBodyweight = useStore(state => parseFloat(state.scienceReport?.inputStats?.bw) || null);
+  const setBodyweight = useStore(state => state.setBodyweight);
 
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [persistenceLoading, setPersistenceLoading] = useState(false);
   const [showScienceInfo, setShowScienceInfo] = useState(false);
   const [mountedAt] = useState(() => Date.now());
+  const [bodyweightInput, setBodyweightInput] = useState(() => (bodyweight ? String(bodyweight).replace('.', ',') : ''));
   const fileInputRef = React.useRef(null);
 
   const handleExport = () => {
@@ -30,6 +36,12 @@ function Settings() {
       setExportSuccess(true);
       setTimeout(() => setExportSuccess(false), 2500);
     }
+  };
+
+  const handleBodyweightChange = (event) => {
+    const value = sanitizeDecimalInput(event.target.value);
+    setBodyweightInput(value);
+    setBodyweight(value);
   };
 
   const handleImport = (event) => {
@@ -82,6 +94,28 @@ function Settings() {
           </span>
           <ChevronRight size={18} className="st-row-chevron" />
         </button>
+
+        <label className="ej-card st-row">
+          <span className="st-row-icon is-primary"><Weight size={20} /></span>
+          <span className="st-row-text">
+            <span className="st-row-title">Peso Corporeo</span>
+            <span className="st-row-sub">
+              Serve per l'1RM di trazioni, dip e piegamenti.
+              {!bodyweight && (quizBodyweight ? ` Se vuoto: ${quizBodyweight} kg dal quiz Scienza.` : ` Se vuoto: ${REFERENCE_BODYWEIGHT_KG} kg di riferimento.`)}
+            </span>
+          </span>
+          <span className="st-weight">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={bodyweightInput}
+              onChange={handleBodyweightChange}
+              placeholder={String(quizBodyweight || REFERENCE_BODYWEIGHT_KG)}
+              aria-label="Peso corporeo in kg"
+            />
+            <span>kg</span>
+          </span>
+        </label>
 
         <div className="ej-card st-row">
           <span className="st-row-icon is-science"><Dna size={20} /></span>

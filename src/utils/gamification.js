@@ -1,4 +1,5 @@
 import { normalizeName } from '../data/exercises';
+import { estimate1RM, repFactor, getBodyweightLoad, REFERENCE_BODYWEIGHT_KG } from './oneRepMax';
 
 export const RANKS = [
   { level: 0, title: 'Rame III', minXp: 0, color: '#B87333' },
@@ -72,15 +73,94 @@ export const getMuscleLevelByXp = (xp) => {
   };
 };
 
-// Used to weight bodyweight sets (kg = 0) in muscle XP.
-const REFERENCE_BODYWEIGHT_KG = 75;
+const workingSets = (exercise) => (exercise?.sets || []).filter(s => s.done && !s.isDropset);
 
-export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], scienceReport = null) => {
+const fmtKg = (n) => `${Math.round(n * 10) / 10}`;
+// Set loads keep their real increments (e.g. 101.25 kg)
+const fmtLoad = (n) => `${Math.round(n * 100) / 100}`;
+
+/**
+ * Compares one exercise with its previous session on strength only: the best
+ * estimated 1RM and the top set (the set with that 1RM). More sets, more total
+ * reps or more tonnage never count as progressive overload.
+ * `bodyweightLoad` is the bodyweight moved by the exercise (0 for external loads).
+ */
+export const evaluateExerciseOverload = (currentSets, pastSets, bodyweightLoad = 0) => {
+  const toSet = (s) => ({ kg: parseFloat(s.kg) || 0, reps: parseInt(s.reps, 10) || 0 });
+  const current = (currentSets || []).map(toSet).filter(s => s.reps > 0);
+  const past = (pastSets || []).map(toSet).filter(s => s.reps > 0);
+  if (current.length === 0 || past.length === 0) return null;
+
+  const isBodyweightOnly = current.every(s => s.kg === 0) && past.every(s => s.kg === 0);
+
+  if (isBodyweightOnly) {
+    // Same load (the body): only the best set's reps tell if strength went up
+    const cur = Math.max(...current.map(s => s.reps));
+    const prev = Math.max(...past.map(s => s.reps));
+    const metrics = { currentMetric: `${cur} reps`, pastMetric: `${prev} reps` };
+    if (cur > prev) {
+      return { status: 'pr', overloaded: true, badge: '⚡ Nuovo Record Reps', badgeColor: '#34c759',
+        detail: `+${cur - prev} reps sulla serie migliore (${cur} vs ${prev})`, ...metrics };
+    }
+    if (repFactor(cur) < repFactor(prev) * 0.95) {
+      return { status: 'decreased', overloaded: false, badge: '🔻 Sotto Target', badgeColor: '#ff9500',
+        detail: `Serie migliore più corta della scorsa volta (${cur} vs ${prev} reps)`, ...metrics };
+    }
+    return { status: 'maintained', overloaded: false, badge: '⚖️ Mantenimento', badgeColor: '#8e8e93',
+      detail: cur === prev ? `Stesse ripetizioni sulla serie migliore (${cur} reps)` : `Ripetizioni stabili sulla serie migliore (${cur} vs ${prev})`,
+      ...metrics };
+  }
+
+  const topSet = (sets) => sets.reduce((best, s) => {
+    const rm = estimate1RM(s.kg, s.reps, bodyweightLoad);
+    return !best || rm > best.rm ? { ...s, rm } : best;
+  }, null);
+  const cur = topSet(current);
+  const prev = topSet(past);
+  const metrics = { currentMetric: `${fmtLoad(cur.kg)}kg × ${cur.reps}`, pastMetric: `${fmtLoad(prev.kg)}kg × ${prev.reps}` };
+  const rmText = `${bodyweightLoad > 0 ? 'zavorra ' : ''}${fmtKg(cur.rm)}kg vs ${fmtKg(prev.rm)}kg`;
+  // Thresholds are relative to the whole mass lifted (body + added weight)
+  const curTotal = cur.rm + bodyweightLoad;
+  const prevTotal = prev.rm + bodyweightLoad;
+
+  // Beyond the estimate's noise (different rep ranges give slightly different 1RMs)
+  if (cur.rm > 0 && curTotal >= prevTotal * 1.015) {
+    return { status: 'pr', overloaded: true, badge: '⚡ Record Forza (1RM)', badgeColor: '#ffd700',
+      detail: `+${fmtKg(cur.rm - prev.rm)} kg di 1RM stimato (${rmText})`, ...metrics };
+  }
+
+  // Small but certain progressions: a set that beats the previous top set on
+  // load or reps without losing on the other (e.g. +1.25 kg, +1 rep at 15 reps)
+  const beatsTop = current
+    .filter(s => s.kg >= prev.kg && s.reps >= prev.reps && (s.kg > prev.kg || s.reps > prev.reps))
+    .sort((a, b) => b.kg - a.kg || b.reps - a.reps)[0];
+  if (beatsTop) {
+    const heavier = beatsTop.kg > prev.kg;
+    return {
+      status: 'overload', overloaded: true,
+      badge: heavier ? '⚡ Più Carico' : '🔥 Più Ripetizioni', badgeColor: '#34c759',
+      detail: heavier
+        ? `Più peso sulla serie migliore: ${fmtLoad(beatsTop.kg)}kg × ${beatsTop.reps} (prec. ${fmtLoad(prev.kg)}kg × ${prev.reps})`
+        : `+${beatsTop.reps - prev.reps} reps a ${fmtLoad(beatsTop.kg)}kg sulla serie migliore`,
+      currentMetric: `${fmtLoad(beatsTop.kg)}kg × ${beatsTop.reps}`, pastMetric: metrics.pastMetric
+    };
+  }
+
+  if (curTotal < prevTotal * 0.95) {
+    return { status: 'decreased', overloaded: false, badge: '🔻 Sotto Target', badgeColor: '#ff9500',
+      detail: `1RM stimato in calo (${rmText})`, ...metrics };
+  }
+
+  return { status: 'maintained', overloaded: false, badge: '⚖️ Mantenimento', badgeColor: '#8e8e93',
+    detail: `1RM stimato stabile (${rmText})`, ...metrics };
+};
+
+export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], scienceReport = null, bodyweight = null) => {
   if (!workout || !workout.exercises || workout.exercises.length === 0) {
     return {
       xp: 0,
       grade: 'D',
-      gradeLabel: 'Volume Insufficiente',
+      gradeLabel: 'Serie Insufficienti',
       gradeDescription: 'Nessun esercizio completato nella sessione.',
       nextTip: 'Completa almeno un esercizio per iniziare a guadagnare punti.',
       exercisesAnalysis: [],
@@ -125,24 +205,26 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
   const overloadedExercises = new Set();
   let overloadCount = 0;
 
-  // --- PASS 1: Detailed Hybrid Overload Analysis per Exercise ---
+  // --- PASS 1: Overload analysis per exercise (estimated 1RM and top set, never volume) ---
   activeExercises.forEach(ex => {
     const normName = normalizeName(ex.name);
-    const currentDoneSets = ex.sets.filter(s => s.done && !s.isDropset);
+    const currentDoneSets = workingSets(ex);
 
     // Find latest past workout containing this exercise with completed sets
     let pastEx = null;
     for (const pw of sortedPast) {
-      if (pw.exercises) {
-        const match = pw.exercises.find(e => normalizeName(e.name) === normName);
-        if (match && match.sets && match.sets.some(s => s.done && !s.isDropset)) {
-          pastEx = match;
-          break;
-        }
+      const match = pw.exercises?.find(e => normalizeName(e.name) === normName);
+      if (match && workingSets(match).length > 0) {
+        pastEx = match;
+        break;
       }
     }
 
-    if (!pastEx) {
+    const result = pastEx
+      ? evaluateExerciseOverload(currentDoneSets, workingSets(pastEx), getBodyweightLoad(ex.name, allKnownExercises, bodyweight))
+      : null;
+
+    if (!result) {
       // First time doing this exercise
       exercisesAnalysis.push({
         name: ex.name,
@@ -157,112 +239,12 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
       return;
     }
 
-    const pastDoneSets = pastEx.sets.filter(s => s.done && !s.isDropset);
-
-    const currentMaxKg = Math.max(...currentDoneSets.map(s => parseFloat(s.kg) || 0));
-    const pastMaxKg = Math.max(...pastDoneSets.map(s => parseFloat(s.kg) || 0));
-
-    const currentBestReps = Math.max(...currentDoneSets.map(s => parseInt(s.reps, 10) || 0));
-    const pastBestReps = Math.max(...pastDoneSets.map(s => parseInt(s.reps, 10) || 0));
-
-    const currentTotalReps = currentDoneSets.reduce((acc, s) => acc + (parseInt(s.reps, 10) || 0), 0);
-    const pastTotalReps = pastDoneSets.reduce((acc, s) => acc + (parseInt(s.reps, 10) || 0), 0);
-
-    const currentVolume = currentDoneSets.reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
-    const pastVolume = pastDoneSets.reduce((acc, s) => acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps, 10) || 0)), 0);
-
-    // Epley Estimated 1RM
-    const calcE1rm = (sets) => Math.max(0, ...sets.map(s => {
-      const w = parseFloat(s.kg) || 0;
-      const r = parseInt(s.reps, 10) || 0;
-      return (w > 0 && r > 0) ? w * (1 + r / 30) : 0;
-    }));
-
-    const currentE1rm = calcE1rm(currentDoneSets);
-    const pastE1rm = calcE1rm(pastDoneSets);
-
-    const isBodyweight = currentMaxKg === 0 && pastMaxKg === 0;
-    let isOverload = false;
-    let reasonDetail = '';
-    let badge = '⚖️ Mantenimento';
-    let badgeColor = '#8e8e93';
-    let status = 'maintained';
-
-    if (isBodyweight) {
-      // Bodyweight: compare repetitions
-      if (currentBestReps > pastBestReps) {
-        isOverload = true;
-        status = 'pr';
-        badge = '⚡ Nuovo Record Reps';
-        badgeColor = '#34c759';
-        reasonDetail = `+${currentBestReps - pastBestReps} reps sul miglior set (${currentBestReps} vs ${pastBestReps})`;
-      } else if (currentTotalReps > pastTotalReps) {
-        isOverload = true;
-        status = 'overload';
-        badge = '🔥 Più Reps Totali';
-        badgeColor = '#34c759';
-        reasonDetail = `+${currentTotalReps - pastTotalReps} reps complessive (${currentTotalReps} vs ${pastTotalReps})`;
-      } else if (currentTotalReps < pastTotalReps * 0.88) {
-        status = 'decreased';
-        badge = '🔻 Sotto Target';
-        badgeColor = '#ff9500';
-        reasonDetail = `Reps inferiori alla scorsa sessione (${currentTotalReps} vs ${pastTotalReps})`;
-      } else {
-        reasonDetail = `Volume reps stabile rispetto alla scorsa volta (${currentTotalReps} reps)`;
-      }
-    } else {
-      // Weighted exercises: Hybrid evaluation (1RM, peak weight, reps at weight, total tonnage)
-      if (currentE1rm >= pastE1rm * 1.015 && currentE1rm > 0) {
-        isOverload = true;
-        status = 'pr';
-        badge = '⚡ Record Forza (1RM)';
-        badgeColor = '#ffd700';
-        const diff = (currentE1rm - pastE1rm).toFixed(1);
-        reasonDetail = `+${diff} kg 1RM stimato (${currentE1rm.toFixed(1)}kg vs ${pastE1rm.toFixed(1)}kg)`;
-      } else if (currentMaxKg > pastMaxKg && currentBestReps >= 3) {
-        isOverload = true;
-        status = 'pr';
-        badge = '⚡ Nuovo Carico Max';
-        badgeColor = '#ffd700';
-        reasonDetail = `Carico max aumentato a ${currentMaxKg}kg (prec. ${pastMaxKg}kg)`;
-      } else if (currentMaxKg === pastMaxKg && currentBestReps > pastBestReps) {
-        isOverload = true;
-        status = 'overload';
-        badge = '🔥 Più Ripetizioni';
-        badgeColor = '#34c759';
-        reasonDetail = `+${currentBestReps - pastBestReps} reps a parità di peso (${currentMaxKg}kg)`;
-      } else if (currentVolume > pastVolume && pastVolume > 0 && currentE1rm >= pastE1rm * 0.95) {
-        isOverload = true;
-        status = 'overload';
-        badge = '🔥 Volume Totale';
-        badgeColor = '#34c759';
-        const volDiff = Math.round(currentVolume - pastVolume);
-        reasonDetail = `+${volDiff} kg tonnellaggio (${currentVolume}kg vs ${pastVolume}kg)`;
-      } else if (currentVolume < pastVolume * 0.85 || (pastE1rm > 0 && currentE1rm < pastE1rm * 0.90)) {
-        status = 'decreased';
-        badge = '🔻 Sotto Target';
-        badgeColor = '#ff9500';
-        reasonDetail = `Carico o volume inferiori (${currentVolume}kg vs ${pastVolume}kg)`;
-      } else {
-        reasonDetail = `Carichi e volume stabili (${currentMaxKg}kg × ${currentBestReps} reps)`;
-      }
-    }
-
-    if (isOverload) {
+    if (result.overloaded) {
       overloadedExercises.add(normName);
       overloadCount++;
     }
 
-    exercisesAnalysis.push({
-      name: ex.name,
-      status,
-      overloaded: isOverload,
-      badge,
-      badgeColor,
-      detail: reasonDetail,
-      currentMetric: isBodyweight ? `${currentBestReps} reps` : `${currentMaxKg}kg × ${currentBestReps}`,
-      pastMetric: isBodyweight ? `${pastBestReps} reps` : `${pastMaxKg}kg × ${pastBestReps}`
-    });
+    exercisesAnalysis.push({ name: ex.name, ...result });
   });
 
   // --- PASS 2: Assign XP per set based on absolute tonnage ---
@@ -339,8 +321,8 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
     }
   } else if (isJunk) {
     grade = 'D';
-    gradeLabel = 'Volume Insufficiente';
-    gradeDescription = `Hai completato solo ${doneSets} ${doneSets === 1 ? 'serie' : 'serie'}. Sotto le 5 serie lo stimolo ipertrofico è troppo basso.`;
+    gradeLabel = 'Serie Insufficienti';
+    gradeDescription = `Hai completato solo ${doneSets} serie: sotto le 5 serie allenanti la sessione non basta per valutare la progressione.`;
     nextTip = 'Completa almeno 6-8 serie allenanti con impegno per stimolare la crescita muscolare e guadagnare un grado superiore.';
   } else if (allNew) {
     grade = 'B';
@@ -363,16 +345,19 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
     gradeDescription = `Hai superato i tuoi standard su ${overloadCount} ${overloadCount === 1 ? 'esercizio' : 'esercizi'} su ${totalExercises}. C'è ancora margine sugli altri movimenti.`;
     nextTip = 'Focalizzati sui primi 2 esercizi base della scheda per aumentare il carico e raggiungere il Grado A.';
   } else {
-    if (doneSets >= 10) {
+    // No overload: strength held or dropped? Doing more sets does not change the grade.
+    const compared = exercisesAnalysis.filter(e => e.status !== 'new').length;
+    const decreased = exercisesAnalysis.filter(e => e.status === 'decreased').length;
+    if (decreased > compared / 2) {
+      grade = 'D';
+      gradeLabel = 'Calo di Forza';
+      gradeDescription = `Il 1RM stimato è sceso su ${decreased} ${decreased === 1 ? 'esercizio' : 'esercizi'} su ${compared} rispetto all'ultima volta.`;
+      nextTip = 'Controlla recupero, sonno e alimentazione: se il calo continua per 2-3 sessioni valuta una settimana di scarico.';
+    } else {
       grade = 'C';
       gradeLabel = 'Mantenimento / Stagnazione';
-      gradeDescription = `Buon volume totale (${doneSets} serie), ma non ci sono stati miglioramenti di carico o ripetizioni rispetto all'ultima volta.`;
-      nextTip = 'Basta anche solo 1 ripetizione in più su una singola serie per rompere lo stallo e trasformare la sessione in progressione.';
-    } else {
-      grade = 'D';
-      gradeLabel = 'Stimolo Sotto Target';
-      gradeDescription = `Nessun sovraccarico registrato e volume complessivo basso (${doneSets} serie).`;
-      nextTip = 'Aumenta il focus: spingi di più sulla prima serie di ogni esercizio o aggiungi serie per dare uno stimolo efficace.';
+      gradeDescription = 'Forza stabile: nessun esercizio ha superato il 1RM stimato o la serie migliore della scorsa volta.';
+      nextTip = 'Basta 1 ripetizione o 1,25-2,5 kg in più sulla serie migliore per trasformare la sessione in progressione.';
     }
   }
 
@@ -537,8 +522,7 @@ export const calculateWeeklyStreak = (history = [], referenceDate = Date.now()) 
   };
 };
 
-export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {
-  console.log(`[DEBUG] recalculateTotalXpFromHistory started. History length: ${history?.length}`);
+export const recalculateTotalXpFromHistory = (history, exercisesDb = [], bodyweight = null) => {
   try {
     if (!history || history.length === 0) {
       return { userXP: 0, muscleXP: {}, currentStreak: 0, highestStreak: 0 };
@@ -553,7 +537,7 @@ export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {
 
     sortedHistory.forEach(workout => {
       // Calcola XP della sessione
-      const score = calculateSessionScore(workout, rollingHistory, exercisesDb);
+      const score = calculateSessionScore(workout, rollingHistory, exercisesDb, null, bodyweight);
       totalXP += score.xp;
       
       if (score.muscleXpGained) {

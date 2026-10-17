@@ -1034,6 +1034,43 @@ button.st-row {
   flex-shrink: 0;
 }
 
+/* Bodyweight input */
+.st-weight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  color: var(--c-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.st-weight:focus-within {
+  border-color: rgba(var(--c-primary-rgb), 0.6);
+}
+
+.st-weight input {
+  width: 44px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.st-weight input::placeholder {
+  color: var(--c-text-dim);
+}
+
 /* Switch */
 .st-switch {
   position: relative;

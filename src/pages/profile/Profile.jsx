@@ -8,6 +8,7 @@ import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../u
 import { getAllExercises } from '../../data/exercises';
 import { getRankByXp } from '../../utils/gamification';
 import { computeOverloadStats } from '../../utils/overload';
+import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './Profile.css';
 
 function Profile() {
@@ -21,6 +22,7 @@ function Profile() {
   const customExercises = useMemo(() => _customExercises || [], [_customExercises]);
   const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
   const allKnownExercises = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
+  const bodyweight = useStore(resolveBodyweight);
 
   const [expandedSessions, setExpandedSessions] = useState({});
   const [visibleWeeks, setVisibleWeeks] = useState(2);
@@ -52,24 +54,16 @@ function Profile() {
     return sets;
   };
 
-  const calculateOneRepMax = (weight, reps) => {
-    const w = parseFloat(weight);
-    const r = parseInt(reps, 10);
-    if (!w || !r || w <= 0 || r <= 0) return null;
-    if (r === 1) return w;
-    return w * (1 + r / 30);
-  };
-
 
   // --- Statistics Logic (progressive overload, not volume) ---
   const stats = useMemo(() => {
-    const { prCount, overloadRate } = computeOverloadStats(history);
+    const { prCount, overloadRate } = computeOverloadStats(history, { exercisesDb: allKnownExercises, bodyweight });
     return {
       workouts: history.length,
       prs: prCount,
       overload: overloadRate == null ? '—' : `${overloadRate}%`
     };
-  }, [history]);
+  }, [history, allKnownExercises, bodyweight]);
 
   // --- RP Volume Logic ---
   const rpVolumes = useMemo(() => {
@@ -280,17 +274,18 @@ function Profile() {
                             {workout.exercises.map(exercise => {
                               const doneSets = exercise.sets.filter(s => s.done);
                               if (doneSets.length === 0) return null;
+                              const bodyweightLoad = getBodyweightLoad(exercise.name, allKnownExercises, bodyweight);
                               return (
                                 <div key={exercise.id} className="pf-ex">
                                   <span className="pf-ex-name">{exercise.name}</span>
                                   <div className="pf-ex-sets">
                                     {doneSets.map((set, setIdx) => {
-                                      const est1rm = calculateOneRepMax(set.kg, set.reps);
+                                      const est1rm = estimate1RM(set.kg, set.reps, bodyweightLoad);
                                       return (
                                         <span key={set.id} className={`pf-set ${set.isDropset ? 'is-drop' : ''}`}>
                                           <span className="pf-set-num">{set.isDropset ? 'D' : setIdx + 1}</span>
                                           {set.kg}kg × {set.reps}
-                                          {est1rm && <span className="pf-set-rm">{est1rm.toFixed(0)}</span>}
+                                          {est1rm > 0 && <span className="pf-set-rm">{bodyweightLoad > 0 ? '+' : ''}{est1rm.toFixed(0)}</span>}
                                         </span>
                                       );
                                     })}

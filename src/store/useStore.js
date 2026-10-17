@@ -3,21 +3,15 @@ import { persist } from 'zustand/middleware';
 import { calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
 import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises';
 import { parseNonNegativeInt } from '../utils/number';
-
-export const calculate1RM = (kg, reps) => {
-  const w = parseFloat(kg) || 0;
-  const r = parseFloat(reps) || 0;
-  if (w <= 0 || r <= 0) return 0;
-  if (r === 1) return w;
-  return w * (1 + r / 30);
-};
+import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
 
 // Only completed sets are real performances: skipped sets keep the values
 // pre-filled from the previous session and must not count as "last" or PR.
 const completedSets = (exercise) => (exercise?.sets || []).filter(s => s.done);
 
 // Most recent session (history is newest first) where the exercise has completed sets.
-export const findLastBest1RMSet = (history, exerciseName) => {
+// `bodyweightLoad` is the bodyweight moved by the exercise (see getBodyweightLoad).
+export const findLastBest1RMSet = (history, exerciseName, bodyweightLoad = 0) => {
   if (!exerciseName || !history || history.length === 0) return null;
   const norm = normalizeName(exerciseName);
   for (const w of history) {
@@ -27,7 +21,7 @@ export const findLastBest1RMSet = (history, exerciseName) => {
       let maxSet = null;
       let max1RM = -1;
       for (const s of doneSets) {
-        const rm = calculate1RM(s.kg, s.reps);
+        const rm = estimate1RM(s.kg, s.reps, bodyweightLoad);
         if (rm > max1RM) {
           max1RM = rm;
           maxSet = s;
@@ -44,7 +38,7 @@ export const findLastBest1RMSet = (history, exerciseName) => {
   return null;
 };
 
-export const findAllTimeBest1RMSet = (history, exerciseName) => {
+export const findAllTimeBest1RMSet = (history, exerciseName, bodyweightLoad = 0) => {
   if (!exerciseName || !history || history.length === 0) return null;
   const norm = normalizeName(exerciseName);
   let allTimeMaxSet = null;
@@ -54,7 +48,7 @@ export const findAllTimeBest1RMSet = (history, exerciseName) => {
   for (const w of history) {
     const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
     for (const s of completedSets(pastEx)) {
-      const rm = calculate1RM(s.kg, s.reps);
+      const rm = estimate1RM(s.kg, s.reps, bodyweightLoad);
       if (rm > allTimeMax1RM) {
         allTimeMax1RM = rm;
         allTimeMaxSet = s;
@@ -71,9 +65,9 @@ export const findAllTimeBest1RMSet = (history, exerciseName) => {
   };
 };
 
-export const getExercise1RMStats = (history, exerciseName) => {
-  const lastSession = findLastBest1RMSet(history, exerciseName);
-  const allTime = findAllTimeBest1RMSet(history, exerciseName);
+export const getExercise1RMStats = (history, exerciseName, bodyweightLoad = 0) => {
+  const lastSession = findLastBest1RMSet(history, exerciseName, bodyweightLoad);
+  const allTime = findAllTimeBest1RMSet(history, exerciseName, bodyweightLoad);
   return { lastSession, allTime };
 };
 
@@ -123,6 +117,8 @@ export const useStore = create(
       activeWorkout: null,
       // Saved science assessment report
       scienceReport: null,
+      // User bodyweight in kg (null = not set): used for the 1RM of pull-ups, dips, push-ups
+      bodyweight: null,
       // Persistent rest timer end timestamp
       globalRestEndTime: null,
 
@@ -147,12 +143,17 @@ export const useStore = create(
       setStoragePersisted: (isPersisted) => set({ isStoragePersisted: isPersisted }),
       snoozeBackupReminder: (hours = 24) => set({ dismissedBackupReminderUntil: Date.now() + (hours * 60 * 60 * 1000) }),
 
+      setBodyweight: (kg) => {
+        const value = parseFloat(kg);
+        set({ bodyweight: value > 0 ? Math.round(value * 10) / 10 : null });
+      },
+
       // --- Gamification Actions ---
       clearRecapData: () => set({ recapData: null }),
       syncGamificationWithHistory: () => {
         set((state) => {
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
-          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(state.history, allKnown);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(state.history, allKnown, resolveBodyweight(state));
           return { userXP, muscleXP, currentStreak, highestStreak };
         });
       },
@@ -275,7 +276,7 @@ export const useStore = create(
           }
 
           const updatedAllExercises = getAllExercises(nextCustom, nextOverrides);
-          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(nextHistory, updatedAllExercises);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(nextHistory, updatedAllExercises, resolveBodyweight(state));
 
           return {
             customExercises: nextCustom,
@@ -347,7 +348,7 @@ export const useStore = create(
           }
 
           const updatedAllExercises = getAllExercises(state.customExercises, nextOverrides);
-          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(nextHistory, updatedAllExercises);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(nextHistory, updatedAllExercises, resolveBodyweight(state));
 
           return {
             exerciseOverrides: nextOverrides,
@@ -561,7 +562,7 @@ export const useStore = create(
           };
 
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
-          const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown, state.scienceReport);
+          const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown, state.scienceReport, resolveBodyweight(state));
           
           const updatedHistory = [completedWorkout, ...state.history];
           const { currentStreak: newStreak, highestStreak: calculatedHighest } = calculateWeeklyStreak(updatedHistory);
@@ -622,7 +623,7 @@ export const useStore = create(
         set((state) => {
           const newHistory = state.history.filter(w => w.id !== workoutId);
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
-          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, allKnown);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, allKnown, resolveBodyweight(state));
           return {
             history: newHistory,
             userXP,
@@ -640,7 +641,7 @@ export const useStore = create(
             .map(w => w.id === workoutId ? { ...w, ...updates } : w)
             .sort((a, b) => (Number(b.startTime) || 0) - (Number(a.startTime) || 0));
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
-          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, allKnown);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, allKnown, resolveBodyweight(state));
           const latest = newHistory[0];
           return {
             history: newHistory,

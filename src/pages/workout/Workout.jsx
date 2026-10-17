@@ -7,6 +7,7 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 import { sanitizeDecimalInput } from '../../utils/number';
+import { getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './Workout.css';
 
 function Workout() {
@@ -25,6 +26,7 @@ function Workout() {
   const customExercises = useStore(state => state.customExercises || []);
   const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
   const allDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
+  const bodyweight = useStore(resolveBodyweight);
 
   const [sessionTimeStr, setSessionTimeStr] = useState('00:00');
   const isFinishing = useRef(false);
@@ -203,7 +205,9 @@ function Workout() {
         {activeWorkout.exercises.map((ex, idx) => {
           const weightStep = getWeightStep(ex, allDB);
           const doneCount = ex.sets.filter(s => s.done).length;
-          const stats1RM = getExercise1RMStats(history, ex.name);
+          const bodyweightLoad = getBodyweightLoad(ex.name, allDB, bodyweight);
+          const stats1RM = getExercise1RMStats(history, ex.name, bodyweightLoad);
+          const rmPrefix = bodyweightLoad > 0 ? '+' : '';
           const hasLast1RM = !!(stats1RM.lastSession?.set && stats1RM.lastSession.max1RM > 0);
           const hasAllTime1RM = !!(stats1RM.allTime?.set && stats1RM.allTime.max1RM > 0);
           const has1RM = hasLast1RM || hasAllTime1RM;
@@ -277,7 +281,7 @@ function Workout() {
                           {stats1RM.lastSession.set.kg}kg × {stats1RM.lastSession.set.reps}
                         </span>
                         <span className="workout-1rm-badge">
-                          1RM {stats1RM.lastSession.max1RM}kg
+                          1RM {rmPrefix}{stats1RM.lastSession.max1RM}kg
                         </span>
                       </div>
                     )}
@@ -296,7 +300,7 @@ function Workout() {
                           {stats1RM.allTime.set.kg}kg × {stats1RM.allTime.set.reps}
                         </span>
                         <span className="workout-1rm-badge">
-                          1RM {stats1RM.allTime.max1RM}kg
+                          1RM {rmPrefix}{stats1RM.allTime.max1RM}kg
                         </span>
                       </div>
                     )}

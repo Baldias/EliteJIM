@@ -232,6 +232,13 @@
   border-radius: 50%;
 }
 
+.pg-hero-note {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--c-text-dim);
+}
+
 .pg-tooltip {
   padding: 10px 12px;
   border-radius: 12px;

@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { Calendar, Clock, ChevronDown, ChevronUp, Edit2, ChevronLeft, Layers, Trophy } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
+import { getAllExercises } from '../../data/exercises';
+import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './History.css';
 
 function History() {
@@ -10,6 +12,10 @@ function History() {
   const location = useLocation();
   const history = useStore(state => state.history);
   const deleteWorkout = useStore(state => state.deleteWorkout);
+  const customExercises = useStore(state => state.customExercises);
+  const exerciseOverrides = useStore(state => state.exerciseOverrides);
+  const bodyweight = useStore(resolveBodyweight);
+  const allKnownExercises = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
   const [expandedSessions, setExpandedSessions] = useState({});
 
   // If navigated here with editWorkoutId, redirect to the dedicated edit page
@@ -64,13 +70,6 @@ function History() {
     return `${diff} min`;
   };
 
-  const calculateOneRepMax = (weight, reps) => {
-    const w = parseFloat(weight);
-    const r = parseInt(reps, 10);
-    if (!w || !r || w <= 0 || r <= 0) return null;
-    if (r === 1) return w;
-    return w * (1 + r / 30);
-  };
 
   const calculateCompletedSets = (exercises) => {
     let sets = 0;
@@ -149,10 +148,11 @@ function History() {
                           const visibleSets = ex.sets.filter(s => s.done);
                           if (visibleSets.length === 0) return null;
 
+                          const bodyweightLoad = getBodyweightLoad(ex.name, allKnownExercises, bodyweight);
                           let bestSetId = null;
                           let max1Rm = 0;
                           visibleSets.forEach(s => {
-                            const est = calculateOneRepMax(s.kg, s.reps);
+                            const est = estimate1RM(s.kg, s.reps, bodyweightLoad);
                             if (est && est > max1Rm) { max1Rm = est; bestSetId = s.id; }
                           });
 
@@ -171,7 +171,7 @@ function History() {
                                     <span>1RM Est.</span>
                                   </div>
                                   {visibleSets.map((set, setIdx) => {
-                                    const est1rm = calculateOneRepMax(set.kg, set.reps);
+                                    const est1rm = estimate1RM(set.kg, set.reps, bodyweightLoad);
                                     const isBest = set.id === bestSetId && max1Rm > 0;
                                     return (
                                       <div key={set.id} className={`hs-row ${isBest ? 'is-best' : ''}`}>
@@ -182,7 +182,7 @@ function History() {
                                         <span>{set.reps || '-'}</span>
                                         <span className="hs-row-rm">
                                           {isBest && <Trophy size={11} />}
-                                          {est1rm ? est1rm.toFixed(1) : '-'}
+                                          {est1rm > 0 ? `${bodyweightLoad > 0 ? '+' : ''}${est1rm.toFixed(1)}` : '-'}
                                         </span>
                                       </div>
                                     );

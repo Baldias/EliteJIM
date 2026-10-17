@@ -20,6 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { getAllExercises, normalizeName } from '../../data/exercises';
+import { estimate1RM } from '../../utils/oneRepMax';
 import { 
   getScienceTargetForMuscle, 
   getSciencePhaseBadge, 
@@ -567,14 +568,6 @@ function Science() {
         deadlift: 0
       };
 
-      const calculate1RM = (w, r) => {
-        const weight = parseFloat(w);
-        const reps = parseInt(r, 10);
-        if (!weight || !reps || weight <= 0 || reps <= 0) return 0;
-        if (reps === 1) return weight;
-        return weight * (1 + reps / 30);
-      };
-
       history.forEach(workout => {
         (workout.exercises || []).forEach(ex => {
           const norm = normalizeName(ex.name);
@@ -585,8 +578,8 @@ function Science() {
 
           if (type) {
             (ex.sets || []).forEach(s => {
-              if (s.done) {
-                const rm = calculate1RM(s.kg, s.reps);
+              if (s.done && !s.isDropset) {
+                const rm = estimate1RM(s.kg, s.reps);
                 if (rm > best1RMs[type]) {
                   best1RMs[type] = rm;
                 }

@@ -32,7 +32,8 @@ function MuscleLevels() {
         <h3 className="ml-info-title"><Info size={18} /> Come si sale di livello</h3>
         <p>
           I livelli premiano il <strong>Sovraccarico Progressivo</strong>. Ogni serie completata vale pochi XP base,
-          ma quando su un esercizio superi la sessione precedente ogni sua serie vale molto di più,
+          ma quando su un esercizio superi la sessione precedente (1RM stimato o serie migliore, non il numero di serie)
+          ogni sua serie vale molto di più,
           in proporzione al carico sollevato.
         </p>
       </section>
