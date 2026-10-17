@@ -72,6 +72,9 @@ export const getMuscleLevelByXp = (xp) => {
   };
 };
 
+// Used to weight bodyweight sets (kg = 0) in muscle XP.
+const REFERENCE_BODYWEIGHT_KG = 75;
+
 export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], scienceReport = null) => {
   if (!workout || !workout.exercises || workout.exercises.length === 0) {
     return {
@@ -287,7 +290,10 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
         const reps = parseInt(set.reps, 10) || 0;
 
         if (categories.length > 0) {
-          const setXp = hadOverload ? Math.round((kg * reps) / 10) : 5;
+          // Bodyweight sets (kg = 0) move the body itself: use a reference bodyweight
+          // so an overloaded pull-up/dip never earns less than a non-overloaded set.
+          const load = kg > 0 ? kg : REFERENCE_BODYWEIGHT_KG;
+          const setXp = hadOverload ? Math.max(5, Math.round((load * reps) / 10)) : 5;
           categories.forEach(cat => {
             rawMuscleXp[cat] = (rawMuscleXp[cat] || 0) + setXp;
           });
@@ -304,9 +310,10 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
   const isJunk = doneSets < 5;
   const allNew = totalExercises > 0 && overloadCount === 0 && exercisesAnalysis.every(e => e.status === 'new');
 
-  // Check if user is in an active Science Mesocycle Deload Week (Weeks 4, 8, 12)
+  // Deload weeks of the Science mesocycle are W9-W10 (see getScienceTargetForMuscle).
+  // W4 and W8 are Boss Fight (MRV) weeks and must be graded like any other session.
   const currentScienceWeek = scienceReport?.currentWeek || 1;
-  const isDeloadWeek = Boolean(scienceReport && scienceReport.status === 'active' && (currentScienceWeek === 4 || currentScienceWeek === 8 || currentScienceWeek === 12));
+  const isDeloadWeek = Boolean(scienceReport && scienceReport.status === 'active' && (currentScienceWeek === 9 || currentScienceWeek === 10));
 
   let grade;
   let gradeLabel;
@@ -528,27 +535,6 @@ export const calculateWeeklyStreak = (history = [], referenceDate = Date.now()) 
     isStreakActive: true,
     daysSinceLastWorkout
   };
-};
-
-export const checkStreakInactivity = (lastWorkoutDateMs, currentStreak, xp) => {
-  if (!lastWorkoutDateMs) return { newStreak: 0, newXp: xp, penalty: 0 };
-  
-  const daysInactive = Math.floor((Date.now() - lastWorkoutDateMs) / MS_PER_DAY);
-  
-  let newStreak = currentStreak;
-  let newXp = xp;
-  let penalty = 0;
-
-  if (daysInactive >= 7) {
-    // Azzera streak dopo 7 giorni di inattività
-    newStreak = 0;
-    
-    // Penalità XP oltre i 7 giorni
-    penalty = Math.min(2000, (daysInactive - 6) * 100);
-    newXp = Math.max(0, xp - penalty);
-  }
-
-  return { newStreak, newXp, penalty, daysInactive };
 };
 
 export const recalculateTotalXpFromHistory = (history, exercisesDb = []) => {

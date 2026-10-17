@@ -1,4 +1,5 @@
 import { normalizeName, getExerciseCategories } from '../data/exercises.js';
+import { parseNonNegativeInt } from './number.js';
 
 /**
  * Genera il Master Prompt da copiare per un'AI esterna (ChatGPT, Claude, Gemini, DeepSeek).
@@ -210,7 +211,7 @@ export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
         name: matchedName,
         setsCount: Math.max(1, parseInt(rawEx.setsCount, 10) || 3),
         targetReps: String(rawEx.targetReps || '8-10').trim(),
-        restTime: Math.max(15, parseInt(rawEx.restTime, 10) || 90),
+        restTime: parseNonNegativeInt(rawEx.restTime, 90),
         notes: typeof rawEx.notes === 'string' ? rawEx.notes.trim() : ''
       });
     }
@@ -255,7 +256,7 @@ export function formatTemplatesForExport(templates) {
       name: e.name,
       setsCount: Number(e.setsCount) || 3,
       targetReps: String(e.targetReps || '8-10'),
-      restTime: Number(e.restTime) || 90,
+      restTime: parseNonNegativeInt(e.restTime, 90),
       ...(e.notes ? { notes: e.notes.trim() } : {})
     }))
   }));

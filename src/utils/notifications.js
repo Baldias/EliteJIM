@@ -6,15 +6,33 @@ export function requestNotificationPermission() {
   }
 }
 
+// One shared AudioContext: browsers cap how many can exist, so creating one per
+// rest timer made the beep stop working after a few sets.
+let audioCtx = null;
+
+function getAudioContext() {
+  if (audioCtx) return audioCtx;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  audioCtx = new AudioContextClass();
+  return audioCtx;
+}
+
+// Autoplay policies only let audio start from a user gesture: unlock (or resume,
+// e.g. after the app was in background) the shared context on every tap.
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', () => {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+  }, { passive: true });
+}
+
 export function playBeep() {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    
-    // We try to resume standard AudioContext if browser requires interaction
-    const ctx = new AudioContext();
+    const ctx = getAudioContext();
+    if (!ctx) return;
     if (ctx.state === 'suspended') {
-      ctx.resume();
+      ctx.resume().catch(() => {});
     }
 
     // A web audio beep generally CANNOT bypass the iOS physical mute switch.
@@ -61,7 +79,7 @@ export function notifyTimerComplete() {
         icon: "/vite.svg",
         vibrate: [200, 100, 200]
       });
-    } catch (e) {
+    } catch {
       // Fallback for some mobile browsers that require service worker for notifications
       navigator.serviceWorker.ready.then((registration) => {
         registration.showNotification("Recupero Terminato!", {

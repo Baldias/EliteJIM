@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { checkStreakInactivity, calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
+import { calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
 import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises';
+import { parseNonNegativeInt } from '../utils/number';
 
 export const calculate1RM = (kg, reps) => {
   const w = parseFloat(kg) || 0;
@@ -11,22 +12,28 @@ export const calculate1RM = (kg, reps) => {
   return w * (1 + r / 30);
 };
 
+// Only completed sets are real performances: skipped sets keep the values
+// pre-filled from the previous session and must not count as "last" or PR.
+const completedSets = (exercise) => (exercise?.sets || []).filter(s => s.done);
+
+// Most recent session (history is newest first) where the exercise has completed sets.
 export const findLastBest1RMSet = (history, exerciseName) => {
   if (!exerciseName || !history || history.length === 0) return null;
   const norm = normalizeName(exerciseName);
   for (const w of history) {
     const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
-    if (pastEx && pastEx.sets && pastEx.sets.length > 0) {
+    const doneSets = completedSets(pastEx);
+    if (doneSets.length > 0) {
       let maxSet = null;
       let max1RM = -1;
-      for (const s of pastEx.sets) {
+      for (const s of doneSets) {
         const rm = calculate1RM(s.kg, s.reps);
         if (rm > max1RM) {
           max1RM = rm;
           maxSet = s;
         }
       }
-      if (!maxSet) maxSet = pastEx.sets[pastEx.sets.length - 1];
+      if (!maxSet) maxSet = doneSets[doneSets.length - 1];
       return {
         set: maxSet,
         max1RM: max1RM > 0 ? parseFloat(max1RM.toFixed(1)) : 0,
@@ -46,14 +53,12 @@ export const findAllTimeBest1RMSet = (history, exerciseName) => {
 
   for (const w of history) {
     const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
-    if (pastEx && pastEx.sets && pastEx.sets.length > 0) {
-      for (const s of pastEx.sets) {
-        const rm = calculate1RM(s.kg, s.reps);
-        if (rm > allTimeMax1RM) {
-          allTimeMax1RM = rm;
-          allTimeMaxSet = s;
-          allTimeNotes = pastEx.notes || '';
-        }
+    for (const s of completedSets(pastEx)) {
+      const rm = calculate1RM(s.kg, s.reps);
+      if (rm > allTimeMax1RM) {
+        allTimeMax1RM = rm;
+        allTimeMaxSet = s;
+        allTimeNotes = pastEx.notes || '';
       }
     }
   }
@@ -144,16 +149,6 @@ export const useStore = create(
 
       // --- Gamification Actions ---
       clearRecapData: () => set({ recapData: null }),
-      processInactivity: () => {
-        set((state) => {
-          if (!state.lastWorkoutDate) return state;
-          const { newStreak, newXp, penalty } = checkStreakInactivity(state.lastWorkoutDate, state.currentStreak, state.userXP);
-          if (penalty > 0 || newStreak !== state.currentStreak) {
-            return { currentStreak: newStreak, userXP: newXp };
-          }
-          return state;
-        });
-      },
       syncGamificationWithHistory: () => {
         set((state) => {
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
@@ -385,7 +380,7 @@ export const useStore = create(
             name: (ex.name || '').trim(),
             setsCount: parseInt(ex.setsCount) || 3,
             targetReps: String(ex.targetReps || '8-10').trim(),
-            restTime: parseInt(ex.restTime) || 90,
+            restTime: parseNonNegativeInt(ex.restTime, 90),
             notes: (ex.notes || '').trim()
           }))
         }));
@@ -397,13 +392,14 @@ export const useStore = create(
       startWorkout: (template) => {
         const history = get().history;
 
-        // Helper: find the most recent past sets for a given exercise name
+        // Helper: completed working sets (no drop sets) of the most recent session with this exercise
         const findLastSets = (exerciseName) => {
           const norm = normalizeName(exerciseName);
           for (const w of history) {
             const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
-            if (pastEx && pastEx.sets && pastEx.sets.length > 0) {
-              return pastEx.sets;
+            const workingSets = completedSets(pastEx).filter(s => !s.isDropset);
+            if (workingSets.length > 0) {
+              return workingSets;
             }
           }
           return null;
@@ -421,7 +417,7 @@ export const useStore = create(
               id: Date.now() + Math.random(),
               name: ex.name,
               notes: ex.notes !== undefined ? ex.notes : '',
-              restTime: ex.restTime || 60,
+              restTime: parseNonNegativeInt(ex.restTime, 60),
               isAdded: false,
               sets: Array.from({ length: parseInt(ex.setsCount) || 1 }, (_, i) => {
                 const pastSet = pastSets && pastSets[i] ? pastSets[i] : (pastSets ? pastSets[pastSets.length - 1] : null);
@@ -639,8 +635,21 @@ export const useStore = create(
 
       updateHistoryWorkout: (workoutId, updates) => {
         set((state) => {
-          const newHistory = state.history.map(w => w.id === workoutId ? { ...w, ...updates } : w);
-          return { history: newHistory };
+          // Keep history newest-first: "last session" lookups and pre-fill rely on it
+          const newHistory = state.history
+            .map(w => w.id === workoutId ? { ...w, ...updates } : w)
+            .sort((a, b) => (Number(b.startTime) || 0) - (Number(a.startTime) || 0));
+          const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
+          const { userXP, muscleXP, currentStreak, highestStreak } = recalculateTotalXpFromHistory(newHistory, allKnown);
+          const latest = newHistory[0];
+          return {
+            history: newHistory,
+            userXP,
+            muscleXP,
+            currentStreak,
+            highestStreak,
+            lastWorkoutDate: latest ? (Number(latest.endTime) || Number(latest.startTime) || null) : null
+          };
         });
       },
 

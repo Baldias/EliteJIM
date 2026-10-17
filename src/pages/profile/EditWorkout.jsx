@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { ChevronLeft, Check, Plus, Trash2, X } from 'lucide-react';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
+import { sanitizeDecimalInput } from '../../utils/number';
 import './EditWorkout.css';
 
 function EditWorkout() {
@@ -169,7 +170,7 @@ function EditWorkout() {
                       type="text"
                       inputMode="decimal"
                       value={set.kg || ''}
-                      onChange={e => hndUpdSet(ex.id, set.id, 'kg', e.target.value.replace(/[^0-9.]/g, ''))}
+                      onChange={e => hndUpdSet(ex.id, set.id, 'kg', sanitizeDecimalInput(e.target.value))}
                       className="edit-set-input"
                       placeholder="kg"
                     />

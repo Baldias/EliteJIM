@@ -11,7 +11,7 @@ function ReloadPrompt() {
       // Controlla la presenza di aggiornamenti ogni ora
       r && setInterval(() => {
         r.update();
-      }, 60 * 60 * 100);
+      }, 60 * 60 * 1000);
     },
     onRegisterError(error) {
       console.log('SW registration error', error);

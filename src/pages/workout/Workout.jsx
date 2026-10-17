@@ -6,6 +6,7 @@ import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { requestNotificationPermission, notifyTimerComplete } from '../../utils/notifications';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
+import { sanitizeDecimalInput } from '../../utils/number';
 import './Workout.css';
 
 function Workout() {
@@ -100,8 +101,11 @@ function Workout() {
       const isAdded = targetEx?.isAdded;
 
       const norm = normalizeName(newName);
-      const pastWk = hist.find(w => w.exercises?.some(e => normalizeName(e.name) === norm));
-      const pastEx = pastWk?.exercises?.find(e => normalizeName(e.name) === norm);
+      // Most recent session with completed working sets for this exercise
+      const isWorkingDone = s => s.done && !s.isDropset;
+      const pastWk = hist.find(w => w.exercises?.some(e => normalizeName(e.name) === norm && e.sets?.some(isWorkingDone)));
+      const pastExRaw = pastWk?.exercises?.find(e => normalizeName(e.name) === norm);
+      const pastEx = pastExRaw ? { ...pastExRaw, sets: pastExRaw.sets.filter(isWorkingDone) } : null;
 
       const bestData = findLastBest1RMSet(hist, newName);
       const bestSet = bestData?.set;
@@ -348,7 +352,7 @@ function Workout() {
                           inputMode="decimal"
                           placeholder="—"
                           value={set.kg || ''}
-                          onChange={e => updateSet(ex.id, set.id, 'kg', e.target.value.replace(/[^0-9.]/g, ''))}
+                          onChange={e => updateSet(ex.id, set.id, 'kg', sanitizeDecimalInput(e.target.value))}
                           className="workout-stepper-input"
                         />
                         <button

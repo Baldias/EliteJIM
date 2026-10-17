@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
+import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
 import { Plus, Play, Dumbbell, Zap, Bell, CheckCircle2, Trash2, Edit3, Share2, Flame } from 'lucide-react';
 import { InteractiveBody } from '../../components/InteractiveBody';
 import { WelcomeBack } from '../../components/WelcomeBack';
@@ -32,7 +33,7 @@ function Home() {
   const history = useStore(state => state.history);
   const lastWorkoutDate = useStore(state => state.lastWorkoutDate);
   const userXP = useStore(state => state.userXP) || 0;
-  const currentStreak = useStore(state => state.currentStreak) || 0;
+  const { currentStreak } = useWeeklyStreak();
 
   const [showWelcome, setShowWelcome] = useState(false);
   const [sharingTemplate, setSharingTemplate] = useState(null);

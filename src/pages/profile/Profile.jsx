@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
+import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
 import { ChevronDown, ChevronUp, ChevronRight, Settings as SettingsIcon, Zap, Trash2, Flame, Trophy, Edit2 } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../utils/rpVolume';
@@ -14,7 +15,7 @@ function Profile() {
   const history = useStore(state => state.history);
   const deleteWorkout = useStore(state => state.deleteWorkout);
   const userXP = useStore(state => state.userXP);
-  const currentStreak = useStore(state => state.currentStreak);
+  const { currentStreak } = useWeeklyStreak();
   const showScience = useStore(state => state.showScience);
   const _customExercises = useStore(state => state.customExercises);
   const customExercises = useMemo(() => _customExercises || [], [_customExercises]);
@@ -25,8 +26,9 @@ function Profile() {
   const [visibleWeeks, setVisibleWeeks] = useState(2);
 
   // --- History Logic ---
+  // e is undefined when called from SwipeToDelete
   const handleDelete = (e, workoutId) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     if (window.confirm("Eliminare questa sessione?")) {
       deleteWorkout(workoutId);
     }

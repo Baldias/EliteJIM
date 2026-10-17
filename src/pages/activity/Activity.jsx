@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { ChevronLeft, Flame, Trophy, Dumbbell, Info } from 'lucide-react';
-import { calculateWeeklyStreak, getMondayOfWeek } from '../../utils/gamification';
+import { getMondayOfWeek } from '../../utils/gamification';
+import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
 import './Activity.css';
 
 const ITALIAN_MONTHS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
@@ -34,10 +35,8 @@ export default function Activity() {
     return map;
   }, [history]);
 
-  // Calcolo streak a settimane aggiornato
-  const streakInfo = useMemo(() => {
-    return calculateWeeklyStreak(history);
-  }, [history]);
+  // Streak a settimane (stessa fonte usata da Home, Profilo e Bentornato)
+  const streakInfo = useWeeklyStreak();
 
   // Calcolo dinamico delle settimane (52-53) e della posizione dei mesi allineata alle colonne
   const { weeksGrid, monthsConfig } = useMemo(() => {

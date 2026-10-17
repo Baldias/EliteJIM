@@ -9,7 +9,7 @@ function History() {
   const navigate = useNavigate();
   const location = useLocation();
   const history = useStore(state => state.history);
-  const setStore = useStore.setState;
+  const deleteWorkout = useStore(state => state.deleteWorkout);
   const [expandedSessions, setExpandedSessions] = useState({});
 
   // If navigated here with editWorkoutId, redirect to the dedicated edit page
@@ -34,12 +34,11 @@ function History() {
     navigate(`/edit-workout/${workoutId}`);
   };
 
+  // e is undefined when called from SwipeToDelete
   const handleDelete = (e, id) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     if (window.confirm("Sei sicuro di voler eliminare questo allenamento dallo storico?")) {
-      setStore(state => ({
-        history: state.history.filter(w => w.id !== id)
-      }));
+      deleteWorkout(id);
     }
   };
 

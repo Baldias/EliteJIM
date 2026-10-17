@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
+import { useWeeklyStreak } from '../hooks/useWeeklyStreak';
 import { Flame, Trophy, Calendar, X, AlertTriangle } from 'lucide-react';
 import './WelcomeBack.css';
 
 export function WelcomeBack({ onClose }) {
-  const currentStreak = useStore(state => state.currentStreak);
-  const lastWorkoutDate = useStore(state => state.lastWorkoutDate);
+  const { currentStreak, daysSinceLastWorkout } = useWeeklyStreak();
   const scienceReport = useStore(state => state.scienceReport);
   const showScience = useStore(state => state.showScience);
 
   const [isVisible, setIsVisible] = useState(false);
 
+  // Start the entrance transition on the next frame
   useEffect(() => {
-    setIsVisible(true);
+    const frame = requestAnimationFrame(() => setIsVisible(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const handleClose = () => {
@@ -33,8 +35,9 @@ export function WelcomeBack({ onClose }) {
     weekInfo = { week: weekNum, month, phase };
   }
 
-  const daysAbsent = lastWorkoutDate ? Math.floor((Date.now() - lastWorkoutDate) / (1000 * 60 * 60 * 24)) : 0;
-  const lostStreak = daysAbsent > 3;
+  // Same rule as calculateWeeklyStreak: the streak resets after 7 days without training
+  const daysAbsent = daysSinceLastWorkout ?? 0;
+  const lostStreak = daysSinceLastWorkout !== null && currentStreak === 0;
 
   return (
     <div className={`wb-overlay ${isVisible ? 'is-visible' : ''}`} onClick={handleClose}>
@@ -48,12 +51,12 @@ export function WelcomeBack({ onClose }) {
         {lostStreak ? (
           <div className="wb-status is-lost">
             <h4><AlertTriangle size={18} /> Streak Perso!</h4>
-            <p>Sei mancato per {daysAbsent} giorni. Hai perso il tuo streak e hai subito una penalità di XP per l'inattività. È il momento di rimettersi in riga!</p>
+            <p>Sei mancato per {daysAbsent} giorni: dopo 7 giorni senza allenamento la streak si azzera. È il momento di rimettersi in riga!</p>
           </div>
         ) : (
           <div className="wb-status is-active">
             <h4><Flame size={18} fill="currentColor" /> Streak Attivo: {currentStreak} {currentStreak === 1 ? 'settimana' : 'settimane'}</h4>
-            <p>Rimani costante per non perdere il moltiplicatore extra e i progressi muscolari.</p>
+            <p>Allenati almeno una volta a settimana per mantenerla attiva.</p>
           </div>
         )}
 
