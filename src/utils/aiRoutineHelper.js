@@ -1,5 +1,4 @@
 import { normalizeName, getExerciseCategories } from '../data/exercises.js';
-import { parseNonNegativeInt } from './number.js';
 
 /**
  * Genera il Master Prompt da copiare per un'AI esterna (ChatGPT, Claude, Gemini, DeepSeek).
@@ -36,7 +35,6 @@ STRICT RULES (CRITICAL FOR PARSING)
    - "name": string (exact match from the DB list)
    - "setsCount": integer (e.g. 3 or 4)
    - "targetReps": string rep range (e.g. "6-8", "8-10", "10-12", "12-15")
-   - "restTime": integer rest in seconds between sets (e.g. 60, 90, 120, 180)
    - "notes": concise coaching cue, tempo or setup tip (e.g. "1s pause at chest, control eccentric")
 
 ═══════════════════════════════════════════════════════════════
@@ -52,14 +50,12 @@ Return an array of workout routines (for a ${splitDays}-day weekly program):
         "name": "Panca Piana Bilanciere",
         "setsCount": 4,
         "targetReps": "6-8",
-        "restTime": 120,
         "notes": "1s chest pause, controlled 3s eccentric"
       },
       {
         "name": "Military Press",
         "setsCount": 3,
         "targetReps": "8-10",
-        "restTime": 90,
         "notes": "Locked core and glutes, full lockout"
       }
     ]
@@ -211,7 +207,6 @@ export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
         name: matchedName,
         setsCount: Math.max(1, parseInt(rawEx.setsCount, 10) || 3),
         targetReps: String(rawEx.targetReps || '8-10').trim(),
-        restTime: parseNonNegativeInt(rawEx.restTime, 90),
         notes: typeof rawEx.notes === 'string' ? rawEx.notes.trim() : ''
       });
     }
@@ -256,7 +251,6 @@ export function formatTemplatesForExport(templates) {
       name: e.name,
       setsCount: Number(e.setsCount) || 3,
       targetReps: String(e.targetReps || '8-10'),
-      restTime: parseNonNegativeInt(e.restTime, 90),
       ...(e.notes ? { notes: e.notes.trim() } : {})
     }))
   }));

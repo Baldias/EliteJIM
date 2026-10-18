@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
 import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises';
-import { parseNonNegativeInt } from '../utils/number';
 import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
 
 // Only completed sets are real performances: skipped sets keep the values
@@ -80,30 +79,30 @@ export const useStore = create(
           id: 'tpl-1',
           name: 'Spinta (Petto/Spalle/Tricipiti)',
           exercises: [
-            { name: 'Panca Piana Bilanciere', setsCount: 3, targetReps: '8-10', restTime: 90 },
-            { name: 'Military Press', setsCount: 3, targetReps: '8-10', restTime: 90 },
-            { name: 'Alzate Laterali Manubri', setsCount: 3, targetReps: '12-15', restTime: 60 },
-            { name: 'Pushdown Tricipiti ai Cavi', setsCount: 3, targetReps: '12-15', restTime: 60 }
+            { name: 'Panca Piana Bilanciere', setsCount: 3, targetReps: '8-10' },
+            { name: 'Military Press', setsCount: 3, targetReps: '8-10' },
+            { name: 'Alzate Laterali Manubri', setsCount: 3, targetReps: '12-15' },
+            { name: 'Pushdown Tricipiti ai Cavi', setsCount: 3, targetReps: '12-15' }
           ]
         },
         {
           id: 'tpl-2',
           name: 'Trazione (Dorso/Bicipiti)',
           exercises: [
-            { name: 'Trazioni alla Sbarra (Pull-up)', setsCount: 3, targetReps: '6-8', restTime: 120 },
-            { name: 'Rematore con Bilanciere', setsCount: 3, targetReps: '8-10', restTime: 90 },
-            { name: 'Pulley Basso', setsCount: 3, targetReps: '10-12', restTime: 90 },
-            { name: 'Curl Bilanciere', setsCount: 3, targetReps: '10-12', restTime: 60 }
+            { name: 'Trazioni alla Sbarra (Pull-up)', setsCount: 3, targetReps: '6-8' },
+            { name: 'Rematore con Bilanciere', setsCount: 3, targetReps: '8-10' },
+            { name: 'Pulley Basso', setsCount: 3, targetReps: '10-12' },
+            { name: 'Curl Bilanciere', setsCount: 3, targetReps: '10-12' }
           ]
         },
         {
           id: 'tpl-3',
           name: 'Leg Day (Quadricipiti & Femorali)',
           exercises: [
-            { name: 'Squat con Bilanciere', setsCount: 3, targetReps: '6-8', restTime: 120 },
-            { name: 'Leg Extension', setsCount: 3, targetReps: '12-15', restTime: 60 },
-            { name: 'Leg Curl', setsCount: 3, targetReps: '12-15', restTime: 60 },
-            { name: 'Calf Raise Seduto', setsCount: 3, targetReps: '15-20', restTime: 60 }
+            { name: 'Squat con Bilanciere', setsCount: 3, targetReps: '6-8' },
+            { name: 'Leg Extension', setsCount: 3, targetReps: '12-15' },
+            { name: 'Leg Curl', setsCount: 3, targetReps: '12-15' },
+            { name: 'Calf Raise Seduto', setsCount: 3, targetReps: '15-20' }
           ]
         }
       ],
@@ -119,8 +118,6 @@ export const useStore = create(
       scienceReport: null,
       // User bodyweight in kg (null = not set): used for the 1RM of pull-ups, dips, push-ups
       bodyweight: null,
-      // Persistent rest timer end timestamp
-      globalRestEndTime: null,
 
       // --- Gamification State ---
       userXP: 0,
@@ -157,10 +154,6 @@ export const useStore = create(
           return { userXP, muscleXP, currentStreak, highestStreak };
         });
       },
-
-      // --- Rest Timer Actions ---
-      setGlobalRestEndTime: (timestamp) => set({ globalRestEndTime: timestamp }),
-      clearGlobalRestTimer: () => set({ globalRestEndTime: null }),
 
       // --- Science Actions ---
       saveScienceReport: (report) => set({ scienceReport: report }),
@@ -381,7 +374,6 @@ export const useStore = create(
             name: (ex.name || '').trim(),
             setsCount: parseInt(ex.setsCount) || 3,
             targetReps: String(ex.targetReps || '8-10').trim(),
-            restTime: parseNonNegativeInt(ex.restTime, 90),
             notes: (ex.notes || '').trim()
           }))
         }));
@@ -418,7 +410,6 @@ export const useStore = create(
               id: Date.now() + Math.random(),
               name: ex.name,
               notes: ex.notes !== undefined ? ex.notes : '',
-              restTime: parseNonNegativeInt(ex.restTime, 60),
               isAdded: false,
               sets: Array.from({ length: parseInt(ex.setsCount) || 1 }, (_, i) => {
                 const pastSet = pastSets && pastSets[i] ? pastSets[i] : (pastSets ? pastSets[pastSets.length - 1] : null);
@@ -485,7 +476,6 @@ export const useStore = create(
             id: Date.now(),
             name: name || '',
             notes: initialNotes,
-            restTime: 60, // default
             isAdded: true,
             sets: [{
               id: Date.now() + 1,
@@ -524,29 +514,6 @@ export const useStore = create(
             return {
               ...ex,
               sets: [...ex.sets, { id: Date.now(), kg: lastKg, reps: lastReps, targetReps, done: false }]
-            };
-          });
-          return { activeWorkout: { ...state.activeWorkout, exercises: updatedExercises } };
-        });
-      },
-
-      addDropsetToActiveExercise: (exerciseId) => {
-        set((state) => {
-          if (!state.activeWorkout) return state;
-          const updatedExercises = state.activeWorkout.exercises.map((ex) => {
-            if (ex.id !== exerciseId) return ex;
-
-            let lastKg = '';
-            let lastReps = '';
-            if (ex.sets && ex.sets.length > 0) {
-              const lastSet = ex.sets[ex.sets.length - 1];
-              lastKg = lastSet.kg || '';
-              lastReps = lastSet.reps || '';
-            }
-
-            return {
-              ...ex,
-              sets: [...ex.sets, { id: Date.now(), kg: lastKg, reps: lastReps, targetReps: '', done: false, isDropset: true }]
             };
           });
           return { activeWorkout: { ...state.activeWorkout, exercises: updatedExercises } };
@@ -606,7 +573,6 @@ export const useStore = create(
             templates: updatedTemplates,
             history: updatedHistory,
             activeWorkout: null,
-            globalRestEndTime: null,
             userXP: newXP,
             muscleXP: newMuscleXP,
             currentStreak: newStreak,
@@ -617,7 +583,7 @@ export const useStore = create(
         });
       },
 
-      cancelWorkout: () => set({ activeWorkout: null, globalRestEndTime: null }),
+      cancelWorkout: () => set({ activeWorkout: null }),
 
       deleteWorkout: (workoutId) => {
         set((state) => {

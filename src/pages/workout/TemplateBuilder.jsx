@@ -42,7 +42,7 @@ function TemplateBuilder() {
   const [showShare, setShowShare] = useState(false);
   const dragTouchRef = useRef(null);
 
-  const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90, notes: '' }]);
+  const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', notes: '' }]);
   const updEx = (id, field, val) => setExercises(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
   const rmEx = id => setExercises(p => p.filter(e => e.id !== id));
 
@@ -67,11 +67,6 @@ function TemplateBuilder() {
       addTemplate({ name, exercises });
     }
     navigate('/');
-  };
-
-  const fmtRest = s => {
-    const m = Math.floor(s / 60), sec = s % 60;
-    return sec === 0 ? `${m}min` : `${m}m${sec}s`;
   };
 
   const isValid = name.trim() && exercises.length > 0;
@@ -219,7 +214,6 @@ function TemplateBuilder() {
                 {/* Controls */}
                 <div className="tb-controls">
                   <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
-                  <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
                 </div>
 
                 <div className="tb-field">

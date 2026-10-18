@@ -19,7 +19,7 @@
 - **🎮 Immersive Gamification**: Level up your character from *Rame III* to *Champion*. Earn Muscle-specific XP based on tonnage and progressive overload.
 - **📉 Progressive Overload Tracker**: Real-time session grading (S to D) based on your ability to out-perform past sessions.
 - **🧍 Interactive Body Map**: A dynamic visual representation of your worked muscles with level indicators.
-- **📋 Advanced Template Builder**: Create complex routines with supersets, dropsets, and set inheritance.
+- **📋 Advanced Template Builder**: Create complex routines with supersets and set inheritance.
 - **📱 Premium PWA Experience**: Glassmorphic UI with liquid-glass effects, offline support, and installable as a mobile app.
 - **⏱️ Background Persistence**: Active workout timer and session state persist even if you close the app.
 
