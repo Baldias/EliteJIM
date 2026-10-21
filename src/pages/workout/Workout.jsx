@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, X, ChevronLeft, Trash2, FileText, Zap, Trophy, Dumbbell } from 'lucide-react';
+import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell } from 'lucide-react';
 import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/useStore';
+import { useRestTimer } from '../../hooks/useRestTimer';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
@@ -38,6 +39,10 @@ function Workout() {
 
   const [sessionTimeStr, setSessionTimeStr] = useState('00:00');
   const isFinishing = useRef(false);
+  const globalRestEndTime = useStore(state => state.globalRestEndTime);
+  const setGlobalRestEndTime = useStore(state => state.setGlobalRestEndTime);
+  const clearGlobalRestTimer = useStore(state => state.clearGlobalRestTimer);
+  const { restTimeLeft, isResting } = useRestTimer();
   const [expandedNotes, setExpandedNotes] = useState({});
   // Set that just beat the all-time PR: drives a short celebration animation
   const [prCelebration, setPrCelebration] = useState(null);
@@ -80,6 +85,8 @@ function Workout() {
     if (nowDone) {
       const ex = activeWorkout.exercises.find(e => e.id === exerciseId);
       celebrateIfNewPR(ex, ex?.sets.find(s => s.id === setId));
+      const secs = ex?.restTime !== undefined && ex.restTime !== '' ? parseInt(ex.restTime) : 60;
+      if (secs > 0) setGlobalRestEndTime(Date.now() + secs * 1000);
     }
   };
 
@@ -145,6 +152,7 @@ function Workout() {
 
   const doneSets = activeWorkout.exercises.reduce((a, ex) => a + ex.sets.filter(s => s.done).length, 0);
   const totalSets = activeWorkout.exercises.reduce((a, ex) => a + ex.sets.length, 0);
+  const fmtRest = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   return (
     <div className="wk-page">
@@ -169,6 +177,21 @@ function Workout() {
             Termina
           </button>
         </div>
+
+        {/* ── REST TIMER ────────────────────── */}
+        {isResting && (
+          <div className="wk-rest">
+            <Clock size={20} className="wk-rest-icon" />
+            <div className="wk-rest-text">
+              <span className="wk-rest-label">Recupero</span>
+              <span className="wk-rest-time">{fmtRest(restTimeLeft)}</span>
+            </div>
+            <button type="button" className="wk-rest-add" onClick={() => setGlobalRestEndTime(globalRestEndTime + 30000)}>+30s</button>
+            <button type="button" className="ej-icon-btn ej-icon-btn--danger wk-rest-stop" onClick={() => clearGlobalRestTimer()} title="Interrompi recupero">
+              <X size={18} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── EXERCISES ─────────────────────── */}

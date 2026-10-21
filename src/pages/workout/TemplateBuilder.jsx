@@ -4,6 +4,7 @@ import { useStore } from '../../store/useStore';
 import { Plus, ArrowLeft, Check, Trash2, FileText, ChevronUp, ChevronDown, GripVertical, Share2 } from 'lucide-react';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { ShareTemplateModal } from '../../components/ShareTemplateModal';
+import { parseNonNegativeInt } from '../../utils/number';
 import './TemplateBuilder.css';
 
 const REPS_PRESETS = ['4-6', '6-8', '8-10', '10-12', '12-15', '15-20'];
@@ -34,7 +35,7 @@ function TemplateBuilder() {
   const [name, setName] = useState(isEditing ? editTemplateData.name || '' : '');
   const [exercises, setExercises] = useState(
     isEditing 
-      ? (editTemplateData.exercises || []).map((ex, i) => ({ ...ex, id: ex.id || `ex-${Date.now()}-${i}`, notes: ex.notes || '' }))
+      ? (editTemplateData.exercises || []).map((ex, i) => ({ ...ex, id: ex.id || `ex-${Date.now()}-${i}`, restTime: parseNonNegativeInt(ex.restTime, 90), notes: ex.notes || '' }))
       : []
   );
   const [draggedIndex, setDraggedIndex] = useState(null);
@@ -42,7 +43,7 @@ function TemplateBuilder() {
   const [showShare, setShowShare] = useState(false);
   const dragTouchRef = useRef(null);
 
-  const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', notes: '' }]);
+  const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90, notes: '' }]);
   const updEx = (id, field, val) => setExercises(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
   const rmEx = id => setExercises(p => p.filter(e => e.id !== id));
 
@@ -67,6 +68,11 @@ function TemplateBuilder() {
       addTemplate({ name, exercises });
     }
     navigate('/');
+  };
+
+  const fmtRest = s => {
+    const m = Math.floor(s / 60), sec = s % 60;
+    return sec === 0 ? `${m}min` : `${m}m${sec}s`;
   };
 
   const isValid = name.trim() && exercises.length > 0;
@@ -214,6 +220,7 @@ function TemplateBuilder() {
                 {/* Controls */}
                 <div className="tb-controls">
                   <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
+                  <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
                 </div>
 
                 <div className="tb-field">
