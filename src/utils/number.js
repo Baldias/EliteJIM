@@ -10,3 +10,11 @@ export const sanitizeDecimalInput = (value) => {
   return cleaned.slice(0, dot + 1) + cleaned.slice(dot + 1).replace(/\./g, '');
 };
 
+/**
+ * Parses a non-negative integer (e.g. rest time in seconds).
+ * Unlike `parseInt(v) || fallback`, a legitimate 0 is preserved.
+ */
+export const parseNonNegativeInt = (value, fallback) => {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+};

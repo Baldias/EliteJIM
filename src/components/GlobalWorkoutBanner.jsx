@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { useRestTimer } from '../hooks/useRestTimer';
 import './GlobalWorkoutBanner.css';
 
 function GlobalWorkoutBanner() {
@@ -11,6 +12,7 @@ function GlobalWorkoutBanner() {
   const activeWorkout = useStore(state => state.activeWorkout);
 
   const [sessionTimeStr, setSessionTimeStr] = useState('00:00');
+  const { restTimeLeft, isResting } = useRestTimer();
 
   // Session timer
   useEffect(() => {
@@ -24,6 +26,12 @@ function GlobalWorkoutBanner() {
     return () => clearInterval(interval);
   }, [activeWorkout]);
 
+  const formatRestTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = String(seconds % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   // Only show if there is an active workout and we are NOT on the workout page
   if (!activeWorkout || location.pathname === '/workout') {
     return null;
@@ -36,6 +44,12 @@ function GlobalWorkoutBanner() {
           <Play size={14} className="global-banner-icon blink" />
           <span className="global-banner-time">{sessionTimeStr}</span>
         </div>
+        {isResting && (
+          <div className="global-banner-rest">
+            <span className="global-banner-rest-label">Rec.</span>
+            <span className="global-banner-rest-time">{formatRestTime(restTimeLeft)}</span>
+          </div>
+        )}
       </div>
     </div>
   );
