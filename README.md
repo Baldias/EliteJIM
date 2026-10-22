@@ -9,7 +9,7 @@
 Log your sets, watch your estimated 1RM climb, follow a periodized mesocycle and level up every muscle group.
 Everything runs on your phone, with no account and no server.
 
-**[▶ Try it live at elite-jim.vercel.app](https://elite-jim.vercel.app)** · no sign-up, nothing to install
+**[▶ Try it live at elite-jim.vercel.app](https://elite-jim.vercel.app/?demo)** · preloaded with demo data, no sign-up, nothing to install
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)

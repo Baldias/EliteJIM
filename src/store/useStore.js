@@ -1,9 +1,11 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
 import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises';
 import { parseNonNegativeInt } from '../utils/number';
 import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
+import { IS_DEMO, STORAGE_KEY, getAppStorage } from '../demo/demoMode';
+import { buildDemoState } from '../demo/demoData';
 
 // Only completed sets are real performances: skipped sets keep the values
 // pre-filled from the previous session and must not count as "last" or PR.
@@ -136,6 +138,9 @@ export const useStore = create(
       lastBackupDate: null,
       dismissedBackupReminderUntil: null,
       isStoragePersisted: false,
+
+      // Demo link: fake history in place of the empty defaults (see demo/demoMode.js)
+      ...(IS_DEMO ? buildDemoState() : {}),
 
       // --- Backup & Storage Actions ---
       setAutoBackupSettings: (settings) => set((state) => ({ ...state, ...settings })),
@@ -697,7 +702,8 @@ export const useStore = create(
       }
     }),
     {
-      name: 'elitejim-storage', // unique name
+      name: STORAGE_KEY, // demo mode uses its own key in sessionStorage
+      storage: createJSONStorage(getAppStorage),
     }
   )
 );
