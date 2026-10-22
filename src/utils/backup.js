@@ -1,4 +1,5 @@
 import { useStore } from '../store/useStore';
+import { STORAGE_KEY, getAppStorage } from '../demo/demoMode';
 
 /**
  * Genera e scarica istantaneamente il file JSON di backup di EliteJIM
@@ -6,7 +7,7 @@ import { useStore } from '../store/useStore';
  */
 export function exportDataBackup() {
   try {
-    let data = localStorage.getItem('elitejim-storage');
+    let data = getAppStorage().getItem(STORAGE_KEY);
     
     // Fallback: se per qualche motivo il localStorage non è ancora sincronizzato
     if (!data) {
@@ -87,7 +88,7 @@ export function importDataBackup(file, onComplete) {
       const normalizedData = parsed.state ? parsed : { state: parsed, version: 0 };
 
       if (window.confirm('Attenzione: Importando questo backup sovrascriverai schede, progressi e cronologia attuali. Sei sicuro di voler procedere?')) {
-        localStorage.setItem('elitejim-storage', JSON.stringify(normalizedData));
+        getAppStorage().setItem(STORAGE_KEY, JSON.stringify(normalizedData));
         if (onComplete) {
           onComplete(true);
         } else {

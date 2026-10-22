@@ -20,6 +20,7 @@ import Monitoring from './pages/monitoring/Monitoring';
 import MyMeals from './pages/monitoring/MyMeals';
 import ReloadPrompt from './components/ReloadPrompt';
 import GlobalWorkoutBanner from './components/GlobalWorkoutBanner';
+import DemoBanner from './components/DemoBanner';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
 
@@ -65,6 +66,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app-container">
+        <DemoBanner />
         <ReloadPrompt />
         <GlobalWorkoutBanner />
         <Routes>
