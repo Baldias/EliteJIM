@@ -25,6 +25,14 @@
   --c-text-muted: #8A94A3;
   --c-text-dim: #5A6370;
 
+  /* macro (sezione Diario): stessa palette di allenamento, XP e accento */
+  --mn-protein: #FF6A3D;
+  --mn-protein-rgb: 255, 106, 61;
+  --mn-carbs: #00B4E6;
+  --mn-carbs-rgb: 0, 180, 230;
+  --mn-fat: #FFD60A;
+  --mn-fat-rgb: 255, 214, 10;
+
   --r-sm: 10px;
   --r-md: 16px;
   --r-lg: 20px;

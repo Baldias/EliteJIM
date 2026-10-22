@@ -1,0 +1,152 @@
+.drc {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px 18px;
+  text-align: left;
+  color: var(--c-text);
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(var(--c-primary-rgb), 0.16) 0%, transparent 60%),
+    var(--c-surface);
+  border: 1px solid rgba(var(--c-primary-rgb), 0.22);
+  font-variant-numeric: tabular-nums;
+}
+
+.drc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drc-eyebrow {
+  flex: 1;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+.drc-weight {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--c-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.drc-chevron {
+  color: var(--c-text-muted);
+}
+
+.drc-numbers {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.drc-big {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 2.25rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.drc-big span {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--c-text-muted);
+}
+
+.drc-big.is-over {
+  color: var(--c-accent);
+}
+
+.drc-protein {
+  width: 46%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.drc-protein > span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  text-align: right;
+}
+
+.drc-protein b {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--mn-protein);
+}
+
+.drc-protein small {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  text-align: right;
+}
+
+.drc-protein-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-surface-2);
+  overflow: hidden;
+}
+
+.drc-protein-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--mn-protein);
+}
+
+.drc-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.drc-empty > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drc-empty strong {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.drc-empty div span {
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+}
+
+.drc-plus {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--c-bg);
+  background: var(--c-primary);
+}

@@ -1,0 +1,98 @@
+// Ricerca alimenti: database generico locale + Open Food Facts
+// (database aperto e gratuito di prodotti confezionati, nessuna chiave API).
+// https://openfoodfacts.github.io/openfoodfacts-server/api/
+import { GENERIC_FOODS } from '../data/genericFoods';
+
+// La ricerca non invia header CORS: si passa dal proxy sullo stesso dominio
+// (vite.config.js in sviluppo, vercel.json in produzione).
+const OFF_SEARCH = '/api/off-search';
+const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product';
+const PRODUCT_FIELDS = 'code,product_name,product_name_it,generic_name_it,brands,nutriments,serving_size,serving_quantity,quantity,image_small_url,image_front_small_url';
+
+const num = (v) => {
+  const n = parseFloat(v);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : 0;
+};
+
+export const normalizeText = (s) => (s || '')
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[̀-ͯ]/g, '')
+  .trim();
+
+// Converte un prodotto Open Food Facts nel formato alimento dell'app
+export function normalizeOffProduct(p) {
+  if (!p) return null;
+  const n = p.nutriments || {};
+  let kcal = n['energy-kcal_100g'];
+  if (kcal == null && n['energy_100g'] != null) kcal = n['energy_100g'] / 4.184; // kJ → kcal
+  const name = (p.product_name_it || p.product_name || p.generic_name_it || '').trim();
+  if (!name || kcal == null) return null;
+  const brands = Array.isArray(p.brands) ? p.brands.join(', ') : (p.brands || '');
+  const servingSize = num(p.serving_quantity);
+  return {
+    id: `off-${p.code}`,
+    barcode: p.code,
+    name,
+    brand: brands.split(',')[0].trim(),
+    source: 'off',
+    image: p.image_front_small_url || p.image_small_url || null,
+    quantity: p.quantity || '',
+    per100: {
+      kcal: Math.round(num(kcal)),
+      carbs: num(n.carbohydrates_100g),
+      protein: num(n.proteins_100g),
+      fat: num(n.fat_100g),
+      fiber: num(n.fiber_100g),
+      sugar: num(n.sugars_100g),
+      satFat: num(n['saturated-fat_100g']),
+      salt: num(n.salt_100g),
+    },
+    servingSize: servingSize > 0 ? servingSize : null,
+    servingLabel: servingSize > 0 ? servingLabelFrom(p.serving_size) : null,
+  };
+}
+
+// "1 biscotto (12 g)" → "1 biscotto"; "85 g" o "1 serving (85 g)" → "1 porzione"
+function servingLabelFrom(raw) {
+  const label = String(raw || '').replace(/\(.*?\)/g, '').trim();
+  if (!label || /^[\d.,\s]+(g|ml|gr|grammi)?$/i.test(label) || /serving|portion/i.test(label)) return '1 porzione';
+  return label;
+}
+
+export function searchLocalFoods(query, customFoods = []) {
+  const q = normalizeText(query);
+  if (!q) return [];
+  const words = q.split(/\s+/);
+  const matches = (f) => {
+    const hay = normalizeText(`${f.name} ${f.brand || ''}`);
+    return words.every(w => hay.includes(w));
+  };
+  return [...customFoods.filter(matches), ...GENERIC_FOODS.filter(matches)];
+}
+
+export async function searchOffFoods(query, { signal, pageSize = 25 } = {}) {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const params = new URLSearchParams({ q, page_size: String(pageSize), langs: 'it,en', fields: PRODUCT_FIELDS });
+  const res = await fetch(`${OFF_SEARCH}?${params}`, { signal });
+  if (!res.ok || !res.headers.get('content-type')?.includes('json')) {
+    throw new Error(`Ricerca non disponibile (${res.status})`);
+  }
+  const data = await res.json();
+  const seen = new Set();
+  return (data.hits || [])
+    .map(normalizeOffProduct)
+    .filter(f => f && !seen.has(f.id) && seen.add(f.id));
+}
+
+export async function fetchProductByBarcode(barcode, { signal } = {}) {
+  const code = String(barcode).replace(/\D/g, '');
+  if (!code) return null;
+  const res = await fetch(`${OFF_PRODUCT}/${code}.json?fields=${PRODUCT_FIELDS}`, { signal });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Servizio non disponibile (${res.status})`);
+  const data = await res.json();
+  if (data.status === 0 || !data.product) return null;
+  return normalizeOffProduct({ code, ...data.product });
+}

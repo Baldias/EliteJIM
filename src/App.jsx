@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { Home as HomeIcon, TrendingUp, User, Dna } from 'lucide-react';
+import { Home as HomeIcon, TrendingUp, User, Dna, Utensils } from 'lucide-react';
 import { useStore } from './store/useStore';
 import { initPersistentStorage } from './utils/backup';
 import Home from './pages/home/Home';
@@ -16,6 +16,7 @@ import MuscleLevels from './pages/profile/MuscleLevels';
 import History from './pages/profile/History';
 import EditWorkout from './pages/profile/EditWorkout';
 import Activity from './pages/activity/Activity';
+import Monitoring from './pages/monitoring/Monitoring';
 import ReloadPrompt from './components/ReloadPrompt';
 import GlobalWorkoutBanner from './components/GlobalWorkoutBanner';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -29,6 +30,16 @@ function Navigation() {
 
   return (
     <nav className="bottom-nav">
+      {showScience && (
+        <NavLink to="/science" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <Dna size={24} />
+          <span>Scienza</span>
+        </NavLink>
+      )}
+      <NavLink to="/diario" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+        <Utensils size={24} />
+        <span>Diario</span>
+      </NavLink>
       <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} end>
         <HomeIcon size={24} />
         <span>Home</span>
@@ -37,12 +48,6 @@ function Navigation() {
         <TrendingUp size={24} />
         <span>Progressi</span>
       </NavLink>
-      {showScience && (
-        <NavLink to="/science" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Dna size={24} />
-          <span>Scienza</span>
-        </NavLink>
-      )}
       <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <User size={24} />
         <span>Profilo</span>
@@ -75,6 +80,7 @@ function App() {
           <Route path="/history" element={<History />} />
           <Route path="/edit-workout/:workoutId" element={<EditWorkout />} />
           <Route path="/activity" element={<Activity />} />
+          <Route path="/diario" element={<Monitoring />} />
         </Routes>
         <Navigation />
         <SpeedInsights />

@@ -4,6 +4,9 @@ import { calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklySt
 import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises';
 import { parseNonNegativeInt } from '../utils/number';
 import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
+import { DEFAULT_NUTRITION_GOALS } from '../utils/nutrition';
+
+const MAX_RECENT_FOODS = 40;
 
 // Only completed sets are real performances: skipped sets keep the values
 // pre-filled from the previous session and must not count as "last" or PR.
@@ -122,6 +125,16 @@ export const useStore = create(
       // Persistent rest timer end timestamp
       globalRestEndTime: null,
 
+      // --- Diario (peso & alimentazione) ---
+      // [{ date: 'YYYY-MM-DD', kg }] ordinato per data crescente
+      weightLog: [],
+      // { 'YYYY-MM-DD': { breakfast: [entry], lunch: [], dinner: [], snacks: [] } }
+      // entry = { id, food: { name, brand, per100, servingSize, servingLabel, ... }, grams }
+      foodDiary: {},
+      nutritionGoals: DEFAULT_NUTRITION_GOALS,
+      recentFoods: [],
+      customFoods: [],
+
       // --- Gamification State ---
       userXP: 0,
       muscleXP: {}, // Track XP per muscle group
@@ -147,6 +160,85 @@ export const useStore = create(
         const value = parseFloat(kg);
         set({ bodyweight: value > 0 ? Math.round(value * 10) / 10 : null });
       },
+
+      // --- Diario Actions ---
+      // Registra (o sostituisce) il peso di un giorno; il peso più recente
+      // diventa anche il peso corporeo usato per il 1RM a corpo libero.
+      addWeightEntry: (date, kg) => {
+        const value = Math.round(parseFloat(kg) * 10) / 10;
+        if (!date || !(value > 0)) return;
+        set((state) => {
+          const weightLog = [...(state.weightLog || []).filter(e => e.date !== date), { date, kg: value }]
+            .sort((a, b) => a.date.localeCompare(b.date));
+          return { weightLog, bodyweight: weightLog[weightLog.length - 1].kg };
+        });
+      },
+      deleteWeightEntry: (date) => {
+        set((state) => {
+          const weightLog = (state.weightLog || []).filter(e => e.date !== date);
+          const latest = weightLog[weightLog.length - 1];
+          return { weightLog, ...(latest ? { bodyweight: latest.kg } : {}) };
+        });
+      },
+      // Restituisce l'id della voce creata (serve per l'annullamento)
+      addFoodEntry: (date, meal, food, grams) => {
+        const g = parseFloat(grams);
+        if (!date || !meal || !food || !(g > 0)) return null;
+        const cleanFood = { ...food };
+        delete cleanFood.lastGrams;
+        const entry = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, food: cleanFood, grams: g };
+        set((state) => {
+          const day = state.foodDiary?.[date] || {};
+          const recentFoods = food.source === 'quick'
+            ? state.recentFoods
+            : [{ ...cleanFood, lastGrams: g }, ...(state.recentFoods || []).filter(f => f.id !== food.id)].slice(0, MAX_RECENT_FOODS);
+          return {
+            foodDiary: { ...state.foodDiary, [date]: { ...day, [meal]: [...(day[meal] || []), entry] } },
+            recentFoods
+          };
+        });
+        return entry.id;
+      },
+      // Aggiorna grammi e/o pasto di una voce già registrata
+      updateFoodEntry: (date, meal, entryId, { grams, meal: newMeal }) => {
+        set((state) => {
+          const day = state.foodDiary?.[date];
+          const entry = day?.[meal]?.find(e => e.id === entryId);
+          if (!entry) return state;
+          const updated = { ...entry, grams: parseFloat(grams) > 0 ? parseFloat(grams) : entry.grams };
+          const target = newMeal || meal;
+          const nextDay = { ...day };
+          if (target === meal) {
+            nextDay[meal] = day[meal].map(e => (e.id === entryId ? updated : e));
+          } else {
+            nextDay[meal] = day[meal].filter(e => e.id !== entryId);
+            nextDay[target] = [...(day[target] || []), updated];
+          }
+          return { foodDiary: { ...state.foodDiary, [date]: nextDay } };
+        });
+      },
+      deleteFoodEntry: (date, meal, entryId) => {
+        set((state) => {
+          const day = state.foodDiary?.[date];
+          if (!day?.[meal]) return state;
+          return { foodDiary: { ...state.foodDiary, [date]: { ...day, [meal]: day[meal].filter(e => e.id !== entryId) } } };
+        });
+      },
+      copyMeal: (fromDate, toDate, meal) => {
+        set((state) => {
+          const source = state.foodDiary?.[fromDate]?.[meal] || [];
+          if (source.length === 0) return state;
+          const day = state.foodDiary?.[toDate] || {};
+          const copies = source.map((e, i) => ({ ...e, id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}` }));
+          return { foodDiary: { ...state.foodDiary, [toDate]: { ...day, [meal]: [...(day[meal] || []), ...copies] } } };
+        });
+      },
+      setNutritionGoals: (goals) => set((state) => ({ nutritionGoals: { ...DEFAULT_NUTRITION_GOALS, ...state.nutritionGoals, ...goals } })),
+      addCustomFood: (food) => set((state) => ({ customFoods: [food, ...(state.customFoods || []).filter(f => f.id !== food.id)] })),
+      deleteCustomFood: (foodId) => set((state) => ({
+        customFoods: (state.customFoods || []).filter(f => f.id !== foodId),
+        recentFoods: (state.recentFoods || []).filter(f => f.id !== foodId)
+      })),
 
       // --- Gamification Actions ---
       clearRecapData: () => set({ recapData: null }),
