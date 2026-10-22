@@ -12,7 +12,7 @@ const workout = (id, kg, reps) => ({ id, startTime: start + id * 3600000, endTim
 const state = () => ({ history: [workout(2, 70, 8), workout(1, 60, 10)], userXP: 4200, muscleXP: { Petto: 900, Spalle: 550 }, bodyweight: 80, weightLog: [{ date: '2026-10-20', kg: 80 }, { date: '2026-10-22', kg: 81 }], scienceState: emptyScienceState(), scienceReport: null, customExercises: [], exerciseOverrides: {} });
 
 describe('read-only graphical progress report', () => {
-  it('uses the existing overload and level calculations and never changes source logs, XP, or scientific annotations', () => {
+  it('uses the existing overload calculations and never changes source logs, XP, or scientific annotations', () => {
     const data = state(), before = structuredClone(data);
     const report = buildProgressReport(data, start + 3 * 3600000);
     const stats = computeOverloadStats(data.history, { exercisesDb: getAllExercises([], {}), bodyweight: 80 });
@@ -22,7 +22,8 @@ describe('read-only graphical progress report', () => {
     expect(report.totals.completedSets).toBe(2);
     expect(report.totals.workouts).toBe(2);
     expect(report.totals.minutes).toBe(60);
-    expect(report.muscles.find(m => m.name === 'Petto').level).toBe(2);
+    expect(report).not.toHaveProperty('muscles');
+    expect(progressReportPages(report).some(p => p.type === 'muscles')).toBe(false);
     expect(data).toEqual(before);
   });
   it('compares the first and latest performance, keeping the absolute record separate', () => {
@@ -41,7 +42,7 @@ describe('read-only graphical progress report', () => {
     const pages = progressReportPages(report);
     expect(report.exercises).toHaveLength(86);
     expect(pages.filter(p => p.type === 'exercises').flatMap(p => p.items).map(ex => ex.name)).toEqual(report.exercises.map(ex => ex.name));
-    expect(pages.filter(p => p.type === 'exercises')).toHaveLength(43);
+    expect(pages.filter(p => p.type === 'exercises')).toHaveLength(44);
   });
   it('keeps logged techniques in totals without inventing comparable ordinary-set progress', () => {
     const data = state();
@@ -96,4 +97,24 @@ describe('read-only graphical progress report', () => {
     expect(missing.missingMuscles.find(m => m.muscle === 'Petto')).toEqual({ muscle: 'Petto', remaining: 11, unknown: 1 });
     expect(missing.missingMuscles.reduce((sum, m) => sum + m.remaining, 0)).toBe(missing.remaining);
   });
+  it('groups exercises by explicit catalog categories, preserving unknown exercises, and puts Science last', () => {
+    const data = state();
+    data.customExercises = [{ id: 'custom-1', name: 'Il mio curl', category: 'Bicipiti' }];
+    const bench = getAllExercises([], {}).find(e => e.name === 'Panca Piana Bilanciere');
+    data.exerciseOverrides = { [bench.id]: { category: 'Spalle' } };
+    data.history[0].exercises.push(...['Curl Bilanciere', 'Il mio curl', 'Press sconosciuta'].map((name, id) => ({ id, name, sets: [{ done: true, kg: 20, reps: 10 }] })));
+    data.scienceState = createScienceProgram({ startDate: start, experience: 'advanced', goal: 'balanced', priorities: [], daysPerWeek: 5, minutesPerSession: 90 }, [], getAllExercises([], {}), emptyScienceState(), null, start);
+    const report = buildProgressReport(data, start + 3 * 3600000, { includeWeight: true });
+    const pages = progressReportPages(report);
+    expect(report.exercises.find(e => e.name === 'Il mio curl').group).toBe('Bicipiti');
+    expect(report.exercises.find(e => e.name === 'Panca Piana Bilanciere').group).toBe('Spalle');
+    expect(report.exercises.find(e => e.name === 'Press sconosciuta').group).toBe('Altri esercizi');
+    expect(pages.at(-1).type).toBe('science');
+    expect(pages[1].type).toBe('exercises');
+    const exercisePages = pages.filter(p => p.type === 'exercises');
+    expect(exercisePages.every(p => new Set(p.items.map(e => e.group)).size === 1)).toBe(true);
+    expect(exercisePages.flatMap(p => p.items)).toHaveLength(report.exercises.length);
+    expect(pages.some(p => p.type === 'muscles')).toBe(false);
+  });
+
 });
