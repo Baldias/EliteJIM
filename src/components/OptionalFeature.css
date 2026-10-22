@@ -1,0 +1,18 @@
+.optional-feature-page { padding-bottom:120px; }
+.optional-feature-page header p { color:var(--c-primary); font-size:10px; font-weight:800; letter-spacing:1.3px; margin:0 0 12px; }
+.optional-feature-page h1 { font-size:32px; margin:0 0 24px; }
+.optional-feature-card { padding:26px 22px; border-radius:24px; }
+.optional-feature-icon { display:grid; place-items:center; width:74px; height:74px; background:rgba(var(--c-primary-rgb),.1); border:1px solid rgba(var(--c-primary-rgb),.25); color:var(--c-primary); border-radius:24px; margin-bottom:26px; }
+.optional-feature-tag { font-size:9px; font-weight:800; letter-spacing:1.4px; color:var(--c-primary); }
+.optional-feature-card h2 { color:var(--c-text); font-size:28px; line-height:1.15; letter-spacing:-.7px; margin:12px 0 16px; }
+.optional-feature-card > p { font-size:14px; line-height:1.7; color:var(--c-text-muted); }
+.optional-feature-card ul { list-style:none; padding:0; margin:26px 0; display:flex; flex-direction:column; gap:17px; }
+.optional-feature-card li { display:flex; align-items:flex-start; gap:10px; font-size:12px; line-height:1.5; color:var(--c-text); }
+.optional-feature-card li svg { flex-shrink:0; color:var(--c-success); }
+.optional-feature-activation { display:flex; align-items:center; justify-content:space-between; gap:12px; border-top:1px solid var(--c-border); padding-top:22px; }
+.optional-feature-activation > span { display:flex; flex-direction:column; gap:7px; }
+.optional-feature-activation strong { font-size:15px; color:var(--c-text); }
+.optional-feature-activation small { color:var(--c-text-muted); font-size:10px; }
+.optional-feature-activation button { width:50px; height:30px; padding:3px; border-radius:20px; background:var(--c-border); border:0; flex-shrink:0; cursor:pointer; }
+.optional-feature-activation button > span { display:block; width:24px; height:24px; background:var(--c-text-muted); border-radius:50%; }
+.optional-feature-card > .optional-feature-hint { display:flex; align-items:center; justify-content:center; gap:6px; font-size:10px; margin:20px 0 0; }

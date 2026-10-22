@@ -5,6 +5,9 @@ import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises'
 import { parseNonNegativeInt } from '../utils/number';
 import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
 import { DEFAULT_NUTRITION_GOALS } from '../utils/nutrition';
+import { emptyScienceState, captureScienceExercises, isScienceV3Active } from '../utils/scienceV3';
+import { scienceActions } from './scienceStore';
+import { existingFeaturePreferences } from '../utils/featurePreferences';
 
 const MAX_RECENT_FOODS = 40;
 import { IS_DEMO, STORAGE_KEY, getAppStorage } from '../demo/demoMode';
@@ -122,6 +125,8 @@ export const useStore = create(
       activeWorkout: null,
       // Saved science assessment report
       scienceReport: null,
+      scienceState: emptyScienceState(),
+      ...scienceActions(set),
       // User bodyweight in kg (null = not set): used for the 1RM of pull-ups, dips, push-ups
       bodyweight: null,
       // Persistent rest timer end timestamp
@@ -144,7 +149,8 @@ export const useStore = create(
       highestStreak: 0,
       lastWorkoutDate: null,
       recapData: null,
-      showScience: true,
+      showScience: false,
+      showDiary: false,
       // --- Backup & Storage State ---
       autoBackupEnabled: true,
       autoBackupFrequency: 'after_workout', // 'after_workout' | 'weekly' | 'monthly'
@@ -285,6 +291,7 @@ export const useStore = create(
         };
       }),
       toggleScience: () => set((state) => ({ showScience: !state.showScience })),
+      toggleDiary: () => set((state) => ({ showDiary: !state.showDiary })),
       
       // --- Exercise Management Actions ---
       addCustomExercise: (exercise) =>
@@ -679,6 +686,7 @@ export const useStore = create(
           return {
             templates: updatedTemplates,
             history: updatedHistory,
+            ...(isScienceV3Active(state) ? { scienceState: captureScienceExercises(state.scienceState, completedWorkout, allKnown) } : {}),
             activeWorkout: null,
             globalRestEndTime: null,
             userXP: newXP,
@@ -796,6 +804,7 @@ export const useStore = create(
     {
       name: STORAGE_KEY, // demo mode uses its own key in sessionStorage
       storage: createJSONStorage(getAppStorage),
+      merge: (saved, current) => ({ ...current, ...saved, ...existingFeaturePreferences(saved) }),
     }
   )
 );

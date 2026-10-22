@@ -1,0 +1,26 @@
+.progress-share-entry { display:flex; align-items:center; gap:12px; width:100%; text-align:left; font:inherit; color:var(--c-text); padding:17px 16px; }
+.progress-share-entry > span { display:grid; place-items:center; height:43px; width:43px; flex-shrink:0; border-radius:14px; color:var(--c-primary); background:rgba(var(--c-primary-rgb),.12); }
+.progress-share-entry > div { flex:1; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.progress-share-entry strong { font-size:14px; font-weight:800; }
+.progress-share-entry small { font-size:10px; color:var(--c-text-muted); line-height:1.6; }
+.progress-share-entry > svg { color:var(--c-text-muted); flex-shrink:0; }
+.progress-share-pager { display:flex; align-items:center; gap:12px; justify-content:space-between; margin:20px 0 16px; }
+.progress-share-pager > span { text-align:center; font-size:12px; font-weight:750; }
+.progress-share-pager small { display:block; font-size:10px; font-weight:400; margin-top:4px; color:var(--c-text-muted); }
+.progress-share-pager button { min-height:42px; min-width:42px; }
+.progress-share-pager button:disabled { opacity:.25; }
+.progress-share-preview { display:block; width:100%; height:auto; border-radius:13px; border:1px solid var(--c-border); background:var(--c-bg); }
+.progress-share-loading { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px; padding:58px 20px; text-align:center; }
+.progress-share-loading > svg { color:var(--c-primary); animation:progress-share-spin 1s linear infinite; }
+.progress-share-loading strong { font-size:16px; }
+.progress-share-loading p, .progress-share-empty p { font-size:12px; color:var(--c-text-muted); line-height:1.8; }
+.progress-share-empty { padding:30px 0; }
+.progress-share-actions { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+.progress-share-actions > .ej-btn { width:100%; min-height:48px; }
+.progress-share-actions > div { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.progress-share-actions > div .ej-btn { padding:12px 8px; min-height:44px; font-size:11px; }
+.progress-share-actions > p { margin:0; color:var(--c-text-muted); font-size:10px; line-height:1.7; }
+.progress-share-actions .progress-share-message { color:var(--c-primary); }
+@keyframes progress-share-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .progress-share-loading > svg { animation:none; } }
+.mn-sheet-foot > .progress-share-actions { margin-top:0; }

@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ChevronLeft, ChevronRight, ChevronDown, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles, Bell, Weight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles, Bell, Weight } from 'lucide-react';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import { AiTemplateModal } from '../../components/AiTemplateModal';
 import { sanitizeDecimalInput } from '../../utils/number';
 import { REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './Settings.css';
+import ScienceDebugEntry from './ScienceDebug';
+import ScienceTutorialButton from '../science/ScienceTutorial';
 
 function Settings() {
   const navigate = useNavigate();
   const showScience = useStore(state => state.showScience);
   const toggleScience = useStore(state => state.toggleScience);
+  const showDiary = useStore(state => state.showDiary);
+  const toggleDiary = useStore(state => state.toggleDiary);
   
   const autoBackupEnabled = useStore(state => state.autoBackupEnabled ?? true);
   const autoBackupFrequency = useStore(state => state.autoBackupFrequency || 'after_workout');
@@ -25,7 +29,6 @@ function Settings() {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [persistenceLoading, setPersistenceLoading] = useState(false);
-  const [showScienceInfo, setShowScienceInfo] = useState(false);
   const [mountedAt] = useState(() => Date.now());
   const [bodyweightInput, setBodyweightInput] = useState(() => (bodyweight ? String(bodyweight).replace('.', ',') : ''));
   const fileInputRef = React.useRef(null);
@@ -136,17 +139,12 @@ function Settings() {
         </div>
       </div>
 
-      <div className="st-disclosure">
-        <button type="button" className="st-disclosure-btn" onClick={() => setShowScienceInfo(v => !v)} aria-expanded={showScienceInfo}>
-          Come funziona la Sezione Scienza?
-          <ChevronDown size={16} className={showScienceInfo ? 'is-open' : ''} />
-        </button>
-        {showScienceInfo && (
-          <p className="st-disclosure-text">
-            Attivando questa opzione avrai accesso all'analisi del mesociclo, al volume minimo e massimo (MEV/MRV di Mike Israetel) e ai grafici di sovraccarico progressivo. Se preferisci un'esperienza essenziale puoi disattivarla in qualsiasi momento.
-          </p>
-        )}
+      <div className="ej-card st-row">
+        <span className="st-row-icon is-primary"><Utensils size={20} /></span>
+        <span className="st-row-text"><span className="st-row-title">Sezione Diario</span><span className="st-row-sub">Alimentazione e andamento del peso</span></span>
+        <button type="button" role="switch" aria-checked={showDiary} aria-label="Attiva Sezione Diario" className={`st-switch ${showDiary ? 'is-on' : ''}`} onClick={toggleDiary}><span /></button>
       </div>
+      <div className="st-disclosure"><ScienceTutorialButton inline /></div>
 
       {/* Sync & Backup */}
       <section className="ej-card st-backup">
@@ -235,6 +233,7 @@ function Settings() {
         </div>
       </section>
 
+      <ScienceDebugEntry />
       <AiTemplateModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
     </div>
   );

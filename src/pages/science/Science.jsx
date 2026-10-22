@@ -28,6 +28,8 @@ import {
 } from '../../utils/rpVolume';
 import './Science.css';
 import './BossFight.css';
+import ScienceV3 from './ScienceV3';
+import { hasLegacyScience } from '../../utils/scienceV3';
 
 const RP_BASE_LANDMARKS = {
   'Petto': { mev: 10, mav: 12, mrv: 20 },
@@ -543,7 +545,7 @@ function Dashboard({ report, reset }) {
   );
 }
 
-function Science() {
+function LegacyScience() {
   const scienceReport = useStore(state => state.scienceReport);
   const saveScienceReport = useStore(state => state.saveScienceReport);
 
@@ -869,4 +871,7 @@ function Science() {
   );
 }
 
-export default Science;
+export default function Science() {
+  const report = useStore(state => state.scienceReport);
+  return hasLegacyScience(report) ? <LegacyScience /> : <ScienceV3 />;
+}

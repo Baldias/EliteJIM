@@ -37,7 +37,7 @@ Everything runs on your phone, with no account and no server.
 | 🏋️ **Fast logging** | Templates pre-fill each set with what you lifted last time. Tap ± to adjust, tap ✓ to complete. |
 | 🏆 **Live PRs** | Beat your best estimated 1RM mid-session and the set lights up as a new PR, right away. |
 | 📈 **Progressive overload** | Every session is graded **S → D** based on how many exercises you out-performed vs. last time (1RM and top set). |
-| 🧬 **Science mode** | A 12-week mesocycle built on Dr. Mike Israetel's volume landmarks (MEV / MAV / MRV), with weekly set targets and *Boss Fight* MRV weeks. |
+| 🧬 **Science mode V3** | Four weeks of adaptive accumulation at 0–1 RIR followed by a proposed deload. Personal priorities, direct-set targets, recovery feedback and explicit acceptance of recovery changes. Existing 12-week cycles keep their original rules. |
 | 🎮 **RPG progression** | Earn XP, climb from *Rame III* to *Champion* and level up each muscle group separately. |
 | 🔥 **Weekly streaks** | A streak counts weeks, not days, so rest days never break it. |
 | 🧍 **Muscle map** | A front and back body map shows which muscles you hit in the last 7 days and how hard. |
@@ -120,7 +120,7 @@ At the end of every workout EliteJIM compares each exercise with the last time y
 | **C** | Strength held steady |
 | **D** | Estimated 1RM dropped on most exercises |
 
-Deload weeks of the mesocycle are graded differently: there you get rewarded for *controlling* volume, not for pushing it.
+Deload weeks of legacy mesocycles retain their original grading. V3's scientific annotations, feedback and recovery decisions do not change XP formulas, muscle levels or historical grades.
 
 ### Volume landmarks
 
@@ -131,7 +131,17 @@ Deload weeks of the mesocycle are graded differently: there you get rewarded for
 | **MAV** | Maximum Adaptive Volume |
 | **MRV** | Maximum Recoverable Volume |
 
-A short quiz (sex, whether you train legs, bodyweight and main lifts, focus muscles, days per week) sets your strength level and adapts the landmarks to you. The 12-week mesocycle then ramps your weekly set targets from MEV toward MRV, with *Boss Fight* weeks in W4 and W8.
+Scienza V3 starts with declared experience, available time and either balanced growth or up to three priorities. Experience establishes per-muscle starting estimates: for advanced growth, chest/back start at 12 direct sets, quads/shoulders at 10, hamstrings/calves/arms at 8, glutes/abs at 6. Representative historical medians can raise these estimates; sparse logs cannot lower them. In specialization, non-priorities start at their growth dose for weeks 1–2. In weeks 3–4, consented transfers can move sets towards recovering priorities, bounded by staged non-priority floors and estimated maintenance. Net increases are limited to about 5% of initial weekly volume per transition. Older active V3 states adopt this policy without rewriting workout history or archived weeks. Without history, total starting doses are fitted to available time with a visible explanation. Starting doses are product heuristics, not measured MEV/MRV values. Shoulders remain one district.
+
+Only completed ordinary sets explicitly confirmed at **0 or 1 RIR** count towards direct targets. Indirect work is shown separately. Unrecorded RIR, excluded sets, warmups, drop sets and rest-pause sets do not count; their original logs and XP remain untouched. Exact exercise mappings and separate scientific overrides avoid changing the categories used for muscle XP.
+
+During four accumulation weeks, good recovery, adequate confirmed work and no marked negative signals permit weekly increases (one set for beginners; up to two for intermediate/advanced trainees), including while performance improves. Advanced priorities can add three when the target is fully completed across at least two exposures, with at least 90% confirmed effort and consistently good reported quality. A 15% aggregate weekly increase budget limits simultaneous jumps. Experience-based review thresholds are 16/20/24 sets; higher historical baselines are preserved and targets/thresholds can be edited. These thresholds are guards for the automation, not biological MRV ceilings. The fourth week records the personal peak; it does not prove the athlete's MRV.
+
+After accumulation, the athlete can accept a 50% deload for all muscles or the signalled districts, pause districts, or postpone recovery. Earlier fatigue advice proposes a 25% reduction or a pause. No recovery reduction is applied without acceptance. Weeks use local calendar arithmetic and half-open windows, including across DST. Closing a week snapshots counts, classifications, landmarks and explanations. Learned observations carry into subsequent blocks; the optional weight trend supplies context for mass gain and never changes set targets on its own.
+
+All new data lives in versioned `scienceState`, separate from workouts and gamification. RIR/feedback changes never call historical-edit or XP-recalculation actions. Active or pending legacy cycles complete first; old reports stay available after V3 starts. Both normal and emergency backups include scientific data, and old backups initialize it empty.
+
+Run `npm test` for engine, persistence, XP-isolation and backup regression tests. `npm run build` builds the PWA; `npm run lint` also reports existing lint issues in legacy components.
 
 ### Ranks
 
@@ -197,3 +207,11 @@ Released under the [MIT License](LICENSE).
 <div align="center">
   <sub><i>Work hard. Level up.</i></sub>
 </div>
+
+Scienza planning UI includes a repeatable quiz (confirmation archives the active block without deleting logs/annotations), local start dates (today, strictly next Monday, or a specific day), and read-only weekly estimates. Estimates assume favorable completion/recovery and never apply future targets or deloads. Landmark colors are green/yellow/purple/red; the tutorial is opened with the round question-mark button on the hero card.
+
+For isolated testing, tap **EliteJIM · version** five times at the bottom of Settings and enter **1234**. Debug creates an in-memory copy of the scientific state and history, with no persistence or live actions. Select copied/empty/good-recovery/high-fatigue data, advance to a weekly check, then close the week in the simulated dashboard. Reset/close discards the simulation; backup exports retain only the real app state.
+
+Weekly science windows remain open after their scheduled deadline until the athlete explicitly advances. Late sessions count in the still-open period; closing freezes its actual end and starts seven new local calendar days at that same instant, with no overlap or catch-up debt. A global prompt reappears on app launch/focus/visibility return while overdue. Active workouts must be completed before advancing. The bottom session planner uses per-week availability (1–7 sessions), total direct targets, confirmed remaining sets and recorded sessions; it never changes targets, logs or XP.
+
+Graphical progress sharing is available from Profile. It builds a read-only snapshot with the whole recorded history: totals, app-consistent PR/overload statistics, activity, muscle levels, current Scienza and per-exercise charts (all exercises, paginated). Ordinary sets are compared with the existing 1RM/bodyweight formulas; techniques remain in logged totals, and exercises without comparable sets are explicitly marked. Weight is opt-in. All graphics/PDFs are generated locally; jsPDF loads only when opening the report. Native file sharing is used when supported, with PDF download and summary PNG alternatives. Demo reports are visibly marked as examples and never read the real storage key.
