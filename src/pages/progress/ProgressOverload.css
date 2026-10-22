@@ -54,13 +54,13 @@
 }
 
 .pg-filter-chip.is-active {
-  background: rgba(var(--c-primary-rgb), 0.14);
-  border-color: rgba(var(--c-primary-rgb), 0.55);
+  /*background: rgba(var(--c-primary-rgb), 0.14);*/
+  border-color: #ffffff78;
   color: var(--c-text);
 }
 
 .pg-filter-chip.is-active .pg-filter-count {
-  background: var(--c-primary);
+  background: #fffffff2;
   color: var(--c-bg);
 }
 

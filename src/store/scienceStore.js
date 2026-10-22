@@ -1,4 +1,5 @@
 import { getAllExercises, normalizeName } from '../data/exercises';
+import { applyScienceBackfill } from '../utils/scienceBackfill';
 import {
   SCIENCE_MUSCLES, OPTIONAL_MUSCLES, emptyScienceState, hasLegacyScience,
   createScienceProgram, closeScienceWeek, respondScienceRecommendation,
@@ -15,8 +16,9 @@ function startProgram(state, input, now, restart = false) {
     const archived = science.program.status === 'active' ? { ...science.program, status: 'replaced', endedAt: now } : science.program;
     science = { ...science, archives: [...science.archives, archived] };
   }
+  const { historicalRir, ...profileInput } = input;
   const profile = {
-    ...input,
+    ...profileInput,
     experience: ['beginner', 'intermediate', 'advanced'].includes(input.experience) ? input.experience : 'beginner',
     monthsTraining: clamp(input.monthsTraining, 0, 1200, 0),
     daysPerWeek: clamp(input.daysPerWeek, 1, 7, 4),
@@ -27,6 +29,9 @@ function startProgram(state, input, now, restart = false) {
   };
   if (profile.goal === 'specialization' && !profile.priorities.length) return state;
   if (profile.goal === 'balanced') profile.priorities = [];
+  const startDate = new Date(Number(profile.startDate) || now);
+  startDate.setHours(0, 0, 0, 0);
+  science = applyScienceBackfill(science, state.history, database(state), startDate.getTime(), now, historicalRir);
   return { scienceState: createScienceProgram(profile, state.history, database(state), science, state.scienceReport, now) };
 }
 

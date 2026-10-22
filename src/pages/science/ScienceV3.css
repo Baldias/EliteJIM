@@ -224,3 +224,23 @@
 .science-week-outstanding b { white-space:nowrap; color:var(--c-text-muted); }
 .science-week-outstanding > p { font-size:11px; margin-bottom:0; }
 @media (max-width:360px) { .sv3-volume-row { padding:14px 10px; } .sv3-volume-name { font-size:12px; } .sv3-focus-badge { font-size:8px; padding:4px; } .sv3-volume-number { font-size:10px; } }
+
+.sv3-history-preview { padding:18px 14px; border:1px solid var(--c-border); border-radius:16px; background:var(--c-surface); margin:20px 0 24px; }
+.sv3-history-preview h4 { display:flex; align-items:center; gap:8px; margin:0 0 12px; color:var(--c-primary); font-size:14px; }
+.sv3-history-preview p { color:var(--c-text-muted); font-size:12px; line-height:1.7; margin:12px 0; }
+.sv3-history-preview .ej-btn { width:100%; white-space:normal; font-size:12px; margin-top:8px; }
+.sv3-history-workout { margin:24px 0; }
+.sv3-history-workout > h3 { font-size:19px; margin:0 0 6px; }
+.sv3-history-workout > p { font-size:12px; color:var(--c-text-muted); margin:0 0 18px; }
+.sv3-history-exercise { margin-top:12px; border:1px solid var(--c-border); border-radius:16px; padding:16px 12px; background:var(--c-surface); }
+.sv3-history-exercise > h4 { margin:0 0 6px; font-size:15px; overflow-wrap:anywhere; }
+.sv3-history-exercise > span { font-size:11px; color:var(--c-primary); }
+.sv3-history-bulk { display:flex; align-items:center; gap:6px; padding:18px 0 12px; }
+.sv3-history-bulk > span { flex:1; font-size:10px; color:var(--c-text-muted); }
+.sv3-history-bulk > button { padding:8px; border:1px solid var(--c-border); border-radius:8px; color:var(--c-primary); font-size:11px; }
+.sv3-history-set { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 0; border-top:1px solid var(--c-border); }
+.sv3-history-set > span { display:flex; flex-direction:column; gap:5px; font-size:12px; flex-shrink:0; }
+.sv3-history-set small { color:var(--c-text-muted); font-size:10px; }
+.sv3-history-set > div { display:flex; gap:4px; }
+.sv3-history-set button { padding:9px 6px; border:1px solid var(--c-border); border-radius:8px; color:var(--c-text-muted); font:inherit; font-size:10px; min-height:36px; }
+.sv3-history-set button[aria-pressed="true"] { color:var(--c-primary); border-color:rgba(var(--c-primary-rgb),.35); background:rgba(var(--c-primary-rgb),.08); }
