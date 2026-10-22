@@ -1,0 +1,133 @@
+/* Barre condivise (pagina Diario e card in Home) */
+
+.mn-fuel {
+  position: relative;
+}
+
+.mn-fuel-track {
+  display: flex;
+  height: 100%;
+  gap: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--c-surface-2);
+}
+
+.mn-fuel-seg {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.mn-fuel-seg.is-protein { background: var(--mn-protein); }
+.mn-fuel-seg.is-carbs { background: var(--mn-carbs); }
+.mn-fuel-seg.is-fat { background: var(--mn-fat); }
+
+.mn-fuel-seg.is-preview {
+  opacity: 0.55;
+  background-image: repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.35) 0 3px, transparent 3px 6px);
+}
+
+.mn-fuel-mark {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--c-text);
+}
+
+
+.mn-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.mn-meter-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.mn-meter-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+.mn-meter-value strong {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: var(--c-text);
+}
+
+.mn-meter-track {
+  display: flex;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--c-surface-2);
+}
+
+.mn-meter-track span {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.mn-meter.is-protein .mn-meter-track span { background: var(--mn-protein); }
+.mn-meter.is-carbs .mn-meter-track span { background: var(--mn-carbs); }
+.mn-meter.is-fat .mn-meter-track span { background: var(--mn-fat); }
+
+.mn-meter-track span.is-preview {
+  opacity: 0.5;
+}
+
+.mn-meter.is-featured {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(var(--mn-protein-rgb), 0.08);
+  border: 1px solid rgba(var(--mn-protein-rgb), 0.22);
+}
+
+.mn-meter.is-featured .mn-meter-label {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--mn-protein);
+}
+
+.mn-meter.is-featured .mn-meter-value strong {
+  font-size: 1.125rem;
+}
+
+.mn-meter.is-featured .mn-meter-track {
+  height: 9px;
+}
+
+.mn-meter-note {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+
+.mn-strip {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 36px;
+  height: 6px;
+  gap: 1px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--c-surface-2);
+}
+
+.mn-strip span { height: 100%; }
+.mn-strip .is-protein { background: var(--mn-protein); }
+.mn-strip .is-carbs { background: var(--mn-carbs); }
+.mn-strip .is-fat { background: var(--mn-fat); }
+

@@ -1,0 +1,183 @@
+import React, { useMemo, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip, Cell } from 'recharts';
+import { useStore } from '../../store/useStore';
+import { resolveBodyweight } from '../../utils/oneRepMax';
+import {
+  MEALS, MACROS, NUTRIENTS, KCAL_PER_G, dayTotals, sumNutrients, macroGoalsInGrams, macroSplit,
+  shiftDateKey, fromDateKey, fmtInt, fmtDec
+} from '../../utils/nutrition';
+import { Sheet } from './Sheet';
+
+// Riferimenti OMS/LARN: le fibre sono un minimo, il resto sono limiti massimi
+const MICROS = [
+  { id: 'fiber', label: 'Fibre', ref: 30, kind: 'min' },
+  { id: 'sugar', label: 'Zuccheri', ref: 50, kind: 'max' },
+  { id: 'satFat', label: 'Grassi saturi', ref: 20, kind: 'max' },
+  { id: 'salt', label: 'Sale', ref: 5, kind: 'max' },
+];
+const MEAL_TONES = { breakfast: 1, lunch: 0.75, dinner: 0.5, snacks: 0.3 };
+
+function WeekTooltip({ active, payload, unit }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="pg-tooltip">
+      <p className="pg-tooltip-date">{d.full}</p>
+      <p className="pg-tooltip-value">{fmtInt(d.value)} {unit}</p>
+    </div>
+  );
+}
+
+function SplitBar({ label, split }) {
+  return (
+    <div className="mn-split">
+      <span className="mn-split-label">{label}</span>
+      <div className="mn-split-bar">
+        {MACROS.map(m => split[m.id] > 0 && (
+          <span key={m.id} className={`is-${m.id}`} style={{ width: `${split[m.id]}%` }}>
+            {split[m.id] >= 12 && `${Math.round(split[m.id])}%`}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function AnalysisSheet({ date, onClose }) {
+  const diary = useStore(state => state.foodDiary || {});
+  const goals = useStore(state => state.nutritionGoals);
+  const bodyweight = useStore(resolveBodyweight);
+  const [view, setView] = useState('day');
+  const [metric, setMetric] = useState('kcal');
+
+  const goalG = macroGoalsInGrams(goals, bodyweight);
+
+  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+    const key = shiftDateKey(date, i - 6);
+    const d = fromDateKey(key);
+    return {
+      key,
+      label: d.toLocaleDateString('it-IT', { weekday: 'short' }).slice(0, 3),
+      full: d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' }),
+      totals: dayTotals(diary[key]),
+    };
+  }), [diary, date]);
+
+  const logged = useMemo(() => week.filter(d => d.totals.kcal > 0), [week]);
+  const totals = useMemo(() => {
+    if (view === 'day') return dayTotals(diary[date]);
+    const div = Math.max(1, logged.length);
+    return Object.fromEntries(NUTRIENTS.map(n => [n.id, logged.reduce((a, d) => a + d.totals[n.id], 0) / div]));
+  }, [view, diary, date, logged]);
+
+  const chartData = week.map(d => ({ ...d, value: Math.round(d.totals[metric]) }));
+  const chartGoal = goalG[metric];
+  const unit = metric === 'kcal' ? 'kcal' : 'g';
+  const onTarget = logged.filter(d => Math.abs(d.totals.kcal - goalG.kcal) <= goalG.kcal * 0.1).length;
+  const proteinHit = logged.filter(d => d.totals.protein >= goalG.protein * 0.9).length;
+
+  const goalSplit = macroSplit({ protein: goalG.protein, carbs: goalG.carbs, fat: goalG.fat });
+  const byMeal = MEALS.map(m => ({ ...m, kcal: sumNutrients(diary[date]?.[m.id] || []).kcal }));
+  const dayKcal = byMeal.reduce((a, m) => a + m.kcal, 0);
+
+  return (
+    <Sheet title="Analisi" onClose={onClose} full>
+      <div className="mn-analysis">
+        <div className="mn-seg">
+          <button type="button" className={view === 'day' ? 'is-active' : ''} onClick={() => setView('day')}>Giorno</button>
+          <button type="button" className={view === 'week' ? 'is-active' : ''} onClick={() => setView('week')}>Ultimi 7 giorni</button>
+        </div>
+
+        {view === 'week' && (
+          <section className="mn-panel">
+            <div className="mn-panel-head">
+              <div className="mn-seg mn-seg--tiny">
+                <button type="button" className={metric === 'kcal' ? 'is-active' : ''} onClick={() => setMetric('kcal')}>Calorie</button>
+                <button type="button" className={metric === 'protein' ? 'is-active' : ''} onClick={() => setMetric('protein')}>Proteine</button>
+              </div>
+              <span className="mn-panel-meta">media {fmtInt(logged.length ? logged.reduce((a, d) => a + d.totals[metric], 0) / logged.length : 0)} {unit}</span>
+            </div>
+            <div className="mn-chart">
+              <ResponsiveContainer width="100%" height={170}>
+                <BarChart data={chartData} margin={{ top: 10, right: 4, left: -22, bottom: 0 }}>
+                  <XAxis dataKey="label" stroke="var(--c-text-dim)" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, (max) => Math.ceil((Math.max(max, chartGoal) * 1.1) / 10) * 10]} stroke="var(--c-text-dim)" fontSize={10} tickLine={false} axisLine={false} />
+                  <Tooltip content={<WeekTooltip unit={unit} />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                  <ReferenceLine y={chartGoal} stroke="var(--c-text-muted)" strokeDasharray="4 4" />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    {chartData.map(d => {
+                      const color = metric === 'protein' ? 'var(--mn-protein)' : d.value > chartGoal * 1.1 ? 'var(--c-accent)' : 'var(--c-primary)';
+                      return <Cell key={d.key} fill={color} fillOpacity={d.key === date ? 1 : 0.55} />;
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mn-stats">
+              <div><strong>{onTarget}/7</strong><span>giorni nel budget ±10%</span></div>
+              <div><strong>{proteinHit}/7</strong><span>giorni con proteine centrate</span></div>
+            </div>
+          </section>
+        )}
+
+        <section className="mn-panel">
+          <div className="mn-panel-head">
+            <h3>Da dove arrivano le calorie</h3>
+          </div>
+          <SplitBar label="Tu" split={macroSplit(totals)} />
+          <SplitBar label="Obiettivo" split={goalSplit} />
+          <div className="mn-legend">
+            {MACROS.map(m => <span key={m.id}><i className={`is-${m.id}`} /> {m.label} {fmtInt(totals[m.id])} g</span>)}
+          </div>
+        </section>
+
+        <section className="mn-panel">
+          <div className="mn-panel-head">
+            <h3>Qualità</h3>
+            <span className="mn-panel-meta">riferimenti OMS/LARN</span>
+          </div>
+          <div className="mn-micros">
+            {MICROS.map(m => {
+              const v = totals[m.id];
+              const ratio = v / m.ref;
+              const status = m.kind === 'min' ? (ratio >= 1 ? 'is-good' : '') : (ratio > 1 ? 'is-bad' : '');
+              return (
+                <div key={m.id} className={`mn-micro ${status}`}>
+                  <span>{m.label}</span>
+                  <strong>{fmtDec(v)}<small> / {m.ref} g</small></strong>
+                  <div className="mn-micro-track"><span style={{ width: `${Math.min(100, ratio * 100)}%` }} /></div>
+                  <em>{m.kind === 'min' ? 'almeno' : 'non oltre'}</em>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {view === 'day' && dayKcal > 0 && (
+          <section className="mn-panel">
+            <div className="mn-panel-head">
+              <h3>Ritmo della giornata</h3>
+              <span className="mn-panel-meta">{fmtInt(dayKcal)} kcal</span>
+            </div>
+            <div className="mn-split-bar mn-split-bar--meals">
+              {byMeal.map(m => m.kcal > 0 && (
+                <span key={m.id} style={{ width: `${(m.kcal / dayKcal) * 100}%`, opacity: MEAL_TONES[m.id] }} />
+              ))}
+            </div>
+            <ul className="mn-meal-split">
+              {byMeal.map(m => (
+                <li key={m.id}>
+                  <i style={{ opacity: MEAL_TONES[m.id] }} />
+                  <span>{m.label}</span>
+                  <strong>{Math.round((m.kcal / dayKcal) * 100)}%</strong>
+                  <small>{fmtInt(m.kcal)} kcal · {fmtInt((sumNutrients(diary[date]?.[m.id] || []).protein))} g P</small>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        <p className="mn-hint mn-hint--center">{KCAL_PER_G.protein} kcal per g di proteine e carboidrati, {KCAL_PER_G.fat} per g di grassi.</p>
+      </div>
+    </Sheet>
+  );
+}

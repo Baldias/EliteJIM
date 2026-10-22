@@ -38,6 +38,17 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    // La ricerca di Open Food Facts non invia header CORS: passa dallo stesso
+    // dominio (in produzione lo fa il rewrite in vercel.json)
+    proxy: {
+      '/api/off-search': {
+        target: 'https://search.openfoodfacts.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/off-search/, '/search')
+      }
+    }
+  },
   build: {
     rollupOptions: {
       output: {

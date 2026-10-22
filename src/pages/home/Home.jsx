@@ -7,6 +7,7 @@ import { InteractiveBody } from '../../components/InteractiveBody';
 import { WelcomeBack } from '../../components/WelcomeBack';
 import { BackupReminderBanner } from '../../components/BackupReminderBanner';
 import { ShareTemplateModal } from '../../components/ShareTemplateModal';
+import { DailyRecapCard } from '../../components/DailyRecapCard';
 import pkg from '../../../package.json';
 import './Home.css';
 
@@ -112,6 +113,9 @@ function Home() {
             </span>
           </button>
         )}
+
+        {/* ── RIEPILOGO GIORNALIERO (→ Diario) ──────── */}
+        <DailyRecapCard />
 
         {/* ── ALLENATI ───────────────────────────────── */}
         <section className="home-section">
