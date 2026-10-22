@@ -1,53 +1,18 @@
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, ScanBarcode, Zap, Plus, Loader2, Check, X } from 'lucide-react';
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import { Search, ScanBarcode, Zap, Plus, Loader2, Check, CookingPot } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { MEALS, KCAL_PER_G, fmtInt, fmtDec } from '../../utils/nutrition';
-import { searchLocalFoods, searchOffFoods, fetchProductByBarcode } from '../../utils/foodApi';
+import { MEALS, fmtInt } from '../../utils/nutrition';
+import { fetchProductByBarcode } from '../../utils/foodApi';
 import { FoodDetailSheet } from './FoodDetailSheet';
-import { MacroStrip } from './Fuel';
+import { FoodRow } from './FoodRow';
+import { RecipeSheet } from './RecipeSheet';
+import { useFoodSearch } from './useFoodSearch';
 import { Sheet } from './Sheet';
 
 const BarcodeScanner = lazy(() => import('./BarcodeScanner'));
 
 const newId = (prefix) => `${prefix}-${Date.now()}`;
 const defaultGrams = (food) => food.lastGrams || food.servingSize || 100;
-const isHighProtein = (per100) => {
-  const kcal = per100?.kcal || 0;
-  return kcal > 0 && ((per100.protein || 0) * KCAL_PER_G.protein) / kcal >= 0.3;
-};
-
-function FoodRow({ food, onOpen, onQuickAdd, onDelete, justAdded }) {
-  const grams = defaultGrams(food);
-  const kcal = (food.per100.kcal * grams) / 100;
-  const protein = ((food.per100.protein || 0) * grams) / 100;
-  return (
-    <li className="mn-row">
-      <button type="button" className="mn-row-main" onClick={() => onOpen(food)}>
-        <span className="mn-row-name">
-          {food.name}
-          {isHighProtein(food.per100) && <em className="mn-badge">Proteico</em>}
-        </span>
-        <span className="mn-row-meta">
-          <MacroStrip per100={food.per100} />
-          {[food.brand, `${fmtDec(grams)} g`, `${fmtInt(kcal)} kcal`, `${fmtInt(protein)} g P`].filter(Boolean).join(' · ')}
-        </span>
-      </button>
-      {onDelete && (
-        <button type="button" className="mn-row-btn is-danger" onClick={() => onDelete(food)} aria-label={`Elimina ${food.name}`}>
-          <X size={16} />
-        </button>
-      )}
-      <button
-        type="button"
-        className={`mn-row-btn ${justAdded ? 'is-done' : ''}`}
-        onClick={() => onQuickAdd(food, grams)}
-        aria-label={`Aggiungi ${fmtDec(grams)} g di ${food.name}`}
-      >
-        {justAdded ? <Check size={18} /> : <Plus size={18} />}
-      </button>
-    </li>
-  );
-}
 
 const emptyNutri = { kcal: '', carbs: '', protein: '', fat: '', fiber: '', sugar: '', satFat: '', salt: '' };
 const parseNum = (v) => {
@@ -183,31 +148,14 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
   const [meal, setMeal] = useState(initialMeal || 'breakfast');
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState('recent');
-  const [online, setOnline] = useState({ q: '', items: [], loading: false, error: '' });
   const [selected, setSelected] = useState(null);
-  const [panel, setPanel] = useState(null); // 'scan' | 'quick' | { create: { barcode, name } }
+  const [panel, setPanel] = useState(null); // 'scan' | 'quick' | { create: { barcode, name } } | { recipe: food | null }
   const [scanState, setScanState] = useState({ loading: false, message: '' });
   const [added, setAdded] = useState([]); // [{ entryId, meal, foodId, name, kcal }]
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
-  const trimmed = query.trim();
-  const local = useMemo(() => searchLocalFoods(trimmed, customFoods), [trimmed, customFoods]);
-
-  useEffect(() => {
-    if (trimmed.length < 2) return undefined;
-    const ctrl = new AbortController();
-    const t = setTimeout(() => {
-      setOnline(o => ({ ...o, loading: true, error: '' }));
-      searchOffFoods(trimmed, { signal: ctrl.signal })
-        .then(items => setOnline({ q: trimmed, items, loading: false, error: '' }))
-        .catch(err => {
-          if (err.name === 'AbortError') return;
-          setOnline({ q: trimmed, items: [], loading: false, error: navigator.onLine ? 'La ricerca dei prodotti non risponde: riprova tra poco.' : 'Sei offline: trovi solo gli alimenti salvati.' });
-        });
-    }, 400);
-    return () => { clearTimeout(t); ctrl.abort(); };
-  }, [trimmed]);
+  const { trimmed, local, online, onlineItems: listOnline, noOnlineResults } = useFoodSearch(query, customFoods);
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
@@ -245,10 +193,9 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
   }, [customFoods]);
 
   const addedIds = new Set(added.map(i => i.foodId));
-  const listOnline = online.q === trimmed ? online.items : [];
   const searching = trimmed.length > 0;
   const addedKcal = added.reduce((a, i) => a + i.kcal, 0);
-  const rowProps = { onOpen: setSelected, onQuickAdd: (f, g) => log(f, g) };
+  const rowProps = (f) => ({ food: f, grams: defaultGrams(f), justAdded: addedIds.has(f.id), onOpen: setSelected, onQuickAdd: (food, g) => log(food, g) });
 
   return (
     <>
@@ -295,6 +242,7 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
           <div className="mn-search-actions">
             <button type="button" onClick={() => setPanel('quick')}><Zap size={14} /> Solo i numeri</button>
             <button type="button" onClick={() => setPanel({ create: { name: trimmed } })}><Plus size={14} /> Nuovo alimento</button>
+            <button type="button" onClick={() => setPanel({ recipe: null })}><CookingPot size={14} /> Componi un pasto</button>
           </div>
 
           {scanState.loading && <p className="mn-hint mn-hint--center"><Loader2 size={14} className="mn-spin" /> Cerco il prodotto…</p>}
@@ -306,7 +254,7 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
                 <section>
                   <h3 className="mn-label">Di base e tuoi</h3>
                   <ul className="mn-rows">
-                    {local.slice(0, 15).map(f => <FoodRow key={f.id} food={f} justAdded={addedIds.has(f.id)} {...rowProps} />)}
+                    {local.slice(0, 15).map(f => <FoodRow key={f.id} {...rowProps(f)} />)}
                   </ul>
                 </section>
               )}
@@ -316,11 +264,11 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
                   {online.loading && <Loader2 size={13} className="mn-spin" />}
                 </h3>
                 {online.error && <p className="mn-hint">{online.error}</p>}
-                {!online.loading && !online.error && online.q === trimmed && listOnline.length === 0 && (
+                {noOnlineResults && (
                   <p className="mn-hint">Nessun prodotto con questo nome. Prova la scansione o crealo tu.</p>
                 )}
                 <ul className="mn-rows">
-                  {listOnline.map(f => <FoodRow key={f.id} food={f} justAdded={addedIds.has(f.id)} {...rowProps} />)}
+                  {listOnline.map(f => <FoodRow key={f.id} {...rowProps(f)} />)}
                 </ul>
               </section>
             </>
@@ -332,12 +280,16 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
               </div>
               {tab === 'recent' && (recentFoods.length === 0
                 ? <p className="mn-empty">Qui ritrovi ciò che mangi più spesso, con la quantità dell'ultima volta: basta un tocco sul +.</p>
-                : <ul className="mn-rows">{recentFoods.map(f => <FoodRow key={f.id} food={f} justAdded={addedIds.has(f.id)} {...rowProps} />)}</ul>)}
+                : <ul className="mn-rows">{recentFoods.map(f => <FoodRow key={f.id} {...rowProps(f)} />)}</ul>)}
               {tab === 'custom' && (customFoods.length === 0
                 ? <p className="mn-empty">Ricette di casa o prodotti che non trovi: creali una volta e li hai sempre qui.</p>
                 : <ul className="mn-rows">{customFoods.map(f => (
-                  <FoodRow key={f.id} food={f} justAdded={addedIds.has(f.id)} {...rowProps}
-                    onDelete={(food) => window.confirm(`Eliminare "${food.name}" dai tuoi alimenti?`) && deleteCustomFood(food.id)} />
+                  <FoodRow
+                    key={f.id}
+                    {...rowProps(f)}
+                    onEdit={f.source === 'recipe' ? (food) => setPanel({ recipe: food }) : undefined}
+                    onDelete={f.source === 'recipe' ? undefined : (food) => window.confirm(`Eliminare "${food.name}" dai tuoi alimenti?`) && deleteCustomFood(food.id)}
+                  />
                 ))}</ul>)}
             </>
           )}
@@ -370,6 +322,13 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
           initialName={panel.create.name}
           onClose={() => setPanel(null)}
           onCreated={(food) => { setPanel(null); setSelected(food); }}
+        />
+      )}
+      {panel && typeof panel === 'object' && 'recipe' in panel && (
+        <RecipeSheet
+          recipe={panel.recipe}
+          onClose={() => setPanel(null)}
+          onSaved={(food) => { setPanel(null); setTab('custom'); setSelected(food); }}
         />
       )}
     </>

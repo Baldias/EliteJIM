@@ -134,6 +134,9 @@ export const useStore = create(
       nutritionGoals: DEFAULT_NUTRITION_GOALS,
       recentFoods: [],
       customFoods: [],
+      // Test iniziale del Diario: completedAt = piano calcolato,
+      // postponedAt = "più tardi" (non si riapre da solo), cardHidden = invito nascosto
+      dietSetup: { completedAt: null, postponedAt: null, cardHidden: false },
 
       // --- Gamification State ---
       userXP: 0,
@@ -224,6 +227,15 @@ export const useStore = create(
           return { foodDiary: { ...state.foodDiary, [date]: { ...day, [meal]: day[meal].filter(e => e.id !== entryId) } } };
         });
       },
+      // Rimette una voce appena eliminata nella stessa posizione (per "Annulla")
+      restoreFoodEntry: (date, meal, entry, index) => {
+        set((state) => {
+          const day = state.foodDiary?.[date] || {};
+          const list = [...(day[meal] || [])];
+          list.splice(Math.min(Math.max(0, index), list.length), 0, entry);
+          return { foodDiary: { ...state.foodDiary, [date]: { ...day, [meal]: list } } };
+        });
+      },
       copyMeal: (fromDate, toDate, meal) => {
         set((state) => {
           const source = state.foodDiary?.[fromDate]?.[meal] || [];
@@ -234,7 +246,25 @@ export const useStore = create(
         });
       },
       setNutritionGoals: (goals) => set((state) => ({ nutritionGoals: { ...DEFAULT_NUTRITION_GOALS, ...state.nutritionGoals, ...goals } })),
-      addCustomFood: (food) => set((state) => ({ customFoods: [food, ...(state.customFoods || []).filter(f => f.id !== food.id)] })),
+      // Salva il piano del test; il peso indicato diventa la pesata di oggi
+      // se per oggi non ce n'è già una
+      completeDietSetup: (goals, { date, kg } = {}) => {
+        set((state) => ({
+          nutritionGoals: { ...DEFAULT_NUTRITION_GOALS, ...state.nutritionGoals, ...goals },
+          dietSetup: { ...state.dietSetup, completedAt: Date.now(), cardHidden: false },
+        }));
+        if (date && kg > 0 && !(get().weightLog || []).some(e => e.date === date)) get().addWeightEntry(date, kg);
+      },
+      postponeDietSetup: () => set((state) => ({ dietSetup: { ...state.dietSetup, postponedAt: Date.now() } })),
+      hideDietSetupCard: () => set((state) => ({ dietSetup: { ...state.dietSetup, cardHidden: true } })),
+      // Aggiunge o aggiorna un alimento creato (anche un pasto composto);
+      // la copia tra i recenti si aggiorna, con la porzione nuova per i pasti
+      addCustomFood: (food) => set((state) => ({
+        customFoods: [food, ...(state.customFoods || []).filter(f => f.id !== food.id)],
+        recentFoods: (state.recentFoods || []).map(f => (f.id === food.id
+          ? { ...food, lastGrams: food.source === 'recipe' && food.servingSize ? food.servingSize : f.lastGrams }
+          : f)),
+      })),
       deleteCustomFood: (foodId) => set((state) => ({
         customFoods: (state.customFoods || []).filter(f => f.id !== foodId),
         recentFoods: (state.recentFoods || []).filter(f => f.id !== foodId)

@@ -6,6 +6,7 @@ import {
   MEALS, MACROS, dayTotals, sumNutrients, entryNutrients, macroGoalsInGrams, estimateWorkoutKcal,
   shiftDateKey, toDateKey, fromDateKey, fmtInt, fmtDec
 } from '../../utils/nutrition';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { FuelBar } from './Fuel';
 
 const MEAL_ICONS = { breakfast: Coffee, lunch: UtensilsCrossed, dinner: Moon, snacks: Apple };
@@ -112,7 +113,7 @@ function portionText(entry) {
 }
 
 // I pasti in un unico elenco: intestazione con totale e +, sotto gli alimenti
-export function MealList({ date, onAdd, onEdit }) {
+export function MealList({ date, onAdd, onEdit, onDelete }) {
   const day = useStore(state => state.foodDiary?.[date]);
   const yesterday = useStore(state => state.foodDiary?.[shiftDateKey(date, -1)]);
   const copyMeal = useStore(state => state.copyMeal);
@@ -139,12 +140,15 @@ export function MealList({ date, onAdd, onEdit }) {
                 <Plus size={18} />
               </button>
             </div>
-            {entries.map(entry => (
-              <button key={entry.id} type="button" className="mn-item" onClick={() => onEdit(meal.id, entry)}>
-                <span className="mn-item-name">{entry.food.name}</span>
-                <span className="mn-item-qty">{portionText(entry)}</span>
-                <span className="mn-item-kcal">{fmtInt(entryNutrients(entry).kcal)}</span>
-              </button>
+            {entries.map((entry, index) => (
+              // trascina a sinistra per eliminare: la pagina offre "Annulla"
+              <SwipeToDelete key={entry.id} onDelete={() => onDelete(meal.id, entry, index)}>
+                <button type="button" className="mn-item" onClick={() => onEdit(meal.id, entry)}>
+                  <span className="mn-item-name">{entry.food.name}</span>
+                  <span className="mn-item-qty">{portionText(entry)}</span>
+                  <span className="mn-item-kcal">{fmtInt(entryNutrients(entry).kcal)}</span>
+                </button>
+              </SwipeToDelete>
             ))}
           </div>
         );

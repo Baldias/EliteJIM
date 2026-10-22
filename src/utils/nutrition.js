@@ -34,12 +34,40 @@ export const DEFAULT_NUTRITION_GOALS = {
   profile: null, // { sex, age, height, activity } usato dal calcolatore
 };
 
+// Passi quotidiani, allenamenti esclusi: i fattori coprono solo il movimento
+// di tutti i giorni, perché le kcal degli allenamenti si sommano a parte
 export const ACTIVITY_LEVELS = [
-  { id: 'sedentary', label: 'Sedentario', desc: 'Lavoro da scrivania, poco movimento', factor: 1.2 },
-  { id: 'light', label: 'Poco attivo', desc: 'In piedi buona parte del giorno', factor: 1.375 },
-  { id: 'active', label: 'Attivo', desc: 'Lavoro fisico o allenamento 3-5 volte', factor: 1.55 },
-  { id: 'very', label: 'Molto attivo', desc: 'Lavoro pesante o allenamento quotidiano', factor: 1.725 },
+  { id: 'sedentary', label: 'Meno di 5.000 passi', desc: 'Scrivania, ci si muove poco', factor: 1.2 },
+  { id: 'light', label: '5.000–7.500 passi', desc: 'Qualche spostamento a piedi', factor: 1.3 },
+  { id: 'moderate', label: '7.500–10.000 passi', desc: 'Spesso in piedi o in giro', factor: 1.4 },
+  { id: 'active', label: '10.000–12.500 passi', desc: 'Lavoro in movimento', factor: 1.5 },
+  { id: 'very', label: 'Oltre 12.500 passi', desc: 'Lavoro fisico, sempre in piedi', factor: 1.6 },
 ];
+
+// Frequenza di allenamento: regola le proteine; le kcal di ogni seduta
+// si aggiungono in automatico nei giorni in cui registri l'allenamento
+export const TRAINING_LEVELS = [
+  { id: 'none', label: 'Non mi alleno', desc: 'Per ora niente palestra', proteinAdj: -0.4 },
+  { id: 'low', label: '1–2 volte a settimana', desc: 'Allenamento occasionale', proteinAdj: -0.2 },
+  { id: 'mid', label: '3–4 volte a settimana', desc: 'Allenamento regolare', proteinAdj: 0 },
+  { id: 'high', label: '5–6 volte a settimana', desc: 'Allenamento intenso', proteinAdj: 0 },
+  { id: 'daily', label: 'Tutti i giorni', desc: 'Anche doppie sedute', proteinAdj: 0.2 },
+];
+
+// Proteine (g/kg) e grassi (% kcal) consigliati per fase: in deficit servono
+// più proteine per conservare la massa magra
+export const PHASE_MACROS = {
+  cut: { proteinPerKg: 2.2, fatPct: 25 },
+  maintain: { proteinPerKg: 1.8, fatPct: 30 },
+  bulk: { proteinPerKg: 1.8, fatPct: 25 },
+};
+
+// Macro per fase, con le proteine adattate a quanto ti alleni
+export function macrosFor(phase, training) {
+  const base = PHASE_MACROS[phase] || PHASE_MACROS.maintain;
+  const adj = TRAINING_LEVELS.find(t => t.id === training)?.proteinAdj || 0;
+  return { ...base, proteinPerKg: Math.round(Math.min(2.4, Math.max(1.2, base.proteinPerKg + adj)) * 10) / 10 };
+}
 
 // Fasi di allenamento e ritmo settimanale proposto (kg/settimana)
 export const PHASES = [
@@ -154,16 +182,27 @@ export function weeklyRate(trendLog = []) {
   return den > 0 ? (num / den) * 7 : null;
 }
 
-// Metabolismo basale (Mifflin-St Jeor) × livello di attività + deficit/surplus
-export function computeCalorieGoal({ sex, age, height, weight, activity, weeklyGoal }) {
-  const w = Number(weight), h = Number(height), a = Number(age);
+// Fabbisogno passo per passo: metabolismo basale × attività + deficit/surplus.
+// Con la massa grassa usa Katch-McArdle (più precisa per chi è muscoloso),
+// altrimenti Mifflin-St Jeor.
+export function energyBreakdown({ sex, age, height, weight, activity, weeklyGoal, bodyFat }) {
+  const w = Number(weight), h = Number(height), a = Number(age), bf = Number(bodyFat);
   if (!(w > 0 && h > 0 && a > 0)) return null;
-  const bmr = 10 * w + 6.25 * h - 5 * a + (sex === 'female' ? -161 : 5);
+  const method = bf > 3 && bf < 60 ? 'katch' : 'mifflin';
+  const bmr = method === 'katch'
+    ? 370 + 21.6 * w * (1 - bf / 100)
+    : 10 * w + 6.25 * h - 5 * a + (sex === 'female' ? -161 : 5);
   const factor = ACTIVITY_LEVELS.find(l => l.id === activity)?.factor || 1.2;
+  const maintenance = bmr * factor;
   // 1 kg di grasso ≈ 7700 kcal → kcal/giorno = kg/settimana × 7700 / 7
   const delta = (Number(weeklyGoal) || 0) * 1100;
   const minimum = sex === 'female' ? 1200 : 1500;
-  return Math.max(minimum, Math.round((bmr * factor + delta) / 10) * 10);
+  const kcal = Math.max(minimum, Math.round((maintenance + delta) / 10) * 10);
+  return { method, bmr: Math.round(bmr), maintenance: Math.round(maintenance), delta: Math.round(delta), kcal, floored: kcal === minimum };
+}
+
+export function computeCalorieGoal(params) {
+  return energyBreakdown(params)?.kcal ?? null;
 }
 
 // Stima delle kcal bruciate con gli allenamenti del giorno (pesi ≈ 5 MET)

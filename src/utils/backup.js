@@ -29,6 +29,7 @@ export function exportDataBackup() {
           nutritionGoals: currentState.nutritionGoals,
           recentFoods: currentState.recentFoods || [],
           customFoods: currentState.customFoods || [],
+          dietSetup: currentState.dietSetup,
           showScience: currentState.showScience ?? true,
           autoBackupEnabled: currentState.autoBackupEnabled ?? true,
           autoBackupFrequency: currentState.autoBackupFrequency || 'after_workout',

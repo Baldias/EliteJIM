@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ChevronLeft, ChevronRight, ChevronDown, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles, Bell, Weight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles, Bell, Weight, CookingPot } from 'lucide-react';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import { AiTemplateModal } from '../../components/AiTemplateModal';
 import { sanitizeDecimalInput } from '../../utils/number';
@@ -91,6 +91,15 @@ function Settings() {
           <span className="st-row-text">
             <span className="st-row-title">Database Esercizi</span>
             <span className="st-row-sub">Gestisci esercizi e gruppi muscolari</span>
+          </span>
+          <ChevronRight size={18} className="st-row-chevron" />
+        </button>
+
+        <button type="button" className="ej-card st-row" onClick={() => navigate('/settings/pasti')}>
+          <span className="st-row-icon is-primary"><CookingPot size={20} /></span>
+          <span className="st-row-text">
+            <span className="st-row-title">Crea il tuo pasto</span>
+            <span className="st-row-sub">Componi e salva pasti da aggiungere al Diario</span>
           </span>
           <ChevronRight size={18} className="st-row-chevron" />
         </button>
