@@ -1854,3 +1854,16 @@
 .mn-panel .mn-chart + .mn-hint {
   margin-top: 8px;
 }
+
+
+/* App-owned calendar: no invisible native date picker or browser-specific taps. */
+.mn-weight-calendar { border:1px solid var(--c-border); border-radius:18px; padding:12px; margin:18px 0; background:var(--c-surface); }
+.mn-weight-calendar-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.mn-weight-calendar-head strong { font-size:14px; text-transform:capitalize; color:var(--c-text); }
+.mn-weight-calendar-head button:disabled { opacity:.2; }
+.mn-weight-calendar-days { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:3px; }
+.mn-weight-calendar-days > span { display:grid; place-items:center; min-height:25px; color:var(--c-text-muted); font-size:10px; }
+.mn-weight-calendar-days > button { min-height:36px; border:0; border-radius:10px; background:none; color:var(--c-text); font:inherit; font-size:13px; }
+.mn-weight-calendar-days > button[aria-pressed="true"] { background:var(--c-primary); color:var(--c-bg); font-weight:800; }
+.mn-weight-calendar-days > button:disabled { opacity:.2; }
+.mn-weighin-selected { display:flex; align-items:center; justify-content:center; gap:8px; margin:18px 0 0; font-size:12px; line-height:1.5; color:var(--c-primary); }

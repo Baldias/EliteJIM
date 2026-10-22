@@ -6,6 +6,8 @@ import { getRankByXp, getMuscleLevelByXp } from '../../utils/gamification';
 import { getAllExercises, normalizeName } from '../../data/exercises';
 import { getScienceTargetForMuscle, getActualSetsForScienceWeek, mapCategoryToScienceLandmark } from '../../utils/rpVolume';
 import { exportDataBackup } from '../../utils/backup';
+import { ScienceWorkoutFeedback } from '../../components/ScienceTraining';
+import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
 import './WorkoutRecap.css';
 
 function WorkoutRecap() {
@@ -207,6 +209,8 @@ function WorkoutRecap() {
         </div>
       </div>
 
+      <ScienceWorkoutFeedback workout={workout} />
+      <ScienceVolumePanel compact workout={workout} />
       {/* Science weekly progression */}
       {scienceGoalsThisWeek.length > 0 && (
         <section className="ej-card rc-card">

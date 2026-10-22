@@ -10,6 +10,9 @@ import { getRankByXp } from '../../utils/gamification';
 import { computeOverloadStats } from '../../utils/overload';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './Profile.css';
+import ProgressShare from '../../components/ProgressShare';
+import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
+import { hasLegacyScience } from '../../utils/scienceV3';
 
 function Profile() {
   const navigate = useNavigate();
@@ -18,6 +21,7 @@ function Profile() {
   const userXP = useStore(state => state.userXP);
   const { currentStreak } = useWeeklyStreak();
   const showScience = useStore(state => state.showScience);
+  const useLegacyVolume = useStore(state => hasLegacyScience(state.scienceReport));
   const _customExercises = useStore(state => state.customExercises);
   const customExercises = useMemo(() => _customExercises || [], [_customExercises]);
   const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
@@ -191,6 +195,8 @@ function Profile() {
         </div>
       </div>
 
+      <ProgressShare />
+
       {/* ── MUSCLE LEVELS ──────────────────────────── */}
       {showScience && (
         <button type="button" className="pf-levels" onClick={() => navigate('/levels')}>
@@ -201,7 +207,8 @@ function Profile() {
       )}
 
       {/* ── RP VOLUME ──────────────────────────────── */}
-      {showScience && rpVolumes && (
+      <ScienceVolumePanel compact />
+      {showScience && useLegacyVolume && rpVolumes && (
         <section className="pf-section">
           <h2 className="ej-section-title">Volume RP (Ultimi 7 Giorni)</h2>
           <div className="ej-card pf-rp">
