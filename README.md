@@ -9,11 +9,14 @@
 Log your sets, watch your estimated 1RM climb, follow a periodized mesocycle and level up every muscle group.
 Everything runs on your phone, with no account and no server.
 
+**[▶ Try it live at elite-jim.vercel.app](https://elite-jim.vercel.app/?demo)** · preloaded with demo data, no sign-up, nothing to install
+
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![Zustand](https://img.shields.io/badge/state-Zustand-443E38)](https://github.com/pmndrs/zustand)
 [![Offline first](https://img.shields.io/badge/data-100%25%20on%20device-22c55e)](#-your-data-stays-on-your-phone)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 <br />
 
@@ -182,6 +185,12 @@ npm run dev        # http://localhost:5173
 | `npm run lint` | Run ESLint |
 
 To try it on your phone, open the dev server from your local network (`npm run dev -- --host`) or deploy the build, then use **Add to Home Screen**.
+
+---
+
+## 📄 License
+
+Released under the [MIT License](LICENSE).
 
 ---
 
