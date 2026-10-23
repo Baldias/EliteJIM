@@ -103,7 +103,7 @@ function summary(ctx, report) {
 }
 function science(ctx, report, page) {
   const estimated = page.week.kind === 'estimate' || page.week.kind === 'deload-estimate';
-  text(ctx, `${page.week.phase} · ${report.science.accounting === 'legacy' ? 'conteggi originali' : 'serie dirette a 0–1 RIR'}`, PAD, 250, 18, C.muted);
+  text(ctx, `${page.week.phase} · ${report.science.accounting === 'legacy' ? 'conteggi originali' : page.items.some(m=>m.imported) ? 'serie a 0–1 RIR + progressi V2 riportati' : 'serie dirette a 0–1 RIR'}`, PAD, 250, 18, C.muted);
   page.items.forEach((m, i) => {
     const y = 328 + i * 76;
     const color = SCIENCE_LANDMARK_COLORS[m.band] || C.cyan;
@@ -112,9 +112,9 @@ function science(ctx, report, page) {
     text(ctx, estimated ? `${m.target} serie · stima` : `${m.done} / ${m.target} serie`, WIDTH - PAD, y, 20, color, 750, 'right');
     const peak = estimated ? Math.max(1, ...(report.science.weeks || [page.week]).flatMap(w => w.rows.filter(row => row.name === m.name).map(row => row.target))) : Math.max(1, m.target);
     bar(ctx, PAD, y + 20, WIDTH - PAD * 2, estimated ? m.target : m.done, peak, color, 8);
-    if (m.unknown) text(ctx, `${m.unknown} senza RIR`, PAD, y + 48, 13, C.yellow);
+    if (m.imported || m.unknown) text(ctx, [m.imported ? `${m.imported} ${m.imported === 1 ? 'riportata' : 'riportate'} da V2` : '', m.unknown ? `${m.unknown} senza RIR` : ''].filter(Boolean).join(' · '), PAD, y + 48, 13, C.yellow);
   });
-  wrapped(ctx, page.week.kind === 'estimate' || page.week.kind === 'deload-estimate' ? 'Proiezione: gli obiettivi potranno cambiare in base a qualità, recupero e scelte dell’atleta. Nessuna serie futura è già completata.' : report.science.accounting === 'legacy' ? 'Conteggi storici del protocollo conservati. Scienza V3.0 modifica solo le proposte accettate.' : 'Serie senza RIR, riscaldamento e tecniche escluse dai target scientifici.', PAD, 1268, WIDTH - PAD * 2, 15, C.muted, 23);
+  wrapped(ctx, page.week.kind === 'estimate' || page.week.kind === 'deload-estimate' ? 'Proiezione: gli obiettivi potranno cambiare in base a qualità, recupero e scelte dell’atleta. Nessuna serie futura è già completata.' : report.science.accounting === 'legacy' ? 'Conteggi storici del protocollo conservati. Scienza V3.0 modifica solo le proposte accettate.' : 'Le serie riportate da V2 conservano il progresso senza inventare il RIR. Nuove serie senza RIR, riscaldamento e tecniche sono escluse.', PAD, 1268, WIDTH - PAD * 2, 15, C.muted, 23);
 }
 function exercise(ctx, ex, y) {
   card(ctx, PAD, y, WIDTH - PAD * 2, 500);

@@ -1,3 +1,4 @@
+import { scienceCompletedSets, scienceUnconfirmedSets } from '../utils/scienceCarry';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check, ChevronRight, Flame, Info, Target } from 'lucide-react';
@@ -30,7 +31,7 @@ export function ScienceVolumePanel({ compact = false, editable = false, workout,
   const custom = useStore(s => s.customExercises);
   const overrides = useStore(s => s.exerciseOverrides);
   const db = useMemo(() => getAllExercises(custom, overrides), [custom, overrides]);
-  if (!enabled || hasLegacyScience(legacy) || !science?.program) return null;
+  if (!enabled || hasLegacyScience(legacy, science) || !science?.program) return null;
   const p = science.program;
   const summary = scienceWeekPreview(science, history, db, previewWeek ?? Math.min(p.currentWeek, 5), now);
   const estimated = summary.kind === 'estimate' || summary.kind === 'deload-estimate';
@@ -41,21 +42,21 @@ export function ScienceVolumePanel({ compact = false, editable = false, workout,
   const trained = workout ? new Set((workout.exercises || []).filter(ex => ex.sets?.some(s => s.done)).map(ex => classifyScienceExercise(ex, db, science, workout.id).primary)) : null;
   const names = Object.keys(targets).filter(m => trained ? trained.has(m) : targets[m] > 0 || muscles[m]?.direct || muscles[m]?.unknown).sort((a, b) => Number(science.profile.priorities.includes(b)) - Number(science.profile.priorities.includes(a)) || a.localeCompare(b));
   const visible = names;
-  const missing = names.reduce((n, m) => n + muscles[m].unknown, 0);
+  const missing = names.reduce((n, m) => n + scienceUnconfirmedSets(muscles[m]), 0);
   const lm = selected && (summary.landmarks || p.landmarks)[selected];
   return <>
     <section className={`ej-card sv3-volumes ${compact ? 'is-compact' : ''}`}>
       <div className="sv3-panel-heading"><span className="sv3-panel-icon"><Target size={17} /></span><div><h2>{workout ? 'Il lavoro di oggi, nel tuo percorso' : estimated ? `Stima settimana ${summary.week}` : summary.kind === 'archive' ? `Settimana ${summary.week} · registrata` : `Obiettivi Settimana ${summary.week}`}</h2><p>{new Date(summary.start).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} – {new Date(summary.end - 1).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</p></div></div>
       {estimated && <p className="sv3-estimate-note">{summary.kind === 'deload-estimate' ? 'Proposta di scarico completo al 50%: si applica solo se la accetti. Puoi scegliere anche uno scarico locale o rimandare.' : summary.redistribution ? 'Stima favorevole con redistribuzione accettata: parte delle serie fuori priorità passa alle priorità, mantenendo il totale contenuto. Non è ancora applicata.' : 'Stima in uno scenario favorevole: target completati, recupero buono e serie pulite. Gli aumenti reali dipenderanno dai tuoi dati; nessuna modifica è già applicata.'}</p>}
       <div className="sv3-volume-list">{visible.map(muscle => {
-        const v = muscles[muscle], target = targets[muscle];
+        const v = muscles[muscle], target = targets[muscle], completed = scienceCompletedSets(v), unknown = scienceUnconfirmedSets(v);
         const focus = science.profile.priorities.includes(muscle);
-        const done = !estimated && target > 0 && v.direct >= target;
+        const done = !estimated && target > 0 && completed >= target;
         const band = scienceLandmarkBand((summary.landmarks || p.landmarks)[muscle], target, summary.roles[muscle]);
-        return <button type="button" key={muscle} className={`sv3-volume-row landmark--${band} ${focus ? 'is-priority' : ''} ${done ? 'is-done' : ''}`} onClick={() => setSelected(muscle)} aria-label={estimated ? `${muscle}: ${target} serie stimate. Dettagli obiettivo` : `${muscle}: ${v.direct} su ${target} serie. Dettagli obiettivo`}>
-          <span className="sv3-volume-top"><span className="sv3-volume-name">{muscle}{focus && <span className="sv3-focus-badge"><Flame size={11} fill="currentColor" />FOCUS</span>}</span><span className="sv3-volume-number">{done && <Check size={13} />}<strong>{estimated ? target : v.direct}</strong><span>{estimated ? 'serie stimate' : `/ ${target} serie`}</span><ChevronRight size={13} /></span></span>
-          <span className="sv3-volume-bar"><span style={{ width: `${estimated ? Math.min(100, target / Math.max(target, p.ceilings[muscle]) * 100) : target ? Math.min(100, v.direct / target * 100) : 0}%` }} /></span>
-          {(v.indirect > 0 || v.unknown > 0) && <span className="sv3-volume-subline">{v.indirect > 0 && <span>+{v.indirect} indirette</span>}{v.unknown > 0 && <span>{v.unknown} senza RIR</span>}</span>}
+        return <button type="button" key={muscle} className={`sv3-volume-row landmark--${band} ${focus ? 'is-priority' : ''} ${done ? 'is-done' : ''}`} onClick={() => setSelected(muscle)} aria-label={estimated ? `${muscle}: ${target} serie stimate. Dettagli obiettivo` : `${muscle}: ${completed} su ${target} serie. Dettagli obiettivo`}>
+          <span className="sv3-volume-top"><span className="sv3-volume-name">{muscle}{focus && <span className="sv3-focus-badge"><Flame size={11} fill="currentColor" />FOCUS</span>}</span><span className="sv3-volume-number">{done && <Check size={13} />}<strong>{estimated ? target : completed}</strong><span>{estimated ? 'serie stimate' : `/ ${target} serie`}</span><ChevronRight size={13} /></span></span>
+          <span className="sv3-volume-bar"><span style={{ width: `${estimated ? Math.min(100, target / Math.max(target, p.ceilings[muscle]) * 100) : target ? Math.min(100, completed / target * 100) : 0}%` }} /></span>
+          {(v.indirect > 0 || v.unknown > 0 || v.imported > 0) && <span className="sv3-volume-subline">{v.indirect > 0 && <span>+{v.indirect} indirette</span>}{v.imported > 0 && <span>{v.imported} {v.imported === 1 ? 'riportata' : 'riportate'} da V2</span>}{unknown > 0 && <span>{unknown} senza RIR</span>}</span>}
 
         </button>;
       })}</div>
@@ -64,10 +65,10 @@ export function ScienceVolumePanel({ compact = false, editable = false, workout,
       {!compact && summary.unclassified?.length > 0 && <p className="sv3-inline-note"><Info size={13} /><span>{summary.unclassified.length} esercizi da classificare nel check delle sedute.</span></p>}
     </section>
     {selected && lm && <Sheet title={selected} onClose={() => setSelected(null)}>
-      <div className="sv3-goal-summary"><span>{estimated ? 'STIMA · ' : ''}SETTIMANA {summary.week}</span><p><strong>{estimated ? targets[selected] : muscles[selected].direct}</strong><span>{estimated ? 'serie stimate' : `/ ${targets[selected]} serie`}</span></p><small>Serie dirette a 0–1 RIR</small></div>
+      <div className="sv3-goal-summary"><span>{estimated ? 'STIMA · ' : ''}SETTIMANA {summary.week}</span><p><strong>{estimated ? targets[selected] : scienceCompletedSets(muscles[selected])}</strong><span>{estimated ? 'serie stimate' : `/ ${targets[selected]} serie`}</span></p><small>Serie dirette a 0–1 RIR{muscles[selected].imported > 0 ? ` + ${muscles[selected].imported} riportate da V2 con sforzo non registrato` : ''}</small></div>
       <p className="science-sheet-intro">{(estimated ? 'Scenario illustrativo, aggiornato dai prossimi check. Non è un target già applicato.' : summary.decisions?.[selected] || p.decisions[selected]) || (lm.source === 'history-estimate' ? 'La partenza tiene conto delle tue settimane di allenamento precedenti.' : 'Una base stimata per il tuo livello, che segue qualità e recupero.')}</p>
-      <div className="sv3-landmark-grid">{[['mv', 'Mantenimento stimato', `${lm.mvEstimate} serie`], ['mev', 'Partenza per crescere', lm.mevEstimate == null ? 'Da valutare' : `${lm.mevEstimate} serie`], ['mav', 'Intervallo produttivo', lm.productiveRange ? `${lm.productiveRange.join('–')} serie` : 'Da osservare'], ['mrv', 'Limite di recupero stimato', lm.mrv ? `${lm.mrv.lower}–${lm.mrv.upper} serie` : 'Da determinare']].map(([band, label, value]) => <div className={`landmark--${band}`} key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
-      <p className="sv3-quiz-note">I landmark sono stime personali. Il lavoro indiretto resta separato.</p>
+      <div className="sv3-landmark-grid">{[['mv', 'Mantenimento stimato', `${lm.mvEstimate} serie`], ['mev', 'Partenza per crescere', lm.mevEstimate == null ? 'Da valutare' : `${lm.mevEstimate} serie`], ['mav', 'Intervallo produttivo', lm.productiveRange ? `${lm.productiveRange.join('–')} osservate` : lm.referenceMav ? `${lm.referenceMav.join('–')} di riferimento` : 'Da osservare'], ['mrv', 'Limite di recupero stimato', lm.mrv ? `${lm.mrv.lower}–${lm.mrv.upper} osservate` : lm.mrvEstimate ? `~${lm.mrvEstimate} di riferimento` : 'Da determinare']].map(([band, label, value]) => <div className={`landmark--${band}`} key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
+      <p className="sv3-quiz-note">La tabella orienta le stime iniziali; la tua risposta le personalizza. Un limite di riferimento non è un MRV misurato. Il lavoro indiretto resta separato.</p>
       {canEdit && <><h3 className="sv3-edit-heading">Personalizza l’obiettivo</h3><TargetEditor key={`${selected}-${targets[selected]}-${p.ceilings[selected]}`} muscle={selected} target={targets[selected]} ceiling={p.ceilings[selected]} /></>}
     </Sheet>}
   </>;

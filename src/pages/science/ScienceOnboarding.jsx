@@ -13,7 +13,7 @@ import MicroLoading from '../../components/MicroLoading';
 import { useMicroTransition } from '../../hooks/useMicroTransition';
 import { localScienceDate, nextScienceMonday } from '../../utils/sciencePlanning';
 
-const LEVELS = [['beginner', 'Principiante', 'Costruiamo una base solida, su tutto il corpo.'], ['intermediate', 'Intermedio', 'Volume progressivo e priorità più precise.'], ['advanced', 'Avanzato', 'Specializzazione e dosi iniziali più alte.']];
+const LEVELS = [['beginner', 'Principiante', 'Costruiamo una base solida, su tutto il corpo.'], ['intermediate', 'Intermedio', 'Volume progressivo e priorità più precise.'], ['advanced', 'Avanzato', 'Accumulo verso la fascia alta, se recuperi bene.']];
 
 export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
   const transition = useMicroTransition(850);
@@ -21,6 +21,7 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
   const previous = repeat ? null : science?.profile;
   const history = useStore(s => s.history);
   const legacy = useStore(s => s.scienceReport);
+  const savedSex = useStore(s => s.nutritionGoals?.profile?.sex);
   const custom = useStore(s => s.customExercises);
   const overrides = useStore(s => s.exerciseOverrides);
   const now = useScienceClock();
@@ -31,8 +32,8 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
   const [historicalRir, setHistoricalRir] = useState({});
   const close = () => { if (!transition.busy) { setOpen(false); onCancel?.(); } };
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState(() => ({ experience: 'beginner', monthsTraining: '', daysPerWeek: 4, minutesPerSession: 60, goal: 'balanced', priorities: [], optionalMuscles: [], useWeight: false, ...previous, startDate: localScienceDate(now) }));
-  const field = (key, value) => setForm(f => ({ ...f, [key]: value }));
+  const [form, setForm] = useState(() => ({ experience: 'beginner', gender: ['male','female'].includes(legacy?.gender) ? legacy.gender : ['male','female'].includes(savedSex) ? savedSex : '', daysPerWeek: 4, minutesPerSession: 60, goal: 'balanced', priorities: [], optionalMuscles: [], useWeight: false, ...previous, startDate: localScienceDate(now) }));
+  const field = (key, value) => setForm(f => ({ ...f, [key]: value, ...(key === 'gender' && value === 'male' ? {priorities:f.priorities.filter(m=>m!=='Glutei')} : {}) }));
   const toggle = (key, muscle, max) => setForm(f => {
     const removing = f[key].includes(muscle);
     const selection = removing ? f[key].filter(m => m !== muscle) : f[key].length < max ? [...f[key], muscle] : f[key];
@@ -41,8 +42,8 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
     return next;
   });
   const specialization = form.goal === 'specialization';
-  const activeMuscles = SCIENCE_MUSCLES.filter(m => !OPTIONAL_MUSCLES.includes(m) || form.optionalMuscles.includes(m));
-  const valid = step === 2 ? Number(form.minutesPerSession) >= 15 && Number(form.minutesPerSession) <= 240 : ![4, 7].includes(step) || !specialization || form.priorities.length > 0;
+  const activeMuscles = SCIENCE_MUSCLES.filter(m => (form.gender !== 'male' || m !== 'Glutei') && (!OPTIONAL_MUSCLES.includes(m) || form.optionalMuscles.includes(m)));
+  const valid = step === 0 ? Boolean(form.gender) : step === 2 ? Number(form.minutesPerSession) >= 15 && Number(form.minutesPerSession) <= 240 : ![4, 7].includes(step) || !specialization || form.priorities.length > 0;
   const preview = useMemo(() => createScienceProgram({ ...form, priorities: form.goal === 'balanced' ? [] : form.priorities, startDate: new Date(`${form.startDate || localScienceDate(now)}T00:00:00`).getTime(), minutesPerSession: Math.min(240, Math.max(15, Math.round(Number(form.minutesPerSession) || 60))) }, history, db, science || emptyScienceState(), legacy, now).program, [form, history, db, science, legacy, now]);
   const selectedStart = new Date(`${form.startDate}T00:00:00`).getTime();
   const pastStart = form.startDate < localScienceDate(now);
@@ -70,7 +71,7 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
       <div className="science-quiz-topline"><span>Scienza · 0–1 RIR</span><span>{step + 1} / 8</span></div>
       <div className="science-feedback-progress"><span style={{ width: `${(step + 1) / 8 * 100}%` }} /></div>
       <h3 className="science-quiz-question">{titles[step]}</h3><p className="science-sheet-intro">{subtitles[step]}</p>
-      {step === 0 && <>{answers(LEVELS, 'experience')}<label className="sv3-quiz-field">Da quanti mesi ti alleni con continuità?<input aria-label="Mesi di allenamento continuo" type="number" min="0" max="1200" placeholder="Facoltativo" value={form.monthsTraining} onChange={e => field('monthsTraining', e.target.value)} /></label></>}
+      {step === 0 && <>{answers(LEVELS, 'experience')}<h4>Il tuo profilo</h4>{answers([['male','Uomo','I glutei sono esclusi dal budget delle serie.'],['female','Donna','Include il lavoro diretto per i glutei.'],['unspecified','Preferisco non indicarlo','Include tutti i distretti.']], 'gender')}</>}
       {step === 1 && <div className="sv3-number-choices">{[1, 2, 3, 4, 5, 6, 7].map(n => <button type="button" key={n} aria-pressed={Number(form.daysPerWeek) === n} onClick={() => field('daysPerWeek', n)}><strong>{n}</strong><span>{n === 1 ? 'giorno' : 'giorni'}</span></button>)}</div>}
       {step === 2 && <><div className="sv3-duration-choices">{[30, 45, 60, 75, 90, 120].map(n => <button type="button" key={n} aria-pressed={Number(form.minutesPerSession) === n} onClick={() => field('minutesPerSession', n)}><strong>{n}</strong><span>minuti</span></button>)}</div><label className="sv3-quiz-field">Oppure indica i tuoi minuti<input aria-label="Minuti personalizzati" type="number" min="15" max="240" value={form.minutesPerSession} onChange={e => field('minutesPerSession', e.target.value)} /></label></>}
       {step === 3 && answers([['balanced', 'Crescita generale', form.experience === 'beginner' ? 'Consigliata per il tuo livello.' : 'Facciamo crescere tutti i distretti.'], ['specialization', 'Priorità mirate', 'Concentriamo il lavoro su alcuni muscoli.']], 'goal')}
@@ -86,7 +87,7 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
         {pastStart && <p className="sv3-quiz-note">Includiamo le serie registrate da questa data. Confermerai lo sforzo di quelle senza RIR nel riepilogo finale. Se sono già passati sette giorni, la prima settimana resta aperta finché scegli tu di avanzare.</p>}
       </>}
       {step === 6 && <div className="sv3-extras">{OPTIONAL_MUSCLES.map(m => <ScienceSwitch key={m} label={`Allena anche ${m.toLowerCase()}`} checked={form.optionalMuscles.includes(m)} onChange={() => toggle('optionalMuscles', m, 2)} />)}<ScienceSwitch label="Tendenza del peso" description="Usa le pesate del Diario come contesto per la massa" checked={form.useWeight} onChange={value => field('useWeight', value)} /></div>}
-      {step === 7 && <div className="sv3-quiz-recap">{repeat && <p className="sv3-quiz-note">Confermando inizierai un nuovo mesociclo. Quello attuale sarà archiviato; storico, annotazioni e XP vengono conservati.</p>}<p className="sv3-quiz-note">Partenza: {new Date(`${form.startDate}T00:00:00`).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</p>{specialization && !form.priorities.length && <p className="sv3-quiz-note">Torna alle priorità e seleziona almeno un distretto attivo.</p>}<div className="sv3-quiz-recap-stats"><span><strong>{LEVELS.find(l => l[0] === form.experience)?.[1]}</strong><small>Il tuo livello</small></span><span><strong>{form.daysPerWeek} × {form.minutesPerSession}′</strong><small>Alla settimana</small></span></div><ScienceHistoryReview workouts={previousWorkouts} choices={historicalRir} onChange={setHistoricalRir} /><h4>{specialization ? 'Le tue priorità' : 'La tua base di crescita'}</h4>{(specialization ? form.priorities : activeMuscles).map(m => <div className="sv3-quiz-dose" key={m}><span>{m}</span><strong>{preview.targets[m]}<small> serie</small></strong></div>)}{specialization && <p className="sv3-quiz-note">Base di crescita nelle prime due settimane: {activeMuscles.filter(m => !form.priorities.includes(m)).join(', ')}.</p>}{preview.timeWarning && <p className="sv3-quiz-note">{preview.timeWarning}</p>}<p className="sv3-quiz-note">Il livello dà la base. Lo storico contribuisce con un peso limitato: le serie senza RIR contano meno nella stima. Qualità e recupero guidano gli aumenti.</p></div>}
+      {step === 7 && <div className="sv3-quiz-recap">{repeat && <p className="sv3-quiz-note">Confermando inizierai un nuovo mesociclo. Quello attuale sarà archiviato; storico, annotazioni e XP vengono conservati.</p>}<p className="sv3-quiz-note">Partenza: {new Date(`${form.startDate}T00:00:00`).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</p>{specialization && !form.priorities.length && <p className="sv3-quiz-note">Torna alle priorità e seleziona almeno un distretto attivo.</p>}<div className="sv3-quiz-recap-stats"><span><strong>{LEVELS.find(l => l[0] === form.experience)?.[1]}</strong><small>Il tuo livello</small></span><span><strong>{form.daysPerWeek} × {form.minutesPerSession}′</strong><small>Alla settimana</small></span></div><ScienceHistoryReview workouts={previousWorkouts} choices={historicalRir} onChange={setHistoricalRir} /><h4>{specialization ? 'Le tue priorità' : 'La tua base di crescita'}</h4>{(specialization ? form.priorities : activeMuscles).map(m => <div className="sv3-quiz-dose" key={m}><span>{m}</span><strong>{preview.targets[m]}<small> serie</small></strong></div>)}{specialization && <p className="sv3-quiz-note">Base di crescita nelle prime due settimane: {activeMuscles.filter(m => !form.priorities.includes(m)).join(', ')}.</p>}{preview.timeWarning && <p className="sv3-quiz-note">{preview.timeWarning}</p>}<p className="sv3-quiz-note">La base minima di crescita è uguale per tutti i livelli. Lo storico contribuisce alla partenza; il livello orienta la fascia di accumulo. Qualità e recupero decidono gli aumenti reali.</p></div>}
     </>}
     </Sheet>}
   </>;

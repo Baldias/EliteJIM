@@ -884,5 +884,6 @@ function LegacyScience() {
 
 export default function Science() {
   const report = useStore(state => state.scienceReport);
-  return hasLegacyScience(report) ? <ScienceEvolution report={report}><LegacyScience /></ScienceEvolution> : <ScienceV3 />;
+  const science = useStore(state => state.scienceState);
+  return hasLegacyScience(report, science) ? <ScienceEvolution report={report}><LegacyScience /></ScienceEvolution> : <ScienceV3 />;
 }

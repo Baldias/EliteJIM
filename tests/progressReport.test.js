@@ -93,9 +93,9 @@ describe('read-only graphical progress report', () => {
     const done = data.history[0];
     data.scienceState.annotations[done.id] = { [done.exercises[0].id]: { [done.exercises[0].sets[0].id]: { rir: 0 } } };
     const report = buildProgressReport(data, start + 3 * 3600000, { includeScience: true });
-    expect(report.science.rows.find(m => m.name === 'Petto')).toMatchObject({ done: 1, target: 12, unknown: 1, band: 'mev' });
+    expect(report.science.rows.find(m => m.name === 'Petto')).toMatchObject({ done: 1, target: 10, unknown: 1, band: 'mev' });
     const missing = scienceSessionGuidance(data.scienceState, data.history, getAllExercises([], {}), start + 3 * 3600000);
-    expect(missing.missingMuscles.find(m => m.muscle === 'Petto')).toEqual({ muscle: 'Petto', remaining: 11, unknown: 1 });
+    expect(missing.missingMuscles.find(m => m.muscle === 'Petto')).toEqual({ muscle: 'Petto', remaining: 9, unknown: 1 });
     expect(missing.missingMuscles.reduce((sum, m) => sum + m.remaining, 0)).toBe(missing.remaining);
   });
   it('groups exercises by explicit catalog categories, preserving unknown exercises, and puts Science last', () => {

@@ -1,9 +1,11 @@
 import { getAllExercises, normalizeName } from '../data/exercises';
+import { SCIENCE_REFERENCE_VERSION } from '../utils/scienceReferences';
+import { migrateLegacyScience } from '../utils/scienceMigration';
 import { applyScienceBackfill } from '../utils/scienceBackfill';
-import { completeScienceEvolution, decideLegacyDynamicVolume } from '../utils/scienceEvolution';
+import { decideLegacyDynamicVolume } from '../utils/scienceEvolution';
 import {
   SCIENCE_MUSCLES, OPTIONAL_MUSCLES, emptyScienceState, hasLegacyScience,
-  createScienceProgram, closeScienceWeek, respondScienceRecommendation, beginnerStartCorrection,
+  createScienceProgram, closeScienceWeek, respondScienceRecommendation,
 } from '../utils/scienceV3';
 
 const database = state => getAllExercises(state.customExercises, state.exerciseOverrides);
@@ -11,7 +13,7 @@ const clamp = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Ma
 
 
 function startProgram(state, input, now, restart = false) {
-  if (hasLegacyScience(state.scienceReport) || (!restart && state.scienceState?.program?.status === 'active')) return state;
+  if (hasLegacyScience(state.scienceReport, state.scienceState) || (!restart && state.scienceState?.program?.status === 'active')) return state;
   let science = state.scienceState || emptyScienceState();
   if (science.program) {
     const archived = science.program.status === 'active' ? { ...science.program, status: 'replaced', endedAt: now } : science.program;
@@ -20,11 +22,11 @@ function startProgram(state, input, now, restart = false) {
   const { historicalRir, ...profileInput } = input;
   const profile = {
     ...profileInput,
+    gender: ['male','female'].includes(input.gender) ? input.gender : 'unspecified',
     experience: ['beginner', 'intermediate', 'advanced'].includes(input.experience) ? input.experience : 'beginner',
-    monthsTraining: clamp(input.monthsTraining, 0, 1200, 0),
     daysPerWeek: clamp(input.daysPerWeek, 1, 7, 4),
     minutesPerSession: clamp(input.minutesPerSession, 15, 240, 60),
-    priorities: [...new Set(input.priorities || [])].filter(m => SCIENCE_MUSCLES.includes(m)).slice(0, 3),
+    priorities: [...new Set(input.priorities || [])].filter(m => SCIENCE_MUSCLES.includes(m) && !(input.gender === 'male' && m === 'Glutei')).slice(0, 3),
     optionalMuscles: (input.optionalMuscles || []).filter(m => OPTIONAL_MUSCLES.includes(m)),
     goal: input.goal === 'specialization' ? 'specialization' : 'balanced',
   };
@@ -40,31 +42,74 @@ function startProgram(state, input, now, restart = false) {
 // updateHistoryWorkout/syncGamificationWithHistory (which recalculate XP).
 export function scienceActions(set) {
   return {
-    respondBeginnerStartCorrection: (accept, now = Date.now()) => set(state => {
-      if (typeof accept !== 'boolean') return state;
+    updateScienceVolumeReferences: (now = Date.now()) => set(state => {
       const science = state.scienceState, p = science?.program;
-      const correction = beginnerStartCorrection(science, state.history, database(state), state.scienceReport, now);
-      if (!correction) return state;
-      const targets = { ...p.targets }, initialTargets = { ...p.initialTargets }, landmarks = structuredClone(p.landmarks), decisions = { ...p.decisions };
-      if (accept) for (const c of correction.changes) {
-        targets[c.muscle] = c.after; initialTargets[c.muscle] = c.after;
-        landmarks[c.muscle] = { ...landmarks[c.muscle], mevEstimate:correction.estimated.landmarks[c.muscle].mevEstimate, mvEstimate:correction.estimated.landmarks[c.muscle].mvEstimate, source:'blended-estimate' };
-        decisions[c.muscle] = 'Nuova stima iniziale per principianti accettata: livello e storico ponderato.';
+      if (!p || !['active','pending'].includes(p.status) || p.startingDoseVersion === SCIENCE_REFERENCE_VERSION || hasLegacyScience(state.scienceReport, science)) return state;
+      const gender = science.profile?.gender ?? state.scienceReport?.gender ?? state.nutritionGoals?.profile?.sex ?? 'unspecified';
+      const profile = {...science.profile,gender,priorities:(science.profile?.priorities || []).filter(m=>gender !== 'male' || m !== 'Glutei')};
+      const offRoles = Object.fromEntries(Object.entries(p.roles).filter(([,role])=>role === 'off'));
+      const fresh = createScienceProgram({ ...profile, roles:offRoles, startDate:p.startDate }, state.history, database(state), science, state.scienceReport, now).program;
+      const targets = {...p.targets}, initialTargets = {...p.initialTargets}, landmarks = structuredClone(p.landmarks), ceilings = {...p.ceilings}, decisions = {...p.decisions};
+      const roles = {...p.roles};
+      const changes = [];
+      for (const m of Object.keys(targets)) {
+        if (gender === 'male' && m === 'Glutei') {
+          changes.push({muscle:m,before:targets[m],after:0});
+          delete targets[m]; delete initialTargets[m]; delete roles[m]; delete ceilings[m];
+          continue;
+        }
+        if (fresh.targets[m] == null) continue;
+        landmarks[m] = {...landmarks[m], mvEstimate:fresh.landmarks[m].mvEstimate, mevEstimate:fresh.landmarks[m].mevEstimate,
+          referenceMav:fresh.landmarks[m].referenceMav, mavTarget:fresh.landmarks[m].mavTarget, mrvEstimate:fresh.landmarks[m].mrvEstimate};
+        const recovering = p.currentWeek >= 5 || p.pauses?.[m] || p.recommendations.some(r=>r.status==='accepted' && ['recovery','deload'].includes(r.type) && r.appliedWeek===p.currentWeek && (r.choice==='reduce-all' || r.muscles.includes(m)));
+        const manual = p.decisions[m] === 'Obiettivo impostato da te.';
+        const gained = Math.max(0, p.targets[m] - (p.initialTargets?.[m] ?? p.targets[m]));
+        if (!recovering && !manual && p.roles[m] !== 'off') {
+          targets[m] = fresh.targets[m] + gained;
+          initialTargets[m] = fresh.targets[m];
+          roles[m] = fresh.roles[m];
+          if (p.roles[m] === 'maintenance' || p.roles[m] === 'support') targets[m] = Math.max(targets[m], fresh.landmarks[m].mevEstimate);
+          if (targets[m] !== p.targets[m]) changes.push({muscle:m,before:p.targets[m],after:targets[m]});
+          decisions[m] = 'Base aggiornata alla nuova tabella: soglia di crescita comune, storico ponderato e incrementi già maturati conservati.';
+        }
+        ceilings[m] = Math.max(targets[m], manual ? p.ceilings[m] : fresh.ceilings[m]);
       }
-      const ceilings = { ...p.ceilings };
-      if (accept) for (const c of correction.changes) ceilings[c.muscle] = correction.estimated.ceilings[c.muscle];
-      return { scienceState:{ ...science, program:{ ...p, targets, initialTargets, landmarks, decisions, ceilings, timeWarning:accept ? correction.estimated.timeWarning : p.timeWarning, startingDoseVersion:2, initialEstimates:correction.estimated.initialEstimates,
-        initialDoseCorrection:{ accepted:accept, at:now, changes:correction.changes } } } };
+      const total = Object.values(targets).reduce((a,n)=>a+n,0);
+      const minutes = (profile.daysPerWeek || 4) * (profile.minutesPerSession || 60);
+      const timeWarning = fresh.timeRestricted ? fresh.timeWarning : total * 4 > minutes ? `Stima: ~${total * 4} min/settimana, ne hai indicati ${minutes}. I target sono conservati: valuta più tempo o priorità diverse.` : null;
+      return {scienceState:{...science,profile,program:{...p,targets,initialTargets,landmarks,ceilings,decisions,roles,
+        startingDoseVersion:SCIENCE_REFERENCE_VERSION,timeRestricted:fresh.timeRestricted,timeWarning,initialEstimates:fresh.initialEstimates,
+        referenceUpdate:{at:now,version:SCIENCE_REFERENCE_VERSION,changes},
+        allocationVersion:3,
+        recommendations:p.recommendations.map(r=>r.status==='pending' && r.type==='redistribution' ? {...r,status:'superseded'} : r),
+      }}};
     }),
     completeScienceEvolution: (now = Date.now()) => set(state => {
       const science = state.scienceState || emptyScienceState();
-      const next = completeScienceEvolution(science, state.scienceReport, now);
+      const next = migrateLegacyScience(science, state.scienceReport, state.history, database(state), now);
       return next === science ? state : { scienceState: next };
     }),
     decideLegacyDynamicVolume: (choice, now = Date.now()) => set(state => {
       const science = state.scienceState || emptyScienceState();
+      if (!hasLegacyScience(state.scienceReport,science)) return state;
       const next = decideLegacyDynamicVolume(science, state.scienceReport, state.history, database(state), choice, now);
       return next === science ? state : { scienceState: next };
+    }),
+    startImportedScience: (date, now = Date.now()) => set(state => {
+      const science = state.scienceState, p = science?.program;
+      const start = new Date(Number(date)); start.setHours(0,0,0,0);
+      if (!p?.migration || p.status !== 'pending' || !Number.isFinite(start.getTime())) return state;
+      return { scienceState:{...science,profile:{...science.profile,startDate:start.getTime()},program:{...p,status:'active',startDate:start.getTime(),weekStarts:{1:start.getTime()},migration:{...p.migration,startedAt:now}}} };
+    }),
+    applyScienceGenderPolicy: () => set(state => {
+      const science=state.scienceState,p=science?.program;
+      if (science?.profile?.gender !== 'male' || !p || !Object.hasOwn(p.targets,'Glutei')) return state;
+      const omit=values=>Object.fromEntries(Object.entries(values).filter(([m])=>m!=='Glutei'));
+      return {scienceState:{...science,profile:{...science.profile,priorities:science.profile.priorities.filter(m=>m!=='Glutei')},program:{...p,
+        targets:omit(p.targets),initialTargets:omit(p.initialTargets || p.targets),roles:omit(p.roles),ceilings:omit(p.ceilings),
+        decisions:{...p.decisions,Glutei:'Esclusi dai target per il profilo uomo. Le serie restano nello storico.'},
+        recommendations:p.recommendations.map(r=>r.status==='pending' && r.type==='redistribution' ? {...r,status:'superseded'} : r),
+      }}};
     }),
     startScienceV3: (input, now = Date.now()) => set(state => startProgram(state, input, now)),
     restartScienceV3: (input, now = Date.now()) => set(state => startProgram(state, input, now, true)),
@@ -110,7 +155,7 @@ export function scienceActions(set) {
     }),
     adoptScienceAllocation: (now = Date.now()) => set(state => {
       const science = state.scienceState, p = science?.program;
-      if (!p || p.status !== 'active' || p.allocationVersion === 2 || hasLegacyScience(state.scienceReport)) return state;
+      if (!p || p.status !== 'active' || p.allocationVersion === 2 || hasLegacyScience(state.scienceReport, state.scienceState)) return state;
       const fresh = createScienceProgram({ ...science.profile, startDate: p.startDate }, state.history, database(state), science, state.scienceReport, now).program;
       const targets = { ...p.targets }, roles = { ...p.roles }, landmarks = structuredClone(p.landmarks);
       for (const m of Object.keys(targets)) {
@@ -138,7 +183,7 @@ export function scienceActions(set) {
       return { scienceState: { ...science, program: { ...p, weekDeferrals: [...(p.weekDeferrals || []), { week: p.currentWeek, at: now }] } } };
     }),
     closeScienceV3Week: (now = Date.now()) => set(state => {
-      if (hasLegacyScience(state.scienceReport) || state.activeWorkout) return state;
+      if (hasLegacyScience(state.scienceReport, state.scienceState) || state.activeWorkout) return state;
       const science = state.scienceState || emptyScienceState();
       const next = closeScienceWeek(science, state.history, database(state), now);
       return next === science ? state : { scienceState: next };
@@ -164,7 +209,7 @@ export function scienceActions(set) {
     reestimateScienceStart: () => set(state => {
       const science = state.scienceState;
       const p = science?.program;
-      if (!p || p.status !== 'active' || p.currentWeek !== 1 || p.weeks.length || hasLegacyScience(state.scienceReport)) return state;
+      if (!p || p.status !== 'active' || p.currentWeek !== 1 || p.weeks.length || hasLegacyScience(state.scienceReport, state.scienceState)) return state;
       const estimated = createScienceProgram({ ...science.profile, startDate: p.startDate }, state.history, database(state), science, state.scienceReport);
       return { scienceState: { ...science, program: {
         ...p, targets: estimated.program.targets, initialTargets: estimated.program.initialTargets,

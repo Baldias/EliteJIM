@@ -7,6 +7,8 @@ import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
 import { DEFAULT_NUTRITION_GOALS } from '../utils/nutrition';
 import { emptyScienceState, captureScienceExercises } from '../utils/scienceV3';
 import { acknowledgeTrainingReminder, emptyTrainingReminder, isTrainingRecovery } from '../utils/trainingReminder';
+import { hasLegacyScience } from '../utils/scienceV3';
+import { scienceScoringReport } from '../utils/scienceMigration';
 import { scienceTrackingEnabled } from '../utils/scienceEvolution';
 import { SCIENCE_GLOWS, THEMES, THEME_SELECTION_VERSION, themePreferences } from '../utils/theme';
 import { scienceActions } from './scienceStore';
@@ -686,7 +688,7 @@ export const useStore = create(
           };
 
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
-          const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown, state.scienceReport, resolveBodyweight(state));
+          const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown, scienceScoringReport(state), resolveBodyweight(state));
           
           const updatedHistory = [completedWorkout, ...state.history];
           const { currentStreak: newStreak, highestStreak: calculatedHighest } = calculateWeeklyStreak(updatedHistory);
@@ -792,6 +794,7 @@ export const useStore = create(
       },
 
       advanceScienceWeek: () => set(state => {
+        if (!hasLegacyScience(state.scienceReport, state.scienceState)) return state;
         if (!state.scienceReport) return state;
         const currentW = state.scienceReport.currentWeek || 1;
         const now = Date.now();

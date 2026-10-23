@@ -1,6 +1,8 @@
 import { normalizeName } from '../data/exercises';
 import { scienceProgramWeekRange } from './scienceCalendar';
 import { allocateScienceGrowth } from './scienceAllocation';
+import { scienceSetKey } from './scienceCarry';
+import { SCIENCE_REFERENCE_VERSION, scienceReference, scienceGrowthStep } from './scienceReferences';
 
 // Product starting doses, not measured biological thresholds. Direct-set accounting
 // follows RP's convention; indirect work is displayed separately, never added.
@@ -11,21 +13,19 @@ export const SCIENCE_MUSCLES = [
 ];
 export const LARGE_MUSCLES = ['Petto', 'Dorso', 'Quadricipiti', 'Femorali'];
 export const OPTIONAL_MUSCLES = ['Collo', 'Avambracci'];
-// Experience-based starting estimates for ordinary 0–1 RIR work. Sparse logs
-// cannot lower these estimates. They are programming defaults, not a measured
-// individual MEV; recovery feedback can still lead to an accepted reduction.
-export const SCIENCE_STARTING_DOSES = {
-  beginner: { Petto: 6, Dorso: 6, Quadricipiti: 6, Femorali: 4, Glutei: 4, Polpacci: 4, Spalle: 4, Bicipiti: 4, Tricipiti: 4, Addome: 4, Collo: 2, Avambracci: 2 },
-  intermediate: { Petto: 8, Dorso: 10, Quadricipiti: 8, Femorali: 6, Glutei: 6, Polpacci: 6, Spalle: 6, Bicipiti: 6, Tricipiti: 6, Addome: 4, Collo: 2, Avambracci: 2 },
-  advanced: { Petto: 12, Dorso: 12, Quadricipiti: 10, Femorali: 8, Glutei: 6, Polpacci: 8, Spalle: 10, Bicipiti: 8, Tricipiti: 8, Addome: 6, Collo: 4, Avambracci: 4 },
-};
-export const SCIENCE_MAINTENANCE_FLOORS = { beginner: 2, intermediate: 3, advanced: 4 };
+// The MEV floor is identical across experience levels. Historical evidence
+// influences the starting dose; MAV/MRV estimates guide subsequent accumulation.
+export const SCIENCE_STARTING_DOSES = Object.fromEntries(['beginner','intermediate','advanced'].map(level =>
+  [level, Object.fromEntries(SCIENCE_MUSCLES.map(m => [m, scienceReference(m,level).start]))]));
 export const emptyScienceState = () => ({
   schemaVersion: 1, profile: null, program: null, archives: [],
   annotations: {}, feedback: {}, classifications: {}, exerciseSnapshots: {},
 });
-export const hasLegacyScience = report => Boolean(report && report.status !== 'completed');
-export const isScienceV3Active = state => !hasLegacyScience(state.scienceReport) && state.scienceState?.program?.status === 'active';
+export const legacyScienceKey = report => report?.baseLandmarks
+  ? JSON.stringify([report.timestamp || report.startDate || 'undated', report.baseLandmarks, report.focus1, report.focus2]) : null;
+export const hasLegacyScience = (report, science) => Boolean(report && report.status !== 'completed' &&
+  !(legacyScienceKey(report) && science?.legacyMigration?.protocolId === legacyScienceKey(report)));
+export const isScienceV3Active = state => !hasLegacyScience(state.scienceReport, state.scienceState) && state.scienceState?.program?.status === 'active';
 export const annotationFor = (science, workoutId, exerciseId, setId) =>
   science?.annotations?.[workoutId]?.[exerciseId]?.[setId] || {};
 
@@ -44,7 +44,7 @@ const median = values => {
 const blankVolumes = () => Object.fromEntries(SCIENCE_MUSCLES.map(m => [m, { direct: 0, indirect: 0, unknown: 0, ordinary: 0 }]));
 
 export function classifyScienceExercise(exercise, db, science, workoutId) {
-  const saved = science?.exerciseSnapshots?.[workoutId]?.[exercise.id];
+  const saved = workoutId != null && exercise.id != null ? science?.exerciseSnapshots?.[workoutId]?.[exercise.id] : null;
   if (saved) return saved;
   const found = db.find(e => normalizeName(e.name) === normalizeName(exercise.name));
   const key = found?.id || normalizeName(exercise.name);
@@ -63,8 +63,10 @@ export function classifyScienceExercise(exercise, db, science, workoutId) {
 }
 
 export function captureScienceExercises(science, workout, db) {
+  if (workout.id == null) return science;
   const snapshots = { ...science.exerciseSnapshots?.[workout.id] };
   for (const ex of workout.exercises || []) {
+    if (ex.id == null) continue;
     snapshots[ex.id] = classifyScienceExercise(ex, db, science, workout.id);
   }
   return { ...science, exerciseSnapshots: { ...science.exerciseSnapshots, [workout.id]: snapshots } };
@@ -83,16 +85,24 @@ export function scienceVolumes(history, db, science, start, end) {
   const muscles = blankVolumes();
   const unclassified = [];
   for (const workout of history || []) {
-    if (!(Number(workout.startTime) >= start && Number(workout.startTime) < end)) continue;
-    for (const ex of workout.exercises || []) {
+    const inWindow = Number(workout.startTime) >= start && Number(workout.startTime) < end;
+    const importedStart = science?.program?.importedCountingStarts?.[start];
+    if (!inWindow && !(importedStart != null && Number(workout.startTime) >= importedStart && Number(workout.startTime) < end)) continue;
+    for (const [exerciseIndex, ex] of (workout.exercises || []).entries()) {
       const classification = classifyScienceExercise(ex, db, science, workout.id);
-      for (const set of ex.sets || []) {
+      for (const [setIndex, set] of (ex.sets || []).entries()) {
+        const imported = science?.program?.importedSets?.[scienceSetKey(workout, ex, set, exerciseIndex, setIndex)];
+        if (!inWindow && imported?.start !== start) continue;
         const annotation = annotationFor(science, workout.id, ex.id, set.id);
         if (!set.done || !(Number(set.reps) > 0) || set.isDropset || set.isRestPause || set.isWarmup || annotation.excluded) continue;
         const volume = muscles[classification.primary];
         if (!volume) { unclassified.push({ workoutId: workout.id, exerciseId: ex.id, name: ex.name }); continue; }
         volume.ordinary++;
-        if (annotation.rir !== 0 && annotation.rir !== 1) { volume.unknown++; continue; }
+        if (annotation.rir !== 0 && annotation.rir !== 1) {
+          volume.unknown++;
+          if (imported) volume.imported = (volume.imported || 0) + 1;
+          continue;
+        }
         volume.direct++;
         for (const muscle of new Set(classification.indirect || [])) {
           if (muscles[muscle] && muscle !== classification.primary) muscles[muscle].indirect++;
@@ -136,8 +146,8 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
   start.setHours(0, 0, 0, 0);
   const startDate = start.getTime();
   const experience = ['beginner', 'intermediate', 'advanced'].includes(profile.experience) ? profile.experience : 'beginner';
-  const priorities = [...new Set(profile.priorities || [])].filter(m => SCIENCE_MUSCLES.includes(m)).slice(0, 3);
-  const active = SCIENCE_MUSCLES.filter(m => !OPTIONAL_MUSCLES.includes(m) || profile.optionalMuscles?.includes(m));
+  const priorities = [...new Set(profile.priorities || [])].filter(m => SCIENCE_MUSCLES.includes(m) && !(profile.gender === 'male' && m === 'Glutei')).slice(0, 3);
+  const active = SCIENCE_MUSCLES.filter(m => (profile.gender !== 'male' || m !== 'Glutei') && (!OPTIONAL_MUSCLES.includes(m) || profile.optionalMuscles?.includes(m)));
   const baseline = initialScienceVolumes(history, db, science, legacy, startDate, now);
   const historicalRange = scienceWeekRange(startDate, -7);
   const historicalVolumes = scienceVolumes(history, db, science, historicalRange.start, Math.min(startDate, now));
@@ -157,14 +167,15 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
     // Product weighting, not a percentage established by RP or a measured MEV.
     // High logged volume alone cannot become the starting growth dose.
     const weight = baseline[muscle] == null ? 0 : ({ beginner: reliable ? 0.3 : 0.15, intermediate: reliable ? 0.45 : 0.25, advanced: reliable ? 0.6 : 0.35 })[experience];
-    const upper = dose + ({ beginner: 2, intermediate: 4, advanced: 8 })[experience];
+    const upper = Math.max(dose, scienceReference(muscle, experience).mavTarget);
     const ordinary = Math.min(upper, Math.max(dose, Math.round(dose + weight * ((baseline[muscle] ?? dose) - dose))));
     initialEstimates[muscle] = { referenceDose:dose, historyMedian:baseline[muscle], historyWeight:weight, reliable, estimate:ordinary };
-    targets[muscle] = roles[muscle] === 'off' ? 0 : roles[muscle] === 'maintenance' ? Math.max(SCIENCE_MAINTENANCE_FLOORS[experience], Math.ceil(ordinary / 2)) : ordinary;
+    targets[muscle] = roles[muscle] === 'off' ? 0 : roles[muscle] === 'maintenance' ? Math.max(scienceReference(muscle).mv, Math.ceil(ordinary / 2)) : ordinary;
   }
   const budget = Math.max(1, Math.floor((Number(profile.daysPerWeek) || 4) * (Number(profile.minutesPerSession) || 60) / 4));
   const sum = Object.values(targets).reduce((a, n) => a + n, 0);
-  if (!hasHistory && sum > budget) {
+  const timeRestricted = !hasHistory && budget < sum * 0.6;
+  if (timeRestricted) {
     // Largest-remainder allocation preserves the time budget exactly.
     const scaled = active.map(m => ({ muscle: m, value: targets[m] * budget / sum }));
     scaled.forEach(v => { targets[v.muscle] = Math.floor(v.value); });
@@ -176,8 +187,11 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
   }
   const landmarks = Object.fromEntries(active.map(m => [m, {
     ...(science.program?.landmarks?.[m] ? structuredClone(science.program.landmarks[m]) : {}),
-    mvEstimate: roles[m] === 'maintenance' ? targets[m] : Math.max(SCIENCE_MAINTENANCE_FLOORS[experience], Math.ceil(targets[m] / 2)),
-    mevEstimate: ['growth', 'support'].includes(roles[m]) ? targets[m] : null,
+    mvEstimate: scienceReference(m).mv,
+    mevEstimate: scienceReference(m).mev,
+    referenceMav: [...scienceReference(m).mav],
+    mavTarget: scienceReference(m, experience).mavTarget,
+    mrvEstimate: scienceReference(m, experience).mrvEstimate,
     productiveRange: structuredClone(science.program?.landmarks?.[m]?.productiveRange ?? null),
     maxTolerated: science.program?.landmarks?.[m]?.maxTolerated ?? null,
     mrv: structuredClone(science.program?.landmarks?.[m]?.mrv ?? null),
@@ -187,21 +201,15 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
   }]));
   const program = {
     id: `science-v3-${now}`, modelVersion: 3, status: 'active', startDate,
-    currentWeek: 1, plannedWeeks: 5, allocationVersion: 2, startingDoseVersion: 2, initialEstimates, weekStarts: { 1: startDate }, sessionPlans: {}, weekDeferrals: [], targets, initialTargets: { ...targets }, roles,
-    ceilings: Object.fromEntries(active.map(m => [m, Math.max(experience === 'beginner' ? 16 : experience === 'intermediate' ? 20 : 24, targets[m])])),
+    currentWeek: 1, plannedWeeks: 5, allocationVersion: 2, startingDoseVersion: SCIENCE_REFERENCE_VERSION, timeRestricted, initialEstimates, weekStarts: { 1: startDate }, sessionPlans: {}, weekDeferrals: [], targets, initialTargets: { ...targets }, roles,
+    ceilings: Object.fromEntries(active.map(m => [m, Math.max(scienceReference(m, experience).mrvEstimate, targets[m])])),
     landmarks, weeks: [], recommendations: [], pauses: {},
-    timeWarning: sum > budget ? hasHistory ? `La stima combina livello e storico (~${sum * 4} min/settimana); verifica la disponibilità dichiarata.` : 'La dose iniziale è proporzionata al tempo dichiarato usando ~4 minuti per serie, una stima organizzativa. Con poco tempo alcuni distretti possono richiedere più disponibilità.' : null,
+    timeWarning: sum > budget ? timeRestricted
+      ? `Forte carenza di tempo: ~${budget * 4} minuti disponibili contro ~${sum * 4} richiesti. La base è ridotta e può scendere sotto la dose di crescita di riferimento. Aumenta la disponibilità per ripristinarla.`
+      : `Stima: ~${sum * 4} min/settimana, ne hai indicati ${budget * 4}. I target sono conservati: valuta più tempo o priorità diverse.` : null,
     decisions: {},
   };
   return { ...science, profile: { ...profile, experience, priorities }, program };
-}
-
-export function beginnerStartCorrection(science, history, db, legacy, now = Date.now()) {
-  const p = science?.program;
-  if (!p || p.status !== 'active' || p.currentWeek !== 1 || p.weeks.length || p.startingDoseVersion === 2 || science.profile?.experience !== 'beginner' || hasLegacyScience(legacy)) return null;
-  const estimated = createScienceProgram({ ...science.profile, startDate:p.startDate }, history, db, science, legacy, now).program;
-  const changes = Object.keys(p.targets).filter(m => p.targets[m] > estimated.targets[m] && p.decisions[m] !== 'Obiettivo impostato da te.').map(m => ({ muscle:m, before:p.targets[m], after:estimated.targets[m] }));
-  return changes.length ? { changes, estimated } : null;
 }
 
 export function currentScienceSummary(history, db, science, now = Date.now()) {
@@ -291,7 +299,7 @@ export function closeScienceWeek(science, history, db, now = Date.now()) {
       candidates.push(muscle);
       const exposures = workouts.filter(w => (w.exercises || []).some(ex => classifyScienceExercise(ex, db, science, w.id).primary === muscle && ex.sets?.some(s => s.done && !annotationFor(science, w.id, ex.id, s.id).excluded && [0, 1].includes(annotationFor(science, w.id, ex.id, s.id).rir)))).length;
       const strongQuality = volume.direct >= targets[muscle] && qualityCoverage >= 0.9 && exposures >= 2 && local.every(f => f.quality === 'good');
-      increments[muscle] = science.profile.experience === 'beginner' ? 1 : science.profile.experience === 'advanced' && strongQuality && science.profile.priorities.includes(muscle) ? 3 : 2;
+      increments[muscle] = scienceGrowthStep(p, muscle, strongQuality);
       decisions[muscle] = 'Serie confermate e recupero buono: possiamo aumentare lo stimolo.';
     } else if (performance.status !== 'progress') decisions[muscle] = 'Target conservato: servono serie di qualità confermate e feedback di recupero buono. Puoi sempre impostarlo tu.';
   }
@@ -311,7 +319,7 @@ export function closeScienceWeek(science, history, db, now = Date.now()) {
   } else {
     Object.assign(targets, allocation.targets);
     nextRoles = allocation.roles;
-    for (const [muscle, increase] of Object.entries(allocation.increases)) decisions[muscle] = `+${increase} serie: qualità e recupero buoni. Aumento totale contenuto entro circa il 5% della dose iniziale.`;
+    for (const [muscle, increase] of Object.entries(allocation.increases)) decisions[muscle] = `+${increase} serie: qualità e recupero buoni. Aumento totale contenuto entro circa il 10% della dose iniziale.`;
   }
   const affected = systemic ? Object.keys(targets).filter(m => targets[m] > 0) : fatigued;
   if (p.currentWeek < 4 && affected.length && !recommendations.some(r => r.status === 'pending' && r.type === 'recovery')) {
@@ -368,7 +376,7 @@ export function respondScienceRecommendation(science, id, choice, now = Date.now
   if (choice === 'redistribute') return science;
   const targets = { ...p.targets };
   const pauses = { ...p.pauses };
-  const muscles = choice === 'reduce-all' ? Object.keys(targets) : rec.muscles;
+  const muscles = (choice === 'reduce-all' ? Object.keys(targets) : rec.muscles).filter(m => Object.hasOwn(targets, m));
   const reduction = rec.type === 'deload' ? 0.5 : 0.25;
   if (choice !== 'reject') for (const muscle of muscles) {
     if (choice === 'pause') {
