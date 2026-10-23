@@ -3,7 +3,8 @@ import { Activity, ArrowLeft, ArrowRight, Check, CheckCheck, ChevronRight, EyeOf
 import { useScienceStore as useStore } from '../store/scienceContext';
 import { getAllExercises } from '../data/exercises';
 import { Sheet } from '../pages/monitoring/Sheet';
-import { annotationFor, classifyScienceExercise, isScienceV3Active, SCIENCE_MUSCLES } from '../utils/scienceV3';
+import { annotationFor, classifyScienceExercise, SCIENCE_MUSCLES } from '../utils/scienceV3';
+import { scienceTrackingEnabled } from '../utils/scienceEvolution';
 import './ScienceTraining.css';
 
 export function ScienceChoices({ label, options, value, onChange }) {
@@ -25,7 +26,7 @@ export function ScienceSwitch({ label, description, checked, onChange, icon: Ico
 
 export function ScienceSetControls({ workoutId, exerciseId, setId, disabled = false }) {
   const science = useStore(s => s.scienceState);
-  const enabled = useStore(s => s.showScience && isScienceV3Active(s));
+  const enabled = useStore(s => s.showScience && scienceTrackingEnabled(s));
   const annotate = useStore(s => s.annotateScienceSet);
   if (!enabled) return null;
   if (workoutId == null || exerciseId == null || setId == null) return <p className="sci-muted">RIR non registrato</p>;
@@ -49,7 +50,7 @@ export function ScienceSetControls({ workoutId, exerciseId, setId, disabled = fa
 export function ScienceExerciseClassification({ workout, exercise }) {
   const [open, setOpen] = useState(false);
   const science = useStore(s => s.scienceState);
-  const enabled = useStore(s => s.showScience && isScienceV3Active(s));
+  const enabled = useStore(s => s.showScience && scienceTrackingEnabled(s));
   const custom = useStore(s => s.customExercises);
   const overrides = useStore(s => s.exerciseOverrides);
   const classify = useStore(s => s.classifyScienceExercise);
@@ -110,7 +111,7 @@ function FeedbackForm({ workout, muscles, initial, onSave }) {
 
 export function ScienceWorkoutFeedback({ workout }) {
   const science = useStore(s => s.scienceState);
-  const enabled = useStore(s => s.showScience && isScienceV3Active(s));
+  const enabled = useStore(s => s.showScience && scienceTrackingEnabled(s));
   const custom = useStore(s => s.customExercises);
   const overrides = useStore(s => s.exerciseOverrides);
   const save = useStore(s => s.saveScienceFeedback);

@@ -211,6 +211,8 @@ export const getScienceTargetForMuscle = (report, muscle, weekNum) => {
   if (!report || !report.baseLandmarks) return 0;
   const lm = report.baseLandmarks[muscle];
   if (!lm) return 0;
+  const personalized = report.dynamicVolumeTargets?.[weekNum]?.[muscle];
+  if (Number.isInteger(personalized) && personalized >= 0) return personalized;
 
   const month = weekNum <= 4 ? 1 : (weekNum <= 8 ? 2 : 3);
 

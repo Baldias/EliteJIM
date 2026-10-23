@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { hasCurrentThemeChoice } from './utils/theme';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, TrendingUp, User, Dna, Utensils } from 'lucide-react';
 import { initPersistentStorage } from './utils/backup';
@@ -58,7 +59,7 @@ function Navigation() {
 }
 
 function App() {
-  const themeChosen = useStore(state => state.themeChosen);
+  const themeChosen = useStore(hasCurrentThemeChoice);
   useEffect(() => {
     initPersistentStorage();
   }, []);
@@ -75,7 +76,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/workout" element={<Workout />} />
           <Route path="/progress" element={<ProgressOverload />} />
-          <Route path="/science" element={<OptionalFeature feature="science"><Science /></OptionalFeature>} />
+          <Route path="/science" element={<OptionalFeature key="science" feature="science"><Science /></OptionalFeature>} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/exercises" element={<Exercises />} />
@@ -85,7 +86,7 @@ function App() {
           <Route path="/history" element={<History />} />
           <Route path="/edit-workout/:workoutId" element={<EditWorkout />} />
           <Route path="/activity" element={<Activity />} />
-          <Route path="/diario" element={<OptionalFeature feature="diary"><Monitoring /></OptionalFeature>} />
+          <Route path="/diario" element={<OptionalFeature key="diary" feature="diary"><Monitoring /></OptionalFeature>} />
         </Routes>
         <Navigation />
         <ScienceWeekPrompt />

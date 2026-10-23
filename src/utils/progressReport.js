@@ -2,8 +2,11 @@ import { EXERCISE_CATEGORIES, getAllExercises, normalizeName } from '../data/exe
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from './oneRepMax';
 import { computeOverloadStats } from './overload';
 import { calculateWeeklyStreak, getRankByXp } from './gamification';
-import { currentScienceSummary, hasLegacyScience } from './scienceV3';
+import { hasLegacyScience } from './scienceV3';
 import { getActualSetsForScienceWeek, getScienceTargetForMuscle } from './rpVolume';
+import { evolvedLegacyReport, legacyEvolutionFor } from './scienceEvolution';
+import { themePreferences } from './theme';
+import { scienceWeekPreview } from './sciencePlanning';
 import { localScienceDate, scienceLandmarkBand } from './sciencePlanning';
 
 const n = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
@@ -41,7 +44,7 @@ function activitySeries(history) {
 
 // A read-only snapshot. Totals and records use the existing app calculations;
 // scientific accounting is kept separate from gamification and logged workload.
-export function buildProgressReport(state, now = Date.now(), { includeWeight = false, demo = false } = {}) {
+export function buildProgressReport(state, now = Date.now(), { includeWeight = false, includeScience = false, demo = false } = {}) {
   const history = (state.history || []).filter(w => w && Number.isFinite(Number(w.startTime)) && Number(w.startTime) > 0).slice().sort((a, b) => a.startTime - b.startTime);
   const db = getAllExercises(state.customExercises || [], state.exerciseOverrides || {});
   const bodyweight = resolveBodyweight(state);
@@ -84,20 +87,34 @@ export function buildProgressReport(state, now = Date.now(), { includeWeight = f
   const streak = calculateWeeklyStreak(history, now);
   const rank = getRankByXp(n(state.userXP));
   let science = null;
-  if (!hasLegacyScience(state.scienceReport) && state.scienceState?.program) {
+  if (includeScience && !hasLegacyScience(state.scienceReport) && state.scienceState?.program) {
     const p = state.scienceState.program;
-    const summary = p.status === 'completed' ? p.weeks.at(-1) : currentScienceSummary(history, db, state.scienceState, now);
-    if (summary) {
+    const weeks = Array.from({ length: 5 }, (_, i) => scienceWeekPreview(state.scienceState, history, db, i + 1, now)).filter(Boolean).map(summary => {
       const counts = summary.muscles || summary.volumes?.muscles || {};
-      science = { accounting: 'v3', week: summary.week, phase: p.status === 'completed' ? 'Blocco concluso' : 'Blocco in corso', rows: Object.entries(summary.targets).map(([name, target]) => ({ name, target, done: counts[name]?.direct || 0, unknown: counts[name]?.unknown || 0, band: scienceLandmarkBand((summary.landmarks || p.landmarks)[name], target, (summary.roles || p.roles)[name]), focus: state.scienceState.profile.priorities.includes(name) })) };
-    }
-  } else if (state.scienceReport?.baseLandmarks) {
-    const p = state.scienceReport, week = p.currentWeek || 1;
-    const counts = getActualSetsForScienceWeek(history, db, p, week);
-    science = { accounting: 'legacy', week, phase: 'Protocollo precedente', rows: Object.keys(p.baseLandmarks).map(name => ({ name, target: getScienceTargetForMuscle(p, name, week), done: counts[name] || 0, unknown: 0, focus: false })) };
+      return { week: summary.week, start: summary.start, end: summary.end, kind: summary.kind,
+        phase: summary.kind === 'archive' ? 'Registrata' : summary.kind === 'current' ? 'In corso' : summary.kind === 'deload-estimate' ? 'Scarico proposto · stima' : 'Stima · da rivalutare',
+        rows: Object.entries(summary.targets).map(([name, target]) => ({ name, target, done: counts[name]?.direct || 0, unknown: counts[name]?.unknown || 0, band: scienceLandmarkBand((summary.landmarks || p.landmarks)[name], target, (summary.roles || p.roles)[name]), focus: state.scienceState.profile.priorities.includes(name) })) };
+    });
+    const current = weeks.find(w => w.week === p.currentWeek) || weeks.at(-1);
+    if (current) science = { accounting: 'v3', ...current, weeks };
+  } else if (includeScience && state.scienceReport?.baseLandmarks) {
+    const p = evolvedLegacyReport(state.scienceReport, state.scienceState), week = p.currentWeek || 1;
+    const weeks = Array.from({ length: 12 }, (_, i) => {
+      const w = i + 1, archived = p.weekHistory?.[w];
+      const counts = p.status === 'pending' || w > week ? {} : getActualSetsForScienceWeek(history, db, p, w);
+      const focus = w <= 4 ? p.focus1 || [] : w <= 8 ? p.focus2 || [] : [];
+      return { week: w, kind: archived ? 'archive' : w === week && p.status !== 'pending' ? 'current' : 'estimate',
+        phase: archived ? 'Registrata' : w === week && p.status !== 'pending' ? 'In corso' : 'Stima · da rivalutare',
+        rows: Object.keys(p.baseLandmarks).map(name => {
+          const target = getScienceTargetForMuscle(p, name, w), lm = p.baseLandmarks[name];
+          return { name, target, done: counts[name] || 0, unknown: 0, focus: focus.includes(name), band: w >= 9 ? 'mv' : target <= lm.mev ? 'mev' : target >= lm.mrv ? 'mrv' : 'mav' };
+        }) };
+    });
+    science = { accounting: 'legacy', dynamicVolume: Boolean(legacyEvolutionFor(state.scienceReport, state.scienceState)), ...weeks[week - 1], weeks };
   }
   const weight = includeWeight ? (state.weightLog || []).filter(w => n(w.kg) > 0 && Number.isFinite(new Date(`${w.date}T12:00:00`).getTime())).slice().sort((a, b) => a.date.localeCompare(b.date)).map(w => ({ time: new Date(`${w.date}T12:00:00`).getTime(), value: n(w.kg) })) : null;
   return {
+    theme: themePreferences(state).theme, scienceGlow: themePreferences(state).scienceGlow,
     demo, generatedAt: now, filename: `EliteJIM-progressi-${localScienceDate(now)}.pdf`,
     period: history.length ? `${day(history[0].startTime)} – ${day(history.at(-1).startTime)}` : 'Nessuna seduta registrata',
     totals: { workouts: history.length, completedSets, repetitions, externalKg, minutes: Math.round(minutes), xp: n(state.userXP), prCount, overloadRate, currentStreak: streak.currentStreak, highestStreak: streak.highestStreak },

@@ -5,6 +5,7 @@ import { Trophy, Clock, Zap, Target, Flame, ChevronRight, ChevronDown, ChevronUp
 import { getRankByXp, getMuscleLevelByXp } from '../../utils/gamification';
 import { getAllExercises, normalizeName } from '../../data/exercises';
 import { getScienceTargetForMuscle, getActualSetsForScienceWeek, mapCategoryToScienceLandmark } from '../../utils/rpVolume';
+import { evolvedLegacyReport } from '../../utils/scienceEvolution';
 import { exportDataBackup } from '../../utils/backup';
 import { ScienceWorkoutFeedback } from '../../components/ScienceTraining';
 import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
@@ -14,7 +15,9 @@ function WorkoutRecap() {
   const navigate = useNavigate();
   const recapData = useStore(state => state.recapData);
   const clearRecapData = useStore(state => state.clearRecapData);
-  const scienceReport = useStore(state => state.scienceReport);
+  const rawScienceReport = useStore(state => state.scienceReport);
+  const scienceState = useStore(state => state.scienceState);
+  const scienceReport = useMemo(() => evolvedLegacyReport(rawScienceReport, scienceState), [rawScienceReport, scienceState]);
   const showScience = useStore(state => state.showScience);
   const history = useStore(state => state.history);
   const muscleXPState = useStore(state => state.muscleXP) || {};

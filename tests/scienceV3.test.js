@@ -78,8 +78,8 @@ describe('calendar and initial doses', () => {
   it('uses the historical median and keeps non-priorities at their growth base', () => {
     const history = [workout(1, scienceWeekRange(start, -1).start, undefined, 14), workout(2, scienceWeekRange(start, 0).start, undefined, 18)];
     const science = createScienceProgram(profile, history, EXERCISES_DB, emptyScienceState(), null, start);
-    expect(science.program.targets.Petto).toBe(16);
-    expect(science.program.landmarks.Petto.source).toBe('history-estimate');
+    expect(science.program.targets.Petto).toBe(13);
+    expect(science.program.landmarks.Petto.source).toBe('blended-estimate');
     expect(science.program.landmarks.Petto.mrv).toBeNull();
     expect(science.program.roles.Dorso).toBe('support');
     expect(science.program.targets.Dorso).toBe(12);
