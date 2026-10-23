@@ -35,3 +35,6 @@
 .progress-share-choices button:disabled { opacity:.4; }
 .progress-share-prepare { width:100%; }
 .progress-share-edit { padding:10px 0; background:none; border:0; color:var(--c-primary); font:inherit; font-size:12px; }
+.progress-share-format { color:var(--c-text-muted); font-size:9px; font-weight:800; letter-spacing:.8px; }
+.progress-share-actions > a.ej-btn { width:100%; min-height:46px; text-decoration:none; }
+.progress-share-actions .progress-share-cover { align-self:center; color:var(--c-text-muted); font-size:10px; line-height:1.5; padding:8px 0; text-decoration:underline; text-underline-offset:3px; }

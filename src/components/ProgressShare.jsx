@@ -1,47 +1,57 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, ChevronRight, Check, Dna, Download, Image, LoaderCircle, Share2, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronRight, Check, Dna, Download, LoaderCircle, Share2, TrendingUp } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Sheet } from '../pages/monitoring/Sheet';
 import { ScienceSwitch } from './ScienceTraining';
 import { buildProgressReport } from '../utils/progressReport';
 import { renderProgressReport } from '../utils/progressReportRender';
+import { canShareProgressPdf, createProgressDownloads, progressPdfFile, shareProgressPdf } from '../utils/progressReportExport';
 import './ProgressShare.css';
 import { IS_DEMO } from '../demo/demoMode';
 
 const SNAPSHOT_FIELDS = ['history', 'userXP', 'scienceState', 'scienceReport', 'bodyweight', 'weightLog', 'customExercises', 'exerciseOverrides', 'theme', 'scienceGlow'];
-function download(blob, filename) {
-  const url = URL.createObjectURL(blob), anchor = document.createElement('a');
-  anchor.href = url; anchor.download = filename; document.body.appendChild(anchor); anchor.click(); anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
-}
 
 function PreparedReport({ report, onClose, onRetry, onEdit }) {
   const [artifacts, setArtifacts] = useState(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [page, setPage] = useState(0);
+  const [sharing, setSharing] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
+    let downloads;
     renderProgressReport(report, { signal: controller.signal }).then(result => {
-      if (!controller.signal.aborted) setArtifacts(result);
+      if (controller.signal.aborted) return;
+      downloads = createProgressDownloads(result, navigator.userAgent);
+      const file = progressPdfFile(result);
+      setArtifacts({ ...result, downloads, file, nativeShare:canShareProgressPdf(file) });
     }).catch(reason => {
       if (!controller.signal.aborted) setError(reason.message || 'Impossibile preparare il report.');
     });
-    return () => controller.abort();
+    return () => { controller.abort(); downloads?.dispose(); };
   }, [report]);
+  const downloadMessage = () => setMessage(`Download del PDF completo richiesto: ${artifacts.pages.length} pagine in un solo file. Aprilo dai Download e usa Condividi per inviarlo.`);
   const share = async () => {
-    if (!artifacts) return;
-    setMessage('');
-    const file = new File([artifacts.pdfBlob], artifacts.filename, { type: 'application/pdf' });
-    if (typeof navigator.share !== 'function' || (navigator.canShare && !navigator.canShare({ files: [file] }))) {
-      download(artifacts.pdfBlob, artifacts.filename);
-      setMessage('PDF scaricato: puoi inviarlo dall’app che preferisci.');
-      return;
-    }
-    try { await navigator.share({ title: 'I miei progressi su EliteJIM', files: [file] }); }
-    catch (reason) { if (reason.name !== 'AbortError') setMessage('Condivisione non disponibile qui. Puoi usare “Scarica PDF”.'); }
+    if (!artifacts || sharing) return;
+    setSharing(true); setMessage('');
+    try {
+      const result = await shareProgressPdf(artifacts.file, () => {
+        const anchor = document.createElement('a');
+        anchor.href = artifacts.downloads.pdfUrl; anchor.download = artifacts.filename;
+        document.body.appendChild(anchor); anchor.click(); anchor.remove();
+      });
+      if (result === 'download') downloadMessage();
+    } catch {
+      setMessage('Usa “Salva PDF completo” qui sotto per scaricare tutte le pagine e condividerle dai Download.');
+    } finally { setSharing(false); }
   };
-  const footer = artifacts && <div className="progress-share-actions"><button type="button" className="ej-btn ej-btn--primary" onClick={share}><Share2 size={17} />Condividi report completo</button><div><button type="button" className="ej-btn ej-btn--secondary" onClick={() => download(artifacts.pdfBlob, artifacts.filename)}><Download size={15} />Scarica PDF</button><button type="button" className="ej-btn ej-btn--secondary" disabled={!artifacts.summaryPng} onClick={() => download(artifacts.summaryPng, artifacts.filename.replace('.pdf', '-riepilogo.png'))}><Image size={15} />Riepilogo PNG</button></div><p>Condividi tutte le pagine. Se il dispositivo non lo supporta, scarichiamo il PDF.</p>{message && <p role="status" className="progress-share-message">{message}</p>}</div>;
+  const footer = artifacts && <div className="progress-share-actions">
+    <span className="progress-share-format">REPORT COMPLETO · {artifacts.pages.length} {artifacts.pages.length === 1 ? 'PAGINA' : 'PAGINE'}</span>
+    {artifacts.nativeShare ? <><button type="button" className="ej-btn ej-btn--primary" disabled={sharing} onClick={share}><Share2 size={17} />{sharing ? 'Apro la condivisione…' : 'Condividi PDF completo'}</button><a className="ej-btn ej-btn--secondary" href={artifacts.downloads.pdfUrl} download={artifacts.filename} onClick={downloadMessage}><Download size={15} />Salva PDF completo</a></> : <a className="ej-btn ej-btn--primary" href={artifacts.downloads.pdfUrl} download={artifacts.filename} onClick={downloadMessage}><Download size={17} />Salva PDF completo</a>}
+    <p>{artifacts.nativeShare ? 'Il PDF contiene tutte le pagine, anche quelle che non stai visualizzando.' : 'Per inviarlo: salva il PDF, aprilo nei Download del telefono e scegli Condividi.'}</p>
+    {artifacts.downloads.pngUrl && <a className="progress-share-cover" href={artifacts.downloads.pngUrl} download={artifacts.filename.replace('.pdf','-copertina.png')}>Salva solo la copertina (PNG · 1 pagina)</a>}
+    {message && <p role="status" className="progress-share-message">{message}</p>}
+  </div>;
   return <Sheet title="Condividi i progressi" full onClose={onClose} footer={footer}>
     <p className="science-sheet-intro">I tuoi esercizi, divisi per gruppo muscolare, con grafici e record. {report.science ? 'Include tutte le settimane del protocollo Scienza corrente, con le stime indicate.' : 'Condividi le tue progressioni senza i dati di Scienza.'} Nessun account richiesto a chi lo riceve.</p>
     <button type="button" className="progress-share-edit" onClick={onEdit}>Modifica contenuto del report</button>
