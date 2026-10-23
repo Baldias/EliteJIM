@@ -5,6 +5,7 @@ import { Trophy, Clock, Zap, Target, Flame, ChevronRight, ChevronDown, ChevronUp
 import { getRankByXp, getMuscleLevelByXp } from '../../utils/gamification';
 import { getAllExercises, normalizeName } from '../../data/exercises';
 import { getScienceTargetForMuscle, getActualSetsForScienceWeek, mapCategoryToScienceLandmark } from '../../utils/rpVolume';
+import { hasLegacyScience } from '../../utils/scienceV3';
 import { evolvedLegacyReport } from '../../utils/scienceEvolution';
 import { exportDataBackup } from '../../utils/backup';
 import { ScienceWorkoutFeedback } from '../../components/ScienceTraining';
@@ -48,7 +49,7 @@ function WorkoutRecap() {
   };
 
   const scienceGoalsThisWeek = useMemo(() => {
-    if (!showScience || !recapData || !scienceReport || scienceReport.status === 'completed' || scienceReport.status === 'pending') {
+    if (!showScience || !recapData || !hasLegacyScience(scienceReport,scienceState) || !scienceReport || scienceReport.status === 'completed' || scienceReport.status === 'pending') {
       return [];
     }
 
@@ -87,7 +88,7 @@ function WorkoutRecap() {
     });
 
     return goals;
-  }, [showScience, scienceReport, recapData, history, allKnownExercises]);
+  }, [showScience, scienceReport, scienceState, recapData, history, allKnownExercises]);
 
 
   if (!recapData) {

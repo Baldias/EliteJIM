@@ -22,7 +22,7 @@ function Profile() {
   const userXP = useStore(state => state.userXP);
   const { currentStreak } = useWeeklyStreak();
   const showScience = useStore(state => state.showScience);
-  const useLegacyVolume = useStore(state => hasLegacyScience(state.scienceReport));
+  const useLegacyVolume = useStore(state => hasLegacyScience(state.scienceReport, state.scienceState));
   const _customExercises = useStore(state => state.customExercises);
   const customExercises = useMemo(() => _customExercises || [], [_customExercises]);
   const exerciseOverrides = useStore(state => state.exerciseOverrides || {});

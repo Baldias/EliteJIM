@@ -1,16 +1,15 @@
 import { getScienceTargetForMuscle } from './rpVolume';
-import { hasLegacyScience, scienceVolumes, scienceWeekRange } from './scienceV3';
+import { hasLegacyScience, isScienceV3Active, legacyScienceKey, scienceVolumes, scienceWeekRange } from './scienceV3';
 
-// A view over the original protocol, never a migration of scienceReport. XP
-// continues to use the unmodified original report and workout history.
-export const legacyProtocolId = report => report?.baseLandmarks
-  ? JSON.stringify([report.timestamp || report.startDate || 'undated', report.baseLandmarks, report.focus1, report.focus2]) : null;
+// Compatibility views for archived V2 proposals. Current protocols migrate
+// through scienceMigration; the original scienceReport remains immutable.
+export const legacyProtocolId = legacyScienceKey;
 
 export const canEvolveLegacy = report => hasLegacyScience(report) && Boolean(legacyProtocolId(report));
 export const needsScienceEvolution = (report, science) => canEvolveLegacy(report) && !science?.releaseV3?.seenAt;
 export const legacyEvolutionFor = (report, science) => science?.legacyEvolution?.protocolId === legacyProtocolId(report) ? science.legacyEvolution : null;
-export const scienceTrackingEnabled = state => (!hasLegacyScience(state.scienceReport) && state.scienceState?.program?.status === 'active') ||
-  (state.scienceReport?.status === 'active' && Boolean(legacyEvolutionFor(state.scienceReport, state.scienceState)));
+export const scienceTrackingEnabled = state => isScienceV3Active(state) ||
+  (hasLegacyScience(state.scienceReport, state.scienceState) && state.scienceReport?.status === 'active' && Boolean(legacyEvolutionFor(state.scienceReport, state.scienceState)));
 
 export function evolvedLegacyReport(report, science) {
   const evolution = legacyEvolutionFor(report, science);

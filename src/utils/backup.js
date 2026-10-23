@@ -40,6 +40,7 @@ export function exportDataBackup() {
           nutritionGoals: currentState.nutritionGoals,
           recentFoods: currentState.recentFoods || [],
           customFoods: currentState.customFoods || [],
+          dietSetup: currentState.dietSetup,
           showScience: currentState.showScience ?? false,
           showDiary: currentState.showDiary ?? false,
           ...themePreferences(currentState),

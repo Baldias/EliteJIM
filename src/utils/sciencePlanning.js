@@ -1,3 +1,5 @@
+import { scienceGrowthStep } from './scienceReferences';
+import { scienceCompletedSets, scienceUnconfirmedSets } from './scienceCarry';
 import { scienceVolumes, currentScienceSummary } from './scienceV3';
 import { scienceProgramWeekRange, projectedScienceWeekRange } from './scienceCalendar';
 import { allocateScienceGrowth } from './scienceAllocation';
@@ -19,15 +21,15 @@ export function nextScienceMonday(time) {
 export const SCIENCE_LANDMARK_COLORS = { mv: '#30D158', mev: '#FFD60A', mav: '#BF5AF2', mrv: '#FF453A' };
 export function scienceLandmarkBand(landmark, target, role) {
   if (role === 'maintenance' || target <= (landmark?.mvEstimate ?? 0)) return 'mv';
-  if (landmark?.mrv && target >= landmark.mrv.lower) return 'mrv';
-  if (landmark?.productiveRange && target >= landmark.productiveRange[0]) return 'mav';
-  if (landmark?.mevEstimate != null && target > landmark.mevEstimate) return 'mav';
+  if (target >= (landmark?.mrv?.lower ?? landmark?.mrvEstimate ?? Infinity)) return 'mrv';
+  if (target >= (landmark?.productiveRange?.[0] ?? landmark?.referenceMav?.[0] ?? Infinity)) return 'mav';
+  if (!landmark?.referenceMav && !landmark?.productiveRange && landmark?.mevEstimate != null && target > landmark.mevEstimate) return 'mav';
   return 'mev';
 }
 
 function favorableAllocation(targets, roles, program, profile, nextWeek) {
   const candidates = Object.keys(targets).filter(m => roles[m] === 'growth' && targets[m] > 0);
-  const increments = Object.fromEntries(candidates.map(m => [m, profile.experience === 'beginner' ? 1 : profile.experience === 'advanced' && profile.priorities.includes(m) ? 3 : 2]));
+  const increments = Object.fromEntries(candidates.map(m => [m, scienceGrowthStep({ ...program, targets, currentWeek:nextWeek - 1 }, m, true)]));
   return allocateScienceGrowth({ ...program, targets, roles }, profile, candidates, increments, nextWeek);
 }
 
@@ -58,9 +60,9 @@ export function scienceSessionGuidance(science, history, db, now) {
   const plannedSessions = p.sessionPlans?.[p.currentWeek]?.plannedSessions ?? science.profile.daysPerWeek;
   const completedSessions = new Set(history.filter(w => w.startTime >= range.start && w.startTime <= now && (w.exercises || []).some(e => e.sets?.some(s => s.done && !s.isWarmup && !s.isDropset && !s.isRestPause))).map(w => w.id)).size;
   const total = Object.values(p.targets).reduce((n, v) => n + v, 0);
-  const missingMuscles = Object.entries(p.targets).map(([muscle, target]) => ({ muscle, remaining: Math.max(0, target - (summary.muscles[muscle]?.direct || 0)), unknown: summary.muscles[muscle]?.unknown || 0 })).filter(m => m.remaining > 0).sort((a, b) => Number(science.profile.priorities.includes(b.muscle)) - Number(science.profile.priorities.includes(a.muscle)) || a.muscle.localeCompare(b.muscle));
+  const missingMuscles = Object.entries(p.targets).map(([muscle, target]) => ({ muscle, remaining: Math.max(0, target - scienceCompletedSets(summary.muscles[muscle])), unknown: scienceUnconfirmedSets(summary.muscles[muscle]) })).filter(m => m.remaining > 0).sort((a, b) => Number(science.profile.priorities.includes(b.muscle)) - Number(science.profile.priorities.includes(a.muscle)) || a.muscle.localeCompare(b.muscle));
   const remaining = missingMuscles.reduce((n, m) => n + m.remaining, 0);
-  const unknown = Object.keys(p.targets).reduce((n, m) => n + (summary.muscles[m]?.unknown || 0), 0);
+  const unknown = Object.keys(p.targets).reduce((n, m) => n + scienceUnconfirmedSets(summary.muscles[m]), 0);
   const sessionsLeft = Math.max(0, plannedSessions - completedSessions);
   return { total, missingMuscles, plannedSessions, completedSessions, remaining, unknown, sessionsLeft, average: total / plannedSessions, remainingAverage: sessionsLeft ? remaining / sessionsLeft : null };
 }

@@ -105,7 +105,7 @@ describe('science isolation and backward compatibility', () => {
     const before = protectedData(useStore.getState());
     useStore.getState().adoptScienceAllocation(start);
     const updated = useStore.getState().scienceState;
-    expect(updated.program.targets.Dorso).toBe(12);
+    expect(updated.program.targets.Dorso).toBe(10);
     expect(updated.program.roles.Dorso).toBe('support');
     expect(updated.program.id).toBe(old.program.id);
     expect(updated.program.startDate).toBe(old.program.startDate);
