@@ -1855,6 +1855,572 @@
   margin-top: 8px;
 }
 
+/* ── Test iniziale ──────────────────────────────────────────── */
+.mn-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.mn-wizard-progress {
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--c-surface-2);
+}
+
+.mn-wizard-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c-primary);
+  transition: width 0.3s ease;
+}
+
+.mn-wizard-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 8px 0;
+  text-align: center;
+}
+
+.mn-wizard-intro h2 {
+  margin: 4px 0 0;
+  font-size: 1.75rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.mn-wizard-intro p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--c-text-muted);
+}
+
+.mn-wizard-badge {
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  color: var(--c-bg);
+  background: linear-gradient(160deg, var(--c-primary), var(--c-primary-deep));
+}
+
+.mn-wizard-q {
+  margin: 6px 0 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.mn-wizard-help {
+  margin: -6px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--c-text-muted);
+}
+
+.mn-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mn-option {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 16px 18px;
+  text-align: left;
+  border-radius: 16px;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+}
+
+.mn-option strong {
+  font-size: 1.0625rem;
+  font-weight: 800;
+}
+
+.mn-option span {
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+}
+
+.mn-option.is-active {
+  border-color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.08);
+}
+
+.mn-numfields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mn-numfield {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+  cursor: text;
+}
+
+.mn-numfield:focus-within {
+  border-color: var(--c-primary);
+}
+
+.mn-numfield > span {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.mn-numfield > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.mn-numfield input {
+  width: 110px;
+  padding: 0;
+  text-align: right;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1.75rem;
+  font-weight: 900;
+}
+
+.mn-numfield input::placeholder {
+  color: var(--c-text-dim);
+}
+
+.mn-numfield small {
+  width: 36px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.mn-wizard-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.mn-wizard-foot.is-row {
+  flex-direction: row;
+}
+
+.mn-wizard-later {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.mn-wizard-back {
+  width: 54px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+
+.mn-steps {
+  list-style: none;
+  margin: 0;
+  padding: 4px 16px;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+
+.mn-steps li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 10px;
+  padding: 11px 0;
+}
+
+.mn-steps li + li {
+  border-top: 1px solid var(--c-border);
+}
+
+.mn-steps span {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.mn-steps strong {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.mn-steps small {
+  grid-column: 1 / -1;
+  font-size: 0.6875rem;
+  color: var(--c-text-dim);
+}
+
+/* invito al test nella pagina del Diario */
+.mn-setup-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 12px 14px 16px;
+  border-radius: var(--r-lg);
+  background: rgba(var(--c-primary-rgb), 0.08);
+  border: 1px solid rgba(var(--c-primary-rgb), 0.3);
+}
+
+.mn-setup-card > svg {
+  flex-shrink: 0;
+  color: var(--c-primary);
+}
+
+.mn-setup-card button.mn-setup-open {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.mn-setup-card strong {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--c-text);
+}
+
+.mn-setup-card span {
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+}
+
+.mn-setup-card .mn-setup-close {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--c-text-dim);
+}
+
+/* "Rifai il test" in fondo agli obiettivi */
+.mn-redo-test {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--c-primary);
+  border: 1px dashed rgba(var(--c-primary-rgb), 0.45);
+}
+
+/* ── Pasti composti ─────────────────────────────────────────── */
+.mn-search-actions {
+  flex-wrap: wrap;
+}
+
+.mn-badge--recipe {
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.14);
+}
+
+.mn-row-btn.is-ghost {
+  color: var(--c-text-muted);
+  background: transparent;
+}
+
+.mn-recipe {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mn-ingredients {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0 14px;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+
+.mn-ingredients li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.mn-ingredients li + li {
+  border-top: 1px solid var(--c-border);
+}
+
+.mn-ingredient-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mn-ingredient-name strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mn-ingredient-name small {
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mn-ingredient-qty {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--c-surface-2);
+  border: 1px solid transparent;
+  cursor: text;
+}
+
+.mn-ingredient-qty:focus-within {
+  border-color: var(--c-primary);
+}
+
+.mn-ingredient-qty input {
+  width: 52px;
+  padding: 0;
+  text-align: right;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.mn-ingredient-qty small {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.mn-ingredient-remove {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--c-text-dim);
+}
+
+.mn-add-ingredient {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--c-primary);
+  border: 1.5px dashed rgba(var(--c-primary-rgb), 0.45);
+  background: rgba(var(--c-primary-rgb), 0.05);
+}
+
+.mn-recipe-yield {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.mn-recipe .mn-field--inline {
+  margin-top: 12px;
+}
+
+.mn-recipe section > .mn-hint {
+  margin-top: 8px;
+}
+
+.mn-recipe-list {
+  list-style: none;
+  margin: -6px 0 0;
+  padding: 4px 14px;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+}
+
+.mn-recipe-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 0.8125rem;
+}
+
+.mn-recipe-list li + li {
+  border-top: 1px solid var(--c-border);
+}
+
+.mn-recipe-list span {
+  color: var(--c-text-muted);
+}
+
+.mn-recipe-list li.is-note {
+  font-size: 0.75rem;
+  color: var(--c-text-dim);
+}
+
+/* ── Eliminazione con trascinamento ─────────────────────────── */
+/* righe a tutta larghezza dentro l'elenco dei pasti */
+.mn-meal .swipe-container,
+.mn-meal .swipe-action-bg {
+  margin: 0;
+  border-radius: 0;
+}
+
+.mn-meal .swipe-action-bg {
+  padding-right: 20px;
+  background: var(--c-danger);
+}
+
+/* la riga copre lo sfondo rosso mentre scorre */
+.mn-meal .swipe-content .mn-item {
+  background: var(--c-surface);
+}
+
+.mn-toast--page {
+  position: fixed;
+  z-index: 60;
+  left: max(16px, calc((100vw - 480px) / 2 + 16px));
+  right: max(16px, calc((100vw - 480px) / 2 + 16px));
+  /* sopra la barra di navigazione (1.5rem dal fondo + 66px) */
+  bottom: calc(1.5rem + 66px + 12px);
+  margin: 0;
+}
+
+.mn-toast--page > svg {
+  color: var(--c-danger);
+}
+
+/* ── Impostazioni → I tuoi pasti ────────────────────────────── */
+.mn-meals-intro {
+  margin: -4px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--c-text-muted);
+}
+
+.mn-saved-meals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mn-saved-meal {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 12px 14px 14px;
+  text-align: left;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+
+.mn-saved-meal-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.12);
+}
+
+.mn-saved-meal-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mn-saved-meal-text strong {
+  font-size: 1rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mn-saved-meal-text > span {
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+}
+
+.mn-saved-meal-macros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mn-saved-meal-chevron {
+  flex-shrink: 0;
+  color: var(--c-text-dim);
+}
 
 /* App-owned calendar: no invisible native date picker or browser-specific taps. */
 .mn-weight-calendar { border:1px solid var(--c-border); border-radius:18px; padding:12px; margin:18px 0; background:var(--c-surface); }
