@@ -7,7 +7,31 @@ import { GENERIC_FOODS } from '../data/genericFoods';
 // (vite.config.js in sviluppo, vercel.json in produzione).
 const OFF_SEARCH = '/api/off-search';
 const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product';
-const PRODUCT_FIELDS = 'code,product_name,product_name_it,generic_name_it,brands,nutriments,serving_size,serving_quantity,quantity,image_small_url,image_front_small_url';
+const PRODUCT_FIELDS = 'code,product_name,product_name_it,generic_name_it,brands,nutriments,serving_size,serving_quantity,quantity,image_small_url,image_front_small_url,nutriscore_grade,nova_group,additives_tags,categories_tags,labels_tags';
+
+// Additivi: "en:e322i" è una sottovoce di "en:e322" → tengo solo il codice base.
+// Le lettere come in E150c invece identificano additivi diversi e restano.
+function additiveCodes(tags) {
+  if (!Array.isArray(tags)) return null;
+  const codes = [...new Set(tags.map(t => String(t).replace(/^\w+:/, '').toLowerCase()))];
+  return codes.filter(c => !codes.some(o => o !== c && c.startsWith(o) && /^(i|ii|iii|iv|v|vi)$/.test(c.slice(o.length))));
+}
+
+// Dati di qualità usati dal voto atleta (assenti se Open Food Facts non li ha)
+function qualityFrom(p) {
+  const grade = String(p.nutriscore_grade || '').toLowerCase();
+  const nova = Number(p.nova_group);
+  // solo i tag della tassonomia ufficiale (es. "en:biscuits"), non quelli liberi tipo "en:Snack dolci"
+  const categories = (p.categories_tags || []).filter(c => /^en:[a-z0-9-]+$/.test(c));
+  return {
+    nutriscore: /^[a-e]$/.test(grade) ? grade : null,
+    nova: nova >= 1 && nova <= 4 ? nova : null,
+    additives: additiveCodes(p.additives_tags),
+    // dalla più generica alla più specifica: l'ultima serve per le alternative
+    categories: categories.slice(-4),
+    organic: (p.labels_tags || []).some(l => /organic|bio/.test(l)),
+  };
+}
 
 const num = (v) => {
   const n = parseFloat(v);
@@ -50,6 +74,7 @@ export function normalizeOffProduct(p) {
     },
     servingSize: servingSize > 0 ? servingSize : null,
     servingLabel: servingSize > 0 ? servingLabelFrom(p.serving_size) : null,
+    quality: qualityFrom(p),
   };
 }
 
@@ -84,6 +109,24 @@ export async function searchOffFoods(query, { signal, pageSize = 25 } = {}) {
   return (data.hits || [])
     .map(normalizeOffProduct)
     .filter(f => f && !seen.has(f.id) && seen.add(f.id));
+}
+
+// Prodotti della stessa categoria con un Nutri-Score migliore, preferendo
+// quelli venduti in Italia. Il confronto fine lo fa poi il voto atleta.
+export async function searchAlternatives(food, { signal, limit = 30 } = {}) {
+  const category = food?.quality?.categories?.at(-1);
+  if (!category) return [];
+  const grades = ['a', 'b', 'c', 'd'].filter(g => !food.quality.nutriscore || g < food.quality.nutriscore);
+  if (grades.length === 0) return [];
+  const base = `categories_tags:"${category}" AND nutriscore_grade:(${grades.join(' OR ')})`;
+  const run = async (q) => {
+    const params = new URLSearchParams({ q, page_size: String(limit), langs: 'it,en', fields: PRODUCT_FIELDS });
+    const res = await fetch(`${OFF_SEARCH}?${params}`, { signal });
+    if (!res.ok || !res.headers.get('content-type')?.includes('json')) throw new Error(`Ricerca non disponibile (${res.status})`);
+    return ((await res.json()).hits || []).map(normalizeOffProduct).filter(f => f && f.id !== food.id);
+  };
+  const italian = await run(`${base} AND countries_tags:"en:italy"`);
+  return italian.length >= 3 ? italian : [...italian, ...(await run(base)).filter(f => !italian.some(i => i.id === f.id))];
 }
 
 export async function fetchProductByBarcode(barcode, { signal } = {}) {
