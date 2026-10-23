@@ -301,11 +301,13 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
 
       {selected && (
         <FoodDetailSheet
+          key={selected.id} // passando a un'alternativa il pannello riparte con quantità e unità del nuovo prodotto
           food={selected}
           date={date}
           initialMeal={meal}
           onClose={() => setSelected(null)}
           onSubmit={({ grams, meal: m }) => { log(selected, grams, m); setSelected(null); }}
+          onPickAlternative={setSelected}
         />
       )}
       {panel === 'scan' && (

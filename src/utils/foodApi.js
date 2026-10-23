@@ -111,22 +111,30 @@ export async function searchOffFoods(query, { signal, pageSize = 25 } = {}) {
     .filter(f => f && !seen.has(f.id) && seen.add(f.id));
 }
 
-// Prodotti della stessa categoria con un Nutri-Score migliore, preferendo
-// quelli venduti in Italia. Il confronto fine lo fa poi il voto atleta.
-export async function searchAlternatives(food, { signal, limit = 30 } = {}) {
-  const category = food?.quality?.categories?.at(-1);
-  if (!category) return [];
-  const grades = ['a', 'b', 'c', 'd'].filter(g => !food.quality.nutriscore || g < food.quality.nutriscore);
-  if (grades.length === 0) return [];
-  const base = `categories_tags:"${category}" AND nutriscore_grade:(${grades.join(' OR ')})`;
-  const run = async (q) => {
-    const params = new URLSearchParams({ q, page_size: String(limit), langs: 'it,en', fields: PRODUCT_FIELDS });
+// Prodotti venduti in Italia, della stessa categoria e con Nutri-Score migliore.
+// Si parte dalla categoria più specifica e si risale finché i risultati bastano;
+// l'ordine per popolarità privilegia prodotti noti, con dati di solito più curati.
+// Il confronto fine lo fa poi il voto atleta.
+export async function searchAlternatives(food, { signal, limit = 40, enough = 8 } = {}) {
+  const categories = [...(food?.quality?.categories || [])].reverse().slice(0, 3);
+  const grades = ['a', 'b', 'c', 'd'].filter(g => !food?.quality?.nutriscore || g < food.quality.nutriscore);
+  if (categories.length === 0 || grades.length === 0) return [];
+  let found = [];
+  for (const category of categories) {
+    const params = new URLSearchParams({
+      q: `categories_tags:"${category}" AND nutriscore_grade:(${grades.join(' OR ')}) AND countries_tags:"en:italy"`,
+      page_size: String(limit),
+      sort_by: '-unique_scans_n',
+      langs: 'it,en',
+      fields: PRODUCT_FIELDS,
+    });
     const res = await fetch(`${OFF_SEARCH}?${params}`, { signal });
     if (!res.ok || !res.headers.get('content-type')?.includes('json')) throw new Error(`Ricerca non disponibile (${res.status})`);
-    return ((await res.json()).hits || []).map(normalizeOffProduct).filter(f => f && f.id !== food.id);
-  };
-  const italian = await run(`${base} AND countries_tags:"en:italy"`);
-  return italian.length >= 3 ? italian : [...italian, ...(await run(base)).filter(f => !italian.some(i => i.id === f.id))];
+    const hits = ((await res.json()).hits || []).map(normalizeOffProduct).filter(f => f && f.id !== food.id);
+    found = [...found, ...hits.filter(f => !found.some(x => x.id === f.id))];
+    if (found.length >= enough) break;
+  }
+  return found;
 }
 
 export async function fetchProductByBarcode(barcode, { signal } = {}) {

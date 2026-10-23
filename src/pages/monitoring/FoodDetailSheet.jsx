@@ -7,6 +7,8 @@ import {
 } from '../../utils/nutrition';
 import { FuelBar, MacroMeter, MacroStrip } from './Fuel';
 import { Sheet } from './Sheet';
+import { ScorePanel, BetterAlternatives } from './ScorePanel';
+import { athleteScore } from '../../utils/athleteScore';
 
 const GRAM_PRESETS = [50, 100, 150, 200];
 const SERVING_PRESETS = [0.5, 1, 2, 3];
@@ -14,7 +16,8 @@ const round = (n, step) => Math.round(n / step) * step;
 
 // Dettaglio di un alimento: quantità, pasto e impatto sulla giornata.
 // mode 'add' → aggiunge al diario, 'edit' → modifica una voce esistente.
-export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initialMeal, onSubmit, onDelete, onClose }) {
+export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initialMeal, onSubmit, onDelete, onClose, onPickAlternative }) {
+  const score = useMemo(() => athleteScore(food), [food]);
   const goals = useStore(state => state.nutritionGoals);
   const day = useStore(state => state.foodDiary?.[date]);
   const history = useStore(state => state.history);
@@ -79,6 +82,8 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
             </div>
           </div>
         </div>
+
+        <ScorePanel result={score} />
 
         {!isQuick && (
           <div className="mn-qty">
@@ -179,6 +184,8 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
             ))}
           </dl>
         )}
+
+        {score && onPickAlternative && <BetterAlternatives food={food} result={score} onPick={onPickAlternative} />}
       </div>
     </Sheet>
   );
