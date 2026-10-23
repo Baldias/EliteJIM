@@ -1,3 +1,4 @@
+import { scienceCompletedSets, scienceUnconfirmedSets } from './scienceCarry';
 import { EXERCISE_CATEGORIES, getAllExercises, normalizeName } from '../data/exercises';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from './oneRepMax';
 import { computeOverloadStats } from './overload';
@@ -87,13 +88,13 @@ export function buildProgressReport(state, now = Date.now(), { includeWeight = f
   const streak = calculateWeeklyStreak(history, now);
   const rank = getRankByXp(n(state.userXP));
   let science = null;
-  if (includeScience && !hasLegacyScience(state.scienceReport) && state.scienceState?.program) {
+  if (includeScience && !hasLegacyScience(state.scienceReport, state.scienceState) && state.scienceState?.program) {
     const p = state.scienceState.program;
     const weeks = Array.from({ length: 5 }, (_, i) => scienceWeekPreview(state.scienceState, history, db, i + 1, now)).filter(Boolean).map(summary => {
       const counts = summary.muscles || summary.volumes?.muscles || {};
       return { week: summary.week, start: summary.start, end: summary.end, kind: summary.kind,
         phase: summary.kind === 'archive' ? 'Registrata' : summary.kind === 'current' ? 'In corso' : summary.kind === 'deload-estimate' ? 'Scarico proposto · stima' : 'Stima · da rivalutare',
-        rows: Object.entries(summary.targets).map(([name, target]) => ({ name, target, done: counts[name]?.direct || 0, unknown: counts[name]?.unknown || 0, band: scienceLandmarkBand((summary.landmarks || p.landmarks)[name], target, (summary.roles || p.roles)[name]), focus: state.scienceState.profile.priorities.includes(name) })) };
+        rows: Object.entries(summary.targets).map(([name, target]) => ({ name, target, done: scienceCompletedSets(counts[name]), unknown: scienceUnconfirmedSets(counts[name]), imported:counts[name]?.imported || 0, band: scienceLandmarkBand((summary.landmarks || p.landmarks)[name], target, (summary.roles || p.roles)[name]), focus: state.scienceState.profile.priorities.includes(name) })) };
     });
     const current = weeks.find(w => w.week === p.currentWeek) || weeks.at(-1);
     if (current) science = { accounting: 'v3', ...current, weeks };

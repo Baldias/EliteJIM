@@ -38,13 +38,14 @@ describe('legacy science evolution without resetting the protocol',()=>{
     useStore.getState().saveScienceFeedback(1,{sleep:'good',muscles:{Petto:{quality:'good',recovery:'good'}}});
     useStore.getState().decideLegacyDynamicVolume('accept',now);
     const sidecar = useStore.getState().scienceState;
-    expect(sidecar.legacyEvolution.decisions['week-4'].choice).toBe('accept');
-    expect(sidecar.legacyEvolution.decisions['week-4'].evidence).toHaveLength(2);
+    expect(sidecar.legacyMigration.sourceWeek).toBe(3);
+    expect(sidecar.program.currentWeek).toBe(3);
+    expect(sidecar.program.weeks).toHaveLength(2);
     useStore.getState().decideLegacyDynamicVolume('reject',now+1);
     expect(useStore.getState().scienceState).toBe(sidecar);
     expect(protectedData(useStore.getState())).toEqual(before);
     expect(calculateSessionScore(useStore.getState().history[0],[],db,useStore.getState().scienceReport,80)).toEqual(score);
-    expect(useStore.getState().scienceState.program).toBeNull();
+    expect(useStore.getState().scienceState.program.modelVersion).toBe(3);
   });
   it('personalizes only the accepted future week and keeps historic unknown RIR explicitly uncertain',()=>{
     const report = legacy(), workouts = history();
@@ -79,16 +80,15 @@ describe('legacy science evolution without resetting the protocol',()=>{
     expect(legacyVolumeEvidence(report,history(),db,science,now)).toEqual([]);
     expect(legacyDynamicProposal(report,history(),db,science,now).changes).toEqual([]);
   });
-  it('continues from the same week on the same calendar and retains accepted targets after advancing',()=>{
+  it('continues immediately in V3 and retires old advancement without rewriting the V2 archive',()=>{
     useStore.getState().completeScienceEvolution(now);
-    useStore.getState().decideLegacyDynamicVolume('accept',now);
     const before=useStore.getState().scienceReport;
     useStore.getState().advanceScienceWeek();
+    expect(useStore.getState().scienceReport).toBe(before);
+    useStore.getState().closeScienceV3Week(start+21*day);
     const after=useStore.getState();
-    expect(after.scienceReport.currentWeek).toBe(4);
-    expect(after.scienceReport.startDate).toBe(before.startDate);
-    expect(after.scienceReport.weekHistory[1]).toEqual(before.weekHistory[1]);
-    expect(getScienceTargetForMuscle(evolvedLegacyReport(after.scienceReport,after.scienceState),'Petto',4)).toBe(12);
+    expect(after.scienceState.program.currentWeek).toBe(4);
+    expect(after.scienceReport).toBe(before);
     expect(after.scienceState.releaseV3.seenAt).toBe(now);
     expect(scienceTrackingEnabled(after)).toBe(true);
   });

@@ -42,7 +42,7 @@ export default function ScienceWeekPrompt() {
       document.removeEventListener('visibilitychange', reopen);
     };
   }, []);
-  if (!enabled || hasLegacyScience(legacy) || program?.status !== 'active') return null;
+  if (!enabled || hasLegacyScience(legacy, science) || program?.status !== 'active') return null;
   const timing = scienceWeekTiming(program, now);
   const key = `${program.id}:${program.currentWeek}:${opening}`;
   if (!timing.overdue || dismissed === key) return null;

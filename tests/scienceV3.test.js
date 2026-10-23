@@ -78,25 +78,25 @@ describe('calendar and initial doses', () => {
   it('uses the historical median and keeps non-priorities at their growth base', () => {
     const history = [workout(1, scienceWeekRange(start, -1).start, undefined, 14), workout(2, scienceWeekRange(start, 0).start, undefined, 18)];
     const science = createScienceProgram(profile, history, EXERCISES_DB, emptyScienceState(), null, start);
-    expect(science.program.targets.Petto).toBe(13);
+    expect(science.program.targets.Petto).toBe(12);
     expect(science.program.landmarks.Petto.source).toBe('blended-estimate');
     expect(science.program.landmarks.Petto.mrv).toBeNull();
     expect(science.program.roles.Dorso).toBe('support');
-    expect(science.program.targets.Dorso).toBe(12);
-    expect(science.program.landmarks.Dorso.mevEstimate).toBe(12);
+    expect(science.program.targets.Dorso).toBe(10);
+    expect(science.program.landmarks.Dorso.mevEstimate).toBe(10);
   });
   it('never initializes a growth district to zero because of sparse historical exposure', () => {
     const history = [workout(1, start - 7 * 86400000, 'Panca Piana Bilanciere', 4), workout(2, start - 14 * 86400000, 'Leg Curl', 4), workout(3, start - 21 * 86400000, 'Leg Curl', 4), workout(4, start - 28 * 86400000, 'Leg Curl', 4)];
     const science = createScienceProgram(profile, history, EXERCISES_DB, emptyScienceState(), null, start);
-    expect(science.program.targets.Petto).toBe(12);
+    expect(science.program.targets.Petto).toBe(10);
     expect(science.program.targets.Bicipiti).toBeGreaterThanOrEqual(4);
     expect(science.program.targets.Spalle).toBeGreaterThanOrEqual(5);
   });
   it('starts an advanced growth district from its experience estimate even when the logged median is only three', () => {
     const history = [workout(1, start - 7 * 86400000, undefined, 3), workout(2, start - 14 * 86400000, undefined, 3)];
     const science = createScienceProgram(profile, history, EXERCISES_DB, emptyScienceState(), null, start);
-    expect(science.program.targets.Petto).toBe(12);
-    expect(science.program.landmarks.Petto.mevEstimate).toBe(12);
+    expect(science.program.targets.Petto).toBe(10);
+    expect(science.program.landmarks.Petto.mevEstimate).toBe(10);
     expect(science.program.landmarks.Petto.source).toBe('starting-dose');
   });
   it('carries personally observed landmarks into the next block without mutating the previous one', () => {

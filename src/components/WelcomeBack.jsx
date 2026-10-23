@@ -8,7 +8,8 @@ import { hasLegacyScience } from '../utils/scienceV3';
 export function WelcomeBack({ onClose }) {
   const { currentStreak, daysSinceLastWorkout } = useWeeklyStreak();
   const scienceReport = useStore(state => state.scienceReport);
-  const scienceProgram = useStore(state => state.scienceState?.program);
+  const science = useStore(state => state.scienceState);
+  const scienceProgram = science?.program;
   const showScience = useStore(state => state.showScience);
 
   const [isVisible, setIsVisible] = useState(false);
@@ -25,7 +26,7 @@ export function WelcomeBack({ onClose }) {
   };
 
   let weekInfo = null;
-  if (showScience && scienceReport && scienceReport.status === 'active') {
+  if (showScience && hasLegacyScience(scienceReport, science) && scienceReport.status === 'active') {
     const weekNum = scienceReport.currentWeek || 1;
     const month = weekNum <= 4 ? 1 : (weekNum <= 8 ? 2 : 3);
     
@@ -37,7 +38,7 @@ export function WelcomeBack({ onClose }) {
     weekInfo = { week: weekNum, month, phase };
   }
 
-  if (showScience && !hasLegacyScience(scienceReport) && scienceProgram?.status === 'active') {
+  if (showScience && !hasLegacyScience(scienceReport, science) && scienceProgram?.status === 'active') {
     const week = scienceProgram.currentWeek;
     weekInfo = { week, month: null, phase: week === 5 ? 'Recupero da concordare' : week === 4 ? 'Picco del blocco' : 'Accumulo · 0–1 RIR' };
   }

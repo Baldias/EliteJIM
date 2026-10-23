@@ -4,13 +4,14 @@ import { Activity, ArrowRight, Check, Dna, History, ShieldCheck, Sparkles, Waves
 import { useScienceStore as useStore } from '../../store/scienceContext';
 import { getAllExercises } from '../../data/exercises';
 import { legacyDynamicProposal, legacyEvolutionFor, needsScienceEvolution } from '../../utils/scienceEvolution';
+import MicroLoading from '../../components/MicroLoading';
 import './ScienceEvolution.css';
 
 const STEPS = [
   { icon: Sparkles, tag: 'L’evoluzione del tuo allenamento', title: 'Scienza V3.0 è finalmente fuori!', body: 'Un nuovo modo di leggere il tuo allenamento. Più personale, più chiaro, sempre al tuo fianco.' },
-  { icon: ShieldCheck, tag: 'Ripartiamo da te', title: 'Il tuo percorso è al sicuro.', body: 'Nessun nuovo inizio obbligato. Settimana, priorità e calendario del tuo protocollo continuano da dove li hai lasciati. Log, record, XP e livelli restano intatti.' },
+  { icon: ShieldCheck, tag: 'Ripartiamo da te', title: 'Il tuo percorso è al sicuro.', body: 'Nessun nuovo inizio obbligato. Passi subito alla nuova dashboard con priorità e progressi della settimana corrente. Le basi del volume si aggiornano alla nuova tabella di riferimento. Il protocollo precedente rimane nell’archivio. Log, record, XP e livelli restano intatti.' },
   { icon: Waves, tag: 'Ti presentiamo Scienza V3.0', title: 'La dose giusta cambia con te.', body: 'Le settimane già completate aiutano a stimare il tuo volume. Le serie a 0–1 RIR e i nuovi check di recupero rendono le proposte successive più personali.' },
-  { icon: Activity, tag: 'Il controllo resta tuo', title: 'Più ascolto. Nessuna forzatura.', body: 'Trovi le proposte per la prossima settimana nella tua dashboard. Le confronti con il programma e scegli se accettarle. Nessun taglio o blocco automatico per la fatica.' },
+  { icon: Activity, tag: 'Il controllo resta tuo', title: 'Più ascolto. Nessuna forzatura.', body: 'Da ora usi Scienza V3.0: target, check e progressione seguono il nuovo motore. Le serie già fatte restano nel conteggio della settimana. Nessun taglio o blocco automatico per la fatica.' },
 ];
 
 function ReleaseTour({ report, animate, onComplete, onReveal }) {
@@ -56,7 +57,7 @@ function ReleaseTour({ report, animate, onComplete, onReveal }) {
           <span className="science-release-tag">{active.tag}</span><h2 id="science-release-title">{active.title}</h2><p id="science-release-description">{active.body}</p>
           {step === 0 && <div className="science-release-version"><span>SCIENZA</span><strong>V3.0</strong><span>Su misura per te</span></div>}
           {step === 1 && <div className="science-release-kept"><Check size={20} /><span>{report.status === 'pending' ? 'Il protocollo che hai preparato ti aspetta.' : `Continui dalla settimana ${week}, con i tuoi progressi.`}</span></div>}
-          {step === 2 && <><div className="science-release-formula"><span><History size={18} />Storico</span><b>+</b><span><Activity size={18} />Qualità</span><b>+</b><span><Waves size={18} />Recupero</span></div><small className="science-release-disclaimer">Sono stime che migliorano con le tue sedute. Lo sforzo dei vecchi allenamenti senza RIR resta sconosciuto.</small></>}
+          {step === 2 && <><div className="science-release-formula"><span><History size={18} />Storico</span><b>+</b><span><Activity size={18} />Qualità</span><b>+</b><span><Waves size={18} />Recupero</span></div><small className="science-release-disclaimer">Le serie già svolte vengono riportate come progressi del protocollo precedente. Lo sforzo non registrato resta sconosciuto: nessun RIR viene inventato.</small></>}
           {step === 3 && <div className="science-release-kept"><ShieldCheck size={20} /><span>Accetta o rifiuta. Le tue schede restano tue.</span></div>}
         </div>
         <footer><button type="button" className="science-release-primary" onClick={() => step < STEPS.length - 1 ? setStep(n => n + 1) : onComplete()}>{step < STEPS.length - 1 ? 'Scopri cosa cambia' : report.status === 'pending' ? 'Torna al tuo protocollo' : `Continua dalla settimana ${week}`}<ArrowRight size={18} /></button><div className="science-release-secondary">{step > 0 && <button type="button" onClick={() => setStep(n => n - 1)}>Indietro</button>}<button type="button" onClick={onComplete}>Vai al mio protocollo</button></div></footer>
@@ -70,10 +71,12 @@ export function ScienceEvolution({ report, children }) {
   const [revealed, setRevealed] = useState(false);
   const [initial] = useState(() => needsScienceEvolution(report, science));
   const open = initial && needsScienceEvolution(report, science);
+  useEffect(() => { if (!open) complete(); }, [open, complete]);
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const evolving = open && !revealed && !reduced;
   // A stable callback keeps the reveal effect independent of store updates.
   const reveal = useMemo(() => () => setRevealed(true), []);
+  if (!open) return <div className="ej-page"><MicroLoading title="Passo a Scienza V3.0" description="Porto con te obiettivi e progressi della settimana." /></div>;
   return <><div className={`science-evolution-stage ${evolving ? 'is-evolving' : revealed ? 'is-revealed' : ''}`} inert={open ? true : undefined}>{children}</div>
     {open && <ReleaseTour report={report} animate={!reduced} onReveal={reveal} onComplete={() => complete()} />}</>;
 }
