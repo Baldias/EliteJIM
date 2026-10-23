@@ -1,3 +1,4 @@
+import { themePreferences } from './theme';
 import { useStore } from '../store/useStore';
 import { STORAGE_KEY, getAppStorage } from '../demo/demoMode';
 import { emptyScienceState } from './scienceV3';
@@ -5,7 +6,7 @@ import { existingFeaturePreferences } from './featurePreferences';
 
 export function normalizeBackupPayload(parsed) {
   const payload = parsed.state ? parsed : { state: parsed, version: 0 };
-  return { ...payload, state: { ...payload.state, ...existingFeaturePreferences(payload.state), scienceState: payload.state.scienceState || emptyScienceState() } };
+  return { ...payload, state: { ...payload.state, ...existingFeaturePreferences(payload.state), ...themePreferences(payload.state), scienceState: payload.state.scienceState || emptyScienceState() } };
 }
 
 /**
@@ -40,6 +41,7 @@ export function exportDataBackup() {
           customFoods: currentState.customFoods || [],
           showScience: currentState.showScience ?? false,
           showDiary: currentState.showDiary ?? false,
+          ...themePreferences(currentState),
           autoBackupEnabled: currentState.autoBackupEnabled ?? true,
           autoBackupFrequency: currentState.autoBackupFrequency || 'after_workout',
           lastBackupDate: Date.now()

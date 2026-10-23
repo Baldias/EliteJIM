@@ -1,0 +1,11 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createPressGesture } from '../src/utils/pressGesture';
+afterEach(() => vi.useRealTimers());
+function setup() { vi.useFakeTimers(); const onTap = vi.fn(), onHold = vi.fn(); return { onTap, onHold, gesture: createPressGesture({ onTap, onHold }) }; }
+describe('routine card gestures', () => {
+  it('starts exactly once on a short tap', () => { const { gesture, onTap, onHold } = setup(); gesture.down(10, 10); vi.advanceTimersByTime(150); gesture.up(); gesture.click(); vi.advanceTimersByTime(800); expect(onTap).toHaveBeenCalledTimes(1); expect(onHold).not.toHaveBeenCalled(); });
+  it('opens actions once on hold and prevents the following click from starting a workout', () => { const { gesture, onTap, onHold } = setup(); gesture.down(10, 10); vi.advanceTimersByTime(500); gesture.context(); gesture.up(); gesture.click(); expect(onHold).toHaveBeenCalledTimes(1); expect(onTap).not.toHaveBeenCalled(); gesture.down(10, 10); gesture.up(); gesture.click(); expect(onTap).toHaveBeenCalledTimes(1); });
+  it('preserves the held state when rerenders replace action callbacks', () => { const { gesture, onTap, onHold } = setup(); const latestHold = vi.fn(); gesture.down(0, 0); gesture.updateCallbacks({ onTap, onHold: latestHold }); vi.advanceTimersByTime(500); gesture.updateCallbacks({ onTap, onHold }); gesture.up(); gesture.click(); expect(latestHold).toHaveBeenCalledTimes(1); expect(onHold).not.toHaveBeenCalled(); expect(onTap).not.toHaveBeenCalled(); });
+  it('treats scrolling and cancelled pointers as neither taps nor holds', () => { const { gesture, onTap, onHold } = setup(); gesture.down(10, 10); gesture.move(10, 35); vi.advanceTimersByTime(800); gesture.up(); gesture.click(); gesture.down(10, 10); gesture.cancel(); vi.advanceTimersByTime(800); gesture.click(); expect(onTap).not.toHaveBeenCalled(); expect(onHold).not.toHaveBeenCalled(); });
+  it('supports keyboard actions and cleans up timers on unmount', () => { const { gesture, onTap, onHold } = setup(); gesture.context(true); gesture.click(true); gesture.context(true); expect(onHold).toHaveBeenCalledTimes(2); expect(onTap).toHaveBeenCalledTimes(1); gesture.down(0, 0); gesture.dispose(); vi.advanceTimersByTime(800); expect(onHold).toHaveBeenCalledTimes(2); });
+});

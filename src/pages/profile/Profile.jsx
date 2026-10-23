@@ -10,6 +10,7 @@ import { getRankByXp } from '../../utils/gamification';
 import { computeOverloadStats } from '../../utils/overload';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './Profile.css';
+import { ProfileThemePicker } from '../../components/ThemePicker';
 import ProgressShare from '../../components/ProgressShare';
 import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
 import { hasLegacyScience } from '../../utils/scienceV3';
@@ -195,6 +196,7 @@ function Profile() {
         </div>
       </div>
 
+      <ProfileThemePicker />
       <ProgressShare />
 
       {/* ── MUSCLE LEVELS ──────────────────────────── */}

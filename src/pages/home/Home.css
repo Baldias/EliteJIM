@@ -1,3 +1,6 @@
+/* A clear rhythm between independent Home blocks. */
+.home-page { gap:36px; }
+
 /* ── Header ─────────────────────────────────────────────────── */
 .home-header {
   display: flex;
@@ -6,7 +9,12 @@
   gap: 12px;
 }
 
+.home-brand { min-width:0; flex:1; }
+.home-logo-title { margin:8px 0 0; line-height:1; }
+.home-logo-title img { display:block; width:164px; max-width:100%; height:auto; }
+
 .home-header-actions {
+  flex-shrink:0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -101,8 +109,10 @@
 .home-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
+
+.home-routines-heading { display:flex; flex-direction:column; gap:10px; }
 
 .home-new-btn {
   padding: 8px 14px;
@@ -119,6 +129,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white !important;
   gap: 10px;
   padding: 18px;
   border-radius: var(--r-lg);
@@ -126,75 +137,26 @@
   font-weight: 700;
   color: var(--c-primary);
   background: rgba(var(--c-primary-rgb), 0.06);
-  border: 1.5px dashed rgba(var(--c-primary-rgb), 0.45);
+  border: 1.5px dashed rgba(var(rgb(196, 196, 196)), 0.45);
 }
 
-.home-routines {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.home-routine {
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.home-routine-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.home-routine-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.0625rem;
-  font-weight: 900;
-  color: var(--c-primary);
-  background: rgba(var(--c-primary-rgb), 0.14);
-}
-
-.home-routine-text {
-  min-width: 0;
-}
-
-.home-routine-text h3 {
-  margin: 0;
-  font-size: 1.0625rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: var(--c-text);
-  line-height: 1.3;
-}
-
-.home-routine-text p {
-  margin: 2px 0 0;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--c-text-muted);
-}
-
-.home-routine-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--c-border);
-}
-
-.home-routine-tools {
-  display: flex;
-  gap: 6px;
-}
+.home-routines { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.home-routine-hint { font-size:10px; line-height:1.5; color:var(--c-text-dim); margin:0; }
+.home-routine { position:relative; display:flex; flex-direction:column; align-items:flex-start; text-align:left; min-width:0; min-height:156px; padding:18px 14px; gap:16px; color:var(--c-text); background:var(--c-surface); border:1px solid var(--c-border); border-radius:18px; overflow:hidden; touch-action:pan-y; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.home-routine:last-child:nth-child(odd) { grid-column:1 / -1; min-height:128px; }
+.home-routine > strong { font-size:16px; font-weight:750; line-height:1.3; letter-spacing:-.35px; overflow-wrap:anywhere; }
+.home-routine > strong > small { display:block; font-size:12px; font-weight:500; letter-spacing:0; line-height:1.5; color:var(--c-text-muted); margin-top:7px; }
+.home-routine-meta { margin-top:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap; font-size:10px; font-weight:500; color:var(--c-text-muted); }
+.home-routine-meta i { color:var(--c-text-dim); font-style:normal; }
+.home-routine:active { border-color:rgba(var(--c-primary-rgb),.4); }
+.home-routine-menu { display:flex; flex-direction:column; }
+.home-routine-menu > p { font-size:21px; font-weight:750; line-height:1.3; color:var(--c-text); margin:8px 0 24px; overflow-wrap:anywhere; }
+.home-routine-menu > button { display:flex; align-items:center; gap:15px; width:100%; padding:18px 4px; border-radius:0; border-top:1px solid var(--c-border); background:none; text-align:left; color:var(--c-primary); }
+.home-routine-menu > button > span { display:flex; flex-direction:column; gap:6px; color:var(--c-text); font-size:14px; }
+.home-routine-menu small { color:var(--c-text-muted); font-size:11px; font-weight:400; }
+.home-routine-menu > button.is-danger, .home-routine-menu > button.is-danger > span { color:var(--c-danger); }
+@media (hover:hover) { .home-routine:hover { border-color:rgba(var(--c-primary-rgb),.3); } }
+@media (max-width:360px) { .home-routine { padding:16px 12px; } .home-routine > strong { font-size:14px; } }
 
 /* ── XP & sessions ──────────────────────────────────────────── */
 .home-xp-row {

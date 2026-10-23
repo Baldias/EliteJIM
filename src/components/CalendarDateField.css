@@ -1,0 +1,11 @@
+.calendar-date-field { padding:14px; margin:8px 0 20px; background:var(--c-surface); border:1px solid var(--c-border); border-radius:16px; }
+.calendar-date-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.calendar-date-head > span { font-size:14px; font-weight:700; text-transform:capitalize; }
+.calendar-date-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; }
+.calendar-date-grid > span { min-height:24px; text-align:center; font-size:10px; color:var(--c-text-muted); }
+.calendar-date-grid > button { min-height:36px; border:1px solid transparent; border-radius:10px; background:none; color:var(--c-text); font-size:13px; }
+.calendar-date-grid > button[aria-pressed="true"] { color:var(--c-primary); background:rgba(var(--c-primary-rgb),.1); border-color:rgba(var(--c-primary-rgb),.35); }
+.calendar-date-field > p { margin:16px 0 0; text-align:center; font-size:11px; color:var(--c-text-muted); line-height:1.5; }
+.calendar-date-field strong { color:var(--c-primary); }
+
+.calendar-date-field button:disabled { opacity:.25; cursor:default; }
