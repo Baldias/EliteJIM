@@ -1,0 +1,43 @@
+/* Shared recent components keep their layout; only the visual skin changes. */
+:root[data-theme="og"] .ej-page { background:var(--c-bg) !important; }
+:root[data-theme="og"] .ej-page .ej-glow { background:rgba(var(--glow-rgb,var(--c-primary-rgb)),var(--glow-opacity,.3)); }
+:root[data-theme="og"] .home-free { color:var(--c-primary) !important; }
+:root[data-theme="og"] .home-routine { background:linear-gradient(145deg,rgba(var(--c-primary-rgb),.05),transparent 70%),var(--c-surface); }
+:root[data-theme="og"] .home-routine:hover { border-color:rgba(var(--c-primary-rgb),.4); }
+:root[data-theme="og"] .sv3-volume-row { background:#0b0e12; }
+:root[data-theme="og"] .theme-option[aria-checked="true"] { box-shadow:0 0 20px rgba(var(--c-primary-rgb),.12); }
+
+:root[data-theme="og"] .nav-item.active { background:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%),rgba(var(--c-primary-rgb),.16) !important; border-color:rgba(var(--c-primary-rgb),.28) !important; }
+
+/* Science V3 active session: the same quiet surfaces and controls as Home. */
+:root[data-theme="science-v3"] .wk-page { background:#0a0610; }
+:root[data-theme="science-v3"] .wk-page .wk-glow { display:block; }
+:root[data-theme="science-v3"] .wk-sticky { background:rgba(10,6,16,.96); backdrop-filter:blur(16px); border-color:var(--c-border); }
+:root[data-theme="science-v3"] .wk-body { padding-top:24px; }
+:root[data-theme="science-v3"] .workout-exercise-group { margin-bottom:28px; gap:12px; }
+:root[data-theme="science-v3"] .workout-exercise-card { background:var(--c-surface); border-color:var(--c-border); box-shadow:none; }
+:root[data-theme="science-v3"] .workout-exercise-idx-pill { color:var(--c-primary); background:rgba(var(--c-primary-rgb),.06); border:1px solid rgba(var(--c-primary-rgb),.16); font-weight:700; }
+:root[data-theme="science-v3"] .workout-exercise-title-bar .autocomplete-input { background:var(--c-surface); font-weight:650; }
+:root[data-theme="science-v3"] .workout-stepper { background:#101010; border-color:#252525; border-radius:10px; }
+:root[data-theme="science-v3"] .workout-stepper-input { font-weight:700; }
+:root[data-theme="science-v3"] .workout-stepper-btn { color:var(--c-text-muted); }
+:root[data-theme="science-v3"] .workout-stepper:focus-within { border-color:var(--c-primary); box-shadow:none; }
+:root[data-theme="science-v3"] .workout-check-btn { background:var(--c-surface-2); border:1px solid var(--c-border); border-radius:10px; }
+:root[data-theme="science-v3"] .workout-check-btn.checked { color:var(--c-primary); border-color:rgba(var(--c-primary-rgb),.4); background:rgba(var(--c-primary-rgb),.1); }
+:root[data-theme="science-v3"] .workout-set-row-item.is-completed { background:var(--c-surface); border-color:rgba(var(--c-primary-rgb),.2); }
+:root[data-theme="science-v3"] .workout-set-row-item.is-completed .workout-set-badge { color:var(--c-primary); background:rgba(var(--c-primary-rgb),.07); }
+:root[data-theme="science-v3"] .workout-1rm-banner.has-new-pr { background:var(--c-surface); box-shadow:none; border:1px solid rgba(var(--c-xp-rgb),.25); }
+:root[data-theme="science-v3"] .workout-set-row-item.is-pr-pop { animation:none; }
+:root[data-theme="science-v3"] .wk-rest { background:var(--c-surface); border-color:rgba(var(--c-primary-rgb),.2); }
+:root[data-theme="science-v3"] .wk-add-exercise { background:rgba(var(--c-primary-rgb),.04); border:1px solid rgba(var(--c-primary-rgb),.25); }
+:root[data-theme="science-v3"] .workout-add-set-btn { background:var(--c-surface-2); color:var(--c-primary); border:1px solid var(--c-border); box-shadow:none; }
+:root[data-theme="science-v3"] .wk-cancel { color:var(--c-text-muted); background:var(--c-surface); border-color:var(--c-border); }
+:root[data-theme="science-v3"] .workout-delete-ex-btn { background:transparent; }
+
+:root { --science-glow-rgb:230,207,0; }
+:root[data-science-glow="blue"] { --science-glow-rgb:0,180,230; }
+:root[data-science-glow="purple"] { --science-glow-rgb:168,85,247; }
+:root[data-science-glow="pink"] { --science-glow-rgb:236,72,153; }
+:root[data-science-glow="green"] { --science-glow-rgb:48,209,88; }
+:root[data-theme="science-v3"] .ej-page .ej-glow,
+:root[data-theme="science-v3"] .wk-page .wk-glow { background:rgba(var(--science-glow-rgb),.3); }

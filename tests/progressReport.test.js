@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildProgressReport } from '../src/utils/progressReport';
+import { progressReportPalette, progressMuscleIcon } from '../src/utils/progressReportStyle';
 import { progressReportPages } from '../src/utils/progressReportRender';
 import { computeOverloadStats } from '../src/utils/overload';
 import { getAllExercises } from '../src/data/exercises';
@@ -91,7 +92,7 @@ describe('read-only graphical progress report', () => {
     data.scienceState = createScienceProgram({ startDate: start, experience: 'advanced', goal: 'balanced', priorities: [], daysPerWeek: 5, minutesPerSession: 90 }, [], getAllExercises([], {}), emptyScienceState(), null, start);
     const done = data.history[0];
     data.scienceState.annotations[done.id] = { [done.exercises[0].id]: { [done.exercises[0].sets[0].id]: { rir: 0 } } };
-    const report = buildProgressReport(data, start + 3 * 3600000);
+    const report = buildProgressReport(data, start + 3 * 3600000, { includeScience: true });
     expect(report.science.rows.find(m => m.name === 'Petto')).toMatchObject({ done: 1, target: 12, unknown: 1, band: 'mev' });
     const missing = scienceSessionGuidance(data.scienceState, data.history, getAllExercises([], {}), start + 3 * 3600000);
     expect(missing.missingMuscles.find(m => m.muscle === 'Petto')).toEqual({ muscle: 'Petto', remaining: 11, unknown: 1 });
@@ -104,7 +105,7 @@ describe('read-only graphical progress report', () => {
     data.exerciseOverrides = { [bench.id]: { category: 'Spalle' } };
     data.history[0].exercises.push(...['Curl Bilanciere', 'Il mio curl', 'Press sconosciuta'].map((name, id) => ({ id, name, sets: [{ done: true, kg: 20, reps: 10 }] })));
     data.scienceState = createScienceProgram({ startDate: start, experience: 'advanced', goal: 'balanced', priorities: [], daysPerWeek: 5, minutesPerSession: 90 }, [], getAllExercises([], {}), emptyScienceState(), null, start);
-    const report = buildProgressReport(data, start + 3 * 3600000, { includeWeight: true });
+    const report = buildProgressReport(data, start + 3 * 3600000, { includeWeight: true, includeScience: true });
     const pages = progressReportPages(report);
     expect(report.exercises.find(e => e.name === 'Il mio curl').group).toBe('Bicipiti');
     expect(report.exercises.find(e => e.name === 'Panca Piana Bilanciere').group).toBe('Spalle');
@@ -115,6 +116,44 @@ describe('read-only graphical progress report', () => {
     expect(exercisePages.every(p => new Set(p.items.map(e => e.group)).size === 1)).toBe(true);
     expect(exercisePages.flatMap(p => p.items)).toHaveLength(report.exercises.length);
     expect(pages.some(p => p.type === 'muscles')).toBe(false);
+  });
+
+  it('shares science only on opt-in and includes every week with future estimates clearly labeled', () => {
+    const data = state();
+    data.scienceState = createScienceProgram({ startDate: start, experience: 'advanced', goal: 'balanced', priorities: [], daysPerWeek: 5, minutesPerSession: 90 }, [], getAllExercises([], {}), emptyScienceState(), null, start);
+    expect(buildProgressReport(data, start).science).toBeNull();
+    const included = buildProgressReport(data, start, { includeScience:true });
+    const pages = progressReportPages(included).filter(p => p.type === 'science');
+    expect(pages.map(p => p.week.week)).toEqual([1,2,3,4,5]);
+    expect(pages[0].week.kind).toBe('current');
+    expect(pages.at(-1).week.kind).toBe('deload-estimate');
+    expect(pages.slice(1).flatMap(p => p.items).every(m => m.done === 0)).toBe(true);
+  });
+  it('shares all 12 legacy weeks without reinterpreting their effort and uses the captured theme', () => {
+    const data = state();
+    data.theme = 'og';
+    data.scienceGlow = 'purple';
+    data.scienceReport = { status:'active', startDate:start, currentWeek:2, focus1:['Petto'], baseLandmarks:{Petto:{mev:10,mav:12,mrv:20}}, weekHistory:{1:{startDate:start,completedDate:start+7*86400000}} };
+    const before = structuredClone(data);
+    const report = buildProgressReport(data, start+8*86400000, {includeScience:true});
+    expect(report.theme).toBe('og');
+    expect(report.science.weeks).toHaveLength(12);
+    expect(report.science.weeks[0].kind).toBe('archive');
+    expect(report.science.weeks[1].kind).toBe('current');
+    expect(report.science.weeks[2].kind).toBe('estimate');
+    expect(progressReportPages(report).filter(p=>p.type==='science')).toHaveLength(12);
+    expect(data).toEqual(before);
+  });
+  it('exports distinct theme palettes and highlights only the named anatomical muscle', () => {
+    expect(progressReportPalette('og','gold')).toMatchObject({minimal:false,glow:'0, 180, 230'});
+    expect(progressReportPalette('science-v3','purple')).toMatchObject({minimal:true,glow:'168, 85, 247'});
+    expect(progressReportPalette('science-v3','invalid').glow).toBe('230, 207, 0');
+    for (const muscle of ['Petto','Dorso','Femorali','Spalle','Bicipiti','Tricipiti','Polpacci','Glutei','Quadricipiti','Addome']) {
+      expect(progressMuscleIcon(muscle).polygons.some(p=>p.selected)).toBe(true);
+    }
+    expect(progressMuscleIcon('Dorso').posterior).toBe(true);
+    expect(progressMuscleIcon('Petto').selected).toEqual(['chest']);
+    expect(progressMuscleIcon('Custom').polygons.some(p=>p.selected)).toBe(false);
   });
 
 });

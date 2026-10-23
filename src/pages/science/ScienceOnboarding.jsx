@@ -1,16 +1,22 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, CalendarDays, CalendarCheck, CalendarClock, Check, Dna, Layers, Target, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, CalendarCheck, CalendarClock, History, Check, Dna, Layers, Target, TrendingUp } from 'lucide-react';
 import { useScienceStore as useStore } from '../../store/scienceContext';
 import { Sheet } from '../monitoring/Sheet';
 import { ScienceSwitch } from '../../components/ScienceTraining';
 import { SCIENCE_MUSCLES, OPTIONAL_MUSCLES, createScienceProgram, emptyScienceState } from '../../utils/scienceV3';
 import { getAllExercises } from '../../data/exercises';
 import { useScienceClock } from '../../hooks/useScienceClock';
+import CalendarDateField from '../../components/CalendarDateField';
+import ScienceHistoryReview from './ScienceHistoryReview';
+import { scienceBackfillWorkouts } from '../../utils/scienceBackfill';
+import MicroLoading from '../../components/MicroLoading';
+import { useMicroTransition } from '../../hooks/useMicroTransition';
 import { localScienceDate, nextScienceMonday } from '../../utils/sciencePlanning';
 
 const LEVELS = [['beginner', 'Principiante', 'Costruiamo una base solida, su tutto il corpo.'], ['intermediate', 'Intermedio', 'Volume progressivo e priorità più precise.'], ['advanced', 'Avanzato', 'Specializzazione e dosi iniziali più alte.']];
 
 export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
+  const transition = useMicroTransition(850);
   const science = useStore(s => s.scienceState);
   const previous = repeat ? null : science?.profile;
   const history = useStore(s => s.history);
@@ -22,7 +28,8 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
   const start = useStore(s => repeat ? s.restartScienceV3 : s.startScienceV3);
   const [open, setOpen] = useState(repeat);
   const [dateChoice, setDateChoice] = useState('today');
-  const close = () => { setOpen(false); onCancel?.(); };
+  const [historicalRir, setHistoricalRir] = useState({});
+  const close = () => { if (!transition.busy) { setOpen(false); onCancel?.(); } };
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(() => ({ experience: 'beginner', monthsTraining: '', daysPerWeek: 4, minutesPerSession: 60, goal: 'balanced', priorities: [], optionalMuscles: [], useWeight: false, ...previous, startDate: localScienceDate(now) }));
   const field = (key, value) => setForm(f => ({ ...f, [key]: value }));
@@ -37,10 +44,13 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
   const activeMuscles = SCIENCE_MUSCLES.filter(m => !OPTIONAL_MUSCLES.includes(m) || form.optionalMuscles.includes(m));
   const valid = step === 2 ? Number(form.minutesPerSession) >= 15 && Number(form.minutesPerSession) <= 240 : ![4, 7].includes(step) || !specialization || form.priorities.length > 0;
   const preview = useMemo(() => createScienceProgram({ ...form, priorities: form.goal === 'balanced' ? [] : form.priorities, startDate: new Date(`${form.startDate || localScienceDate(now)}T00:00:00`).getTime(), minutesPerSession: Math.min(240, Math.max(15, Math.round(Number(form.minutesPerSession) || 60))) }, history, db, science || emptyScienceState(), legacy, now).program, [form, history, db, science, legacy, now]);
+  const selectedStart = new Date(`${form.startDate}T00:00:00`).getTime();
+  const pastStart = form.startDate < localScienceDate(now);
+  const previousWorkouts = useMemo(() => scienceBackfillWorkouts(history, db, science || emptyScienceState(), selectedStart, now), [history, db, science, selectedStart, now]);
   const titles = ['Da dove parti?', 'Quanti giorni ti alleni?', 'Quanto dura una seduta?', 'Qual è il tuo obiettivo?', specialization ? 'Su cosa vuoi puntare?' : 'Crescita su tutto il corpo.', 'Quando cominciamo?', 'Vuoi aggiungere qualcosa?', 'Il tuo prossimo blocco.'];
   const subtitles = ['Scegli il livello che descrive il tuo allenamento attuale.', 'La tua disponibilità reale, senza una split obbligatoria.', 'Il tempo ci aiuta a proporti un volume gestibile.', 'Scegli la direzione. Agli esercizi pensi tu.', specialization ? 'Fino a tre priorità. Gli altri distretti partono dalla base di crescita. Nelle ultime due settimane potrai ridistribuirne parte del lavoro.' : 'Una base equilibrata. Puoi scegliere altri muscoli opzionali al prossimo passaggio.', 'Il mesociclo segue settimane di calendario dalla data scelta.', 'Sono tutte opzioni facoltative.', 'Controlla la partenza prima di iniziare.'];
   const answers = (options, key) => <div className="science-quiz-answers">{options.map(([id, label, description]) => <button type="button" key={id} className={form[key] === id ? 'is-selected' : ''} aria-pressed={form[key] === id} onClick={() => field(key, id)}><span>{label}{description && <small>{description}</small>}</span><span className="science-answer-check">{form[key] === id && <Check size={15} />}</span></button>)}</div>;
-  const finish = () => { start({ ...form, startDate: new Date(`${form.startDate}T00:00:00`).getTime() }, now); setOpen(false); onStarted(); };
+  const finish = () => transition.run(() => { start({ ...form, historicalRir, startDate: new Date(`${form.startDate}T00:00:00`).getTime() }, now); setOpen(false); onStarted?.(); });
   return <>
     {!repeat && <section className="ej-card sv3-setup-intro">
       <span className="sv3-intro-icon"><Dna size={26} /></span>
@@ -52,9 +62,11 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
       <small>Un breve quiz per scegliere il punto di partenza.</small>
     </section>}
     {open && <Sheet title="Il tuo programma" onClose={close} full footer={<div className="science-feedback-footer">
-      <button type="button" className="science-feedback-skip" onClick={() => step > 0 ? setStep(s => s - 1) : close()}>{step > 0 ? <><ArrowLeft size={14} />Indietro</> : 'Più tardi'}</button>
-      <button type="button" className="ej-btn ej-btn--primary" disabled={!valid || !form.startDate} onClick={() => step < 7 ? setStep(s => s + 1) : finish()}>{step === 7 ? repeat ? 'Conferma nuovo blocco' : 'Inizia mesociclo' : 'Continua'}{step === 7 ? <Check size={16} /> : <ArrowRight size={16} />}</button>
+      <button type="button" className="science-feedback-skip" disabled={transition.busy} onClick={() => step > 0 ? setStep(s => s - 1) : close()}>{step > 0 ? <><ArrowLeft size={14} />Indietro</> : 'Più tardi'}</button>
+      <button type="button" className="ej-btn ej-btn--primary" disabled={transition.busy || !valid || !form.startDate} onClick={() => step < 7 ? setStep(s => s + 1) : finish()}>{transition.busy ? 'Preparo il programma…' : step === 7 ? repeat ? 'Conferma nuovo blocco' : 'Inizia mesociclo' : 'Continua'}{step === 7 ? <Check size={16} /> : <ArrowRight size={16} />}</button>
     </div>}>
+      {transition.error && <p role="alert">{transition.error}</p>}
+      {transition.busy ? <MicroLoading title={repeat ? 'Ricalcolo il tuo protocollo' : 'Preparo il tuo primo mesociclo'} /> : <>
       <div className="science-quiz-topline"><span>Scienza · 0–1 RIR</span><span>{step + 1} / 8</span></div>
       <div className="science-feedback-progress"><span style={{ width: `${(step + 1) / 8 * 100}%` }} /></div>
       <h3 className="science-quiz-question">{titles[step]}</h3><p className="science-sheet-intro">{subtitles[step]}</p>
@@ -67,12 +79,15 @@ export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
         <div className="science-quiz-answers sv3-date-choices">{[
           ['today', 'Oggi', 'Partiamo subito.', CalendarCheck],
           ['monday', 'Prossimo lunedì', new Date(`${nextScienceMonday(now)}T00:00:00`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }), CalendarClock],
-          ['custom', 'Un giorno specifico', 'Scegli la tua data.', CalendarDays],
-        ].map(([id, label, description, icon]) => { const Icon = icon; return <button type="button" key={id} aria-pressed={dateChoice === id} className={dateChoice === id ? 'is-selected' : ''} onClick={() => { setDateChoice(id); if (id !== 'custom') field('startDate', id === 'today' ? localScienceDate(now) : nextScienceMonday(now)); }}><Icon size={21} /><span>{label}<small>{description}</small></span><span className="science-answer-check">{dateChoice === id && <Check size={15} />}</span></button>; })}</div>
-        {dateChoice === 'custom' && <label className="sv3-quiz-field">Data di partenza<input aria-label="Data di inizio" type="date" value={form.startDate} onChange={e => field('startDate', e.target.value)} /></label>}
+          ['past', 'Ho già iniziato', 'Scegli un giorno passato e includi le serie già fatte.', History],
+          ['custom', 'Un giorno specifico', 'Una data passata o futura.', CalendarDays],
+        ].map(([id, label, description, icon]) => { const Icon = icon; return <button type="button" key={id} aria-pressed={dateChoice === id} className={dateChoice === id ? 'is-selected' : ''} onClick={() => { setDateChoice(id); if (id === 'past' && form.startDate > localScienceDate(now)) field('startDate', localScienceDate(now)); if (id === 'today' || id === 'monday') field('startDate', id === 'today' ? localScienceDate(now) : nextScienceMonday(now)); }}><Icon size={21} /><span>{label}<small>{description}</small></span><span className="science-answer-check">{dateChoice === id && <Check size={15} />}</span></button>; })}</div>
+        {['custom', 'past'].includes(dateChoice) && <CalendarDateField value={form.startDate} max={dateChoice === 'past' ? localScienceDate(now) : undefined} onChange={value => field('startDate', value)} />}
+        {pastStart && <p className="sv3-quiz-note">Includiamo le serie registrate da questa data. Confermerai lo sforzo di quelle senza RIR nel riepilogo finale. Se sono già passati sette giorni, la prima settimana resta aperta finché scegli tu di avanzare.</p>}
       </>}
       {step === 6 && <div className="sv3-extras">{OPTIONAL_MUSCLES.map(m => <ScienceSwitch key={m} label={`Allena anche ${m.toLowerCase()}`} checked={form.optionalMuscles.includes(m)} onChange={() => toggle('optionalMuscles', m, 2)} />)}<ScienceSwitch label="Tendenza del peso" description="Usa le pesate del Diario come contesto per la massa" checked={form.useWeight} onChange={value => field('useWeight', value)} /></div>}
-      {step === 7 && <div className="sv3-quiz-recap">{repeat && <p className="sv3-quiz-note">Confermando inizierai un nuovo mesociclo. Quello attuale sarà archiviato; storico, annotazioni e XP vengono conservati.</p>}<p className="sv3-quiz-note">Partenza: {new Date(`${form.startDate}T00:00:00`).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</p>{specialization && !form.priorities.length && <p className="sv3-quiz-note">Torna alle priorità e seleziona almeno un distretto attivo.</p>}<div className="sv3-quiz-recap-stats"><span><strong>{LEVELS.find(l => l[0] === form.experience)?.[1]}</strong><small>Il tuo livello</small></span><span><strong>{form.daysPerWeek} × {form.minutesPerSession}′</strong><small>Alla settimana</small></span></div><h4>{specialization ? 'Le tue priorità' : 'La tua base di crescita'}</h4>{(specialization ? form.priorities : activeMuscles).map(m => <div className="sv3-quiz-dose" key={m}><span>{m}</span><strong>{preview.targets[m]}<small> serie</small></strong></div>)}{specialization && <p className="sv3-quiz-note">Base di crescita nelle prime due settimane: {activeMuscles.filter(m => !form.priorities.includes(m)).join(', ')}.</p>}{preview.timeWarning && <p className="sv3-quiz-note">{preview.timeWarning}</p>}<p className="sv3-quiz-note">Stime iniziali per il tuo livello. Storico e disponibilità definiscono la partenza; qualità e recupero guidano gli aumenti.</p></div>}
+      {step === 7 && <div className="sv3-quiz-recap">{repeat && <p className="sv3-quiz-note">Confermando inizierai un nuovo mesociclo. Quello attuale sarà archiviato; storico, annotazioni e XP vengono conservati.</p>}<p className="sv3-quiz-note">Partenza: {new Date(`${form.startDate}T00:00:00`).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</p>{specialization && !form.priorities.length && <p className="sv3-quiz-note">Torna alle priorità e seleziona almeno un distretto attivo.</p>}<div className="sv3-quiz-recap-stats"><span><strong>{LEVELS.find(l => l[0] === form.experience)?.[1]}</strong><small>Il tuo livello</small></span><span><strong>{form.daysPerWeek} × {form.minutesPerSession}′</strong><small>Alla settimana</small></span></div><ScienceHistoryReview workouts={previousWorkouts} choices={historicalRir} onChange={setHistoricalRir} /><h4>{specialization ? 'Le tue priorità' : 'La tua base di crescita'}</h4>{(specialization ? form.priorities : activeMuscles).map(m => <div className="sv3-quiz-dose" key={m}><span>{m}</span><strong>{preview.targets[m]}<small> serie</small></strong></div>)}{specialization && <p className="sv3-quiz-note">Base di crescita nelle prime due settimane: {activeMuscles.filter(m => !form.priorities.includes(m)).join(', ')}.</p>}{preview.timeWarning && <p className="sv3-quiz-note">{preview.timeWarning}</p>}<p className="sv3-quiz-note">Il livello dà la base. Lo storico contribuisce con un peso limitato: le serie senza RIR contano meno nella stima. Qualità e recupero guidano gli aumenti.</p></div>}
+    </>}
     </Sheet>}
   </>;
 }

@@ -1,7 +1,7 @@
 import { SCIENCE_LANDMARK_COLORS } from './sciencePlanning';
+import { drawProgressMuscle, progressReportPalette } from './progressReportStyle';
 
 const WIDTH = 1080, HEIGHT = 1440, PAD = 64;
-const C = { bg: '#07090C', panel: '#11151B', border: '#252C36', text: '#F5F7FA', muted: '#8A94A3', cyan: '#00B4E6', green: '#30D158', yellow: '#FFD60A', purple: '#BF5AF2', red: '#FF453A' };
 const fmt = (value, digits = 0) => Number(value).toLocaleString('it-IT', { maximumFractionDigits: digits });
 const date = time => new Date(time).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: '2-digit' });
 const chunks = (items, count) => Array.from({ length: Math.ceil(items.length / count) }, (_, i) => items.slice(i * count, (i + 1) * count));
@@ -15,19 +15,20 @@ export function progressReportPages(report) {
     groups.get(name).push(ex);
   });
   for (const [group, exercises] of groups) {
-    chunks(exercises, 2).forEach(items => pages.push({ type: 'exercises', title: `${group} · esercizi`, items }));
+    chunks(exercises, 2).forEach(items => pages.push({ type: 'exercises', title: `${group} · esercizi`, group, items }));
   }
   if (report.weight?.length) pages.push({ type: 'weight', title: 'Andamento del peso' });
-  if (report.science) chunks(report.science.rows, 12).forEach(items => pages.push({ type: 'science', title: `Scienza · settimana ${report.science.week}`, items }));
+  if (report.science) for (const week of report.science.weeks || [report.science]) chunks(week.rows, 12).forEach(items => pages.push({ type: 'science', title: `Scienza · settimana ${week.week}`, week, items }));
   return pages;
 }
 
+function reportPainter(C) {
 function text(ctx, value, x, y, size = 20, color = C.text, weight = 500, align = 'left') {
   ctx.font = `${weight} ${size}px Inter, system-ui, sans-serif`;
   ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(String(value), x, y); ctx.textAlign = 'left';
 }
 function card(ctx, x, y, width, height, color = C.panel) {
-  ctx.beginPath(); ctx.roundRect(x, y, width, height, 24); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = C.border; ctx.lineWidth = 1; ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(x, y, width, height, C.minimal ? 14 : 24); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = C.border; ctx.lineWidth = 1; ctx.stroke();
 }
 function bar(ctx, x, y, width, value, max, color = C.cyan, height = 10) {
   ctx.fillStyle = C.border; ctx.beginPath(); ctx.roundRect(x, y, width, height, height / 2); ctx.fill();
@@ -69,9 +70,13 @@ function chart(ctx, points, x, y, width, height, { color = C.cyan, bars = false,
 }
 function header(ctx, report, page, index, total) {
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  const glow = ctx.createRadialGradient(WIDTH * .65, 0, 0, WIDTH * .65, 0, 740);
+  glow.addColorStop(0, `rgba(${C.glow},${C.minimal ? .12 : .2})`); glow.addColorStop(1, `rgba(${C.glow},0)`);
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  drawProgressMuscle(ctx, page.group || '', WIDTH - PAD - 118, 85, 112, 150, C);
   text(ctx, 'ELITEJIM', PAD, 78, 26, C.cyan, 900);
-  text(ctx, report.demo ? 'DATI DI ESEMPIO · DEMO' : 'IL MIO PERCORSO', WIDTH - PAD, 78, 15, C.muted, 750, 'right');
-  wrapped(ctx, page.title, PAD, 154, WIDTH - PAD * 2, 43, C.text, 51, 900);
+  text(ctx, report.demo ? 'DEMO' : C.minimal ? 'SCIENCE V3 EDITION' : 'OG ELITE JIM', WIDTH - PAD, 78, 15, C.muted, 750, 'right');
+  wrapped(ctx, page.title, PAD, 154, WIDTH - PAD * 2 - 160, 43, C.text, 51, 900);
   text(ctx, report.period, PAD, 204, 17, C.muted);
   ctx.strokeStyle = C.border; ctx.beginPath(); ctx.moveTo(PAD, HEIGHT - 80); ctx.lineTo(WIDTH - PAD, HEIGHT - 80); ctx.stroke();
   text(ctx, `Report del ${date(report.generatedAt)} · tutti i dati registrati`, PAD, HEIGHT - 42, 15, C.muted);
@@ -79,9 +84,10 @@ function header(ctx, report, page, index, total) {
 }
 function summary(ctx, report) {
   const t = report.totals;
-  text(ctx, report.rank.title, PAD, 256, 24, report.rank.color, 800);
+  const rankColor = C.minimal ? C.yellow : report.rank.color;
+  text(ctx, report.rank.title, PAD, 256, 24, rankColor, 800);
   text(ctx, `${fmt(t.xp)} XP`, WIDTH - PAD, 256, 21, C.muted, 650, 'right');
-  bar(ctx, PAD, 278, WIDTH - PAD * 2, report.rank.progress, 100, report.rank.color, 8);
+  bar(ctx, PAD, 278, WIDTH - PAD * 2, report.rank.progress, 100, rankColor, 8);
   const metrics = [[t.workouts, 'ALLENAMENTI'], [t.completedSets, 'SERIE REGISTRATE'], [t.prCount, 'RECORD BATTUTI'], [t.overloadRate == null ? '—' : `${t.overloadRate}%`, 'SEDUTE IN OVERLOAD'], [`${t.currentStreak} sett.`, 'STREAK ATTUALE'], [`${t.highestStreak} sett.`, 'STREAK MIGLIORE']];
   metrics.forEach(([value, label], i) => {
     const x = PAD + i % 3 * 324, y = 322 + Math.floor(i / 3) * 156;
@@ -96,17 +102,19 @@ function summary(ctx, report) {
   wrapped(ctx, `${report.exercises.length} esercizi nel dettaglio nelle pagine successive. Totali e record seguono le formule dell’app; le serie registrate includono le tecniche di intensità.`, PAD, 1240, WIDTH - PAD * 2, 17, C.muted, 26);
 }
 function science(ctx, report, page) {
-  text(ctx, `${report.science.phase} · ${report.science.accounting === 'legacy' ? 'conteggi originali' : 'serie dirette a 0–1 RIR'}`, PAD, 250, 18, C.muted);
+  const estimated = page.week.kind === 'estimate' || page.week.kind === 'deload-estimate';
+  text(ctx, `${page.week.phase} · ${report.science.accounting === 'legacy' ? 'conteggi originali' : 'serie dirette a 0–1 RIR'}`, PAD, 250, 18, C.muted);
   page.items.forEach((m, i) => {
-    const y = 308 + i * 76;
+    const y = 328 + i * 76;
     const color = SCIENCE_LANDMARK_COLORS[m.band] || C.cyan;
     text(ctx, m.name, PAD, y, 23, C.text, 700);
     if (m.focus) text(ctx, 'FOCUS', PAD + 240, y, 13, color, 850);
-    text(ctx, `${m.done} / ${m.target} serie`, WIDTH - PAD, y, 20, color, 750, 'right');
-    bar(ctx, PAD, y + 20, WIDTH - PAD * 2, m.done, Math.max(1, m.target), color, 8);
+    text(ctx, estimated ? `${m.target} serie · stima` : `${m.done} / ${m.target} serie`, WIDTH - PAD, y, 20, color, 750, 'right');
+    const peak = estimated ? Math.max(1, ...(report.science.weeks || [page.week]).flatMap(w => w.rows.filter(row => row.name === m.name).map(row => row.target))) : Math.max(1, m.target);
+    bar(ctx, PAD, y + 20, WIDTH - PAD * 2, estimated ? m.target : m.done, peak, color, 8);
     if (m.unknown) text(ctx, `${m.unknown} senza RIR`, PAD, y + 48, 13, C.yellow);
   });
-  text(ctx, report.science.accounting === 'legacy' ? 'Protocollo precedente conservato secondo le sue regole originali.' : 'Serie senza RIR, riscaldamento e tecniche escluse dai target scientifici.', PAD, 1285, 16, C.muted);
+  wrapped(ctx, page.week.kind === 'estimate' || page.week.kind === 'deload-estimate' ? 'Proiezione: gli obiettivi potranno cambiare in base a qualità, recupero e scelte dell’atleta. Nessuna serie futura è già completata.' : report.science.accounting === 'legacy' ? 'Conteggi storici del protocollo conservati. Scienza V3.0 modifica solo le proposte accettate.' : 'Serie senza RIR, riscaldamento e tecniche escluse dai target scientifici.', PAD, 1268, WIDTH - PAD * 2, 15, C.muted, 23);
 }
 function exercise(ctx, ex, y) {
   card(ctx, PAD, y, WIDTH - PAD * 2, 500);
@@ -132,10 +140,18 @@ function weight(ctx, report) {
   wrapped(ctx, 'La variazione del peso non misura da sola la crescita muscolare. Il grafico mostra tutte le pesate registrate e non interpreta una fase di massa o definizione.', PAD, 1090, WIDTH - PAD * 2, 20, C.muted, 34);
 }
 
+function exercisePage(ctx, page) {
+  page.items.forEach((ex, j) => exercise(ctx, ex, 244 + j * 526));
+  text(ctx, 'Stime, non massimali testati. Serie ordinarie; a corpo libero, carico esterno aggiunto.', PAD, 1295, 15, C.muted);
+}
+return { header, summary, science, exercisePage, weight };
+}
+
 export async function renderProgressReport(report, { signal } = {}) {
   const { jsPDF } = await import('jspdf');
   await document.fonts?.ready;
   const pages = progressReportPages(report), images = [];
+  const { header, summary, science, exercisePage, weight } = reportPainter(progressReportPalette(report.theme, report.scienceGlow));
   const canvas = document.createElement('canvas'); canvas.width = WIDTH; canvas.height = HEIGHT;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Impossibile creare il report su questo browser.');
@@ -148,7 +164,7 @@ export async function renderProgressReport(report, { signal } = {}) {
     if (page.type === 'summary') summary(ctx, report);
     else if (page.type === 'science') science(ctx, report, page);
     else if (page.type === 'weight') weight(ctx, report);
-    else { page.items.forEach((ex, j) => exercise(ctx, ex, 244 + j * 526)); text(ctx, 'Stime, non massimali testati. Serie ordinarie; a corpo libero, carico esterno aggiunto.', PAD, 1295, 15, C.muted); }
+    else exercisePage(ctx, page);
     if (i === 0) summaryPng = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     const image = canvas.toDataURL('image/jpeg', 0.9); images.push(image);
     if (i > 0) pdf.addPage([WIDTH, HEIGHT], 'portrait');

@@ -10,6 +10,7 @@ import './Science.css';
 import './ScienceV3.css';
 import ScienceSetup from './ScienceOnboarding';
 import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
+import { beginnerStartCorrection } from '../../utils/scienceV3';
 import { useScienceAllocationPolicy } from '../../hooks/useScienceAllocationPolicy';
 import ScienceSessionPlanner from '../../components/ScienceSessionPlanner';
 import ScienceTutorialButton from './ScienceTutorial';
@@ -48,6 +49,8 @@ export default function ScienceV3() {
   const [restart, setRestart] = useState(false);
   const [viewWeek, setViewWeek] = useState(null);
   const db = useMemo(() => getAllExercises(custom, overrides), [custom, overrides]);
+  const correction = beginnerStartCorrection(science, history, db, legacy, now);
+  const respondCorrection = useStore(s => s.respondBeginnerStartCorrection);
   const p = science?.program;
   const range = p && scienceProgramWeekRange(p);
   const timing = p && scienceWeekTiming(p, now);
@@ -58,6 +61,7 @@ export default function ScienceV3() {
       <section className="ej-card sv3-dashboard-hero"><ScienceTutorialButton /><span className="sv3-status"><Dna size={14} />Il tuo percorso</span><h2>{p.status === 'completed' ? 'Un blocco di esperienza in più.' : now < p.startDate ? 'Il tuo mesociclo.' : p.currentWeek === 5 ? 'Recupero da concordare.' : p.currentWeek === 4 ? 'Costruisci il tuo picco.' : 'Sfida il tuo limite.'}</h2><p>{p.status === 'completed' ? 'Rivaluta le priorità e riparti dai dati raccolti.' : now < p.startDate ? `Partenza ${new Date(p.startDate).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}. Nel frattempo esplora le stime delle settimane.` : 'Il volume cresce con la tua capacità di recuperare.'}</p>{p.status === 'active' && <div className={`sv3-week-timing ${timing.overdue ? 'is-overdue' : ''}`}><Clock3 size={14} /><span>{timing.label}</span><small>{new Date(timing.end).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></div>}<div className="sv3-week-strip" role="group" aria-label="Settimane del mesociclo">{[1, 2, 3, 4, 5].map(w => <button type="button" key={w} aria-pressed={w === (viewWeek ?? Math.min(p.currentWeek, 5))} className={w === (viewWeek ?? Math.min(p.currentWeek, 5)) ? 'is-active' : ''} onClick={() => setViewWeek(w)}><strong>{`W${w}`}</strong><small>{p.weeks.some(saved => saved.week === w) ? 'Registrata' : w === p.currentWeek ? now < p.startDate ? 'Partenza' : 'Attuale' : w === 5 ? 'Proposta' : 'Stima'}</small></button>)}</div><button type="button" className="sv3-repeat-quiz" onClick={() => setRestart(true)}><RotateCcw size={13} />Ripeti il quiz da capo</button>
         {p.status === 'completed' && <button type="button" className="sci-cta" onClick={() => setRestart(true)}>Scegli il prossimo mesociclo <ChevronRight size={18} /></button>}
       </section>
+      {correction && <section className="ej-card sv3-advice"><span className="sci-kicker">Una partenza più adatta al tuo livello</span><h3>Rivediamo la dose iniziale?</h3><p>La vecchia stima dava troppo peso alle serie registrate. Ora partiamo dai riferimenti per principianti e lasciamo allo storico solo una parte del calcolo. Nulla cambia senza la tua conferma.</p><div className="sv3-redistribution-changes">{correction.changes.map(c => <span key={c.muscle}>{c.muscle}<strong>{c.before} → {c.after}</strong></span>)}</div><div className="sv3-advice-actions"><button type="button" className="ej-btn ej-btn--primary" onClick={() => respondCorrection(true, now)}>Applica la nuova stima</button><button type="button" className="science-feedback-skip" onClick={() => respondCorrection(false, now)}>Mantieni i miei obiettivi</button></div></section>}
       {p.allocationNotice && <p className="sv3-allocation-note">{p.allocationNotice}</p>}
       {p.timeWarning && <p className="sv3-notice">{p.timeWarning}</p>}
       {due && <section className="ej-card sv3-week-check"><h3><TrendingUp size={18} /> Check della settimana {p.currentWeek}</h3><p>Chiudi la settimana per aggiornare gli obiettivi. Gli aumenti ordinari sono automatici; recupero e riduzioni si applicano solo se li accetti.</p><button type="button" className="sci-cta" disabled={hasWorkout} onClick={() => { closeWeek(now); setViewWeek(null); }}>{p.currentWeek === 5 ? 'Concludi il mesociclo' : 'Chiudi settimana e aggiorna obiettivi'}</button>{hasWorkout && <p>Concludi la seduta in corso prima di passare alla settimana successiva.</p>}</section>}

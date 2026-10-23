@@ -9,6 +9,9 @@ import { BackupReminderBanner } from '../../components/BackupReminderBanner';
 import { ShareTemplateModal } from '../../components/ShareTemplateModal';
 import { DailyRecapCard } from '../../components/DailyRecapCard';
 import pkg from '../../../package.json';
+import RoutineCard from './RoutineCard';
+import eliteJimLogo from '../../assets/elitejim-logo-script.png?inline';
+import { Sheet } from '../monitoring/Sheet';
 import './Home.css';
 
 function getGreeting() {
@@ -38,6 +41,7 @@ function Home() {
 
   const [showWelcome, setShowWelcome] = useState(false);
   const [sharingTemplate, setSharingTemplate] = useState(null);
+  const [actionTemplate, setActionTemplate] = useState(null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -63,6 +67,7 @@ function Home() {
   const handleDelete = (template) => {
     if (window.confirm(`Sei sicuro di voler eliminare la scheda "${template.name}"?\nQuesta azione è irreversibile.`)) {
       deleteTemplate(template.id);
+      setActionTemplate(null);
     }
   };
 
@@ -75,9 +80,9 @@ function Home() {
 
         {/* ── HEADER ─────────────────────────────────── */}
         <header className="home-header">
-          <div>
+          <div className="home-brand">
             <p className="ej-eyebrow">{getGreeting()}</p>
-            <h1 className="ej-title">EliteJIM</h1>
+            <h1 className="home-logo-title"><img src={eliteJimLogo} alt="EliteJIM" width="272" height="116" /></h1>
           </div>
           <div className="home-header-actions">
             <button
@@ -115,55 +120,28 @@ function Home() {
         )}
 
         {/* ── RIEPILOGO GIORNALIERO (→ Diario) ──────── */}
-        <DailyRecapCard />
+        {!activeWorkout && <DailyRecapCard />}
 
-        {/* ── ALLENATI ───────────────────────────────── */}
-        <section className="home-section">
-          <div className="ej-section-header">
-            <h2 className="ej-section-title">Allenati</h2>
-            <button type="button" className="ej-btn ej-btn--secondary home-new-btn" onClick={() => navigate('/build')}>
-              <Plus size={16} className="home-new-icon" /> Nuova Scheda
-            </button>
-          </div>
-
+        {/* ── ALLENAMENTO LIBERO ─────────────────────── */}
+        <section className="home-section" aria-labelledby="home-training-title">
+          <h2 className="ej-section-title" id="home-training-title">Allenati</h2>
           <button type="button" className="home-free" onClick={handleStartEmpty}>
             <Dumbbell size={20} /> Sessione Libera
           </button>
+        </section>
 
-          {templates.length > 0 && (
-            <div className="home-routines">
-              {templates.map(template => {
-                const setsTotal = template.exercises.reduce((a, ex) => a + (Number(ex.setsCount) || 0), 0);
-                return (
-                  <article key={template.id} className="ej-card home-routine">
-                    <div className="home-routine-head">
-                      <span className="home-routine-badge">{(template.name || '?').trim().charAt(0).toUpperCase()}</span>
-                      <div className="home-routine-text">
-                        <h3>{template.name}</h3>
-                        <p>{template.exercises.length} esercizi · {setsTotal} serie</p>
-                      </div>
-                    </div>
-                    <div className="home-routine-actions">
-                      <div className="home-routine-tools">
-                        <button type="button" className="ej-icon-btn ej-icon-btn--danger" onClick={() => handleDelete(template)} title="Elimina scheda">
-                          <Trash2 size={16} />
-                        </button>
-                        <button type="button" className="ej-icon-btn ej-icon-btn--primary" onClick={() => setSharingTemplate(template)} title="Condividi ed esporta scheda">
-                          <Share2 size={16} />
-                        </button>
-                        <button type="button" className="ej-icon-btn" onClick={() => navigate('/build', { state: { template } })} title="Modifica scheda">
-                          <Edit3 size={16} />
-                        </button>
-                      </div>
-                      <button type="button" className="ej-btn ej-btn--primary" onClick={() => handleStartTemplate(template)} title="Inizia allenamento">
-                        <Play size={14} fill="currentColor" /> Inizia
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+        {/* ── SCHEDE ────────────────────────────────── */}
+        <section className="home-section" aria-labelledby="home-routines-title">
+          <div className="home-routines-heading">
+            <div className="ej-section-header">
+              <h2 className="ej-section-title" id="home-routines-title">Le tue schede</h2>
+              <button type="button" className="ej-btn ej-btn--secondary home-new-btn" onClick={() => navigate('/build')}>
+                <Plus size={16} className="home-new-icon" /> Nuova Scheda
+              </button>
             </div>
-          )}
+            {templates.length > 0 && <p className="home-routine-hint" id="routine-gesture-hint">Tocca per iniziare · Tieni premuto per le opzioni</p>}
+          </div>
+          {templates.length > 0 && <div className="home-routines">{templates.map(template => <RoutineCard key={template.id} template={template} onStart={() => handleStartTemplate(template)} onActions={() => setActionTemplate(template)} />)}</div>}
         </section>
 
         {/* ── XP & SESSIONI ──────────────────────────── */}
@@ -184,6 +162,8 @@ function Home() {
 
         <p className="ej-footer-version">ELITEJIM v{pkg.version}</p>
       </div>
+
+      {actionTemplate && <Sheet title="Opzioni scheda" onClose={() => setActionTemplate(null)}><div className="home-routine-menu"><p>{actionTemplate.name}</p><button type="button" onClick={() => { setSharingTemplate(actionTemplate); setActionTemplate(null); }}><Share2 size={19} /><span>Condividi scheda<small>Esporta o invia a un amico</small></span></button><button type="button" onClick={() => { setActionTemplate(null); navigate('/build', { state: { template: actionTemplate } }); }}><Edit3 size={19} /><span>Modifica scheda<small>Esercizi, serie e dettagli</small></span></button><button type="button" className="is-danger" onClick={() => handleDelete(actionTemplate)}><Trash2 size={19} /><span>Elimina scheda<small>Ti chiederemo conferma</small></span></button></div></Sheet>}
 
       <ShareTemplateModal
         isOpen={!!sharingTemplate}

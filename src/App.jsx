@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { hasCurrentThemeChoice } from './utils/theme';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, TrendingUp, User, Dna, Utensils } from 'lucide-react';
 import { initPersistentStorage } from './utils/backup';
@@ -21,6 +22,8 @@ import ReloadPrompt from './components/ReloadPrompt';
 import ScienceWeekPrompt from './components/ScienceWeekPrompt';
 import GlobalWorkoutBanner from './components/GlobalWorkoutBanner';
 import DemoBanner from './components/DemoBanner';
+import { useStore } from './store/useStore';
+import { ThemeOnboarding } from './components/ThemePicker';
 import OptionalFeature from './components/OptionalFeature';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
@@ -57,9 +60,12 @@ function Navigation() {
 }
 
 function App() {
+  const themeChosen = useStore(hasCurrentThemeChoice);
   useEffect(() => {
     initPersistentStorage();
   }, []);
+
+  if (!themeChosen) return <><DemoBanner /><ThemeOnboarding /></>;
 
   return (
     <BrowserRouter>
@@ -71,7 +77,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/workout" element={<Workout />} />
           <Route path="/progress" element={<ProgressOverload />} />
-          <Route path="/science" element={<OptionalFeature feature="science"><Science /></OptionalFeature>} />
+          <Route path="/science" element={<OptionalFeature key="science" feature="science"><Science /></OptionalFeature>} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/exercises" element={<Exercises />} />
@@ -81,8 +87,8 @@ function App() {
           <Route path="/history" element={<History />} />
           <Route path="/edit-workout/:workoutId" element={<EditWorkout />} />
           <Route path="/activity" element={<Activity />} />
-          <Route path="/diario" element={<OptionalFeature feature="diary"><Monitoring /></OptionalFeature>} />
-          <Route path="/settings/pasti" element={<OptionalFeature feature="diary"><MyMeals /></OptionalFeature>} />
+          <Route path="/diario" element={<OptionalFeature key="diary" feature="diary"><Monitoring /></OptionalFeature>} />
+          <Route path="/settings/pasti" element={<OptionalFeature key="meals" feature="diary"><MyMeals /></OptionalFeature>} />
         </Routes>
         <Navigation />
         <ScienceWeekPrompt />

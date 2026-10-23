@@ -1,7 +1,9 @@
 import { getAllExercises, normalizeName } from '../data/exercises';
+import { applyScienceBackfill } from '../utils/scienceBackfill';
+import { completeScienceEvolution, decideLegacyDynamicVolume } from '../utils/scienceEvolution';
 import {
   SCIENCE_MUSCLES, OPTIONAL_MUSCLES, emptyScienceState, hasLegacyScience,
-  createScienceProgram, closeScienceWeek, respondScienceRecommendation,
+  createScienceProgram, closeScienceWeek, respondScienceRecommendation, beginnerStartCorrection,
 } from '../utils/scienceV3';
 
 const database = state => getAllExercises(state.customExercises, state.exerciseOverrides);
@@ -15,8 +17,9 @@ function startProgram(state, input, now, restart = false) {
     const archived = science.program.status === 'active' ? { ...science.program, status: 'replaced', endedAt: now } : science.program;
     science = { ...science, archives: [...science.archives, archived] };
   }
+  const { historicalRir, ...profileInput } = input;
   const profile = {
-    ...input,
+    ...profileInput,
     experience: ['beginner', 'intermediate', 'advanced'].includes(input.experience) ? input.experience : 'beginner',
     monthsTraining: clamp(input.monthsTraining, 0, 1200, 0),
     daysPerWeek: clamp(input.daysPerWeek, 1, 7, 4),
@@ -27,6 +30,9 @@ function startProgram(state, input, now, restart = false) {
   };
   if (profile.goal === 'specialization' && !profile.priorities.length) return state;
   if (profile.goal === 'balanced') profile.priorities = [];
+  const startDate = new Date(Number(profile.startDate) || now);
+  startDate.setHours(0, 0, 0, 0);
+  science = applyScienceBackfill(science, state.history, database(state), startDate.getTime(), now, historicalRir);
   return { scienceState: createScienceProgram(profile, state.history, database(state), science, state.scienceReport, now) };
 }
 
@@ -34,6 +40,32 @@ function startProgram(state, input, now, restart = false) {
 // updateHistoryWorkout/syncGamificationWithHistory (which recalculate XP).
 export function scienceActions(set) {
   return {
+    respondBeginnerStartCorrection: (accept, now = Date.now()) => set(state => {
+      if (typeof accept !== 'boolean') return state;
+      const science = state.scienceState, p = science?.program;
+      const correction = beginnerStartCorrection(science, state.history, database(state), state.scienceReport, now);
+      if (!correction) return state;
+      const targets = { ...p.targets }, initialTargets = { ...p.initialTargets }, landmarks = structuredClone(p.landmarks), decisions = { ...p.decisions };
+      if (accept) for (const c of correction.changes) {
+        targets[c.muscle] = c.after; initialTargets[c.muscle] = c.after;
+        landmarks[c.muscle] = { ...landmarks[c.muscle], mevEstimate:correction.estimated.landmarks[c.muscle].mevEstimate, mvEstimate:correction.estimated.landmarks[c.muscle].mvEstimate, source:'blended-estimate' };
+        decisions[c.muscle] = 'Nuova stima iniziale per principianti accettata: livello e storico ponderato.';
+      }
+      const ceilings = { ...p.ceilings };
+      if (accept) for (const c of correction.changes) ceilings[c.muscle] = correction.estimated.ceilings[c.muscle];
+      return { scienceState:{ ...science, program:{ ...p, targets, initialTargets, landmarks, decisions, ceilings, timeWarning:accept ? correction.estimated.timeWarning : p.timeWarning, startingDoseVersion:2, initialEstimates:correction.estimated.initialEstimates,
+        initialDoseCorrection:{ accepted:accept, at:now, changes:correction.changes } } } };
+    }),
+    completeScienceEvolution: (now = Date.now()) => set(state => {
+      const science = state.scienceState || emptyScienceState();
+      const next = completeScienceEvolution(science, state.scienceReport, now);
+      return next === science ? state : { scienceState: next };
+    }),
+    decideLegacyDynamicVolume: (choice, now = Date.now()) => set(state => {
+      const science = state.scienceState || emptyScienceState();
+      const next = decideLegacyDynamicVolume(science, state.scienceReport, state.history, database(state), choice, now);
+      return next === science ? state : { scienceState: next };
+    }),
     startScienceV3: (input, now = Date.now()) => set(state => startProgram(state, input, now)),
     restartScienceV3: (input, now = Date.now()) => set(state => startProgram(state, input, now, true)),
     annotateScienceSet: (workoutId, exerciseId, setId, changes) => set(state => {

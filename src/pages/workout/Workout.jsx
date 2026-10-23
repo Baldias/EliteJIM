@@ -9,6 +9,7 @@ import { ScienceSetControls, ScienceExerciseClassification } from '../../compone
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 import { sanitizeDecimalInput } from '../../utils/number';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
+import TrainingReminder from '../../components/TrainingReminder';
 import './Workout.css';
 
 const round1 = (n) => Math.round(n * 10) / 10;
@@ -197,6 +198,7 @@ function Workout() {
 
       {/* ── EXERCISES ─────────────────────── */}
       <div className="wk-body">
+        <TrainingReminder key={activeWorkout.id} workout={activeWorkout} />
 
         {/* Empty state */}
         {activeWorkout.exercises.length === 0 && (

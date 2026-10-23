@@ -1,0 +1,130 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { useStore } from '../src/store/useStore';
+import { getAllExercises } from '../src/data/exercises';
+import { emptyScienceState } from '../src/utils/scienceV3';
+import { calculateSessionScore } from '../src/utils/gamification';
+import { normalizeBackupPayload } from '../src/utils/backup';
+import { getScienceTargetForMuscle } from '../src/utils/rpVolume';
+import { completeScienceEvolution, decideLegacyDynamicVolume, evolvedLegacyReport, legacyDynamicProposal, legacyVolumeEvidence, needsScienceEvolution, scienceTrackingEnabled } from '../src/utils/scienceEvolution';
+
+const start = new Date(2026, 8, 7).getTime(), day = 86400000, now = start + 16 * day;
+const db = getAllExercises([], {});
+const legacy = () => ({ timestamp:start, startDate:start, currentWeekStartDate:start+14*day, status:'active', currentWeek:3, focus1:[], focus2:['Petto'], daysPerWeek:5,
+  baseLandmarks:{Petto:{mev:10,mav:12,mrv:20},Bicipiti:{mev:8,mav:10,mrv:18}}, weekHistory:{1:{startDate:start,completedDate:start+7*day},2:{startDate:start+7*day,completedDate:start+14*day}} });
+const history = () => [0,1].map((w) => ({id:w+1,startTime:start+(w*7+1)*day,endTime:start+(w*7+1)*day+3600000,exercises:[{id:'e',name:'Panca Piana Bilanciere',sets:Array.from({length:16},(_,i)=>({id:i,reps:10,kg:60,done:true}))}]}));
+const original = useStore.getInitialState();
+const protectedData = state => structuredClone(Object.fromEntries(['history','activeWorkout','scienceReport','userXP','muscleXP','currentStreak','highestStreak','templates'].map(k=>[k,state[k]])));
+beforeEach(()=>useStore.setState({...original,history:history(),scienceReport:legacy(),scienceState:emptyScienceState(),userXP:2400,muscleXP:{Petto:700},currentStreak:6,highestStreak:8},true));
+
+describe('legacy science evolution without resetting the protocol',()=>{
+  it('offers the tour once, keeps pending protocols unstarted and persists the marker in backups',()=>{
+    const report = {...legacy(),status:'pending'};
+    const empty = emptyScienceState();
+    expect(needsScienceEvolution(report,empty)).toBe(true);
+    const seen = completeScienceEvolution(empty,report,now);
+    expect(needsScienceEvolution(report,seen)).toBe(false);
+    expect(completeScienceEvolution(seen,report,now+1000)).toBe(seen);
+    expect(scienceTrackingEnabled({scienceReport:report,scienceState:seen})).toBe(false);
+    expect(normalizeBackupPayload({scienceReport:report,scienceState:seen}).state.scienceState).toEqual(seen);
+    expect(needsScienceEvolution(null,empty)).toBe(false);
+    expect(needsScienceEvolution({...report,status:'completed'},empty)).toBe(false);
+  });
+  it('changes only the science sidecar for onboarding, annotations, feedback and both proposal decisions',()=>{
+    const before = protectedData(useStore.getState());
+    const score = calculateSessionScore(history()[0],[],db,legacy(),80);
+    useStore.getState().completeScienceEvolution(now);
+    useStore.getState().completeScienceEvolution(now+1);
+    useStore.getState().annotateScienceSet(1,'e',0,{rir:0});
+    useStore.getState().saveScienceFeedback(1,{sleep:'good',muscles:{Petto:{quality:'good',recovery:'good'}}});
+    useStore.getState().decideLegacyDynamicVolume('accept',now);
+    const sidecar = useStore.getState().scienceState;
+    expect(sidecar.legacyEvolution.decisions['week-4'].choice).toBe('accept');
+    expect(sidecar.legacyEvolution.decisions['week-4'].evidence).toHaveLength(2);
+    useStore.getState().decideLegacyDynamicVolume('reject',now+1);
+    expect(useStore.getState().scienceState).toBe(sidecar);
+    expect(protectedData(useStore.getState())).toEqual(before);
+    expect(calculateSessionScore(useStore.getState().history[0],[],db,useStore.getState().scienceReport,80)).toEqual(score);
+    expect(useStore.getState().scienceState.program).toBeNull();
+  });
+  it('personalizes only the accepted future week and keeps historic unknown RIR explicitly uncertain',()=>{
+    const report = legacy(), workouts = history();
+    const science = completeScienceEvolution(emptyScienceState(),report,now);
+    const proposal = legacyDynamicProposal(report,workouts,db,science,now);
+    expect(proposal.changes.find(c=>c.muscle==='Petto')).toMatchObject({before:10,after:12,observed:16});
+    expect(proposal.changes[0].reason).toContain('Sforzo storico non sempre registrato');
+    const next = decideLegacyDynamicVolume(science,report,workouts,db,'accept',now);
+    const view = evolvedLegacyReport(report,next);
+    expect(getScienceTargetForMuscle(view,'Petto',4)).toBe(12);
+    expect(getScienceTargetForMuscle(view,'Petto',3)).toBe(10);
+    expect(getScienceTargetForMuscle(view,'Petto',1)).toBe(10);
+    expect(getScienceTargetForMuscle(view,'Petto',5)).toBe(12);
+    expect(getScienceTargetForMuscle(report,'Petto',4)).toBe(10);
+    expect(next.annotations).toEqual({});
+    expect(next.legacyEvolution.decisions['week-4'].evidence[0].volumes.muscles.Petto.direct).toBe(0);
+    const other = {...report,timestamp:start+1};
+    expect(evolvedLegacyReport(other,next)).toBe(other);
+  });
+  it('keeps all targets when a proposal is declined, with no fatigue penalty or hidden freeze',()=>{
+    const report=legacy(),workouts=history(),science=completeScienceEvolution(emptyScienceState(),report,now);
+    const after=decideLegacyDynamicVolume(science,report,workouts,db,'reject',now);
+    expect(evolvedLegacyReport(report,after).dynamicVolumeTargets).toEqual({});
+    expect(getScienceTargetForMuscle(evolvedLegacyReport(report,after),'Petto',4)).toBe(10);
+    expect(after.legacyEvolution.decisions['week-4'].choice).toBe('reject');
+  });
+  it('never derives weekly doses from overlapping, incomplete or prolonged weeks',()=>{
+    const report=legacy(),science=completeScienceEvolution(emptyScienceState(),report,now);
+    report.weekHistory[1].completedDate=start+20*day;
+    report.weekHistory[2].startDate=start+8*day;
+    report.weekHistory[2].completedDate=start+9*day;
+    expect(legacyVolumeEvidence(report,history(),db,science,now)).toEqual([]);
+    expect(legacyDynamicProposal(report,history(),db,science,now).changes).toEqual([]);
+  });
+  it('continues from the same week on the same calendar and retains accepted targets after advancing',()=>{
+    useStore.getState().completeScienceEvolution(now);
+    useStore.getState().decideLegacyDynamicVolume('accept',now);
+    const before=useStore.getState().scienceReport;
+    useStore.getState().advanceScienceWeek();
+    const after=useStore.getState();
+    expect(after.scienceReport.currentWeek).toBe(4);
+    expect(after.scienceReport.startDate).toBe(before.startDate);
+    expect(after.scienceReport.weekHistory[1]).toEqual(before.weekHistory[1]);
+    expect(getScienceTargetForMuscle(evolvedLegacyReport(after.scienceReport,after.scienceState),'Petto',4)).toBe(12);
+    expect(after.scienceState.releaseV3.seenAt).toBe(now);
+    expect(scienceTrackingEnabled(after)).toBe(true);
+  });
+  it('makes systemic fatigue a consented suggestion and allows normal progression after rejection',()=>{
+    const report=legacy(),workouts=history();
+    workouts.push({...workouts[1],id:55,startTime:workouts[1].startTime+day});
+    const science=completeScienceEvolution(emptyScienceState(),report,now);
+    science.feedback={2:{systemicFatigue:true},55:{systemicFatigue:true}};
+    const proposal=legacyDynamicProposal(report,workouts,db,science,now);
+    expect(proposal.changes.find(c=>c.muscle==='Petto')).toMatchObject({before:10,after:7});
+    const rejected=decideLegacyDynamicVolume(science,report,workouts,db,'reject',now);
+    expect(getScienceTargetForMuscle(evolvedLegacyReport(report,rejected),'Petto',4)).toBe(10);
+    const accepted=decideLegacyDynamicVolume(science,report,workouts,db,'accept',now);
+    expect(getScienceTargetForMuscle(evolvedLegacyReport(report,accepted),'Petto',4)).toBe(7);
+    expect(getScienceTargetForMuscle(evolvedLegacyReport(report,accepted),'Petto',3)).toBe(10);
+    useStore.setState({scienceState:rejected});
+    const before=useStore.getState().userXP;
+    useStore.getState().advanceScienceWeek();
+    expect(useStore.getState().scienceReport.currentWeek).toBe(4);
+    expect(useStore.getState().userXP).toBe(before);
+  });
+  it('finishes the same legacy workout with identical XP and logs, with or without the new annotations',()=>{
+    const active={...history()[0],id:999,startTime:now};
+    useStore.setState({activeWorkout:structuredClone(active)});
+    const baseline={...useStore.getState()};
+    useStore.getState().finishWorkout();
+    const plain=useStore.getState();
+    const expectedXP=plain.userXP, expectedMuscleXP=structuredClone(plain.muscleXP);
+    useStore.setState(baseline,true);
+    useStore.getState().completeScienceEvolution(now);
+    useStore.getState().annotateScienceSet(999,'e',0,{rir:1});
+    useStore.getState().finishWorkout();
+    const upgraded=useStore.getState();
+    expect(upgraded.userXP).toBe(expectedXP);
+    expect(upgraded.muscleXP).toEqual(expectedMuscleXP);
+    expect(upgraded.history[0].exercises).toEqual(plain.history[0].exercises);
+    expect(upgraded.scienceState.exerciseSnapshots[999].e.primary).toBe('Petto');
+  });
+});
