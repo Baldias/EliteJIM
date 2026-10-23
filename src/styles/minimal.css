@@ -1,7 +1,7 @@
 /* Minimal brand refresh: black foundation, existing blue for interaction,
    yellow for a few highlights. Semantic status/landmark colors stay intact.
    Loaded after page styles so the treatment is consistent across routes. */
-:root {
+:root[data-theme="science-v3"] {
   --c-bg: #000000;
   --c-surface: #0A0A0A;
   --c-surface-2: #151515;
@@ -33,53 +33,53 @@
 }
 
 /* Pure black between surfaces; typography and spacing retain the app's voice. */
-.ej-page .ej-glow,
-.wk-page .wk-glow,
-.app-container .app-header::before,
-.app-container .profile-header::before {  }
+:root[data-theme="science-v3"] .ej-page .ej-glow,
+:root[data-theme="science-v3"] .wk-page .wk-glow,
+:root[data-theme="science-v3"] .app-container .app-header::before,
+:root[data-theme="science-v3"] .app-container .profile-header::before {  }
 
-.header-content h1,
-.app-container .header-content h1 {
+:root[data-theme="science-v3"] .header-content h1,
+:root[data-theme="science-v3"] .app-container .header-content h1 {
   background: none;
   -webkit-text-fill-color: var(--c-text);
   filter: none;
 }
-.header-content .subtitle { color: var(--c-primary); text-shadow: none; }
-.card { box-shadow: none; }
+:root[data-theme="science-v3"] .header-content .subtitle { color: var(--c-primary); text-shadow: none; }
+:root[data-theme="science-v3"] .card { box-shadow: none; }
 
 /* Flat, quiet controls. Color identifies actions without filling every button. */
-.ej-btn,
-.sci-cta,
-.mn-cta { border-radius: 12px; font-weight: 650; box-shadow: none; }
-.ej-btn--primary,
-.sci-cta,
-.mn-cta {
+:root[data-theme="science-v3"] .ej-btn,
+:root[data-theme="science-v3"] .sci-cta,
+:root[data-theme="science-v3"] .mn-cta { border-radius: 12px; font-weight: 650; box-shadow: none; }
+:root[data-theme="science-v3"] .ej-btn--primary,
+:root[data-theme="science-v3"] .sci-cta,
+:root[data-theme="science-v3"] .mn-cta {
   color: var(--c-primary);
   background: rgba(var(--c-primary-rgb), .08);
   border: 1px solid rgba(var(--c-primary-rgb), .32);
 }
-.ej-btn--secondary,
-.sci-small-btn {
+:root[data-theme="science-v3"] .ej-btn--secondary,
+:root[data-theme="science-v3"] .sci-small-btn {
   color: var(--c-text);
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   font-weight: 600;
 }
-.ej-icon-btn { background: var(--c-surface); border-color: var(--c-border); }
-.ej-icon-btn--primary { background: rgba(var(--c-primary-rgb), .05); color: var(--c-primary); }
-.ej-icon-btn--danger { color: var(--c-danger); }
-.ej-btn:disabled,
-.sci-cta:disabled,
-.mn-cta:disabled { color: var(--c-text-dim); background: var(--c-surface); border-color: var(--c-border); }
-.sci-cta.is-gold { background: rgba(var(--c-xp-rgb), .06); border-color: rgba(var(--c-xp-rgb), .26); color: var(--c-xp); }
-button:active { transform: scale(.98); }
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 3px; }
+:root[data-theme="science-v3"] .ej-icon-btn { background: var(--c-surface); border-color: var(--c-border); }
+:root[data-theme="science-v3"] .ej-icon-btn--primary { background: rgba(var(--c-primary-rgb), .05); color: var(--c-primary); }
+:root[data-theme="science-v3"] .ej-icon-btn--danger { color: var(--c-danger); }
+:root[data-theme="science-v3"] .ej-btn:disabled,
+:root[data-theme="science-v3"] .sci-cta:disabled,
+:root[data-theme="science-v3"] .mn-cta:disabled { color: var(--c-text-dim); background: var(--c-surface); border-color: var(--c-border); }
+:root[data-theme="science-v3"] .sci-cta.is-gold { background: rgba(var(--c-xp-rgb), .06); border-color: rgba(var(--c-xp-rgb), .26); color: var(--c-xp); }
+:root[data-theme="science-v3"] button:active { transform: scale(.98); }
+:root[data-theme="science-v3"] button:focus-visible,
+:root[data-theme="science-v3"] a:focus-visible,
+:root[data-theme="science-v3"] input:focus-visible,
+:root[data-theme="science-v3"] select:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 3px; }
 
 /* Keep touch targets; remove the glass highlights and neon effects. */
-.bottom-nav {
+:root[data-theme="science-v3"] .bottom-nav {
   background: rgba(5, 5, 5, .96);
   border-color: #282828;
   border-radius: 24px;
@@ -87,65 +87,65 @@ select:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 3px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
-.nav-item { border-radius: 17px; color: var(--c-text-muted); font-weight: 600; }
-.nav-item.active {
+:root[data-theme="science-v3"] .nav-item { border-radius: 17px; color: var(--c-text-muted); font-weight: 600; }
+:root[data-theme="science-v3"] .nav-item.active {
   background: rgba(var(--c-primary-rgb), .07);
   border-color: rgba(var(--c-primary-rgb), .2);
   box-shadow: none;
 }
-.nav-item.active svg { filter: none; transform: none; }
+:root[data-theme="science-v3"] .nav-item.active svg { filter: none; transform: none; }
 
 /* Home: the workout remains the visual priority. */
-.home-free {border: 1px solid #232323; border-radius: 16px; }
-.home-active { background: var(--c-surface); box-shadow: none; }
-.home-active-live { color: var(--c-primary); }
-.home-active-dot { background: var(--c-primary); }
-.home-active-play { background: rgba(var(--c-primary-rgb), .08); color: var(--c-primary); }
-.home-routine-badge { background: rgba(var(--c-primary-rgb), .05); border: 1px solid rgba(var(--c-primary-rgb), .12); }
-.home-streak.is-active { color: var(--c-xp); background: rgba(var(--c-xp-rgb), .04); border-color: rgba(var(--c-xp-rgb), .18); }
-.home-stat--xp { background: var(--c-surface); border-color: var(--c-border); }
-.home-stat--xp .home-stat-value { color: var(--c-text); }
-.drc { background: var(--c-surface); border-color: var(--c-border); }
-.drc-plus { background: rgba(var(--c-primary-rgb), .08); color: var(--c-primary); }
+:root[data-theme="science-v3"] .home-free {border: 1px solid #232323; border-radius: 16px; }
+:root[data-theme="science-v3"] .home-active { background: var(--c-surface); box-shadow: none; }
+:root[data-theme="science-v3"] .home-active-live { color: var(--c-primary); }
+:root[data-theme="science-v3"] .home-active-dot { background: var(--c-primary); }
+:root[data-theme="science-v3"] .home-active-play { background: rgba(var(--c-primary-rgb), .08); color: var(--c-primary); }
+:root[data-theme="science-v3"] .home-routine-badge { background: rgba(var(--c-primary-rgb), .05); border: 1px solid rgba(var(--c-primary-rgb), .12); }
+:root[data-theme="science-v3"] .home-streak.is-active { color: var(--c-xp); background: rgba(var(--c-xp-rgb), .04); border-color: rgba(var(--c-xp-rgb), .18); }
+:root[data-theme="science-v3"] .home-stat--xp { background: var(--c-surface); border-color: var(--c-border); }
+:root[data-theme="science-v3"] .home-stat--xp .home-stat-value { color: var(--c-text); }
+:root[data-theme="science-v3"] .drc { background: var(--c-surface); border-color: var(--c-border); }
+:root[data-theme="science-v3"] .drc-plus { background: rgba(var(--c-primary-rgb), .08); color: var(--c-primary); }
 
 /* Profile: keep rank names, let the progress itself carry the accent. */
-.pf-rank { background: var(--c-surface); border-color: var(--c-border); }
-.pf-rank-icon { color: var(--c-xp); background: rgba(var(--c-xp-rgb), .04); }
-.pf-rank-title { color: var(--c-text); }
-.pf-rank-track > span { background: var(--c-primary); }
-.pf-streak-value svg { color: var(--c-xp); }
-.pf-levels { background: var(--c-surface); border-color: var(--c-border); color: var(--c-text); }
-.pf-levels-icon { color: var(--c-xp); background: rgba(var(--c-xp-rgb), .04); }
-.progress-share-entry > span { background: rgba(var(--c-primary-rgb), .05); }
+:root[data-theme="science-v3"] .pf-rank { background: var(--c-surface); border-color: var(--c-border); }
+:root[data-theme="science-v3"] .pf-rank-icon { color: var(--c-xp); background: rgba(var(--c-xp-rgb), .04); }
+:root[data-theme="science-v3"] .pf-rank-title { color: var(--c-text); }
+:root[data-theme="science-v3"] .pf-rank-track > span { background: var(--c-primary); }
+:root[data-theme="science-v3"] .pf-streak-value svg { color: var(--c-xp); }
+:root[data-theme="science-v3"] .pf-levels { background: var(--c-surface); border-color: var(--c-border); color: var(--c-text); }
+:root[data-theme="science-v3"] .pf-levels-icon { color: var(--c-xp); background: rgba(var(--c-xp-rgb), .04); }
+:root[data-theme="science-v3"] .progress-share-entry > span { background: rgba(var(--c-primary-rgb), .05); }
 
 /* Science keeps its agreed color meaning inside the otherwise neutral cards. */
-.sv3-volumes { border-color: rgba(var(--c-primary-rgb), .25); }
-.sv3-volume-row, .sv3-volume-row:last-child { background: #050505; border-color: #1C1C1C; }
-.sv3-volume-bar { background: var(--c-surface-2); }
-.sv3-tutorial-button { background: rgba(var(--c-xp-rgb), .05); border-color: rgba(var(--c-xp-rgb), .25); box-shadow: none; }
-.sv3-advice, .sv3-debug-toolbar { border-color: rgba(var(--c-xp-rgb), .22); }
-.sv3-notice { background: rgba(var(--c-xp-rgb), .04); }
-.sv3-panel-icon,
-.sv3-intro-icon,
-.optional-feature-icon { background: rgba(var(--c-primary-rgb), .05); }
-.science-quiz-icon { background: rgba(var(--c-primary-rgb), .05); }
+:root[data-theme="science-v3"] .sv3-volumes { border-color: rgba(var(--c-primary-rgb), .25); }
+:root[data-theme="science-v3"] .sv3-volume-row, :root[data-theme="science-v3"] .sv3-volume-row:last-child { background: #050505; border-color: #1C1C1C; }
+:root[data-theme="science-v3"] .sv3-volume-bar { background: var(--c-surface-2); }
+:root[data-theme="science-v3"] .sv3-tutorial-button { background: rgba(var(--c-xp-rgb), .05); border-color: rgba(var(--c-xp-rgb), .25); box-shadow: none; }
+:root[data-theme="science-v3"] .sv3-advice, :root[data-theme="science-v3"] .sv3-debug-toolbar { border-color: rgba(var(--c-xp-rgb), .22); }
+:root[data-theme="science-v3"] .sv3-notice { background: rgba(var(--c-xp-rgb), .04); }
+:root[data-theme="science-v3"] .sv3-panel-icon,
+:root[data-theme="science-v3"] .sv3-intro-icon,
+:root[data-theme="science-v3"] .optional-feature-icon { background: rgba(var(--c-primary-rgb), .05); }
+:root[data-theme="science-v3"] .science-quiz-icon { background: rgba(var(--c-primary-rgb), .05); }
 
 /* Diary and sheets: same controls and surfaces as training. */
-.mn-sheet,
-.mn-sheet-foot { background: var(--c-bg); }
-.ej-chip.is-active,
-.mn-chip.is-active,
-.mn-switch button.is-active { color: var(--c-primary); background: rgba(var(--c-primary-rgb), .08); border-color: rgba(var(--c-primary-rgb), .28); box-shadow: none; }
-.mn-day.is-selected .mn-day-num { color: var(--c-primary); background: rgba(var(--c-primary-rgb), .08); box-shadow: none; }
-.mn-meter.is-featured { background: var(--c-surface); border-color: var(--c-border); }
-.demo-banner { background: #090909; border-bottom-color: #242424; }
-.demo-banner-exit { background: transparent; }
+:root[data-theme="science-v3"] .mn-sheet,
+:root[data-theme="science-v3"] .mn-sheet-foot { background: var(--c-bg); }
+:root[data-theme="science-v3"] .ej-chip.is-active,
+:root[data-theme="science-v3"] .mn-chip.is-active,
+:root[data-theme="science-v3"] .mn-switch button.is-active { color: var(--c-primary); background: rgba(var(--c-primary-rgb), .08); border-color: rgba(var(--c-primary-rgb), .28); box-shadow: none; }
+:root[data-theme="science-v3"] .mn-day.is-selected .mn-day-num { color: var(--c-primary); background: rgba(var(--c-primary-rgb), .08); box-shadow: none; }
+:root[data-theme="science-v3"] .mn-meter.is-featured { background: var(--c-surface); border-color: var(--c-border); }
+:root[data-theme="science-v3"] .demo-banner { background: #090909; border-bottom-color: #242424; }
+:root[data-theme="science-v3"] .demo-banner-exit { background: transparent; }
 
 @media (hover: hover) {
-  .ej-btn--primary:hover:not(:disabled),
-  .sci-cta:hover:not(:disabled),
-  .mn-cta:hover:not(:disabled) { background: rgba(var(--c-primary-rgb), .14); border-color: rgba(var(--c-primary-rgb), .55); }
-  .ej-btn--secondary:hover:not(:disabled),
-  .ej-icon-btn:hover:not(:disabled) { border-color: #404040; }
-  .ej-icon-btn--danger:hover:not(:disabled) { color: var(--c-danger); }
+  :root[data-theme="science-v3"] .ej-btn--primary:hover:not(:disabled),
+  :root[data-theme="science-v3"] .sci-cta:hover:not(:disabled),
+  :root[data-theme="science-v3"] .mn-cta:hover:not(:disabled) { background: rgba(var(--c-primary-rgb), .14); border-color: rgba(var(--c-primary-rgb), .55); }
+  :root[data-theme="science-v3"] .ej-btn--secondary:hover:not(:disabled),
+  :root[data-theme="science-v3"] .ej-icon-btn:hover:not(:disabled) { border-color: #404040; }
+  :root[data-theme="science-v3"] .ej-icon-btn--danger:hover:not(:disabled) { color: var(--c-danger); }
 }

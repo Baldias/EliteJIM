@@ -6,6 +6,7 @@ import { parseNonNegativeInt } from '../utils/number';
 import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
 import { DEFAULT_NUTRITION_GOALS } from '../utils/nutrition';
 import { emptyScienceState, captureScienceExercises, isScienceV3Active } from '../utils/scienceV3';
+import { SCIENCE_GLOWS, THEMES, themePreferences } from '../utils/theme';
 import { scienceActions } from './scienceStore';
 import { existingFeaturePreferences } from '../utils/featurePreferences';
 
@@ -149,6 +150,10 @@ export const useStore = create(
       highestStreak: 0,
       lastWorkoutDate: null,
       recapData: null,
+      theme: 'science-v3',
+      themeChosen: false,
+      scienceGlow: 'gold',
+      chooseTheme: (theme, glow = get().scienceGlow) => { if (THEMES.includes(theme)) set({ theme, themeChosen: true, scienceGlow: SCIENCE_GLOWS.some(g => g.id === glow) ? glow : get().scienceGlow }); },
       showScience: false,
       showDiary: false,
       // --- Backup & Storage State ---
@@ -804,7 +809,7 @@ export const useStore = create(
     {
       name: STORAGE_KEY, // demo mode uses its own key in sessionStorage
       storage: createJSONStorage(getAppStorage),
-      merge: (saved, current) => ({ ...current, ...saved, ...existingFeaturePreferences(saved) }),
+      merge: (saved, current) => ({ ...current, ...saved, ...existingFeaturePreferences(saved), ...themePreferences(saved) }),
     }
   )
 );

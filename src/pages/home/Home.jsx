@@ -10,6 +10,7 @@ import { ShareTemplateModal } from '../../components/ShareTemplateModal';
 import { DailyRecapCard } from '../../components/DailyRecapCard';
 import pkg from '../../../package.json';
 import RoutineCard from './RoutineCard';
+import eliteJimLogo from '../../assets/elitejim-logo-script.png?inline';
 import { Sheet } from '../monitoring/Sheet';
 import './Home.css';
 
@@ -79,9 +80,9 @@ function Home() {
 
         {/* ── HEADER ─────────────────────────────────── */}
         <header className="home-header">
-          <div>
+          <div className="home-brand">
             <p className="ej-eyebrow">{getGreeting()}</p>
-            <h1 className="ej-title">EliteJIM</h1>
+            <h1 className="home-logo-title"><img src={eliteJimLogo} alt="EliteJIM" width="272" height="116" /></h1>
           </div>
           <div className="home-header-actions">
             <button

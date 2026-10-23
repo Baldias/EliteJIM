@@ -9,7 +9,12 @@
   gap: 12px;
 }
 
+.home-brand { min-width:0; flex:1; }
+.home-logo-title { margin:8px 0 0; line-height:1; }
+.home-logo-title img { display:block; width:164px; max-width:100%; height:auto; }
+
 .home-header-actions {
+  flex-shrink:0;
   display: flex;
   align-items: center;
   gap: 8px;

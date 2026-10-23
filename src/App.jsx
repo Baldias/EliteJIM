@@ -20,6 +20,8 @@ import ReloadPrompt from './components/ReloadPrompt';
 import ScienceWeekPrompt from './components/ScienceWeekPrompt';
 import GlobalWorkoutBanner from './components/GlobalWorkoutBanner';
 import DemoBanner from './components/DemoBanner';
+import { useStore } from './store/useStore';
+import { ThemeOnboarding } from './components/ThemePicker';
 import OptionalFeature from './components/OptionalFeature';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
@@ -56,9 +58,12 @@ function Navigation() {
 }
 
 function App() {
+  const themeChosen = useStore(state => state.themeChosen);
   useEffect(() => {
     initPersistentStorage();
   }, []);
+
+  if (!themeChosen) return <><DemoBanner /><ThemeOnboarding /></>;
 
   return (
     <BrowserRouter>
