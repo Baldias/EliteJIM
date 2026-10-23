@@ -1,3 +1,4 @@
+import { emptyTrainingReminder } from './trainingReminder';
 import { themePreferences } from './theme';
 import { useStore } from '../store/useStore';
 import { STORAGE_KEY, getAppStorage } from '../demo/demoMode';
@@ -6,7 +7,7 @@ import { existingFeaturePreferences } from './featurePreferences';
 
 export function normalizeBackupPayload(parsed) {
   const payload = parsed.state ? parsed : { state: parsed, version: 0 };
-  return { ...payload, state: { ...payload.state, ...existingFeaturePreferences(payload.state), ...themePreferences(payload.state), scienceState: payload.state.scienceState || emptyScienceState() } };
+  return { ...payload, state: { ...payload.state, ...existingFeaturePreferences(payload.state), ...themePreferences(payload.state), trainingReminder:payload.state.trainingReminder || emptyTrainingReminder(), scienceState: payload.state.scienceState || emptyScienceState() } };
 }
 
 /**
@@ -42,6 +43,7 @@ export function exportDataBackup() {
           showScience: currentState.showScience ?? false,
           showDiary: currentState.showDiary ?? false,
           ...themePreferences(currentState),
+          trainingReminder: currentState.trainingReminder || emptyTrainingReminder(),
           autoBackupEnabled: currentState.autoBackupEnabled ?? true,
           autoBackupFrequency: currentState.autoBackupFrequency || 'after_workout',
           lastBackupDate: Date.now()

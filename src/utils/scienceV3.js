@@ -139,14 +139,27 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
   const priorities = [...new Set(profile.priorities || [])].filter(m => SCIENCE_MUSCLES.includes(m)).slice(0, 3);
   const active = SCIENCE_MUSCLES.filter(m => !OPTIONAL_MUSCLES.includes(m) || profile.optionalMuscles?.includes(m));
   const baseline = initialScienceVolumes(history, db, science, legacy, startDate, now);
+  const historicalRange = scienceWeekRange(startDate, -7);
+  const historicalVolumes = scienceVolumes(history, db, science, historicalRange.start, Math.min(startDate, now));
+  const historicalFeedback = history.filter(w => Number(w.startTime) >= historicalRange.start && Number(w.startTime) < Math.min(startDate, now)).map(w => science.feedback?.[w.id]).filter(Boolean);
   const hasHistory = active.some(m => baseline[m] != null);
   const targets = {};
   const roles = {};
+  const initialEstimates = {};
   for (const muscle of active) {
     const role = profile.goal === 'specialization' && priorities.length && !priorities.includes(muscle) ? 'support' : 'growth';
     roles[muscle] = profile.roles?.[muscle] || role;
     const dose = SCIENCE_STARTING_DOSES[experience][muscle];
-    const ordinary = Math.max(dose, baseline[muscle] ?? 0);
+    const volume = historicalVolumes.muscles[muscle];
+    const feedback = historicalFeedback.map(f => f.muscles?.[muscle]).filter(Boolean);
+    const reliable = volume.ordinary > 0 && volume.direct / volume.ordinary >= 0.8 && feedback.length >= 2 &&
+      feedback.every(f => f.quality === 'good' && f.recovery === 'good' && !f.pain) && !historicalFeedback.some(f => f.systemicFatigue);
+    // Product weighting, not a percentage established by RP or a measured MEV.
+    // High logged volume alone cannot become the starting growth dose.
+    const weight = baseline[muscle] == null ? 0 : ({ beginner: reliable ? 0.3 : 0.15, intermediate: reliable ? 0.45 : 0.25, advanced: reliable ? 0.6 : 0.35 })[experience];
+    const upper = dose + ({ beginner: 2, intermediate: 4, advanced: 8 })[experience];
+    const ordinary = Math.min(upper, Math.max(dose, Math.round(dose + weight * ((baseline[muscle] ?? dose) - dose))));
+    initialEstimates[muscle] = { referenceDose:dose, historyMedian:baseline[muscle], historyWeight:weight, reliable, estimate:ordinary };
     targets[muscle] = roles[muscle] === 'off' ? 0 : roles[muscle] === 'maintenance' ? Math.max(SCIENCE_MAINTENANCE_FLOORS[experience], Math.ceil(ordinary / 2)) : ordinary;
   }
   const budget = Math.max(1, Math.floor((Number(profile.daysPerWeek) || 4) * (Number(profile.minutesPerSession) || 60) / 4));
@@ -170,17 +183,25 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
     mrv: structuredClone(science.program?.landmarks?.[m]?.mrv ?? null),
     fatigueSignals: structuredClone(science.program?.landmarks?.[m]?.fatigueSignals || []),
     confidence: science.program?.landmarks?.[m]?.confidence || 'low',
-    source: baseline[m] != null && baseline[m] >= SCIENCE_STARTING_DOSES[experience][m] ? 'history-estimate' : 'starting-dose',
+    source: targets[m] > SCIENCE_STARTING_DOSES[experience][m] && initialEstimates[m].historyWeight > 0 ? 'blended-estimate' : 'starting-dose',
   }]));
   const program = {
     id: `science-v3-${now}`, modelVersion: 3, status: 'active', startDate,
-    currentWeek: 1, plannedWeeks: 5, allocationVersion: 2, weekStarts: { 1: startDate }, sessionPlans: {}, weekDeferrals: [], targets, initialTargets: { ...targets }, roles,
+    currentWeek: 1, plannedWeeks: 5, allocationVersion: 2, startingDoseVersion: 2, initialEstimates, weekStarts: { 1: startDate }, sessionPlans: {}, weekDeferrals: [], targets, initialTargets: { ...targets }, roles,
     ceilings: Object.fromEntries(active.map(m => [m, Math.max(experience === 'beginner' ? 16 : experience === 'intermediate' ? 20 : 24, targets[m])])),
     landmarks, weeks: [], recommendations: [], pauses: {},
-    timeWarning: sum > budget ? hasHistory ? `Il volume iniziale deriva dallo storico (~${sum * 4} min/settimana); verifica la disponibilità dichiarata.` : 'La dose iniziale è proporzionata al tempo dichiarato usando ~4 minuti per serie, una stima organizzativa. Con poco tempo alcuni distretti possono richiedere più disponibilità.' : null,
+    timeWarning: sum > budget ? hasHistory ? `La stima combina livello e storico (~${sum * 4} min/settimana); verifica la disponibilità dichiarata.` : 'La dose iniziale è proporzionata al tempo dichiarato usando ~4 minuti per serie, una stima organizzativa. Con poco tempo alcuni distretti possono richiedere più disponibilità.' : null,
     decisions: {},
   };
   return { ...science, profile: { ...profile, experience, priorities }, program };
+}
+
+export function beginnerStartCorrection(science, history, db, legacy, now = Date.now()) {
+  const p = science?.program;
+  if (!p || p.status !== 'active' || p.currentWeek !== 1 || p.weeks.length || p.startingDoseVersion === 2 || science.profile?.experience !== 'beginner' || hasLegacyScience(legacy)) return null;
+  const estimated = createScienceProgram({ ...science.profile, startDate:p.startDate }, history, db, science, legacy, now).program;
+  const changes = Object.keys(p.targets).filter(m => p.targets[m] > estimated.targets[m] && p.decisions[m] !== 'Obiettivo impostato da te.').map(m => ({ muscle:m, before:p.targets[m], after:estimated.targets[m] }));
+  return changes.length ? { changes, estimated } : null;
 }
 
 export function currentScienceSummary(history, db, science, now = Date.now()) {

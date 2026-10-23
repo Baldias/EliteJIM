@@ -30,6 +30,9 @@ import './Science.css';
 import './BossFight.css';
 import ScienceV3 from './ScienceV3';
 import { hasLegacyScience } from '../../utils/scienceV3';
+import { evolvedLegacyReport, legacyEvolutionFor } from '../../utils/scienceEvolution';
+import { ScienceEvolution, LegacyDynamicVolume } from './ScienceEvolution';
+import ScienceTutorialButton from './ScienceTutorial';
 
 const RP_BASE_LANDMARKS = {
   'Petto': { mev: 10, mav: 12, mrv: 20 },
@@ -282,6 +285,8 @@ function CompletedScreen({ reset }) {
  * Dashboard Principale della Sezione Scienza
  */
 function Dashboard({ report, reset }) {
+  const science = useStore(state => state.scienceState);
+  const evolved = Boolean(legacyEvolutionFor(report, science));
   const currentWeekNum = report.currentWeek || 1;
   const advanceScienceWeek = useStore(state => state.advanceScienceWeek);
 
@@ -360,7 +365,7 @@ function Dashboard({ report, reset }) {
   const phaseOf = (w) => {
     if (w >= 9 && w <= 10) return { cls: 'deload', label: 'Deload' };
     if (w >= 11) return { cls: 'resens', label: 'Mant.' };
-    if (w === 4 || w === 8) return { cls: 'bossfight', label: 'Boss' };
+    if (w === 4 || w === 8) return { cls: 'bossfight', label: evolved ? 'Picco' : 'Boss' };
     return { cls: 'overreaching', label: 'Focus' };
   };
 
@@ -373,9 +378,10 @@ function Dashboard({ report, reset }) {
       </header>
 
       {/* Report header */}
-      <section className="ej-card sci-report">
-        <h2 className="sci-report-title">Mesociclo Israetel V2</h2>
-        <p className="sci-muted">Status Coefficiente Forza: <strong>{expLabel}</strong></p>
+      <section className={`ej-card sci-report ${evolved ? 'science-evolved-hero' : ''}`}>
+        {evolved && <><ScienceTutorialButton /><span className="science-evolution-label"><Dna size={14} /> SCIENZA V3.0</span></>}
+        <h2 className="sci-report-title">{evolved ? 'Il tuo percorso, evoluto.' : 'Mesociclo Israetel V2'}</h2>
+        <p className="sci-muted">{evolved ? 'Scienza V3 · Il calendario del tuo protocollo continua.' : <>Status Coefficiente Forza: <strong>{expLabel}</strong></>}</p>
         <button
           type="button"
           className="sci-small-btn"
@@ -385,9 +391,11 @@ function Dashboard({ report, reset }) {
             }
           }}
         >
-          <RefreshCw size={14} /> Ricalcola parametri
+          <RefreshCw size={14} /> {evolved ? 'Ripeti il quiz da capo' : 'Ricalcola parametri'}
         </button>
       </section>
+
+      {evolved && <LegacyDynamicVolume report={report} />}
 
       {/* Summary */}
       <div className="sci-summary">
@@ -438,13 +446,13 @@ function Dashboard({ report, reset }) {
       </div>
 
       {/* Weekly targets */}
-      <section className={`ej-card sci-targets ${isBossFight ? 'is-boss' : ''}`}>
+      <section className={`ej-card sci-targets ${isBossFight && !evolved ? 'is-boss' : ''} ${evolved ? 'science-evolved-target' : ''}`}>
         <h3 className="sci-targets-title">
           <Target size={18} />
-          {isBossFight ? 'Boss Fight: Settimana MRV' : `Obiettivi Settimana ${selectedWeek}`}
+          {isBossFight && !evolved ? 'Boss Fight: Settimana MRV' : `Obiettivi Settimana ${selectedWeek}`}
         </h3>
 
-        {isBossFight && (
+        {isBossFight && !evolved && (
           <p className="sci-boss-note">
             <AlertTriangle size={14} /> Raggiungi il Massimo Volume Recuperabile. Cedimento tecnico completo su ogni serie!
           </p>
@@ -463,12 +471,13 @@ function Dashboard({ report, reset }) {
               <div
                 key={muscle}
                 className={`sci-muscle ${isFocus ? 'is-focus' : ''} ${isCompleted ? 'is-done' : ''}`}
+                style={evolved ? { '--dynamic-color': weekToDisplay >= 9 ? '#34c759' : targetSets <= report.baseLandmarks[muscle].mev ? '#e6cf00' : targetSets >= report.baseLandmarks[muscle].mrv ? '#ff453a' : '#af52de' } : undefined}
               >
                 <div className="sci-muscle-head">
                   <div className="sci-muscle-name">
                     <span>{muscle}</span>
                     {isFocus && <span className="sci-badge is-focus"><Flame size={10} fill="currentColor" /> Focus</span>}
-                    {badge && (
+                    {badge && !evolved && (
                       <span className="sci-badge" style={{ color: badge.color, backgroundColor: badge.bg }}>
                         {badge.label}
                       </span>
@@ -521,14 +530,14 @@ function Dashboard({ report, reset }) {
 
         <div className="sci-legend">
           <span><i className="overreaching" /> Overreaching Focus</span>
-          <span><i className="bossfight" /> Boss Fight (MRV)</span>
+          <span><i className="bossfight" /> {evolved ? 'Picco programmato · da rivalutare' : 'Boss Fight (MRV)'}</span>
           <span><i className="deload" /> Deload (Scarico)</span>
           <span><i className="resens" /> Mantenimento Basso</span>
         </div>
       </section>
 
       {/* Glossary */}
-      <section className="ej-card sci-glossary">
+      {!evolved && <section className="ej-card sci-glossary">
         <h3 className="sci-glossary-title"><BookOpen size={18} /> Pillole RP &amp; Consigli</h3>
         <dl>
           <dt>MEV</dt>
@@ -540,13 +549,15 @@ function Dashboard({ report, reset }) {
           <dt>Anti-Junk</dt>
           <dd>Con {sessionsPerWeek} giorni a settimana, distribuisci i muscoli in focus su 2 sedute (~{estimatedSetsPerSession} serie a seduta). Evita di superare 8-10 serie sullo stesso muscolo in una singola sessione per massimizzare la qualità dello stimolo.</dd>
         </dl>
-      </section>
+      </section>}
     </div>
   );
 }
 
 function LegacyScience() {
-  const scienceReport = useStore(state => state.scienceReport);
+  const rawReport = useStore(state => state.scienceReport);
+  const science = useStore(state => state.scienceState);
+  const scienceReport = useMemo(() => evolvedLegacyReport(rawReport, science), [rawReport, science]);
   const saveScienceReport = useStore(state => state.saveScienceReport);
 
   const [step, setStep] = useState(0);
@@ -873,5 +884,5 @@ function LegacyScience() {
 
 export default function Science() {
   const report = useStore(state => state.scienceReport);
-  return hasLegacyScience(report) ? <LegacyScience /> : <ScienceV3 />;
+  return hasLegacyScience(report) ? <ScienceEvolution report={report}><LegacyScience /></ScienceEvolution> : <ScienceV3 />;
 }

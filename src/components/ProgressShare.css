@@ -24,3 +24,14 @@
 @keyframes progress-share-spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce) { .progress-share-loading > svg { animation:none; } }
 .mn-sheet-foot > .progress-share-actions { margin-top:0; }
+.progress-share-choices { display:flex; flex-direction:column; gap:12px; margin:24px 0; }
+.progress-share-choices button { display:flex; align-items:center; gap:14px; text-align:left; color:var(--c-text); background:var(--c-surface); border:1px solid var(--c-border); border-radius:18px; padding:20px 16px; font:inherit; }
+.progress-share-choices button[aria-checked="true"] { border-color:var(--c-primary); background:rgba(var(--c-primary-rgb),.05); }
+.progress-share-choices button > svg { flex-shrink:0; color:var(--c-primary); }
+.progress-share-choices button > span { flex:1; min-width:0; }
+.progress-share-choices strong { display:block; font-size:14px; margin-bottom:7px; }
+.progress-share-choices small { display:block; font-size:12px; line-height:1.6; color:var(--c-text-muted); }
+.progress-share-choices i { display:grid; place-items:center; width:23px; height:23px; flex-shrink:0; border:1px solid var(--c-border); border-radius:50%; color:var(--c-primary); }
+.progress-share-choices button:disabled { opacity:.4; }
+.progress-share-prepare { width:100%; }
+.progress-share-edit { padding:10px 0; background:none; border:0; color:var(--c-primary); font:inherit; font-size:12px; }

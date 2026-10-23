@@ -5,8 +5,10 @@ import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises'
 import { parseNonNegativeInt } from '../utils/number';
 import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
 import { DEFAULT_NUTRITION_GOALS } from '../utils/nutrition';
-import { emptyScienceState, captureScienceExercises, isScienceV3Active } from '../utils/scienceV3';
-import { SCIENCE_GLOWS, THEMES, themePreferences } from '../utils/theme';
+import { emptyScienceState, captureScienceExercises } from '../utils/scienceV3';
+import { acknowledgeTrainingReminder, emptyTrainingReminder, isTrainingRecovery } from '../utils/trainingReminder';
+import { scienceTrackingEnabled } from '../utils/scienceEvolution';
+import { SCIENCE_GLOWS, THEMES, THEME_SELECTION_VERSION, themePreferences } from '../utils/theme';
 import { scienceActions } from './scienceStore';
 import { existingFeaturePreferences } from '../utils/featurePreferences';
 
@@ -152,8 +154,14 @@ export const useStore = create(
       recapData: null,
       theme: 'science-v3',
       themeChosen: false,
+      themeChoiceVersion: 0,
       scienceGlow: 'gold',
-      chooseTheme: (theme, glow = get().scienceGlow) => { if (THEMES.includes(theme)) set({ theme, themeChosen: true, scienceGlow: SCIENCE_GLOWS.some(g => g.id === glow) ? glow : get().scienceGlow }); },
+      chooseTheme: (theme, glow = get().scienceGlow) => { if (THEMES.includes(theme)) set({ theme, themeChosen: true, themeChoiceVersion: THEME_SELECTION_VERSION, scienceGlow: SCIENCE_GLOWS.some(g => g.id === glow) ? glow : get().scienceGlow }); },
+      trainingReminder: emptyTrainingReminder(),
+      acknowledgeTrainingReminder: (now = Date.now()) => set(state => {
+        const next = acknowledgeTrainingReminder(state.trainingReminder, state.activeWorkout, now, isTrainingRecovery(state));
+        return next === state.trainingReminder ? state : { trainingReminder:next };
+      }),
       showScience: false,
       showDiary: false,
       // --- Backup & Storage State ---
@@ -691,7 +699,7 @@ export const useStore = create(
           return {
             templates: updatedTemplates,
             history: updatedHistory,
-            ...(isScienceV3Active(state) ? { scienceState: captureScienceExercises(state.scienceState, completedWorkout, allKnown) } : {}),
+            ...(scienceTrackingEnabled(state) ? { scienceState: captureScienceExercises(state.scienceState, completedWorkout, allKnown) } : {}),
             activeWorkout: null,
             globalRestEndTime: null,
             userXP: newXP,
@@ -809,7 +817,7 @@ export const useStore = create(
     {
       name: STORAGE_KEY, // demo mode uses its own key in sessionStorage
       storage: createJSONStorage(getAppStorage),
-      merge: (saved, current) => ({ ...current, ...saved, ...existingFeaturePreferences(saved), ...themePreferences(saved) }),
+      merge: (saved, current) => ({ ...current, ...saved, ...existingFeaturePreferences(saved), ...themePreferences(saved), trainingReminder: saved?.trainingReminder || emptyTrainingReminder() }),
     }
   )
 );
