@@ -1,7 +1,9 @@
 import React from 'react';
 import { Plus, Check, X, Pencil } from 'lucide-react';
 import { KCAL_PER_G, fmtInt, fmtDec } from '../../utils/nutrition';
+import { athleteScore } from '../../utils/athleteScore';
 import { MacroStrip } from './Fuel';
+import { ScoreBadge } from './ScorePanel';
 
 const isHighProtein = (per100) => {
   const kcal = per100?.kcal || 0;
@@ -15,8 +17,10 @@ export function FoodRow({ food, grams, onOpen, onQuickAdd, onDelete, onEdit, jus
   const portion = food.source === 'recipe' && food.servingSize && Math.abs(grams - food.servingSize) < 0.5
     ? food.servingLabel
     : `${fmtDec(grams)} g`;
+  const score = athleteScore(food);
   return (
-    <li className="mn-row">
+    <li className={`mn-row ${score ? 'has-score' : ''}`}>
+      {score && <ScoreBadge result={score} size="sm" />}
       <button type="button" className="mn-row-main" onClick={() => onOpen(food)}>
         <span className="mn-row-name">
           {food.name}

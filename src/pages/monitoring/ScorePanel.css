@@ -172,3 +172,38 @@
   flex-shrink: 0;
   color: var(--c-text-dim);
 }
+
+/* voto accanto al nome nei risultati di ricerca */
+.mn-row.has-score {
+  gap: 10px;
+}
+
+/* ── Analisi: lavorazione ───────────────────────────────────── */
+.mn-processing-big {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  color: var(--c-text-muted);
+}
+
+.mn-processing-big strong {
+  margin-right: 4px;
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--c-text);
+}
+
+.mn-split-bar--processing {
+  height: 12px;
+  border-radius: 999px;
+}
+
+.mn-split-bar--processing .is-minimal,
+.mn-legend .is-minimal { background: var(--c-success); }
+.mn-split-bar--processing .is-processed,
+.mn-legend .is-processed { background: var(--c-xp); }
+.mn-split-bar--processing .is-ultra,
+.mn-legend .is-ultra { background: var(--c-accent); }
+
+.mn-panel .mn-legend + .mn-hint {
+  margin-top: 10px;
+}

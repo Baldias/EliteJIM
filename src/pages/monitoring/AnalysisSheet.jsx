@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Toolti
 import { useStore } from '../../store/useStore';
 import { resolveBodyweight } from '../../utils/oneRepMax';
 import {
-  MEALS, MACROS, NUTRIENTS, KCAL_PER_G, dayTotals, sumNutrients, macroGoalsInGrams, macroSplit,
+  MEALS, MACROS, NUTRIENTS, KCAL_PER_G, dayTotals, dayEntries, entryNutrients, sumNutrients, macroGoalsInGrams, macroSplit,
   shiftDateKey, fromDateKey, fmtInt, fmtDec
 } from '../../utils/nutrition';
 import { Sheet } from './Sheet';
@@ -75,6 +75,24 @@ export function AnalysisSheet({ date, onClose }) {
   const unit = metric === 'kcal' ? 'kcal' : 'g';
   const onTarget = logged.filter(d => Math.abs(d.totals.kcal - goalG.kcal) <= goalG.kcal * 0.1).length;
   const proteinHit = logged.filter(d => d.totals.protein >= goalG.protein * 0.9).length;
+
+  // kcal per livello di lavorazione (NOVA): lo conoscono solo i prodotti di Open Food Facts
+  const processing = useMemo(() => {
+    const out = { minimal: 0, processed: 0, ultra: 0, unknown: 0 };
+    const keys = view === 'day' ? [date] : week.map(d => d.key);
+    for (const key of keys) {
+      for (const entry of dayEntries(diary[key])) {
+        const kcal = entryNutrients(entry).kcal;
+        const nova = entry.food?.quality?.nova;
+        if (!nova) out.unknown += kcal;
+        else if (nova === 4) out.ultra += kcal;
+        else if (nova === 3) out.processed += kcal;
+        else out.minimal += kcal;
+      }
+    }
+    out.known = out.minimal + out.processed + out.ultra;
+    return out;
+  }, [view, date, week, diary]);
 
   const goalSplit = macroSplit({ protein: goalG.protein, carbs: goalG.carbs, fat: goalG.fat });
   const byMeal = MEALS.map(m => ({ ...m, kcal: sumNutrients(diary[date]?.[m.id] || []).kcal }));
@@ -152,6 +170,33 @@ export function AnalysisSheet({ date, onClose }) {
             })}
           </div>
         </section>
+
+        {processing.known > 0 && (
+          <section className="mn-panel">
+            <div className="mn-panel-head">
+              <h3>Lavorazione</h3>
+              <span className="mn-panel-meta">prodotti confezionati</span>
+            </div>
+            <p className="mn-processing-big">
+              <strong>{Math.round((processing.ultra / processing.known) * 100)}%</strong> delle kcal da ultra-processati
+            </p>
+            <div className="mn-split-bar mn-split-bar--processing">
+              {[['minimal', processing.minimal], ['processed', processing.processed], ['ultra', processing.ultra]].map(([k, v]) => v > 0 && (
+                <span key={k} className={`is-${k}`} style={{ width: `${(v / processing.known) * 100}%` }} />
+              ))}
+            </div>
+            <div className="mn-legend">
+              <span><i className="is-minimal" /> Poco lavorati {fmtInt(processing.minimal)} kcal</span>
+              <span><i className="is-processed" /> Trasformati {fmtInt(processing.processed)} kcal</span>
+              <span><i className="is-ultra" /> Ultra-processati {fmtInt(processing.ultra)} kcal</span>
+            </div>
+            {processing.unknown > 0 && (
+              <p className="mn-hint">
+                Calcolato sui prodotti con dati di lavorazione: {fmtInt(processing.unknown)} kcal (alimenti di base, pasti composti, inserimenti rapidi) restano fuori.
+              </p>
+            )}
+          </section>
+        )}
 
         {view === 'day' && dayKcal > 0 && (
           <section className="mn-panel">
