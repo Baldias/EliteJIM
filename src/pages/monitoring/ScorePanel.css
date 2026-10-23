@@ -1,0 +1,209 @@
+/* ── Voto atleta ────────────────────────────────────────────── */
+.mn-score {
+  --score: var(--c-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--score);
+  border: 2px solid var(--score);
+  background: color-mix(in srgb, var(--score) 14%, transparent);
+}
+
+.mn-score.is-great { --score: var(--c-success); }
+.mn-score.is-good { --score: #A3D94A; }
+.mn-score.is-poor { --score: var(--c-streak); }
+.mn-score.is-bad { --score: var(--c-danger); }
+
+.mn-score.is-sm { width: 30px; height: 30px; font-size: 0.75rem; border-width: 1.5px; }
+.mn-score.is-md { width: 38px; height: 38px; font-size: 0.875rem; }
+.mn-score.is-lg { width: 60px; height: 60px; font-size: 1.375rem; border-width: 3px; }
+
+.mn-score-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+
+.mn-score-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mn-score-title {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+.mn-score-level {
+  margin: 2px 0 0;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.mn-score-level small {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.mn-score-reasons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mn-score-reasons li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.mn-score-reasons svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mn-score-reasons .is-pro svg { color: var(--c-success); }
+.mn-score-reasons .is-con svg { color: var(--c-streak); }
+
+.mn-score-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mn-score-part-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.mn-score-part-head span {
+  color: var(--c-text-muted);
+}
+
+.mn-score-track {
+  height: 5px;
+  margin: 5px 0 3px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--c-surface-2);
+}
+
+.mn-score-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c-primary);
+}
+
+.mn-score-parts small {
+  font-size: 0.6875rem;
+  color: var(--c-text-dim);
+}
+
+.mn-alternatives ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mn-alt {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  border-radius: 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+
+.mn-alt-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mn-alt-text strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mn-alt-text > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mn-alt-go {
+  flex-shrink: 0;
+  color: var(--c-text-dim);
+}
+
+/* voto accanto al nome nei risultati di ricerca */
+.mn-row.has-score {
+  gap: 10px;
+}
+
+/* ── Analisi: lavorazione ───────────────────────────────────── */
+.mn-processing-big {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  color: var(--c-text-muted);
+}
+
+.mn-processing-big strong {
+  margin-right: 4px;
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--c-text);
+}
+
+.mn-split-bar--processing {
+  height: 12px;
+  border-radius: 999px;
+}
+
+.mn-split-bar--processing .is-minimal,
+.mn-legend .is-minimal { background: var(--c-success); }
+.mn-split-bar--processing .is-processed,
+.mn-legend .is-processed { background: var(--c-xp); }
+.mn-split-bar--processing .is-ultra,
+.mn-legend .is-ultra { background: var(--c-accent); }
+
+.mn-panel .mn-legend + .mn-hint {
+  margin-top: 10px;
+}

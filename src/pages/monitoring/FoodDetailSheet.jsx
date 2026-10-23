@@ -7,6 +7,8 @@ import {
 } from '../../utils/nutrition';
 import { FuelBar, MacroMeter, MacroStrip } from './Fuel';
 import { Sheet } from './Sheet';
+import { ScorePanel, BetterAlternatives } from './ScorePanel';
+import { athleteScore } from '../../utils/athleteScore';
 
 const GRAM_PRESETS = [50, 100, 150, 200];
 const SERVING_PRESETS = [0.5, 1, 2, 3];
@@ -14,7 +16,8 @@ const round = (n, step) => Math.round(n / step) * step;
 
 // Dettaglio di un alimento: quantità, pasto e impatto sulla giornata.
 // mode 'add' → aggiunge al diario, 'edit' → modifica una voce esistente.
-export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initialMeal, onSubmit, onDelete, onClose }) {
+export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initialMeal, onSubmit, onDelete, onClose, onPickAlternative }) {
+  const score = useMemo(() => athleteScore(food), [food]);
   const goals = useStore(state => state.nutritionGoals);
   const day = useStore(state => state.foodDiary?.[date]);
   const history = useStore(state => state.history);
@@ -28,6 +31,7 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
   const [grams, setGrams] = useState(isQuick ? 100 : startGrams);
   const [meal, setMeal] = useState(initialMeal || 'breakfast');
   const [showFacts, setShowFacts] = useState(false);
+  const [showIngredients, setShowIngredients] = useState(false);
   const [draft, setDraft] = useState(null); // testo digitato nel campo quantità
 
   const amount = unit === 'serving' ? grams / food.servingSize : grams;
@@ -78,6 +82,8 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
             </div>
           </div>
         </div>
+
+        <ScorePanel result={score} />
 
         {!isQuick && (
           <div className="mn-qty">
@@ -143,6 +149,28 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
           </div>
         </section>
 
+        {food.recipe?.ingredients?.length > 0 && (
+          <>
+            <button type="button" className={`mn-facts-toggle ${showIngredients ? 'is-open' : ''}`} onClick={() => setShowIngredients(s => !s)}>
+              Ingredienti ({food.recipe.ingredients.length}) <ChevronDown size={16} />
+            </button>
+            {showIngredients && (
+              <ul className="mn-recipe-list">
+                {food.recipe.ingredients.map((i, n) => (
+                  <li key={`${i.food.id}-${n}`}>
+                    <span>{i.food.name}</span>
+                    <strong>{fmtDec(i.grams)} g</strong>
+                  </li>
+                ))}
+                <li className="is-note">
+                  Pasto intero: {fmtInt(food.recipe.cookedWeight || food.recipe.ingredients.reduce((a, i) => a + i.grams, 0))} g
+                  {food.recipe.portions > 1 ? `, ${food.recipe.portions} porzioni` : ''}
+                </li>
+              </ul>
+            )}
+          </>
+        )}
+
         <button type="button" className={`mn-facts-toggle ${showFacts ? 'is-open' : ''}`} onClick={() => setShowFacts(s => !s)}>
           Valori nutrizionali <ChevronDown size={16} />
         </button>
@@ -156,6 +184,8 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
             ))}
           </dl>
         )}
+
+        {score && onPickAlternative && <BetterAlternatives food={food} result={score} onPick={onPickAlternative} />}
       </div>
     </Sheet>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Minus, Plus, ChevronDown } from 'lucide-react';
+import { Minus, Plus, ChevronDown, Sparkles } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { resolveBodyweight } from '../../utils/oneRepMax';
 import {
@@ -41,7 +41,7 @@ function Section({ id, open, onToggle, title, summary, children }) {
   );
 }
 
-export function GoalsSheet({ onClose }) {
+export function GoalsSheet({ onClose, onRedoTest }) {
   const stored = useStore(state => state.nutritionGoals);
   const bodyweight = useStore(resolveBodyweight);
   const setNutritionGoals = useStore(state => state.setNutritionGoals);
@@ -199,6 +199,12 @@ export function GoalsSheet({ onClose }) {
             </p>
           </Section>
         </div>
+
+        {onRedoTest && (
+          <button type="button" className="mn-redo-test" onClick={onRedoTest}>
+            <Sparkles size={16} /> Rifai il test per ricalcolare il piano
+          </button>
+        )}
       </div>
     </Sheet>
   );
