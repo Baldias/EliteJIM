@@ -1,5 +1,12 @@
 import { useStore } from '../store/useStore';
 import { STORAGE_KEY, getAppStorage } from '../demo/demoMode';
+import { emptyScienceState } from './scienceV3';
+import { existingFeaturePreferences } from './featurePreferences';
+
+export function normalizeBackupPayload(parsed) {
+  const payload = parsed.state ? parsed : { state: parsed, version: 0 };
+  return { ...payload, state: { ...payload.state, ...existingFeaturePreferences(payload.state), scienceState: payload.state.scienceState || emptyScienceState() } };
+}
 
 /**
  * Genera e scarica istantaneamente il file JSON di backup di EliteJIM
@@ -19,6 +26,7 @@ export function exportDataBackup() {
           customExercises: currentState.customExercises || [],
           exerciseOverrides: currentState.exerciseOverrides || {},
           scienceReport: currentState.scienceReport || null,
+          scienceState: currentState.scienceState || emptyScienceState(),
           userXP: currentState.userXP || 0,
           muscleXP: currentState.muscleXP || {},
           currentStreak: currentState.currentStreak || 0,
@@ -31,7 +39,8 @@ export function exportDataBackup() {
           recentFoods: currentState.recentFoods || [],
           customFoods: currentState.customFoods || [],
           dietSetup: currentState.dietSetup,
-          showScience: currentState.showScience ?? true,
+          showScience: currentState.showScience ?? false,
+          showDiary: currentState.showDiary ?? false,
           autoBackupEnabled: currentState.autoBackupEnabled ?? true,
           autoBackupFrequency: currentState.autoBackupFrequency || 'after_workout',
           lastBackupDate: Date.now()
@@ -85,7 +94,7 @@ export function importDataBackup(file, onComplete) {
       }
 
       // Normalizza la struttura se proviene da versioni differenti
-      const normalizedData = parsed.state ? parsed : { state: parsed, version: 0 };
+      const normalizedData = normalizeBackupPayload(parsed);
 
       if (window.confirm('Attenzione: Importando questo backup sovrascriverai schede, progressi e cronologia attuali. Sei sicuro di voler procedere?')) {
         getAppStorage().setItem(STORAGE_KEY, JSON.stringify(normalizedData));

@@ -9,7 +9,7 @@ let openSheets = 0;
 // Pannello a scomparsa dal basso usato da tutta la sezione Diario
 // (montato nel body per non dipendere dallo stacking della pagina).
 // `overlay` resta fisso sopra il footer, fuori dall'area che scorre.
-export function Sheet({ title, onClose, children, footer, full = false, headerExtra, overlay }) {
+export function Sheet({ title, onClose, children, footer, full = false, headerExtra, overlay, className = '' }) {
   useEffect(() => {
     openSheets += 1;
     document.body.style.overflow = 'hidden';
@@ -26,7 +26,7 @@ export function Sheet({ title, onClose, children, footer, full = false, headerEx
   }, [onClose]);
 
   return createPortal(
-    <div className="mn-sheet-backdrop" onClick={onClose}>
+    <div className={`mn-sheet-backdrop ${className}`} onClick={onClose}>
       <div
         className={`mn-sheet ${full ? 'is-full' : ''}`}
         role="dialog"

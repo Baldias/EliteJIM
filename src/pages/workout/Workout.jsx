@@ -5,6 +5,7 @@ import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/u
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
+import { ScienceSetControls, ScienceExerciseClassification } from '../../components/ScienceTraining';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 import { sanitizeDecimalInput } from '../../utils/number';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
@@ -350,6 +351,7 @@ function Workout() {
                 </div>
               )}
 
+              <ScienceExerciseClassification workout={activeWorkout} exercise={ex} />
               {/* Sets section */}
               <div className="workout-sets-section">
                 <div className="workout-sets-header">
@@ -427,6 +429,7 @@ function Workout() {
                         <Check size={17} strokeWidth={set.done ? 3 : 2} />
                       </button>
                     </div>
+                    <ScienceSetControls workoutId={activeWorkout.id} exerciseId={ex.id} setId={set.id} disabled={Boolean(set.isDropset || set.isRestPause || set.isWarmup)} />
                   </SwipeToDelete>
                 ))}
 

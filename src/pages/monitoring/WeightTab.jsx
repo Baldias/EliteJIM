@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { Minus, Plus, Scale, Trash2, Check, CalendarDays } from 'lucide-react';
+import { Minus, Plus, Scale, Trash2, Check, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { toDateKey, fromDateKey, shiftDateKey, fmtDec, weightTrend, weeklyRate } from '../../utils/nutrition';
 import { Sheet } from './Sheet';
+import { shiftWeightMonth, weightCalendarDays } from '../../utils/weightCalendar';
 
 const RANGES = [
   { id: '1m', label: '1M', days: 30 },
@@ -38,6 +39,11 @@ function WeightTooltip({ active, payload }) {
   );
 }
 
+function WeightCalendar({ value, max, onChange }) {
+  const [month, setMonth] = useState(value.slice(0, 7));
+  return <div className="mn-weight-calendar" id="weighin-date" aria-label="Calendario della pesata"><div className="mn-weight-calendar-head"><button type="button" className="ej-icon-btn" aria-label="Mese precedente per la pesata" onClick={() => setMonth(m => shiftWeightMonth(m, -1))}><ChevronLeft size={18} /></button><strong aria-live="polite">{fromDateKey(`${month}-01`).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}</strong><button type="button" className="ej-icon-btn" aria-label="Mese successivo per la pesata" disabled={month >= max.slice(0, 7)} onClick={() => setMonth(m => shiftWeightMonth(m, 1))}><ChevronRight size={18} /></button></div><div className="mn-weight-calendar-days">{['L', 'M', 'M', 'G', 'V', 'S', 'D'].map((day, i) => <span key={`day-${i}`} aria-hidden="true">{day}</span>)}{weightCalendarDays(month).map((key, i) => key ? <button type="button" key={key} disabled={key > max} aria-pressed={key === value} aria-label={fromDateKey(key).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} onClick={() => onChange(key)}>{Number(key.slice(-2))}</button> : <span key={`blank-${i}`} />)}</div></div>;
+}
+
 // Registrazione della pesata: numero grande, ±100 g, giorno a scelta
 export function WeighInSheet({ initialDate, onClose }) {
   const weightLog = useStore(state => state.weightLog || []);
@@ -50,9 +56,11 @@ export function WeighInSheet({ initialDate, onClose }) {
   const latest = weightLog[weightLog.length - 1];
   const [kg, setKg] = useState(existing?.kg ?? latest?.kg ?? 75);
   const [draft, setDraft] = useState(null);
+  const [chooseDate, setChooseDate] = useState(false);
 
   const pickDate = (key) => {
     setDate(key);
+    setDraft(null);
     const entry = weightLog.find(e => e.date === key);
     if (entry) setKg(entry.kg);
   };
@@ -81,12 +89,12 @@ export function WeighInSheet({ initialDate, onClose }) {
         <div className="mn-chips">
           <button type="button" className={`mn-chip ${date === today ? 'is-active' : ''}`} onClick={() => pickDate(today)}>Oggi</button>
           <button type="button" className={`mn-chip ${date === shiftDateKey(today, -1) ? 'is-active' : ''}`} onClick={() => pickDate(shiftDateKey(today, -1))}>Ieri</button>
-          <label className={`mn-chip mn-chip--date ${date < shiftDateKey(today, -1) ? 'is-active' : ''}`}>
-            <CalendarDays size={14} />
-            {date < shiftDateKey(today, -1) ? fmtLongDate(date) : 'Altro giorno'}
-            <input type="date" value={date} max={today} onChange={(e) => e.target.value && pickDate(e.target.value)} aria-label="Scegli il giorno" />
-          </label>
+          <button type="button" className={`mn-chip ${chooseDate || date < shiftDateKey(today, -1) ? 'is-active' : ''}`} onClick={() => setChooseDate(v => !v)} aria-expanded={chooseDate} aria-controls="weighin-date">
+            <CalendarDays size={14} />Altro giorno
+          </button>
         </div>
+        {chooseDate && <WeightCalendar value={date} max={today} onChange={key => { pickDate(key); setChooseDate(false); }} />}
+        <p className="mn-weighin-selected"><CalendarDays size={15} />{relDay(date)} · {fromDateKey(date).toLocaleDateString('it-IT')}</p>
 
         <div className="mn-stepper mn-stepper--big">
           <button type="button" onClick={() => bump(-0.1)} aria-label="Meno 100 grammi"><Minus size={22} /></button>

@@ -3,10 +3,12 @@ import { useStore } from '../store/useStore';
 import { useWeeklyStreak } from '../hooks/useWeeklyStreak';
 import { Flame, Trophy, Calendar, X, AlertTriangle } from 'lucide-react';
 import './WelcomeBack.css';
+import { hasLegacyScience } from '../utils/scienceV3';
 
 export function WelcomeBack({ onClose }) {
   const { currentStreak, daysSinceLastWorkout } = useWeeklyStreak();
   const scienceReport = useStore(state => state.scienceReport);
+  const scienceProgram = useStore(state => state.scienceState?.program);
   const showScience = useStore(state => state.showScience);
 
   const [isVisible, setIsVisible] = useState(false);
@@ -33,6 +35,11 @@ export function WelcomeBack({ onClose }) {
     if (month === 3 && weekNum >= 11) phase = 'Mantenimento / Risensibilizzazione';
 
     weekInfo = { week: weekNum, month, phase };
+  }
+
+  if (showScience && !hasLegacyScience(scienceReport) && scienceProgram?.status === 'active') {
+    const week = scienceProgram.currentWeek;
+    weekInfo = { week, month: null, phase: week === 5 ? 'Recupero da concordare' : week === 4 ? 'Picco del blocco' : 'Accumulo · 0–1 RIR' };
   }
 
   // Same rule as calculateWeeklyStreak: the streak resets after 7 days without training
@@ -67,7 +74,7 @@ export function WelcomeBack({ onClose }) {
               <div className="wb-plan-box">
                 <div className="wb-plan-row">
                   <span>Settimana Corrente:</span>
-                  <strong className="is-primary">W{weekInfo.week} (Mese {weekInfo.month})</strong>
+                  <strong className="is-primary">W{weekInfo.week}{weekInfo.month ? ` (Mese ${weekInfo.month})` : ' · Scienza V3'}</strong>
                 </div>
                 <div className="wb-plan-row">
                   <span>Fase:</span>
