@@ -1,3 +1,4 @@
+import { BALANCED_VOLUME_VERSION, fitBalancedTargets, scienceSessionBudget } from '../utils/scienceBalanced';
 import { getAllExercises, normalizeName } from '../data/exercises';
 import { SCIENCE_REFERENCE_VERSION } from '../utils/scienceReferences';
 import { migrateLegacyScience } from '../utils/scienceMigration';
@@ -74,15 +75,32 @@ export function scienceActions(set) {
         }
         ceilings[m] = Math.max(targets[m], manual ? p.ceilings[m] : fresh.ceilings[m]);
       }
+      if (profile.goal === 'balanced') Object.assign(targets, fitBalancedTargets(targets, scienceSessionBudget(profile, p)));
       const total = Object.values(targets).reduce((a,n)=>a+n,0);
       const minutes = (profile.daysPerWeek || 4) * (profile.minutesPerSession || 60);
       const timeWarning = fresh.timeRestricted ? fresh.timeWarning : total * 4 > minutes ? `Stima: ~${total * 4} min/settimana, ne hai indicati ${minutes}. I target sono conservati: valuta più tempo o priorità diverse.` : null;
       return {scienceState:{...science,profile,program:{...p,targets,initialTargets,landmarks,ceilings,decisions,roles,
-        startingDoseVersion:SCIENCE_REFERENCE_VERSION,timeRestricted:fresh.timeRestricted,timeWarning,initialEstimates:fresh.initialEstimates,
+        startingDoseVersion:SCIENCE_REFERENCE_VERSION,balancedVolumeVersion:profile.goal === 'balanced' ? BALANCED_VOLUME_VERSION : p.balancedVolumeVersion,timeRestricted:fresh.timeRestricted,timeWarning,initialEstimates:fresh.initialEstimates,
         referenceUpdate:{at:now,version:SCIENCE_REFERENCE_VERSION,changes},
         allocationVersion:3,
         recommendations:p.recommendations.map(r=>r.status==='pending' && r.type==='redistribution' ? {...r,status:'superseded'} : r),
       }}};
+    }),
+    adoptBalancedScienceVolume: (now = Date.now()) => set(state => {
+      const science = state.scienceState, p = science?.program;
+      if (science?.profile?.goal !== 'balanced' || !p || !['active', 'pending'].includes(p.status) || p.balancedVolumeVersion === BALANCED_VOLUME_VERSION || hasLegacyScience(state.scienceReport, science)) return state;
+      const fresh = createScienceProgram({ ...science.profile, roles: p.roles, startDate: p.startDate }, state.history, database(state), science, state.scienceReport, now).program;
+      const desired = Object.fromEntries(Object.keys(p.targets).map(m => {
+        const recovery = p.currentWeek >= 5 || p.pauses?.[m] || p.recommendations.some(r => r.status === 'accepted' && ['recovery', 'deload'].includes(r.type) && r.appliedWeek === p.currentWeek && (r.choice === 'reduce-all' || r.muscles.includes(m)));
+        const manual = p.decisions[m] === 'Obiettivo impostato da te.';
+        return [m, recovery || manual ? p.targets[m] : (fresh.targets[m] ?? p.targets[m]) + Math.max(0, p.targets[m] - (p.initialTargets?.[m] ?? p.targets[m]))];
+      }));
+      const targets = fitBalancedTargets(desired, scienceSessionBudget(science.profile, p));
+      return { scienceState: { ...science, program: { ...p, targets, initialTargets: fresh.initialTargets,
+        balancedVolumeVersion: BALANCED_VOLUME_VERSION,
+        decisions: { ...p.decisions, ...Object.fromEntries(Object.keys(targets).map(m => [m, 'Base del percorso completo adattata al MAV basso e al limite di 20 serie per seduta.'])) },
+        recommendations: p.recommendations.map(r => r.status === 'pending' && r.type === 'redistribution' ? { ...r, status: 'superseded' } : r),
+      } } };
     }),
     completeScienceEvolution: (now = Date.now()) => set(state => {
       const science = state.scienceState || emptyScienceState();
@@ -146,11 +164,11 @@ export function scienceActions(set) {
       const muscles = {};
       for (const [muscle, value] of Object.entries(feedback.muscles || {})) {
         if (!SCIENCE_MUSCLES.includes(muscle)) continue;
-        muscles[muscle] = { recovery: ['good', 'fair', 'poor'].includes(value.recovery) ? value.recovery : null, quality: ['good', 'fair', 'poor'].includes(value.quality) ? value.quality : null, pain: Boolean(value.pain) };
+        muscles[muscle] = { recovery: ['good', 'fair', 'poor'].includes(value.recovery) ? value.recovery : null, quality: ['good', 'fair', 'poor'].includes(value.quality) ? value.quality : null, pain: value.pain === 'mild' ? 'mild' : Boolean(value.pain) };
       }
       return { scienceState: { ...science, feedback: { ...science.feedback, [workoutId]: {
         sleep: ['good', 'fair', 'poor'].includes(feedback.sleep) ? feedback.sleep : null,
-        systemicFatigue: Boolean(feedback.systemicFatigue), muscles,
+        systemicFatigue: feedback.systemicFatigue === 'mild' ? 'mild' : Boolean(feedback.systemicFatigue), muscles,
       } } } };
     }),
     adoptScienceAllocation: (now = Date.now()) => set(state => {
@@ -174,7 +192,12 @@ export function scienceActions(set) {
       const science = state.scienceState, p = science?.program;
       if (!p || p.status !== 'active') return state;
       const plannedSessions = clamp(sessions, 1, 7, science.profile.daysPerWeek || 4);
-      return { scienceState: { ...science, program: { ...p, sessionPlans: { ...p.sessionPlans, [p.currentWeek]: { plannedSessions } } } } };
+      const sessionPlans = { ...p.sessionPlans, [p.currentWeek]: { plannedSessions } };
+      const targets = science.profile.goal === 'balanced' ? fitBalancedTargets(p.targets, scienceSessionBudget(science.profile, { ...p, sessionPlans })) : p.targets;
+      const decisions = { ...p.decisions, ...Object.fromEntries(Object.keys(targets).filter(m => targets[m] !== p.targets[m]).map(m => [m, 'Obiettivo adattato alle sedute disponibili: massimo 20 serie per seduta.'])) };
+      return { scienceState: { ...science, program: { ...p, sessionPlans, targets, decisions,
+        recommendations: science.profile.goal === 'balanced' ? p.recommendations.map(r => r.status === 'pending' && r.type === 'redistribution' ? { ...r, status: 'superseded' } : r) : p.recommendations,
+      } } };
     }),
     deferScienceWeek: (now = Date.now()) => set(state => {
       const science = state.scienceState, p = science?.program;
@@ -197,7 +220,8 @@ export function scienceActions(set) {
       const science = state.scienceState;
       const p = science?.program;
       if (!p || p.status !== 'active' || !Object.hasOwn(p.targets, muscle)) return state;
-      const target = clamp(value, 0, 100, p.targets[muscle]);
+      const available = science.profile.goal === 'balanced' ? Math.max(0, scienceSessionBudget(science.profile, p) - Object.entries(p.targets).reduce((n, [m, v]) => n + (m === muscle ? 0 : v), 0)) : 100;
+      const target = clamp(value, 0, Math.min(100, available), Math.min(available, p.targets[muscle]));
       return { scienceState: { ...science, program: {
         ...p, targets: { ...p.targets, [muscle]: target },
         ceilings: { ...p.ceilings, [muscle]: Math.max(target, clamp(ceiling, 0, 100, p.ceilings[muscle])) },
@@ -214,7 +238,7 @@ export function scienceActions(set) {
       return { scienceState: { ...science, program: {
         ...p, targets: estimated.program.targets, initialTargets: estimated.program.initialTargets,
         ceilings: estimated.program.ceilings, landmarks: estimated.program.landmarks,
-        timeWarning: estimated.program.timeWarning,
+        timeWarning: estimated.program.timeWarning, balancedVolumeVersion: estimated.program.balancedVolumeVersion,
         decisions: Object.fromEntries(Object.keys(p.targets).map(m => [m, 'Partenza ristimata per esperienza e ruolo del distretto. Lo storico scarso non abbassa la dose di base.'])),
       } } };
     }),

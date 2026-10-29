@@ -449,3 +449,16 @@
   font-size: 0.9375rem;
   line-height: 1.6;
 }
+
+.pg-weekly { display: flex; flex-direction: column; gap: 16px; }
+.pg-weekly-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.pg-weekly-heading h2 { font-size: 1.1rem; margin: 0; }
+.pg-date-range input { color: var(--c-text); background: var(--c-surface-2); border: 1px solid var(--c-border); border-radius: 10px; padding: 10px; font: inherit; font-size: .8rem; min-width: 0; color-scheme: dark; }
+.pg-date-range { display: flex; gap: 12px; }
+.pg-date-range label { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 6px; font-size: .75rem; color: var(--c-text-muted); }
+.pg-overview-btn { align-self: flex-start; background: none; border: 0; color: var(--c-primary); padding: 4px 0; font-size: .8rem; }
+
+.pg-periods { display: flex; flex-wrap: wrap; gap: 6px; }
+.pg-period-btn { padding: 8px 10px; border: 1px solid var(--c-border); border-radius: 10px; background: var(--c-surface-2); color: var(--c-text-muted); font: inherit; font-size: .75rem; font-weight: 700; cursor: pointer; }
+.pg-period-btn.is-active { color: var(--c-text); border-color: var(--c-primary); background: rgba(var(--c-primary-rgb), .12); }
+.pg-period-btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }

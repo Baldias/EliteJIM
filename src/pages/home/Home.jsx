@@ -160,7 +160,7 @@ function Home() {
 
         <InteractiveBody />
 
-        <p className="ej-footer-version">ELITEJIM v{pkg.version}</p>
+        <p className="ej-footer-version">ELITEJIM v{pkg.version.replace(/\.0$/, '')}</p>
       </div>
 
       {actionTemplate && <Sheet title="Opzioni scheda" onClose={() => setActionTemplate(null)}><div className="home-routine-menu"><p>{actionTemplate.name}</p><button type="button" onClick={() => { setSharingTemplate(actionTemplate); setActionTemplate(null); }}><Share2 size={19} /><span>Condividi scheda<small>Esporta o invia a un amico</small></span></button><button type="button" onClick={() => { setActionTemplate(null); navigate('/build', { state: { template: actionTemplate } }); }}><Edit3 size={19} /><span>Modifica scheda<small>Esercizi, serie e dettagli</small></span></button><button type="button" className="is-danger" onClick={() => handleDelete(actionTemplate)}><Trash2 size={19} /><span>Elimina scheda<small>Ti chiederemo conferma</small></span></button></div></Sheet>}

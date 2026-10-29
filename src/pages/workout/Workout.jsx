@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell } from 'lucide-react';
+import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell, TrendingUp } from 'lucide-react';
 import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/useStore';
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
@@ -254,6 +254,16 @@ function Workout() {
                     </span>
                   </div>
                   <div className="workout-exercise-meta-right">
+                    <button
+                      type="button"
+                      className="workout-exercise-progress-btn"
+                      title="Vedi progressi"
+                      aria-label={`Vedi progressi di ${ex.name || 'questo esercizio'}`}
+                      disabled={!ex.name?.trim()}
+                      onClick={() => navigate(`/progress?exercise=${encodeURIComponent(ex.name.trim())}`)}
+                    >
+                      <TrendingUp size={16} />
+                    </button>
                     <button
                       type="button"
                       onClick={() => toggleNotes(ex.id)}

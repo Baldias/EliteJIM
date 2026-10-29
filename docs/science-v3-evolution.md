@@ -41,6 +41,24 @@ Quattro minuti per serie servono solo per stimare il tempo. Una normale discrepa
 
 L’accumulo usa recupero, qualità, completamento e prestazioni confrontabili. L’esperienza non limita più il principiante a +1 serie: gli incrementi tendono al riferimento MAV, con massimo +2 o +3 se i dati di qualità sono particolarmente buoni. La crescita complessiva è contenuta entro circa il 10% della dose iniziale per aggiornamento. I riferimenti non garantiscono di raggiungere simultaneamente il MAV di ogni muscolo in un blocco. Le priorità guidano l’allocazione. Eventuali trasferimenti nelle ultime due settimane richiedono consenso e non scendono sotto MEV. Fatica e dolore producono consigli; riduzioni, pause e scarico richiedono la scelta dell’utente.
 
+## Tolleranza ai segnali lievi durante l’accumulo
+
+Per i distretti target in specializzazione l’aumento è la scelta predefinita quando è stato completato almeno l’80% del target, anche senza RIR e senza un check perfetto. “Solo in parte”, qualche serie meno pulita, stanchezza lieve e fastidi lievi con movimento normale permettono +1 serie. Un singolo check negativo isolato non blocca automaticamente l’accumulo. Senza segnali negativi il passo resta fino a +2, oppure +3 con serie confermate, almeno due esposizioni e feedback completamente positivo.
+
+Il blocco per recupero scatta con dolore che limita il movimento, fatica generale marcata in almeno due sedute, due check con recupero o qualità nettamente insufficienti, recupero insufficiente e qualità marcatamente scadente nello stesso check, oppure calo ripetuto delle prestazioni accompagnato da almeno un check nettamente negativo. Le risposte storiche booleane positive su dolore/fatica sono conservate; i nuovi check distinguono esplicitamente il livello lieve. Il RIR migliora la lettura delle prestazioni e la fiducia nei landmark, ma non è un requisito per l’aumento ordinario.
+
+Restano il budget globale del 10%, le soglie di volume, le settimane W1–W4 di accumulo e W5 di recupero. In specializzazione i distretti fuori priorità non ricevono aumenti: conservano la base, con eventuali trasferimenti solo accettati e mai sotto MEV. Le nuove regole si applicano alla prossima chiusura senza riscrivere lo storico o annullare pause già accettate.
+
+## Percorso completo: MAV basso e budget per seduta
+
+Il percorso `balanced`, senza priorità specializzate, parte dal valore basso del MAV di ogni distretto nella tabella. La partenza non viene aumentata automaticamente dalla mediana storica. Il tetto degli obiettivi è `20 × sedute previste`, anche nelle stime, negli aumenti successivi e nell’editor manuale. A parità di disponibilità il volume viene ripartito per avanzamento proporzionale da MEV verso MAV basso, con un piccolo ritardo per polpacci, addome e femorali.
+
+Se non entrano nemmeno tutti i MEV, il tetto prevale: si riducono prima questi tre distretti, anche sotto MEV. Solo con disponibilità estremamente ridotta si toccano anche gli altri. I distretti attivi conservano almeno una serie quando possibile; nessun log completato viene rimosso per far rientrare il volume.
+
+Gli aumenti privilegiano recupero buono e carichi confrontabili in crescita. A tetto pieno le differenze tra distretti possono spostare una serie per muscolo donatore per aggiornamento verso quelli con risposta migliore. Con segnali equivalenti non si inventano differenze e le stime future non simulano trasferimenti arbitrari. Il budget di cambiamento resta graduale, intorno al 10% della base iniziale. Lo scarico rimane una proposta da accettare.
+
+La politica si applica una volta anche ai protocolli completi attivi, conservando settimane archiviate e dati originali. Cambiare le sedute previste riduce i target correnti se necessario per il nuovo tetto; aumentare la disponibilità non inventa nuove serie già completate. Il percorso di specializzazione conserva la sua base e i suoi automatismi: prima usa il budget disponibile, poi propone eventuali trasferimenti necessari dalle altre basi.
+
 ## Aggiornamento obbligatorio dei protocolli V3 esistenti
 
 Come richiesto, il primo caricamento aggiorna anche i protocolli già compilati, senza ripetere il quiz. `startingDoseVersion = 3` rende l’operazione idempotente, anche dopo ripristino. Si ricalcola la base e si conservano gli incrementi positivi già maturati; date, settimana e settimane archiviate restano intatte. Gli obiettivi impostati manualmente e il recupero già accettato non sono annullati. I riferimenti vengono aggiornati anche in recupero. I nuovi valori e le variazioni sono salvati nel sidecar; la UI segnala l’aggiornamento.

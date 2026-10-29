@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import MuscleWeeklyProgress from './MuscleWeeklyProgress';
 import { useStore } from '../../store/useStore';
 import { EXERCISE_CATEGORIES, getAllExercises, getExerciseCategories } from '../../data/exercises';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -42,8 +44,17 @@ function ProgressOverload() {
     const muscleXP = useStore(state => state.muscleXP) || {};
     const bodyweight = useStore(resolveBodyweight);
 
+    const [searchParams] = useSearchParams();
+    const requestedExercise = searchParams.get('exercise') || '';
+    const science = useStore(state => state.scienceState);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedExercise, setSelectedExercise] = useState('');
+    const [selectedExercise, setSelectedExercise] = useState(requestedExercise);
+    const [searchText, setSearchText] = useState(requestedExercise);
+    const selectCategory = key => {
+        setSelectedCategory(key);
+        setSelectedExercise('');
+        setSearchText('');
+    };
 
     const allExercisesDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
@@ -55,8 +66,9 @@ function ProgressOverload() {
                 if (ex.sets.some(s => s.done)) exSet.add(ex.name);
             });
         });
+        if (requestedExercise) exSet.add(requestedExercise);
         return Array.from(exSet).sort();
-    }, [history]);
+    }, [history, requestedExercise]);
 
     // Only muscle groups that actually have trained exercises, with their count
     const categories = useMemo(() => {
@@ -79,10 +91,7 @@ function ProgressOverload() {
         return trainedExercises.filter(name => categoryExNames.has(name));
     }, [trainedExercises, activeCategory, allExercisesDB]);
 
-    // Fall back to the first exercise when the filter hides the current pick
-    const currentExercise = availableExercises.includes(selectedExercise)
-        ? selectedExercise
-        : (availableExercises[0] || '');
+    const currentExercise = availableExercises.includes(selectedExercise) ? selectedExercise : '';
 
     // Bodyweight moved by pull-ups, dips, push-ups: their 1RM is the added weight
     const bodyweightLoad = useMemo(
@@ -146,7 +155,7 @@ function ProgressOverload() {
 
             <header>
                 <h1 className="ej-title">Progressi</h1>
-                <p className="ej-eyebrow">Sovraccarico progressivo &amp; 1RM</p>
+                <p className="ej-eyebrow">Volume settimanale &amp; sovraccarico progressivo</p>
             </header>
 
             {/* Muscle group filter: one scrollable row, only trained groups */}
@@ -157,7 +166,7 @@ function ProgressOverload() {
                         role="tab"
                         aria-selected={!activeCategory}
                         className={`pg-filter-chip ${!activeCategory ? 'is-active' : ''}`}
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={() => selectCategory(null)}
                     >
                         Tutti <span className="pg-filter-count">{trainedExercises.length}</span>
                     </button>
@@ -168,35 +177,13 @@ function ProgressOverload() {
                             key={key}
                             aria-selected={activeCategory === key}
                             className={`pg-filter-chip ${activeCategory === key ? 'is-active' : ''}`}
-                            onClick={() => setSelectedCategory(activeCategory === key ? null : key)}
+                            onClick={() => selectCategory(key)}
                         >
                             {label} <span className="pg-filter-count">{count}</span>
                         </button>
                     ))}
                 </div>
             )}
-
-            {/* RPG level of the selected muscle group */}
-            {activeCategory && (() => {
-                const label = EXERCISE_CATEGORIES[activeCategory];
-                const xp = muscleXP[label] || 0;
-                const levelData = getMuscleLevelByXp(xp);
-                return (
-                    <div className="ej-card pg-rpg">
-                        <h3 className="pg-rpg-title"><Zap size={18} /> Livelli RPG</h3>
-                        <div className="pg-rpg-level">
-                            <div className="pg-rpg-row">
-                                <span className="pg-rpg-name">{label}</span>
-                                <span className="pg-rpg-meta">
-                                    <span>{xp.toLocaleString('it-IT')} XP</span>
-                                    <strong>Lv. {levelData.level}</strong>
-                                </span>
-                            </div>
-                            <div className="ej-track"><span style={{ width: `${levelData.progressPercent}%` }} /></div>
-                        </div>
-                    </div>
-                );
-            })()}
 
             {availableExercises.length === 0 ? (
                 <div className="ej-card pg-empty">
@@ -209,13 +196,18 @@ function ProgressOverload() {
                     <div className="pg-search">
                         <Search size={18} className="pg-search-icon" />
                         <ExerciseAutocomplete
-                            value={currentExercise}
-                            onChange={(val) => setSelectedExercise(val)}
+                            value={searchText}
+                            onChange={val => { setSearchText(val); setSelectedExercise(''); }}
+                            onSelect={setSelectedExercise}
                             options={availableExercises}
                             placeholder="Cerca esercizio..."
                         />
                     </div>
 
+                    {activeCategory && currentExercise && <button type="button" className="pg-overview-btn" onClick={() => { setSelectedExercise(''); setSearchText(''); }}>Torna alle serie settimanali</button>}
+                    {activeCategory && !currentExercise && <MuscleWeeklyProgress muscle={EXERCISE_CATEGORIES[activeCategory]} history={history} db={allExercisesDB} science={science} />}
+                    {currentExercise && !summary && <div className="ej-card pg-empty">Nessuna sessione completata per {currentExercise}. I progressi appariranno dopo aver salvato l’allenamento.</div>}
+                    {!activeCategory && !currentExercise && <p className="pg-hero-note">Scegli un distretto per vedere le serie settimanali oppure cerca un esercizio.</p>}
                     {summary && (
                         <>
                             {/* 1RM hero + chart */}
@@ -365,6 +357,29 @@ function ProgressOverload() {
                             </div>
                         </>
                     )}
+                    {/* RPG level of the selected muscle group */}
+                    {activeCategory && (() => {
+                        const label = EXERCISE_CATEGORIES[activeCategory];
+                        const xp = muscleXP[label] || 0;
+                        const levelData = getMuscleLevelByXp(xp);
+                        return (
+                            <div className="ej-card pg-rpg">
+                                <h3 className="pg-rpg-title"><Zap size={18} /> Livelli RPG</h3>
+                                <div className="pg-rpg-level">
+                                    <div className="pg-rpg-row">
+                                        <span className="pg-rpg-name">{label}</span>
+                                        <span className="pg-rpg-meta">
+                                            <span>{xp.toLocaleString('it-IT')} XP</span>
+                                            <strong>Lv. {levelData.level}</strong>
+                                        </span>
+                                    </div>
+                                    <div className="ej-track"><span style={{ width: `${levelData.progressPercent}%` }} /></div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+
                 </>
             )}
         </div>

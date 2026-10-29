@@ -114,9 +114,9 @@ describe('calendar and initial doses', () => {
     const legacy = { weekHistory: { 9: { startDate: start - 14 * 86400000, completedDate: start } } };
     expect(createScienceProgram(profile, history, EXERCISES_DB, emptyScienceState(), legacy, start).program.landmarks.Petto.source).toBe('starting-dose');
   });
-  it('fits new users to their available time, but never shrinks a historical starting dose', () => {
+  it('caps full-body targets to twenty sets per planned session', () => {
     const science = program({ experience: 'beginner', goal: 'balanced', priorities: [], daysPerWeek: 2, minutesPerSession: 30 });
-    expect(Object.values(science.program.targets).reduce((a, b) => a + b, 0)).toBe(15);
+    expect(Object.values(science.program.targets).reduce((a, b) => a + b, 0)).toBe(40);
     expect(science.program.targets).toHaveProperty('Spalle');
     expect(Object.keys(science.program.targets).some(m => m.includes('Deltoidi'))).toBe(false);
   });
@@ -159,9 +159,9 @@ describe('accumulation, peak and recovery decisions', () => {
     expect(next.program.recommendations).toEqual([]);
     expect(closeScienceWeek(science, [], EXERCISES_DB, start)).toBe(science);
   });
-  it('does not increase unknown-RIR or poor-quality work', () => {
+  it('blocks progression when poor recovery and markedly poor quality occur together', () => {
     const science = program(); const w = workout(1, start + 1000, undefined, 15);
-    annotate(science, w); science.feedback[1].muscles.Petto.quality = 'poor';
+    annotate(science, w); science.feedback[1].muscles.Petto = { recovery: 'poor', quality: 'poor', pain: false };
     const next = closeScienceWeek(science, [w], EXERCISES_DB, scienceWeekRange(start, 1).end);
     expect(next.program.targets.Petto).toBe(science.program.targets.Petto);
     science.annotations = {};
@@ -215,7 +215,7 @@ describe('accumulation, peak and recovery decisions', () => {
   it('does not fabricate MRV from one bad week and restores an accepted temporary pause', () => {
     let science = program();
     const w = workout(1, start + 1000); annotate(science, w);
-    science.feedback[1].muscles.Petto.recovery = 'poor';
+    science.feedback[1].muscles.Petto = { recovery: 'poor', quality: 'poor', pain: false };
     science = closeScienceWeek(science, [w], EXERCISES_DB, scienceWeekRange(start, 1).end);
     expect(science.program.landmarks.Petto.mrv).toBeNull();
     const rec = science.program.recommendations[0];

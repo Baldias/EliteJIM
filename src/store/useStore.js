@@ -157,6 +157,8 @@ export const useStore = create(
       highestStreak: 0,
       lastWorkoutDate: null,
       recapData: null,
+      releaseNotesSeen: '',
+      dismissReleaseNotes: (version) => set({ releaseNotesSeen: version }),
       theme: 'science-v3',
       themeChosen: false,
       themeChoiceVersion: 0,

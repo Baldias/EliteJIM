@@ -7,7 +7,7 @@ import { normalizeBackupPayload } from '../src/utils/backup';
 
 const start=new Date(2026,9,19).getTime(), day=86400000;
 const db=getAllExercises([],{});
-const profile={experience:'beginner',daysPerWeek:4,minutesPerSession:90,goal:'balanced',priorities:[],startDate:start};
+const profile={experience:'beginner',daysPerWeek:4,minutesPerSession:90,goal:'specialization',priorities:['Petto'],startDate:start};
 const history=[1,2].map(w=>({id:w,startTime:start-w*7*day+1000,exercises:[{id:'back',name:'Rematore con Bilanciere',sets:Array.from({length:22},(_,id)=>({id,kg:40,reps:10,done:true}))},{id:'shoulder',name:'Alzate Laterali Manubri',sets:Array.from({length:14},(_,id)=>({id,kg:5,reps:12,done:true}))}]}));
 const original=useStore.getInitialState();
 const protectedData=s=>structuredClone(Object.fromEntries(['history','activeWorkout','userXP','muscleXP','currentStreak','highestStreak','scienceReport','templates'].map(k=>[k,s[k]])));

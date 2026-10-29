@@ -244,3 +244,6 @@
 .sv3-history-set > div { display:flex; gap:4px; }
 .sv3-history-set button { padding:9px 6px; border:1px solid var(--c-border); border-radius:8px; color:var(--c-text-muted); font:inherit; font-size:10px; min-height:36px; }
 .sv3-history-set button[aria-pressed="true"] { color:var(--c-primary); border-color:rgba(var(--c-primary-rgb),.35); background:rgba(var(--c-primary-rgb),.08); }
+
+.sv3-planner-help { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; padding: 0; color: var(--c-text-muted); background: transparent; border: 0; border-radius: 50%; cursor: pointer; }
+.sv3-planner-help:hover, .sv3-planner-help:focus-visible { color: var(--c-text); background: var(--c-surface-2); }
