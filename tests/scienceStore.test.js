@@ -17,6 +17,21 @@ beforeEach(() => {
   useStore.setState({ ...original, history: [structuredClone(workout)], userXP: 1750, muscleXP: { Petto: 480, Spalle: 360 }, currentStreak: 4, highestStreak: 12, scienceState: emptyScienceState() }, true);
 });
 
+describe('daily week reminder persistence', () => {
+  it('persists the day shown across store rehydration and preserves science state', async () => {
+    useStore.getState().startScienceV3(profile, start);
+    const before = structuredClone(useStore.getState().scienceState.program);
+    useStore.getState().markScienceWeekPromptShown('2026-09-14');
+    expect(useStore.getState().scienceState.weekPromptShownDate).toBe('2026-09-14');
+    const saved = localStorage.getItem('elitejim-storage');
+    useStore.setState({ scienceState: emptyScienceState() });
+    localStorage.setItem('elitejim-storage', saved);
+    await useStore.persist.rehydrate();
+    expect(useStore.getState().scienceState.weekPromptShownDate).toBe('2026-09-14');
+    expect(useStore.getState().scienceState.program).toEqual(before);
+  });
+});
+
 describe('science isolation and backward compatibility', () => {
   it('preserves all historical/gamification fields across start, RIR, feedback and classification', () => {
     const before = protectedData(useStore.getState());

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useWorkoutAutoFinish } from './hooks/useWorkoutAutoFinish';
 import { hasCurrentThemeChoice } from './utils/theme';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, TrendingUp, User, Dna, Utensils } from 'lucide-react';
@@ -61,6 +62,7 @@ function Navigation() {
 }
 
 function App() {
+  useWorkoutAutoFinish();
   const themeChosen = useStore(hasCurrentThemeChoice);
   const releaseNotesSeen = useStore(state => state.releaseNotesSeen);
   const dismissReleaseNotes = useStore(state => state.dismissReleaseNotes);

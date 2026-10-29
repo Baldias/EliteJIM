@@ -43,6 +43,7 @@ function startProgram(state, input, now, restart = false) {
 // updateHistoryWorkout/syncGamificationWithHistory (which recalculate XP).
 export function scienceActions(set) {
   return {
+    markScienceWeekPromptShown: (date) => set(state => ({ scienceState: { ...state.scienceState, weekPromptShownDate: date } })),
     updateScienceVolumeReferences: (now = Date.now()) => set(state => {
       const science = state.scienceState, p = science?.program;
       if (!p || !['active','pending'].includes(p.status) || p.startingDoseVersion === SCIENCE_REFERENCE_VERSION || hasLegacyScience(state.scienceReport, science)) return state;
@@ -142,7 +143,7 @@ export function scienceActions(set) {
       const annotation = { ...old };
       if (Object.hasOwn(changes, 'rir')) annotation.rir = changes.rir === 0 || changes.rir === 1 ? changes.rir : null;
       if (Object.hasOwn(changes, 'excluded')) annotation.excluded = Boolean(changes.excluded);
-      return { scienceState: { ...science, annotations: { ...science.annotations, [workoutId]: { ...perWorkout, [exerciseId]: { ...perExercise, [setId]: annotation } } } } };
+      return { ...(state.activeWorkout?.id === workoutId ? { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now() } } : {}), scienceState: { ...science, annotations: { ...science.annotations, [workoutId]: { ...perWorkout, [exerciseId]: { ...perExercise, [setId]: annotation } } } } };
     }),
     classifyScienceExercise: (workoutId, exerciseId, primary) => set(state => {
       if (!SCIENCE_MUSCLES.includes(primary)) return state;
@@ -152,7 +153,7 @@ export function scienceActions(set) {
       const science = state.scienceState || emptyScienceState();
       const found = database(state).find(e => normalizeName(e.name) === normalizeName(ex.name));
       const classification = { primary, indirect: [], name: ex.name };
-      return { scienceState: {
+      return { ...(state.activeWorkout?.id === workoutId ? { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now() } } : {}), scienceState: {
         ...science,
         classifications: { ...science.classifications, [found?.id || normalizeName(ex.name)]: classification },
         exerciseSnapshots: { ...science.exerciseSnapshots, [workoutId]: { ...science.exerciseSnapshots[workoutId], [exerciseId]: classification } },

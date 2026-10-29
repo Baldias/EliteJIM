@@ -106,7 +106,8 @@ function Workout() {
       const hist = state.history || [];
       const templates = state.templates || [];
       const targetEx = state.activeWorkout.exercises.find(e => e.id === exerciseId);
-      const isAdded = targetEx?.isAdded;
+      if (!targetEx || targetEx.name === newName) return state;
+      const isAdded = targetEx.isAdded;
 
       const norm = normalizeName(newName);
       // Most recent session with completed working sets for this exercise
@@ -132,6 +133,7 @@ function Workout() {
       return {
         activeWorkout: {
           ...state.activeWorkout,
+          lastActivityAt: Date.now(),
           exercises: state.activeWorkout.exercises.map(ex => {
             if (ex.id !== exerciseId) return ex;
             const sets = ex.sets.map((s, i) => {

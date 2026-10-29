@@ -563,6 +563,7 @@ export const useStore = create(
           templateId: template ? template.id : null,
           name: template ? template.name : 'Allenamento Libero',
           startTime: Date.now(),
+          lastActivityAt: Date.now(),
           exercises: template ? template.exercises.map(ex => {
             const pastSets = findLastSets(ex.name);
             return {
@@ -589,7 +590,7 @@ export const useStore = create(
 
       updateActiveWorkoutSet: (exerciseId, setId, field, value) => {
         set((state) => {
-          if (!state.activeWorkout) return state;
+          if (!state.activeWorkout?.exercises.some(ex => ex.id === exerciseId && ex.sets.some(s => s.id === setId && s[field] !== value))) return state;
           const updatedExercises = state.activeWorkout.exercises.map((ex) => {
             if (ex.id !== exerciseId) return ex;
             const updatedSets = ex.sets.map((s) => {
@@ -598,18 +599,18 @@ export const useStore = create(
             });
             return { ...ex, sets: updatedSets };
           });
-          return { activeWorkout: { ...state.activeWorkout, exercises: updatedExercises } };
+          return { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), exercises: updatedExercises } };
         });
       },
 
       updateActiveWorkoutExerciseNotes: (exerciseId, notes) => {
         set((state) => {
-          if (!state.activeWorkout) return state;
+          if (!state.activeWorkout?.exercises.some(ex => ex.id === exerciseId && ex.notes !== notes)) return state;
           const updatedExercises = state.activeWorkout.exercises.map((ex) => {
             if (ex.id !== exerciseId) return ex;
             return { ...ex, notes };
           });
-          return { activeWorkout: { ...state.activeWorkout, exercises: updatedExercises } };
+          return { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), exercises: updatedExercises } };
         });
       },
 
@@ -649,6 +650,7 @@ export const useStore = create(
           return {
             activeWorkout: {
               ...state.activeWorkout,
+              lastActivityAt: Date.now(),
               exercises: [...state.activeWorkout.exercises, newExercise]
             }
           };
@@ -657,7 +659,7 @@ export const useStore = create(
 
       addSetToActiveExercise: (exerciseId) => {
         set((state) => {
-          if (!state.activeWorkout) return state;
+          if (!state.activeWorkout?.exercises.some(ex => ex.id === exerciseId)) return state;
           const updatedExercises = state.activeWorkout.exercises.map((ex) => {
             if (ex.id !== exerciseId) return ex;
 
@@ -677,16 +679,23 @@ export const useStore = create(
               sets: [...ex.sets, { id: Date.now(), kg: lastKg, reps: lastReps, targetReps, done: false }]
             };
           });
-          return { activeWorkout: { ...state.activeWorkout, exercises: updatedExercises } };
+          return { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), exercises: updatedExercises } };
         });
       },
 
-      finishWorkout: () => {
+      initializeWorkoutActivity: (now = Date.now()) => set(state => {
+        if (!state.activeWorkout || Number.isFinite(state.activeWorkout.lastActivityAt)) return state;
+        return { activeWorkout: { ...state.activeWorkout, lastActivityAt: now } };
+      }),
+      finishWorkout: (options = {}) => {
         set((state) => {
           if (!state.activeWorkout) return state;
+          const now = options.now ?? Date.now();
+          const lastActivity = state.activeWorkout.lastActivityAt;
+          if (options.auto && (state.activeWorkout.id !== options.workoutId || lastActivity !== options.lastActivityAt || !Number.isFinite(lastActivity) || now < lastActivity + 3600000)) return state;
           const completedWorkout = {
             ...state.activeWorkout,
-            endTime: Date.now()
+            endTime: options.auto ? Math.max(state.activeWorkout.startTime, lastActivity) : now
           };
 
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
@@ -740,7 +749,7 @@ export const useStore = create(
             muscleXP: newMuscleXP,
             currentStreak: newStreak,
             highestStreak,
-            lastWorkoutDate: Date.now(),
+            lastWorkoutDate: completedWorkout.endTime,
             recapData
           };
         });
@@ -785,10 +794,11 @@ export const useStore = create(
 
       deleteExerciseFromActiveSession: (exerciseId) => {
         set((state) => {
-          if (!state.activeWorkout) return state;
+          if (!state.activeWorkout?.exercises.some(ex => ex.id === exerciseId)) return state;
           return {
             activeWorkout: {
               ...state.activeWorkout,
+              lastActivityAt: Date.now(),
               exercises: state.activeWorkout.exercises.filter(ex => ex.id !== exerciseId)
             }
           };
@@ -832,7 +842,7 @@ export const useStore = create(
 
       deleteSetFromActiveExercise: (exerciseId, setId) => {
         set((state) => {
-          if (!state.activeWorkout) return state;
+          if (!state.activeWorkout?.exercises.some(ex => ex.id === exerciseId && ex.sets.some(s => s.id === setId))) return state;
           const updatedExercises = state.activeWorkout.exercises.map(ex => {
             if (ex.id !== exerciseId) return ex;
             return {
@@ -843,6 +853,7 @@ export const useStore = create(
           return {
             activeWorkout: {
               ...state.activeWorkout,
+              lastActivityAt: Date.now(),
               exercises: updatedExercises
             }
           };
