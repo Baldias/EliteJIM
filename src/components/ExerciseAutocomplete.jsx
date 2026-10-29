@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { EXERCISES_DB, getAllExercises, getExerciseCategories } from '../data/exercises';
 import './Autocomplete.css';
 
-export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca esercizio...", options = null }) {
+export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca esercizio...", options = null, onSelect }) {
   const customExercises = useStore(state => state.customExercises || []);
   const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
   const [isOpen, setIsOpen] = useState(false);
@@ -45,6 +45,7 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
         type="text"
         className="autocomplete-input"
         placeholder={placeholder}
+        aria-label={placeholder}
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
@@ -73,6 +74,7 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     onChange(name);
+                    onSelect?.(name);
                     setIsOpen(false);
                   }}
                 >

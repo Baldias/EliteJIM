@@ -897,3 +897,19 @@
   background-color: #ff3b30;
   box-shadow: 0 0 6px rgba(255, 59, 48, 0.5);
 }
+.workout-exercise-progress-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--c-text-muted);
+  cursor: pointer;
+}
+.workout-exercise-progress-btn:hover, .workout-exercise-progress-btn:focus-visible { color: var(--c-primary); background: var(--c-surface-2); }
+.workout-exercise-progress-btn:disabled { opacity: .35; cursor: default; }

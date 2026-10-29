@@ -31,3 +31,9 @@ export function scienceWeekTiming(program, now) {
   const label = now < range.start ? `Inizia tra ${Math.max(0, dayNumber(range.start) - dayNumber(now))} giorni` : overdue ? lateDays ? `In ritardo di ${lateDays} ${lateDays === 1 ? 'giorno' : 'giorni'}` : 'Settimana scaduta oggi' : days === 0 ? 'Termina oggi' : `Termina tra ${days} ${days === 1 ? 'giorno' : 'giorni'}`;
   return { ...range, overdue, days, lateDays, label };
 }
+
+// Count remaining whole minutes without showing zero before the actual deadline.
+export function scienceCountdown(end, now) {
+  const minutesLeft = Math.max(0, Math.ceil((end - now) / 60000));
+  return { days: Math.floor(minutesLeft / 1440), hours: Math.floor(minutesLeft % 1440 / 60), minutes: minutesLeft % 60 };
+}

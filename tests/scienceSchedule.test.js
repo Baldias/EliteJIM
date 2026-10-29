@@ -15,8 +15,7 @@ const sum = targets => Object.values(targets).reduce((a, b) => a + b, 0);
 describe('specialization with a stable weekly workload', () => {
   it('starts every non-priority at its growth base for the first two weeks', () => {
     const science = make();
-    const base = make({ goal: 'balanced', priorities: [] });
-    expect(science.program.targets).toEqual(base.program.targets);
+    expect(science.program.targets).toMatchObject({ Petto: 10, Dorso: 10, Bicipiti: 8, Spalle: 8, Femorali: 6, Polpacci: 8 });
     expect(science.program.roles.Bicipiti).toBe('support');
     const preview = scienceWeekPreview(science, [], EXERCISES_DB, 2, now);
     expect(preview.targets.Bicipiti).toBe(science.program.targets.Bicipiti);
@@ -124,6 +123,17 @@ describe('per-session guidance', () => {
     expect(plan.sessionsLeft).toBe(0);
     expect(plan.remainingAverage).toBeNull();
     expect(plan.unknown).toBe(20);
-    expect(plan.remaining).toBe(sum(science.program.targets));
+    expect(plan.remaining).toBe(sum(science.program.targets) - science.program.targets.Petto);
+  });
+});
+
+describe('weekly countdown', () => {
+  it('shows remaining days, hours and minutes and reaches zero only at the deadline', async () => {
+    const { scienceCountdown } = await import('../src/utils/scienceCalendar');
+    const deadline = now + ((2 * 24 + 5) * 60 + 7) * 60000;
+    expect(scienceCountdown(deadline, now)).toEqual({ days: 2, hours: 5, minutes: 7 });
+    expect(scienceCountdown(deadline, deadline - 1)).toEqual({ days: 0, hours: 0, minutes: 1 });
+    expect(scienceCountdown(deadline, deadline)).toEqual({ days: 0, hours: 0, minutes: 0 });
+    expect(scienceCountdown(deadline, deadline + 100000)).toEqual({ days: 0, hours: 0, minutes: 0 });
   });
 });

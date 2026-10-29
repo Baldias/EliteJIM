@@ -54,7 +54,7 @@ export function legacyDynamicProposal(report, history, db, science, now = Date.n
   const targets = {}, changes = [], notes = [];
   const recent = evidence[0];
   const recentWorkouts = recent ? history.filter(w => Number(w.startTime) >= recent.start && Number(w.startTime) < recent.end) : [];
-  const systemic = recentWorkouts.filter(w => science.feedback?.[w.id]?.systemicFatigue).length >= 2;
+  const systemic = recentWorkouts.filter(w => science.feedback?.[w.id]?.systemicFatigue === true).length >= 2;
   let increases = 0;
   const muscles = Object.keys(report.baseLandmarks).sort((a, b) => Number(focus.includes(b)) - Number(focus.includes(a)) || a.localeCompare(b));
   for (const muscle of muscles) {
@@ -63,7 +63,7 @@ export function legacyDynamicProposal(report, history, db, science, now = Date.n
     const samples = evidence.map(e => e.volumes.muscles[muscle]).filter(Boolean);
     const observed = samples.length >= 2 ? Math.round(median(samples.map(s => s.ordinary))) : null;
     const feedback = recentWorkouts.map(w => science.feedback?.[w.id]?.muscles?.[muscle]).filter(Boolean);
-    const negative = feedback.some(f => f.pain) || feedback.filter(f => f.recovery === 'poor' || f.quality === 'poor').length >= 2;
+    const negative = feedback.some(f => f.pain === true) || feedback.filter(f => f.recovery === 'poor' || f.quality === 'poor').length >= 2;
     const good = feedback.length >= 2 && feedback.every(f => f.recovery === 'good' && f.quality === 'good' && !f.pain);
     const previous = getScienceTargetForMuscle(view, muscle, current);
     const recentVolume = recent?.volumes.muscles[muscle];

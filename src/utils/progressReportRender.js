@@ -103,7 +103,7 @@ function summary(ctx, report) {
 }
 function science(ctx, report, page) {
   const estimated = page.week.kind === 'estimate' || page.week.kind === 'deload-estimate';
-  text(ctx, `${page.week.phase} · ${report.science.accounting === 'legacy' ? 'conteggi originali' : page.items.some(m=>m.imported) ? 'serie a 0–1 RIR + progressi V2 riportati' : 'serie dirette a 0–1 RIR'}`, PAD, 250, 18, C.muted);
+  text(ctx, `${page.week.phase} · ${report.science.accounting === 'legacy' ? 'conteggi originali' : 'serie dirette completate'}`, PAD, 250, 18, C.muted);
   page.items.forEach((m, i) => {
     const y = 328 + i * 76;
     const color = SCIENCE_LANDMARK_COLORS[m.band] || C.cyan;
@@ -114,7 +114,7 @@ function science(ctx, report, page) {
     bar(ctx, PAD, y + 20, WIDTH - PAD * 2, estimated ? m.target : m.done, peak, color, 8);
     if (m.imported || m.unknown) text(ctx, [m.imported ? `${m.imported} ${m.imported === 1 ? 'riportata' : 'riportate'} da V2` : '', m.unknown ? `${m.unknown} senza RIR` : ''].filter(Boolean).join(' · '), PAD, y + 48, 13, C.yellow);
   });
-  wrapped(ctx, page.week.kind === 'estimate' || page.week.kind === 'deload-estimate' ? 'Proiezione: gli obiettivi potranno cambiare in base a qualità, recupero e scelte dell’atleta. Nessuna serie futura è già completata.' : report.science.accounting === 'legacy' ? 'Conteggi storici del protocollo conservati. Scienza V3.0 modifica solo le proposte accettate.' : 'Le serie riportate da V2 conservano il progresso senza inventare il RIR. Nuove serie senza RIR, riscaldamento e tecniche sono escluse.', PAD, 1268, WIDTH - PAD * 2, 15, C.muted, 23);
+  wrapped(ctx, page.week.kind === 'estimate' || page.week.kind === 'deload-estimate' ? 'Proiezione: gli obiettivi potranno cambiare in base a qualità, recupero e scelte dell’atleta. Nessuna serie futura è già completata.' : report.science.accounting === 'legacy' ? 'Conteggi storici del protocollo conservati. Scienza V3.0 modifica solo le proposte accettate.' : 'Le serie riportate da V2 conservano il progresso senza inventare il RIR. Anche le serie senza RIR contano; riscaldamento e tecniche sono esclusi.', PAD, 1268, WIDTH - PAD * 2, 15, C.muted, 23);
 }
 function exercise(ctx, ex, y) {
   card(ctx, PAD, y, WIDTH - PAD * 2, 500);

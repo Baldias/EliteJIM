@@ -1,7 +1,8 @@
+import { balancedStartingTargets, BALANCED_VOLUME_VERSION, fitBalancedTargets, scienceSessionBudget } from './scienceBalanced';
 import { normalizeName } from '../data/exercises';
 import { scienceProgramWeekRange } from './scienceCalendar';
 import { allocateScienceGrowth } from './scienceAllocation';
-import { scienceSetKey } from './scienceCarry';
+import { scienceSetKey, scienceCompletedSets } from './scienceCarry';
 import { SCIENCE_REFERENCE_VERSION, scienceReference, scienceGrowthStep } from './scienceReferences';
 
 // Product starting doses, not measured biological thresholds. Direct-set accounting
@@ -172,9 +173,13 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
     initialEstimates[muscle] = { referenceDose:dose, historyMedian:baseline[muscle], historyWeight:weight, reliable, estimate:ordinary };
     targets[muscle] = roles[muscle] === 'off' ? 0 : roles[muscle] === 'maintenance' ? Math.max(scienceReference(muscle).mv, Math.ceil(ordinary / 2)) : ordinary;
   }
+  if (profile.goal === 'balanced') {
+    Object.assign(targets, balancedStartingTargets(active, profile, roles));
+    for (const muscle of active) initialEstimates[muscle] = { ...initialEstimates[muscle], referenceDose: scienceReference(muscle).mav[0], historyWeight: 0, estimate: targets[muscle] };
+  }
   const budget = Math.max(1, Math.floor((Number(profile.daysPerWeek) || 4) * (Number(profile.minutesPerSession) || 60) / 4));
   const sum = Object.values(targets).reduce((a, n) => a + n, 0);
-  const timeRestricted = !hasHistory && budget < sum * 0.6;
+  const timeRestricted = profile.goal !== 'balanced' && !hasHistory && budget < sum * 0.6;
   if (timeRestricted) {
     // Largest-remainder allocation preserves the time budget exactly.
     const scaled = active.map(m => ({ muscle: m, value: targets[m] * budget / sum }));
@@ -197,9 +202,10 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
     mrv: structuredClone(science.program?.landmarks?.[m]?.mrv ?? null),
     fatigueSignals: structuredClone(science.program?.landmarks?.[m]?.fatigueSignals || []),
     confidence: science.program?.landmarks?.[m]?.confidence || 'low',
-    source: targets[m] > SCIENCE_STARTING_DOSES[experience][m] && initialEstimates[m].historyWeight > 0 ? 'blended-estimate' : 'starting-dose',
+    source: profile.goal === 'balanced' ? 'balanced-low-mav' : targets[m] > SCIENCE_STARTING_DOSES[experience][m] && initialEstimates[m].historyWeight > 0 ? 'blended-estimate' : 'starting-dose',
   }]));
   const program = {
+    balancedVolumeVersion: profile.goal === 'balanced' ? BALANCED_VOLUME_VERSION : null,
     id: `science-v3-${now}`, modelVersion: 3, status: 'active', startDate,
     currentWeek: 1, plannedWeeks: 5, allocationVersion: 2, startingDoseVersion: SCIENCE_REFERENCE_VERSION, timeRestricted, initialEstimates, weekStarts: { 1: startDate }, sessionPlans: {}, weekDeferrals: [], targets, initialTargets: { ...targets }, roles,
     ceilings: Object.fromEntries(active.map(m => [m, Math.max(scienceReference(m, experience).mrvEstimate, targets[m])])),
@@ -265,45 +271,63 @@ export function closeScienceWeek(science, history, db, now = Date.now()) {
   const recommendations = [...p.recommendations];
   const candidates = [];
   const increments = {};
+  const growthScores = {};
   const fatigued = [];
   const feedback = workouts.map(w => science.feedback?.[w.id]).filter(Boolean);
-  const systemic = feedback.filter(f => f.systemicFatigue).length >= 2;
+  // Only explicitly marked fatigue, repeated across sessions, stops the block.
+  // The new "mild" answer never becomes a systemic recovery problem.
+  const systemic = feedback.filter(f => f.systemicFatigue === true).length >= 2;
   for (const muscle of Object.keys(targets)) {
     const volume = volumes.muscles[muscle];
     const performance = sciencePerformance(history, db, science, muscle, closedRange.end);
     const local = feedback.map(f => f.muscles?.[muscle]).filter(Boolean);
-    const goodRecovery = local.length > 0 && local.every(f => f.recovery === 'good' && !f.pain && f.quality !== 'poor') && !systemic;
-    const poorRecovery = local.some(f => f.recovery === 'poor' || f.quality === 'poor' || f.pain);
-    const currentExposure = workouts.some(w => (w.exercises || []).some(ex => classifyScienceExercise(ex, db, science, w.id).primary === muscle && ex.sets?.some(s => s.done && [0, 1].includes(annotationFor(science, w.id, ex.id, s.id).rir))));
-    const hasData = workouts.length > 0 && currentExposure && volume.direct > 0;
-    if (hasData && (poorRecovery || performance.status === 'decline')) {
+    const completed = scienceCompletedSets(volume);
+    const markedPain = local.some(f => f.pain === true);
+    const poorChecks = local.filter(f => f.recovery === 'poor' || f.quality === 'poor');
+    const poorRecovery = markedPain || poorChecks.length >= 2
+      || local.some(f => f.recovery === 'poor' && f.quality === 'poor');
+    const concerningDecline = performance.status === 'decline' && poorChecks.length > 0;
+    const recoveryBlocked = systemic || poorRecovery || concerningDecline;
+    const mildSignals = local.some(f => ['fair', 'poor'].includes(f.recovery)
+      || ['fair', 'poor'].includes(f.quality) || f.pain === 'mild')
+      || feedback.some(f => f.systemicFatigue || ['fair', 'poor'].includes(f.sleep));
+    const goodRecovery = local.length > 0 && local.every(f => f.recovery === 'good' && !f.pain && f.quality === 'good') && !mildSignals && !systemic;
+    // scienceVolumes already excludes warmups, techniques and excluded sets.
+    // Missing RIR does not erase a completed exposure or prevent progression.
+    const hasData = completed > 0;
+    growthScores[muscle] = recoveryBlocked ? -2 : mildSignals ? 0 : goodRecovery ? (performance.status === 'progress' ? 3 : 2) : 1;
+    if (hasData && (poorRecovery || concerningDecline)) {
       fatigued.push(muscle);
-      landmarks[muscle].fatigueSignals.push({ week: p.currentWeek, volume: volume.direct, poorRecovery, performance: performance.status });
+      landmarks[muscle].fatigueSignals.push({ week: p.currentWeek, volume: completed, poorRecovery, performance: performance.status });
       const signals = landmarks[muscle].fatigueSignals;
       if (signals.length >= 2 && landmarks[muscle].maxTolerated != null && !local.some(f => f.pain)) {
         const lower = landmarks[muscle].maxTolerated;
         landmarks[muscle].mrv = { lower, upper: Math.max(lower, Math.min(...signals.slice(-2).map(s => s.volume))), confidence: 'low' };
       }
     }
-    if (hasData && goodRecovery && performance.status === 'progress') {
+    if (hasData && goodRecovery && volume.direct > 0 && performance.status === 'progress') {
       const old = landmarks[muscle].productiveRange;
       landmarks[muscle].productiveRange = old ? [Math.min(old[0], volume.direct), Math.max(old[1], volume.direct)] : [volume.direct, volume.direct];
       landmarks[muscle].maxTolerated = Math.max(landmarks[muscle].maxTolerated || 0, volume.direct);
       landmarks[muscle].confidence = 'observed';
-      decisions[muscle] = 'Prestazioni in crescita: conserva il volume che sta funzionando.';
     }
     const qualityCoverage = volume.ordinary > 0 ? volume.direct / volume.ordinary : 0;
-    if (!hasData) decisions[muscle] = 'Dati insufficienti: target invariato. Registra serie ordinarie e RIR.';
+    if (!hasData) decisions[muscle] = 'Nessuna serie ordinaria completata: target invariato.';
     else if (p.currentWeek >= 4) decisions[muscle] = p.currentWeek === 4 ? 'Picco del blocco registrato: valutiamo lo scarico, senza imporlo.' : 'Settimana di recupero da concordare: nessuna riduzione automatica.';
-    else if (p.roles[muscle] === 'growth' && goodRecovery && performance.status !== 'decline' && volume.direct >= targets[muscle] * 0.8 && qualityCoverage >= 0.8 && targets[muscle] < p.ceilings[muscle]) {
+    else if (p.roles[muscle] !== 'growth') decisions[muscle] = 'Distretto fuori priorità: base di volume conservata.';
+    else if (recoveryBlocked) decisions[muscle] = systemic ? 'Aumento sospeso: fatica generale marcata in almeno due sedute.' : markedPain ? 'Aumento sospeso: dolore che limita il movimento.' : 'Aumento sospeso: recupero insufficiente ripetuto o segnali marcati associati.';
+    else if (completed < targets[muscle] * 0.8) decisions[muscle] = 'Completa almeno l’80% delle serie previste prima di aumentare il target.';
+    else if (targets[muscle] >= p.ceilings[muscle]) decisions[muscle] = 'Soglia di volume raggiunta: rivaluta l’obiettivo prima di aggiungere serie.';
+    else if (targets[muscle] > 0 && !p.pauses?.[muscle]) {
       candidates.push(muscle);
-      const exposures = workouts.filter(w => (w.exercises || []).some(ex => classifyScienceExercise(ex, db, science, w.id).primary === muscle && ex.sets?.some(s => s.done && !annotationFor(science, w.id, ex.id, s.id).excluded && [0, 1].includes(annotationFor(science, w.id, ex.id, s.id).rir)))).length;
-      const strongQuality = volume.direct >= targets[muscle] && qualityCoverage >= 0.9 && exposures >= 2 && local.every(f => f.quality === 'good');
-      increments[muscle] = scienceGrowthStep(p, muscle, strongQuality);
-      decisions[muscle] = 'Serie confermate e recupero buono: possiamo aumentare lo stimolo.';
-    } else if (performance.status !== 'progress') decisions[muscle] = 'Target conservato: servono serie di qualità confermate e feedback di recupero buono. Puoi sempre impostarlo tu.';
+      const exposures = workouts.filter(w => scienceCompletedSets(scienceVolumes([w], db, science, closedRange.start, closedRange.end).muscles[muscle]) > 0).length;
+      const strongQuality = goodRecovery && volume.direct >= targets[muscle] && qualityCoverage >= 0.9 && exposures >= 2;
+      // Mild fatigue changes the size of the step, never cancels it.
+      increments[muscle] = mildSignals ? 1 : scienceGrowthStep(p, muscle, strongQuality);
+      decisions[muscle] = 'Incremento disponibile: in attesa dell’allocazione del volume settimanale.';
+    }
   }
-  const allocation = allocateScienceGrowth(p, science.profile, candidates, increments, p.currentWeek + 1);
+  const allocation = allocateScienceGrowth(p, science.profile, candidates, increments, p.currentWeek + 1, growthScores);
   let nextRoles = { ...p.roles };
   for (let i = 0; i < recommendations.length; i++) {
     if (recommendations[i].status === 'pending' && recommendations[i].type === 'redistribution') recommendations[i] = { ...recommendations[i], status: 'superseded' };
@@ -319,14 +343,22 @@ export function closeScienceWeek(science, history, db, now = Date.now()) {
   } else {
     Object.assign(targets, allocation.targets);
     nextRoles = allocation.roles;
-    for (const [muscle, increase] of Object.entries(allocation.increases)) decisions[muscle] = `+${increase} serie: qualità e recupero buoni. Aumento totale contenuto entro circa il 10% della dose iniziale.`;
+    for (const muscle of candidates) {
+      const increase = allocation.increases[muscle];
+      decisions[muscle] = increase
+        ? `+${increase} serie: nessun problema di recupero marcato. Incremento graduale entro il budget settimanale.`
+        : science.profile.goal === 'balanced' ? 'Volume conservato: limite di 20 serie per seduta; gli aumenti seguono recupero e andamento dei carichi.' : 'Incremento rimandato: budget settimanale assegnato alle altre priorità, nessun blocco del recupero.';
+    }
+  }
+  if (science.profile.goal === 'balanced') for (const [muscle, reduction] of Object.entries(allocation.reductions)) {
+    decisions[muscle] = `−${reduction} serie: volume ridistribuito entro il limite di 20 serie per seduta, privilegiando i distretti che recuperano meglio.`;
   }
   const affected = systemic ? Object.keys(targets).filter(m => targets[m] > 0) : fatigued;
   if (p.currentWeek < 4 && affected.length && !recommendations.some(r => r.status === 'pending' && r.type === 'recovery')) {
     recommendations.push({
       id: `${p.id}-recovery-${p.currentWeek}`, type: 'recovery', status: 'pending', week: p.currentWeek,
       muscles: affected, systemic,
-      reason: systemic ? 'Hai segnalato fatica generale in almeno due sedute. Valuta meno serie o una pausa; decidi tu.' : 'Recupero insufficiente, fastidi o calo ripetuto: valuta meno serie o una pausa per questi distretti.',
+      reason: systemic ? 'Hai segnalato fatica generale marcata in almeno due sedute. Valuta meno serie o una pausa; decidi tu.' : 'Dolore limitante, recupero insufficiente ripetuto o calo con segnali marcati: valuta meno serie o una pausa per questi distretti.',
       proposedTargets: Object.fromEntries(affected.map(m => [m, Math.max(0, targets[m] - Math.ceil(targets[m] * 0.25))])),
     });
   }
@@ -355,6 +387,7 @@ export function closeScienceWeek(science, history, db, now = Date.now()) {
   for (const [muscle, pause] of Object.entries(pauses)) {
     if (pause && pause.week === p.currentWeek) { targets[muscle] = pause.resumeTarget; delete pauses[muscle]; }
   }
+  if (science.profile.goal === 'balanced') Object.assign(targets, fitBalancedTargets(targets, scienceSessionBudget(science.profile, p, p.currentWeek + 1)));
   return { ...science, program: { ...p, targets, roles: nextRoles, weekStarts: { ...p.weekStarts, [p.currentWeek + 1]: closedRange.end }, landmarks, decisions, recommendations, pauses, weeks: [...p.weeks, week], currentWeek: p.currentWeek + 1, status: p.currentWeek >= p.plannedWeeks ? 'completed' : 'active' } };
 }
 

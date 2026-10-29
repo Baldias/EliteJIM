@@ -1,3 +1,4 @@
+import { scienceSessionBudget } from '../utils/scienceBalanced';
 import { scienceCompletedSets, scienceUnconfirmedSets } from '../utils/scienceCarry';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,12 +11,12 @@ import { classifyScienceExercise, hasLegacyScience } from '../utils/scienceV3';
 import '../pages/science/ScienceV3.css';
 import { scienceWeekPreview, scienceLandmarkBand } from '../utils/sciencePlanning';
 
-function TargetEditor({ muscle, target, ceiling }) {
+function TargetEditor({ muscle, target, ceiling, maximum = 100 }) {
   const save = useStore(s => s.setScienceTarget);
   const [values, setValues] = useState({ target, ceiling });
   const [saved, setSaved] = useState(false);
   return <form className="sv3-target-editor" onSubmit={e => { e.preventDefault(); save(muscle, values.target, values.ceiling); setSaved(true); }}>
-    <label>Serie a settimana<input aria-label={`Target ${muscle}`} type="number" min="0" max="100" value={values.target} onChange={e => { setSaved(false); setValues(v => ({ ...v, target: e.target.value })); }} /></label>
+    <label>Serie a settimana<input aria-label={`Target ${muscle}`} type="number" min="0" max={maximum} value={values.target} onChange={e => { setSaved(false); setValues(v => ({ ...v, target: e.target.value })); }} /></label>
     <label>Soglia da rivalutare<input aria-label={`Soglia ${muscle}`} type="number" min="0" max="100" value={values.ceiling} onChange={e => { setSaved(false); setValues(v => ({ ...v, ceiling: e.target.value })); }} /></label>
     <button className="ej-btn ej-btn--primary" type="submit">{saved ? <><Check size={16} />Salvato</> : 'Aggiorna obiettivo'}</button>
   </form>;
@@ -60,16 +61,16 @@ export function ScienceVolumePanel({ compact = false, editable = false, workout,
 
         </button>;
       })}</div>
-      {missing > 0 && <p className="sv3-inline-note"><Info size={13} /><span>{missing} serie da confermare con il RIR.</span></p>}
+      {missing > 0 && <p className="sv3-inline-note"><Info size={13} /><span>{missing} serie conteggiate senza RIR.</span></p>}
       {workout && <Link className="sv3-program-link" to="/science">Vai al programma completo<ArrowRight size={14} /></Link>}
       {!compact && summary.unclassified?.length > 0 && <p className="sv3-inline-note"><Info size={13} /><span>{summary.unclassified.length} esercizi da classificare nel check delle sedute.</span></p>}
     </section>
     {selected && lm && <Sheet title={selected} onClose={() => setSelected(null)}>
-      <div className="sv3-goal-summary"><span>{estimated ? 'STIMA · ' : ''}SETTIMANA {summary.week}</span><p><strong>{estimated ? targets[selected] : scienceCompletedSets(muscles[selected])}</strong><span>{estimated ? 'serie stimate' : `/ ${targets[selected]} serie`}</span></p><small>Serie dirette a 0–1 RIR{muscles[selected].imported > 0 ? ` + ${muscles[selected].imported} riportate da V2 con sforzo non registrato` : ''}</small></div>
+      <div className="sv3-goal-summary"><span>{estimated ? 'STIMA · ' : ''}SETTIMANA {summary.week}</span><p><strong>{estimated ? targets[selected] : scienceCompletedSets(muscles[selected])}</strong><span>{estimated ? 'serie stimate' : `/ ${targets[selected]} serie`}</span></p><small>Serie dirette completate, anche senza RIR</small></div>
       <p className="science-sheet-intro">{(estimated ? 'Scenario illustrativo, aggiornato dai prossimi check. Non è un target già applicato.' : summary.decisions?.[selected] || p.decisions[selected]) || (lm.source === 'history-estimate' ? 'La partenza tiene conto delle tue settimane di allenamento precedenti.' : 'Una base stimata per il tuo livello, che segue qualità e recupero.')}</p>
       <div className="sv3-landmark-grid">{[['mv', 'Mantenimento stimato', `${lm.mvEstimate} serie`], ['mev', 'Partenza per crescere', lm.mevEstimate == null ? 'Da valutare' : `${lm.mevEstimate} serie`], ['mav', 'Intervallo produttivo', lm.productiveRange ? `${lm.productiveRange.join('–')} osservate` : lm.referenceMav ? `${lm.referenceMav.join('–')} di riferimento` : 'Da osservare'], ['mrv', 'Limite di recupero stimato', lm.mrv ? `${lm.mrv.lower}–${lm.mrv.upper} osservate` : lm.mrvEstimate ? `~${lm.mrvEstimate} di riferimento` : 'Da determinare']].map(([band, label, value]) => <div className={`landmark--${band}`} key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
       <p className="sv3-quiz-note">La tabella orienta le stime iniziali; la tua risposta le personalizza. Un limite di riferimento non è un MRV misurato. Il lavoro indiretto resta separato.</p>
-      {canEdit && <><h3 className="sv3-edit-heading">Personalizza l’obiettivo</h3><TargetEditor key={`${selected}-${targets[selected]}-${p.ceilings[selected]}`} muscle={selected} target={targets[selected]} ceiling={p.ceilings[selected]} /></>}
+      {canEdit && <><h3 className="sv3-edit-heading">Personalizza l’obiettivo</h3><TargetEditor key={`${selected}-${targets[selected]}-${p.ceilings[selected]}`} muscle={selected} target={targets[selected]} ceiling={p.ceilings[selected]} maximum={science.profile.goal === 'balanced' ? Math.max(0, scienceSessionBudget(science.profile, p) - Object.entries(targets).reduce((n, [m, v]) => n + (m === selected ? 0 : v), 0)) : 100} /></>}
     </Sheet>}
   </>;
 }

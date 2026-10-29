@@ -40,15 +40,15 @@ describe('immediate V2 to V3 migration',()=>{
     expect(science.annotations).toEqual({});expect(logs).toEqual(before);
     expect(hasLegacyScience(report,science)).toBe(false);
   });
-  it('counts imported work exactly once when subsequently annotated, and excludes future unverified work',()=>{
+  it('counts imported work exactly once when subsequently annotated, and also counts new work without RIR',()=>{
     const logs=history(),science=migrateLegacyScience(emptyScienceState(),legacy(),logs,db,now);
     science.annotations.current={e:{s:{rir:0}}};
     logs.push(workout('new',now+day));
     const v=currentScienceSummary(logs,db,science,now+2*day).muscles.Petto;
     expect(v).toMatchObject({direct:1,unknown:1});expect(v.imported || 0).toBe(0);
-    expect(scienceCompletedSets(v)).toBe(1);
+    expect(scienceCompletedSets(v)).toBe(2);
     science.annotations.current.e.s.excluded=true;
-    expect(scienceCompletedSets(currentScienceSummary(logs,db,science,now+2*day).muscles.Petto)).toBe(0);
+    expect(scienceCompletedSets(currentScienceSummary(logs,db,science,now+2*day).muscles.Petto)).toBe(1);
   });
   it('is idempotent after backup restore, preserves the original report and never changes gamification',()=>{
     const before=structuredClone(Object.fromEntries(['history','scienceReport','userXP','muscleXP','currentStreak','highestStreak','templates'].map(k=>[k,useStore.getState()[k]])));
