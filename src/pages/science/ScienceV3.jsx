@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Dna, TrendingUp, ChevronRight, RotateCcw, Clock3 } from 'lucide-react';
+import { Dna, TrendingUp, ChevronRight, RotateCcw } from 'lucide-react';
 import { useScienceStore as useStore } from '../../store/scienceContext';
 import { useScienceClock } from '../../hooks/useScienceClock';
 import { getAllExercises } from '../../data/exercises';
-import { scienceProgramWeekRange, scienceWeekTiming } from '../../utils/scienceCalendar';
+import { scienceProgramWeekRange, scienceCountdown } from '../../utils/scienceCalendar';
 import { getActualSetsForScienceWeek, getScienceTargetForMuscle } from '../../utils/rpVolume';
 import { weightTrend, weeklyRate } from '../../utils/nutrition';
 import './Science.css';
@@ -12,10 +12,11 @@ import ScienceSetup from './ScienceOnboarding';
 import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
 import { scienceCompletedSets } from '../../utils/scienceCarry';
 import CalendarDateField from '../../components/CalendarDateField';
-import { localScienceDate } from '../../utils/sciencePlanning';
+import { localScienceDate, scienceSessionGuidance } from '../../utils/sciencePlanning';
 import { useScienceAllocationPolicy } from '../../hooks/useScienceAllocationPolicy';
 import ScienceSessionPlanner from '../../components/ScienceSessionPlanner';
 import ScienceTutorialButton from './ScienceTutorial';
+import { ProgressRing } from '../monitoring/ProgressRing';
 
 const dates = (start, end) => `${new Date(start).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} – ${new Date(end - 1).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}`;
 
@@ -55,12 +56,30 @@ export default function ScienceV3() {
   const [importStart, setImportStart] = useState(() => localScienceDate(now));
   const p = science?.program;
   const range = p && scienceProgramWeekRange(p);
-  const timing = p && scienceWeekTiming(p, now);
+  const countdown = p?.status === 'active' ? scienceCountdown(range.end, now) : null;
+  const guidance = p?.status === 'active' ? scienceSessionGuidance(science, history, db, now) : null;
   const due = p?.status === 'active' && now >= range.end;
   const rate = science?.profile?.useWeight ? weeklyRate(weightTrend(weightLog || [])) : null;
-  return <div className="ej-page sci-page sv3-page"><div className="ej-glow" aria-hidden="true" /><header><p className="ej-eyebrow">ALLENA IL TUO POTENZIALE</p><h1 className="ej-title">Scienza</h1></header>
+  return <div className="ej-page sci-page sv3-page"><div className="ej-glow" aria-hidden="true" /><header><p className="ej-eyebrow">ALLENA IL TUO POTENZIALE</p><h1 className="ej-title">Scienza</h1><p className="sv3-page-subtitle">Il volume cresce con la tua capacità di recuperare.</p></header>
     {!p ? <div className="sv3-intro-wrap"><ScienceTutorialButton /><ScienceSetup onStarted={() => setRestart(false)} /></div> : <>
-      <section className="ej-card sv3-dashboard-hero"><ScienceTutorialButton /><span className="sv3-status"><Dna size={14} />Il tuo percorso</span><h2>{p.status === 'pending' ? 'Il tuo protocollo è pronto.' : p.status === 'completed' ? 'Un blocco di esperienza in più.' : now < p.startDate ? 'Il tuo mesociclo.' : p.currentWeek === 5 ? 'Recupero da concordare.' : p.currentWeek === 4 ? 'Costruisci il tuo picco.' : 'Sfida il tuo limite.'}</h2><p>{p.status === 'completed' ? 'Rivaluta le priorità e riparti dai dati raccolti.' : now < p.startDate ? `Partenza ${new Date(p.startDate).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}. Nel frattempo esplora le stime delle settimane.` : 'Il volume cresce con la tua capacità di recuperare.'}</p>{p.status === 'active' && <div className={`sv3-week-timing ${timing.overdue ? 'is-overdue' : ''}`}><Clock3 size={14} /><span>{timing.label}</span><small>{new Date(timing.end).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></div>}<div className="sv3-week-strip" role="group" aria-label="Settimane del mesociclo">{[1, 2, 3, 4, 5].map(w => <button type="button" key={w} aria-pressed={w === (viewWeek ?? Math.min(p.currentWeek, 5))} className={w === (viewWeek ?? Math.min(p.currentWeek, 5)) ? 'is-active' : ''} onClick={() => setViewWeek(w)}><strong>{`W${w}`}</strong><small>{p.weeks.some(saved => saved.week === w) ? 'Registrata' : w === p.currentWeek ? now < p.startDate ? 'Partenza' : 'Attuale' : w === 5 ? 'Proposta' : 'Stima'}</small></button>)}</div><button type="button" className="sv3-repeat-quiz" onClick={() => setRestart(true)}><RotateCcw size={13} />Ripeti il quiz da capo</button>
+      <section className="ej-card sv3-dashboard-hero">
+        <ScienceTutorialButton />
+        <span className="sv3-status"><Dna size={14} />Il tuo percorso</span>
+        {p.status === 'active' ? <div className="sv3-week-dashboard">
+          <div className="sv3-countdown" aria-label={`Tempo rimanente: ${countdown.days} giorni, ${countdown.hours} ore, ${countdown.minutes} minuti`}>
+            <p className="sv3-countdown-label">{due ? 'Settimana scaduta' : now < range.start ? 'Fine della prima settimana' : 'Alla fine della settimana'}</p>
+            <div className="sv3-countdown-values">{[[countdown.days, 'giorni'], [countdown.hours, 'ore'], [countdown.minutes, 'minuti']].map(([value, label]) => <div key={label}><strong>{String(value).padStart(2, '0')}</strong><span>{label}</span></div>)}</div>
+            <p className="sv3-countdown-date">{due ? 'La settimana resta aperta finché scegli di avanzare.' : `Termina il ${new Date(range.end).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}</p>
+          </div>
+          <div className="sv3-ring-wrap" role="img" aria-label={`${guidance.remaining} serie mancanti su ${guidance.total} previste per la settimana corrente`}>
+            <ProgressRing size={122} stroke={10} progress={guidance.total ? (guidance.total - guidance.remaining) / guidance.total : 0}>
+              <strong>{guidance.remaining}</strong><span>serie mancanti</span>
+            </ProgressRing>
+            <span className="sv3-ring-caption">{guidance.total ? `${guidance.total - guidance.remaining} / ${guidance.total} completate` : 'Nessun obiettivo'}</span>
+          </div>
+        </div> : <><h2>{p.status === 'pending' ? 'Il tuo protocollo è pronto.' : 'Un blocco di esperienza in più.'}</h2><p>{p.status === 'completed' ? 'Rivaluta le priorità e riparti dai dati raccolti.' : 'Scegli quando iniziare il tuo percorso.'}</p></>}
+        <div className="sv3-week-strip" role="group" aria-label="Settimane del mesociclo">{[1, 2, 3, 4, 5].map(w => <button type="button" key={w} aria-pressed={w === (viewWeek ?? Math.min(p.currentWeek, 5))} className={w === (viewWeek ?? Math.min(p.currentWeek, 5)) ? 'is-active' : ''} onClick={() => setViewWeek(w)}><strong>{`W${w}`}</strong><small>{p.weeks.some(saved => saved.week === w) ? 'Registrata' : w === p.currentWeek ? now < p.startDate ? 'Partenza' : 'Attuale' : w === 5 ? 'Proposta' : 'Stima'}</small></button>)}</div>
+        <button type="button" className="sv3-repeat-quiz" onClick={() => setRestart(true)}><RotateCcw size={13} />Ripeti il quiz da capo</button>
         {p.status === 'completed' && <button type="button" className="sci-cta" onClick={() => setRestart(true)}>Scegli il prossimo mesociclo <ChevronRight size={18} /></button>}
       </section>
       {p.status === 'pending' && <section className="ej-card sv3-week-check"><h3>Il tuo protocollo è pronto</h3><p>Scegli quando iniziare con gli obiettivi importati.</p><CalendarDateField value={importStart} onChange={setImportStart} /><button type="button" className="ej-btn ej-btn--primary" disabled={!importStart} onClick={() => startImported(new Date(`${importStart}T00:00:00`).getTime(),now)}>Avvia il mesociclo</button></section>}

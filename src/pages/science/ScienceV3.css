@@ -247,3 +247,19 @@
 
 .sv3-planner-help { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; padding: 0; color: var(--c-text-muted); background: transparent; border: 0; border-radius: 50%; cursor: pointer; }
 .sv3-planner-help:hover, .sv3-planner-help:focus-visible { color: var(--c-text); background: var(--c-surface-2); }
+
+.sv3-page-subtitle { margin: 5px 0 0; color: var(--c-text-muted); font-size: .8125rem; line-height: 1.5; }
+.sv3-week-dashboard { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 19px; }
+.sv3-countdown { min-width: 0; }
+.sv3-dashboard-hero .sv3-countdown-label { color: var(--c-text-muted); font-size: .6875rem; font-weight: 750; }
+.sv3-countdown-values { display: flex; gap: 12px; margin: 8px 0; }
+.sv3-countdown-values div { display: flex; flex-direction: column; gap: 2px; }
+.sv3-countdown-values strong { color: var(--c-text); font-size: clamp(1.4rem, 6vw, 2rem); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.sv3-countdown-values span { color: var(--c-text-muted); font-size: .58rem; font-weight: 700; text-transform: uppercase; }
+.sv3-dashboard-hero .sv3-countdown-date { font-size: .625rem; line-height: 1.4; }
+.sv3-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
+.sv3-ring-wrap .mn-ring-center { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.sv3-ring-wrap .mn-ring-center strong { font-size: 1.65rem; line-height: 1; font-weight: 900; color: var(--c-text); }
+.sv3-ring-wrap .mn-ring-center span { font-size: .55rem; color: var(--c-text-muted); margin-top: 4px; }
+.sv3-ring-caption { font-size: .625rem; color: var(--c-text-muted); font-weight: 700; }
+@media (max-width: 350px) { .sv3-week-dashboard { gap: 5px; } .sv3-countdown-values { gap: 7px; } .sv3-ring-wrap { transform: scale(.9); transform-origin: right center; margin-left: -10px; } }

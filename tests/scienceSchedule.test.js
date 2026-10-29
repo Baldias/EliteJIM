@@ -126,3 +126,14 @@ describe('per-session guidance', () => {
     expect(plan.remaining).toBe(sum(science.program.targets) - science.program.targets.Petto);
   });
 });
+
+describe('weekly countdown', () => {
+  it('shows remaining days, hours and minutes and reaches zero only at the deadline', async () => {
+    const { scienceCountdown } = await import('../src/utils/scienceCalendar');
+    const deadline = now + ((2 * 24 + 5) * 60 + 7) * 60000;
+    expect(scienceCountdown(deadline, now)).toEqual({ days: 2, hours: 5, minutes: 7 });
+    expect(scienceCountdown(deadline, deadline - 1)).toEqual({ days: 0, hours: 0, minutes: 1 });
+    expect(scienceCountdown(deadline, deadline)).toEqual({ days: 0, hours: 0, minutes: 0 });
+    expect(scienceCountdown(deadline, deadline + 100000)).toEqual({ days: 0, hours: 0, minutes: 0 });
+  });
+});
