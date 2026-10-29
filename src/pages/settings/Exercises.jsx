@@ -223,7 +223,8 @@ function Exercises() {
                   value={newExEquipment}
                   onChange={(e) => setNewExEquipment(e.target.value)}
                 >
-                  <option value={EQUIPMENT_TYPES.BARBELL}>Bilanciere / Macchina (+2.5kg)</option>
+                  <option value={EQUIPMENT_TYPES.BARBELL}>Bilanciere (+2.5kg)</option>
+                  <option value={EQUIPMENT_TYPES.MACHINE}>Macchinario / Cavi (+2.5kg)</option>
                   <option value={EQUIPMENT_TYPES.DUMBBELL}>Manubri (+2kg)</option>
                 </select>
               </div>
@@ -246,7 +247,7 @@ function Exercises() {
                 <div className="category-list">
                   {exercises.map(ex => {
                     const isDumbbell = ex.equipmentType === EQUIPMENT_TYPES.DUMBBELL;
-                    const equipmentLabel = isDumbbell ? 'Manubri (+2kg)' : 'Bilanciere (+2.5kg)';
+                    const equipmentLabel = isDumbbell ? 'Manubri (+2kg)' : ex.equipmentType === EQUIPMENT_TYPES.MACHINE ? 'Macchinario / Cavi (+2.5kg)' : 'Bilanciere (+2.5kg)';
                     const secondaryLabel = ex.secondaryCategories && ex.secondaryCategories.length > 0
                       ? `+ ${ex.secondaryCategories.join(', ')}`
                       : null;
@@ -404,7 +405,8 @@ function Exercises() {
                   value={editEquipment}
                   onChange={(e) => setEditEquipment(e.target.value)}
                 >
-                  <option value={EQUIPMENT_TYPES.BARBELL}>Bilanciere / Macchina (+2.5kg per volta)</option>
+                  <option value={EQUIPMENT_TYPES.BARBELL}>Bilanciere (+2.5kg per volta)</option>
+                  <option value={EQUIPMENT_TYPES.MACHINE}>Macchinario / Cavi (+2.5kg)</option>
                   <option value={EQUIPMENT_TYPES.DUMBBELL}>Manubri (+2kg: 1kg per mano)</option>
                 </select>
               </div>

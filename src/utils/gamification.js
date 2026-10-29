@@ -1,3 +1,4 @@
+import { machineHistory } from './gymLocation';
 import { normalizeName } from '../data/exercises';
 import { estimate1RM, repFactor, getBodyweightLoad, REFERENCE_BODYWEIGHT_KG } from './oneRepMax';
 
@@ -212,7 +213,7 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
 
     // Find latest past workout containing this exercise with completed sets
     let pastEx = null;
-    for (const pw of sortedPast) {
+    for (const pw of machineHistory(sortedPast, ex.name, allKnownExercises, workout)) {
       const match = pw.exercises?.find(e => normalizeName(e.name) === normName);
       if (match && workingSets(match).length > 0) {
         pastEx = match;

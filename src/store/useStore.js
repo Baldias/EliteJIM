@@ -1,3 +1,4 @@
+import { machineHistory, isMachineExercise } from '../utils/gymLocation';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
@@ -126,6 +127,30 @@ export const useStore = create(
       customExercises: [],
       // Map of overrides for default DB exercises: { [id]: { name, category, secondaryCategories, equipmentType } }
       exerciseOverrides: {},
+      gymLocationPreferences: { introVersion: 0, capture: false, adaptLoads: false },
+      gymLocationAliases: {},
+      setGymLocationPreferences: changes => set(state => {
+        const firstChoice = !state.gymLocationPreferences?.introVersion;
+        const db = getAllExercises(state.customExercises, state.exerciseOverrides);
+        const activeWorkout = firstChoice && changes.adaptLoads && state.activeWorkout ? { ...state.activeWorkout, machineLocationScoped: true, exercises: state.activeWorkout.exercises.map(ex => !state.activeWorkout.gymIntroFresh || state.activeWorkout.lastActivityAt > state.activeWorkout.startTime + 10 || !isMachineExercise(ex.name, db) ? ex : { ...ex, sets: ex.sets.map(s => s.done ? s : { ...s, kg: '', reps: '' }) }) } : state.activeWorkout;
+        return { gymLocationPreferences: { ...state.gymLocationPreferences, ...changes }, activeWorkout };
+      }),
+      renameGymLocation: (id, name) => set(state => ({ gymLocationAliases: { ...state.gymLocationAliases, [id]: name.trim().slice(0, 80) } })),
+      attachWorkoutLocation: (workoutId, location) => set(state => {
+        const workout = state.activeWorkout;
+        if (!workout || workout.id !== workoutId || !state.gymLocationPreferences.capture) return state;
+        if (!location?.id || !location?.name) return state;
+        const city = { id: location.id, name: location.name, region: location.region || '', country: location.country || '' };
+        const context = { ...workout, gymLocation: city, machineLocationScoped: Boolean(workout.machineLocationScoped) };
+        const db = getAllExercises(state.customExercises, state.exerciseOverrides);
+        const exercises = workout.exercises.map(ex => {
+          if (!context.machineLocationScoped || !isMachineExercise(ex.name, db)) return ex;
+          const past = machineHistory(state.history, ex.name, db, context).find(w => w.exercises.some(e => normalizeName(e.name) === normalizeName(ex.name) && e.sets.some(s => s.done && !s.isDropset)));
+          const sets = past?.exercises.find(e => normalizeName(e.name) === normalizeName(ex.name))?.sets.filter(s => s.done && !s.isDropset) || [];
+          return { ...ex, sets: ex.sets.map((s, i) => s.done || s.kg !== '' || s.reps !== '' ? s : { ...s, kg: (sets[i] || sets.at(-1))?.kg || '', reps: (sets[i] || sets.at(-1))?.reps || '' }) };
+        });
+        return { activeWorkout: { ...context, exercises } };
+      }),
       // Currently active workout session
       activeWorkout: null,
       // Saved science assessment report
@@ -370,7 +395,7 @@ export const useStore = create(
                   name: newName || ex.name,
                   category,
                   secondaryCategories: cleanSecondary,
-                  equipmentType
+                  equipmentType, machineTypeVersion: 1
                 };
               }
               return ex;
@@ -381,7 +406,7 @@ export const useStore = create(
               name: newName || currentEx.name,
               category,
               secondaryCategories: cleanSecondary,
-              equipmentType
+              equipmentType, machineTypeVersion: 1
             };
           }
 
@@ -542,11 +567,15 @@ export const useStore = create(
 
       // --- Workout Actions ---
       startWorkout: (template) => {
-        const history = get().history;
+        const state = get();
+        const history = state.history;
+        const db = getAllExercises(state.customExercises, state.exerciseOverrides);
+        const scoped = Boolean(state.gymLocationPreferences?.adaptLoads && state.gymLocationPreferences?.capture);
 
         // Helper: completed working sets (no drop sets) of the most recent session with this exercise
         const findLastSets = (exerciseName) => {
           const norm = normalizeName(exerciseName);
+          if (scoped && isMachineExercise(exerciseName, db)) return null;
           for (const w of history) {
             const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
             const workingSets = completedSets(pastEx).filter(s => !s.isDropset);
@@ -560,6 +589,8 @@ export const useStore = create(
         // Build a fresh session from a template
         const session = {
           id: Date.now(),
+          machineLocationScoped: scoped,
+          gymIntroFresh: !state.gymLocationPreferences?.introVersion,
           templateId: template ? template.id : null,
           name: template ? template.name : 'Allenamento Libero',
           startTime: Date.now(),
@@ -619,7 +650,8 @@ export const useStore = create(
           if (!state.activeWorkout) return state;
           const history = state.history || [];
           const templates = state.templates || [];
-          const bestData = name ? findLastBest1RMSet(history, name) : null;
+          const db = getAllExercises(state.customExercises, state.exerciseOverrides);
+          const bestData = name ? findLastBest1RMSet(machineHistory(history, name, db, state.activeWorkout), name) : null;
           const bestSet = bestData?.set;
 
           let initialNotes = bestData?.notes || '';

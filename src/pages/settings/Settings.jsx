@@ -1,3 +1,4 @@
+import { GymLocationSettings } from '../../components/GymLocation';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
@@ -157,6 +158,7 @@ function Settings() {
       </div>
       <div className="st-disclosure"><ScienceTutorialButton inline /></div>
 
+      <GymLocationSettings />
       {/* Sync & Backup */}
       <section className="ej-card st-backup">
         <div className="st-backup-head">
