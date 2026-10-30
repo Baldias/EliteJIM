@@ -7,7 +7,7 @@ import './InteractiveBody.css';
 
 import { EXERCISES_DB, EXERCISE_CATEGORIES, getAllExercises, normalizeName } from '../data/exercises';
 import { tr } from '../i18n';
-import { computeMuscleFatigue, fatigueLevel, FATIGUE_COLORS, FATIGUE_LEVELS, FATIGUE_MUSCLES } from '../utils/muscleFatigue';
+import { computeMuscleFatigue, readiness, READINESS, READINESS_COLORS, FATIGUE_MUSCLES } from '../utils/muscleFatigue';
 
 const RECOVERED_COLOR = '#B6BDC3';
 
@@ -156,14 +156,14 @@ export const InteractiveBody = () => {
   }, [history, allExercises]);
 
   const fatigueData = useMemo(() => computeMuscleFatigue(history, allExercises)
-    .filter(m => FATIGUE_MUSCLES[m.muscle] && fatigueLevel(m.fatigue) > 0)
-    .map(m => ({ name: m.muscle, muscles: [m.muscle], frequency: fatigueLevel(m.fatigue) })), [history, allExercises]);
+    .filter(m => FATIGUE_MUSCLES[m.muscle] && readiness(m.fatigue) > 0)
+    .map(m => ({ name: m.muscle, muscles: [m.muscle], frequency: readiness(m.fatigue) })), [history, allExercises]);
 
   const toggle = () => setShowFatigue(v => !v);
   const data = showFatigue ? fatigueData : workoutData;
-  const colors = showFatigue ? FATIGUE_COLORS : INTENSITY_COLORS;
+  const colors = showFatigue ? READINESS_COLORS : INTENSITY_COLORS;
   const legend = showFatigue
-    ? [[tr('Recuperato'), RECOVERED_COLOR], ...FATIGUE_LEVELS.map((label, i) => [tr(label), FATIGUE_COLORS[i]])]
+    ? READINESS.map((r, i) => [tr(r.label), i === 0 ? RECOVERED_COLOR : READINESS_COLORS[i - 1]])
     : INTENSITY_LEGEND.map((label, i) => [label, INTENSITY_COLORS[i]]);
 
   return (
@@ -178,7 +178,7 @@ export const InteractiveBody = () => {
     >
       <div className="ib-header">
         <h3>{showFatigue ? tr('Mappa della fatica') : tr('Mappa Muscolare')}</h3>
-        <p>{showFatigue ? tr('Fatica residua stimata per muscolo, adesso') : tr('Gruppi allenati negli ultimi 7 giorni')}</p>
+        <p>{showFatigue ? tr('Quali muscoli puoi allenare oggi') : tr('Gruppi allenati negli ultimi 7 giorni')}</p>
       </div>
 
       <div className="ib-views">
