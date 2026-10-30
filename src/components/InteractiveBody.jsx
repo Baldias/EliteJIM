@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Activity } from 'lucide-react';
 import Model from 'react-body-highlighter';
 import { useStore } from '../store/useStore';
 import './InteractiveBody.css';
@@ -111,6 +113,7 @@ const getIntensity = (sets) => {
 };
 
 export const InteractiveBody = () => {
+  const navigate = useNavigate();
   const history = useStore(state => state.history);
   const customExercises = useStore(state => state.customExercises);
   const exerciseOverrides = useStore(state => state.exerciseOverrides);
@@ -149,7 +152,14 @@ export const InteractiveBody = () => {
   }, [history, allExercises]);
 
   return (
-    <div className="ej-card interactive-body-container">
+    <div
+      className="ej-card interactive-body-container is-tappable"
+      role="button"
+      tabIndex={0}
+      aria-label={tr('Apri la mappa della fatica')}
+      onClick={() => navigate('/fatigue')}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/fatigue'); } }}
+    >
       <div className="ib-header">
         <h3>{tr('Mappa Muscolare')}</h3>
         <p>{tr('Gruppi allenati negli ultimi 7 giorni')}</p>
@@ -175,6 +185,8 @@ export const InteractiveBody = () => {
           </span>
         ))}
       </div>
+
+      <p className="ib-fatigue-link"><Activity size={14} /> {tr('Tocca per vedere la mappa della fatica')}</p>
     </div>
   );
 };
