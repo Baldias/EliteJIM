@@ -80,3 +80,38 @@
   height: 6px;
   border-radius: 3px;
 }
+
+.interactive-body-container.is-tappable {
+  cursor: pointer;
+}
+
+.interactive-body-container.is-tappable:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+.ib-fatigue-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-accent);
+}
+
+button.ib-fatigue-link {
+  align-self: center;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.is-fatigue .ib-legend {
+  flex-wrap: wrap;
+}

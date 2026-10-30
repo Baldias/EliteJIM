@@ -17,6 +17,7 @@ import MuscleLevels from './pages/profile/MuscleLevels';
 import History from './pages/profile/History';
 import EditWorkout from './pages/profile/EditWorkout';
 import Activity from './pages/activity/Activity';
+import FatigueMap from './pages/fatigue/FatigueMap';
 import Monitoring from './pages/monitoring/Monitoring';
 import MyMeals from './pages/monitoring/MyMeals';
 import ReloadPrompt from './components/ReloadPrompt';
@@ -35,7 +36,7 @@ import { tr } from './i18n';
 function Navigation() {
   const location = useLocation();
   // Hide bottom nav on active workout session, template builder, settings, recap, history, levels, and activity
-  if (['/workout', '/build', '/settings', '/recap', '/levels', '/settings/exercises', '/settings/pasti', '/history', '/activity'].includes(location.pathname) || location.pathname.startsWith('/edit-workout')) return null;
+  if (['/workout', '/build', '/settings', '/recap', '/levels', '/settings/exercises', '/settings/pasti', '/history', '/activity', '/fatigue'].includes(location.pathname) || location.pathname.startsWith('/edit-workout')) return null;
 
   return (
     <nav className="bottom-nav">
@@ -95,6 +96,7 @@ function AppContent() {
           <Route path="/history" element={<History />} />
           <Route path="/edit-workout/:workoutId" element={<EditWorkout />} />
           <Route path="/activity" element={<Activity />} />
+          <Route path="/fatigue" element={<FatigueMap />} />
           <Route path="/diario" element={<OptionalFeature key="diary" feature="diary"><Monitoring /></OptionalFeature>} />
           <Route path="/settings/pasti" element={<OptionalFeature key="meals" feature="diary"><MyMeals /></OptionalFeature>} />
         </Routes>
