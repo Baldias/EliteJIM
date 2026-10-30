@@ -19,11 +19,18 @@ import { EXERCISE_CATEGORIES, normalizeName } from '../data/exercises';
  * fatigued the muscle starts (6 sets ≈ full) and how long recovery lasts
  * (24 h + 6 h per set, 24-72 h, ×1.2 for the large lower-body muscles).
  * Fatigue then fades linearly and overlapping sessions add up.
+ *
+ * Readiness: below 25% the muscle can be trained normally; 25-50% it can be
+ * trained with fewer sets or more reps in reserve; from 50% it is better to
+ * wait. With 6 hard sets that means ~30 h "wait", ready after ~45 h (60 h
+ * window), matching the 24-48 h extra recovery after failure in the studies.
  */
 
 const HOUR = 3600 * 1000;
 export const FATIGUE_WINDOW_HOURS = 96;
-export const RECOVERED_BELOW = 0.1;
+// Readiness thresholds on residual fatigue (see readiness() below).
+export const READY_BELOW = 0.25;
+export const WAIT_FROM = 0.5;
 const FULL_DOSE = 6;
 const SYNERGIST = 0.5;
 const PARTIAL_SET = 0.5;
@@ -168,10 +175,10 @@ export function computeMuscleFatigue(history = [], allExercises = [], now = Date
   return Object.entries(sessions).map(([muscle, list]) => {
     const fatigue = fatigueAt(list, now);
     let readyInHours = 0;
-    if (fatigue >= RECOVERED_BELOW) {
+    if (fatigue >= READY_BELOW) {
       readyInHours = FATIGUE_WINDOW_HOURS;
       for (let h = 1; h <= FATIGUE_WINDOW_HOURS; h++) {
-        if (fatigueAt(list, now + h * HOUR) < RECOVERED_BELOW) { readyInHours = h; break; }
+        if (fatigueAt(list, now + h * HOUR) < READY_BELOW) { readyInHours = h; break; }
       }
     }
     return {
@@ -184,15 +191,13 @@ export function computeMuscleFatigue(history = [], allExercises = [], now = Date
   }).sort((a, b) => b.fatigue - a.fatigue);
 }
 
-// Grey (recovered, not highlighted) → yellow → orange → red.
-export const FATIGUE_COLORS = ['#f2c94c', '#f2994a', '#eb5757', '#c0182b'];
-export const FATIGUE_LEVELS = ['Lieve', 'Moderata', 'Alta', 'Molto alta'];
+// Grey = ready (not highlighted), orange = almost ready, red = better wait.
+export const READINESS_COLORS = ['#f2994a', '#e5484d'];
+export const READINESS = [
+  { label: 'Pronto', hint: 'Allenalo pure come al solito' },
+  { label: 'Quasi pronto', hint: 'Si può allenare con meno serie o tenendo 2-3 ripetizioni in riserva' },
+  { label: 'Meglio aspettare', hint: 'Allena altri muscoli e ridai un’occhiata più tardi' },
+];
 
-/** 0 = recovered, 1-4 = index+1 in FATIGUE_COLORS. */
-export const fatigueLevel = fatigue => {
-  if (fatigue < RECOVERED_BELOW) return 0;
-  if (fatigue < 0.35) return 1;
-  if (fatigue < 0.6) return 2;
-  if (fatigue < 0.85) return 3;
-  return 4;
-};
+/** 0 = ready, 1 = almost ready, 2 = better wait (index into READINESS). */
+export const readiness = fatigue => (fatigue < READY_BELOW ? 0 : fatigue < WAIT_FROM ? 1 : 2);

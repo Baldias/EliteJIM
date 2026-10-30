@@ -4,11 +4,12 @@ import Model from 'react-body-highlighter';
 import { ChevronLeft, BookOpen, ArrowRight } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { getAllExercises } from '../../data/exercises';
-import { computeMuscleFatigue, fatigueLevel, FATIGUE_COLORS, FATIGUE_LEVELS, FATIGUE_MUSCLES } from '../../utils/muscleFatigue';
+import { computeMuscleFatigue, readiness, READINESS, READINESS_COLORS, FATIGUE_MUSCLES } from '../../utils/muscleFatigue';
 import { locale, tr } from '../../i18n';
 import './FatigueMap.css';
 
 const RECOVERED_COLOR = '#B6BDC3';
+const statusColor = level => (level === 0 ? RECOVERED_COLOR : READINESS_COLORS[level - 1]);
 
 const SOURCES = [
   ['Morán-Navarro et al. 2017 · Recupero con e senza cedimento', 'https://pubmed.ncbi.nlm.nih.gov/28965198/'],
@@ -18,7 +19,7 @@ const SOURCES = [
 ];
 
 const formatReady = hours => {
-  if (hours <= 0) return tr('Recuperato');
+  if (hours <= 0) return tr('Pronto adesso');
   if (hours < 24) return tr('Pronto tra ~{n} h', { n: hours });
   return tr('Pronto tra ~{n} g', { n: Math.round(hours / 24 * 2) / 2 });
 };
@@ -36,9 +37,9 @@ export default function FatigueMap() {
 
   const { visible, tired, modelData } = useMemo(() => {
     const visible = computeMuscleFatigue(history, allExercises).filter(m => FATIGUE_MUSCLES[m.muscle]);
-    const tired = visible.filter(m => fatigueLevel(m.fatigue) > 0);
+    const tired = visible.filter(m => readiness(m.fatigue) > 0);
     // The library colours a muscle with highlightedColors[frequency - 1].
-    const modelData = tired.map(m => ({ name: m.muscle, muscles: [m.muscle], frequency: fatigueLevel(m.fatigue) }));
+    const modelData = tired.map(m => ({ name: m.muscle, muscles: [m.muscle], frequency: readiness(m.fatigue) }));
     return { visible, tired, modelData };
   }, [history, allExercises]);
 
@@ -59,26 +60,28 @@ export default function FatigueMap() {
         </button>
         <div>
           <h1 className="fm-title">{tr('Mappa della fatica')}</h1>
-          <p className="fm-sub">{tr('Fatica residua stimata per muscolo, adesso')}</p>
+          <p className="fm-sub">{tr('Quali muscoli puoi allenare oggi')}</p>
         </div>
       </header>
 
       <section className="ej-card fm-map">
         <div className="fm-views">
           <figure className="fm-view">
-            <Model data={modelData} type="anterior" bodyColor={RECOVERED_COLOR} highlightedColors={FATIGUE_COLORS} onClick={handleMuscle} />
+            <Model data={modelData} type="anterior" bodyColor={RECOVERED_COLOR} highlightedColors={READINESS_COLORS} onClick={handleMuscle} />
             <figcaption>{tr('Vista Frontale')}</figcaption>
           </figure>
           <figure className="fm-view">
-            <Model data={modelData} type="posterior" bodyColor={RECOVERED_COLOR} highlightedColors={FATIGUE_COLORS} onClick={handleMuscle} />
+            <Model data={modelData} type="posterior" bodyColor={RECOVERED_COLOR} highlightedColors={READINESS_COLORS} onClick={handleMuscle} />
             <figcaption>{tr('Vista Posteriore')}</figcaption>
           </figure>
         </div>
 
         <div className="fm-legend" aria-label={tr('Legenda')}>
-          <span className="fm-legend-item"><span className="fm-swatch" style={{ background: RECOVERED_COLOR }} />{tr('Recuperato')}</span>
-          {FATIGUE_LEVELS.map((label, i) => (
-            <span key={label} className="fm-legend-item"><span className="fm-swatch" style={{ background: FATIGUE_COLORS[i] }} />{tr(label)}</span>
+          {READINESS.map((r, i) => (
+            <span key={r.label} className="fm-legend-item">
+              <span className="fm-swatch" style={{ background: statusColor(i) }} />
+              <span><strong>{tr(r.label)}</strong><small>{tr(r.hint)}</small></span>
+            </span>
           ))}
         </div>
 
@@ -89,8 +92,8 @@ export default function FatigueMap() {
               <span>{detail.sets ? tr('{n} serie negli ultimi 4 giorni', { n: detail.sets.toLocaleString(locale()) }) : tr('Nessuna serie negli ultimi 4 giorni')}</span>
             </div>
             <div className="fm-detail-value">
-              <strong>{Math.round(detail.fatigue * 100)}%</strong>
-              <span>{formatReady(detail.readyInHours)}</span>
+              <strong style={{ color: readiness(detail.fatigue) ? statusColor(readiness(detail.fatigue)) : undefined }}>{tr(READINESS[readiness(detail.fatigue)].label)}</strong>
+              <span>{readiness(detail.fatigue) ? formatReady(detail.readyInHours) : tr('Fatica {n}%', { n: Math.round(detail.fatigue * 100) })}</span>
             </div>
           </div>
         ) : (
@@ -99,20 +102,20 @@ export default function FatigueMap() {
       </section>
 
       <section className="ej-card fm-list">
-        <h2>{tr('Muscoli ancora affaticati')}</h2>
+        <h2>{tr('Muscoli da far recuperare')}</h2>
         {tired.length === 0 ? (
-          <p className="fm-empty">{tr('Tutti i muscoli risultano recuperati. Buon allenamento!')}</p>
+          <p className="fm-empty">{tr('Tutti i muscoli sono pronti. Buon allenamento!')}</p>
         ) : tired.map(m => {
-          const level = fatigueLevel(m.fatigue);
+          const level = readiness(m.fatigue);
           return (
             <button type="button" key={m.muscle} className={`fm-row ${selected === m.muscle ? 'is-selected' : ''}`} onClick={() => setSelected(m.muscle)}>
               <span className="fm-row-name">
                 <strong>{tr(FATIGUE_MUSCLES[m.muscle])}</strong>
                 <small>{tr('Ultima seduta: {date}', { date: formatLast(m.lastAt) })}</small>
               </span>
-              <span className="fm-row-bar" aria-hidden="true"><span style={{ width: `${Math.round(m.fatigue * 100)}%`, background: FATIGUE_COLORS[level - 1] }} /></span>
+              <span className="fm-row-bar" aria-hidden="true"><span style={{ width: `${Math.round(m.fatigue * 100)}%`, background: statusColor(level) }} /></span>
               <span className="fm-row-value">
-                <strong>{Math.round(m.fatigue * 100)}%</strong>
+                <strong style={{ color: statusColor(level) }}>{tr(READINESS[level].label)}</strong>
                 <small>{formatReady(m.readyInHours)}</small>
               </span>
             </button>
@@ -129,8 +132,9 @@ export default function FatigueMap() {
           <div className="fm-method-body">
             <p>{tr('Ogni serie completata conta come vicina al cedimento, perché è il protocollo dell’app; le serie di riscaldamento non contano. Un muscolo prende una serie intera quando è il bersaglio dell’esercizio e mezza quando aiuta (per esempio i tricipiti nella panca).')}</p>
             <p>{tr('Più serie fai in una seduta, più la fatica parte alta (6 serie dirette la portano al massimo) e più dura: da 24 a 72 ore, il 20% in più per i grandi muscoli delle gambe e i lombari. Poi cala in modo graduale, e le sedute vicine si sommano.')}</p>
+            <p>{tr('Sotto il 25% di fatica il muscolo è pronto; tra 25% e 50% è quasi pronto; dal 50% in su è meglio aspettare. Esempio: dopo 6 serie dure di petto è meglio aspettare per circa 30 ore, è quasi pronto fino a circa 45 ore, poi è pronto.')}</p>
             <p>{tr('Gli studi sugli atleti allenati mostrano che arrivare al cedimento allunga il recupero di 24-48 ore e che dopo uno squat pesante la velocità può restare più bassa fino a 72 ore. È anche il motivo per cui allenare un muscolo due volte a settimana funziona bene.')}</p>
-            <p className="fm-method-note">{tr('È una stima per orientarti, non una misura: sonno, alimentazione, esperienza e il tipo di esercizio cambiano molto il recupero. Se un muscolo ti sembra pronto prima, fidati delle sensazioni e delle prestazioni.')}</p>
+            <p className="fm-method-note">{tr('È una stima per orientarti, non una misura: gli studi danno l’intervallo di 24-72 ore, ma le soglie esatte sono una nostra scelta. Sonno, alimentazione ed esperienza cambiano molto il recupero: chi si allena da anni di solito recupera prima. Se ti senti forte e i carichi salgono, sei pronto anche se la mappa dice di aspettare.')}</p>
             {SOURCES.map(([label, url]) => (
               <a key={url} href={url} target="_blank" rel="noreferrer">{tr(label)} <ArrowRight size={14} /></a>
             ))}

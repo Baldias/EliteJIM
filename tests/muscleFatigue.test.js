@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EXERCISES_DB } from '../src/data/exercises';
-import { computeMuscleFatigue, exerciseMuscleWeights, fatigueLevel, recoveryHours } from '../src/utils/muscleFatigue';
+import { computeMuscleFatigue, exerciseMuscleWeights, readiness, recoveryHours } from '../src/utils/muscleFatigue';
 
 const HOUR = 3600 * 1000;
 const NOW = Date.UTC(2026, 9, 30, 18);
@@ -27,12 +27,12 @@ describe('muscle fatigue', () => {
     const history = [workout(0, [{ name: 'Panca Piana Bilanciere', sets: sets(6) }])];
     const fresh = byMuscle(computeMuscleFatigue(history, EXERCISES_DB, NOW));
     expect(fresh.chest.fatigue).toBe(1);
-    expect(fatigueLevel(fresh.chest.fatigue)).toBe(4);
+    expect(readiness(fresh.chest.fatigue)).toBe(2);
     expect(fresh.triceps.fatigue).toBe(0.5);
-    expect(fresh.chest.readyInHours).toBe(54);
+    expect(fresh.chest.readyInHours).toBe(46);
     const later = byMuscle(computeMuscleFatigue(history, EXERCISES_DB, NOW + 60 * HOUR));
     expect(later.chest.fatigue).toBe(0);
-    expect(fatigueLevel(later.chest.fatigue)).toBe(0);
+    expect(readiness(later.chest.fatigue)).toBe(0);
   });
 
   it('ignores warmups, unfinished sets and sessions outside the window', () => {
@@ -41,6 +41,18 @@ describe('muscle fatigue', () => {
       workout(120, [{ name: 'Squat con Bilanciere', sets: sets(5) }]),
     ];
     expect(computeMuscleFatigue(history, EXERCISES_DB, NOW)).toEqual([]);
+  });
+
+  it('maps 6 hard chest sets to ~30 h wait, then almost ready, ready after ~45 h', () => {
+    const history = [workout(0, [{ name: 'Panca Piana Bilanciere', sets: sets(6) }])];
+    const at = h => readiness(byMuscle(computeMuscleFatigue(history, EXERCISES_DB, NOW + h * HOUR)).chest.fatigue);
+    expect(at(29)).toBe(2);
+    expect(at(31)).toBe(1);
+    expect(at(44)).toBe(1);
+    expect(at(46)).toBe(0);
+    // A single set never blocks the muscle.
+    const light = [workout(0, [{ name: 'Curl Bilanciere', sets: sets(1) }])];
+    expect(readiness(byMuscle(computeMuscleFatigue(light, EXERCISES_DB, NOW)).biceps.fatigue)).toBe(0);
   });
 
   it('adds up overlapping sessions and caps at 100%', () => {
