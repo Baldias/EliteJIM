@@ -2,8 +2,10 @@
 :root[data-theme="og"] .ej-page { background:var(--c-bg) !important; }
 :root[data-theme="og"] .ej-page .ej-glow { background:rgba(var(--glow-rgb,var(--c-primary-rgb)),var(--glow-opacity,.3)); }
 :root[data-theme="og"] .home-free { color:var(--c-primary) !important; }
-:root[data-theme="og"] .home-routine { background:linear-gradient(145deg,rgba(var(--c-primary-rgb),.05),transparent 70%),var(--c-surface); }
-:root[data-theme="og"] .home-routine:hover { border-color:rgba(var(--c-primary-rgb),.4); }
+:root[data-theme="og"] .home-routine,
+:root[data-theme="og"] .home-routine-row { background:linear-gradient(145deg,rgba(var(--c-primary-rgb),.05),transparent 70%),var(--c-surface); }
+:root[data-theme="og"] .home-routine:hover,
+:root[data-theme="og"] .home-routine-row:hover { border-color:rgba(var(--c-primary-rgb),.4); }
 :root[data-theme="og"] .sv3-volume-row { background:#0b0e12; }
 :root[data-theme="og"] .theme-option[aria-checked="true"] { box-shadow:0 0 20px rgba(var(--c-primary-rgb),.12); }
 
