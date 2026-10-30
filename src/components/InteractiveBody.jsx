@@ -1,12 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity } from 'lucide-react';
+import { Activity, ArrowRight } from 'lucide-react';
 import Model from 'react-body-highlighter';
 import { useStore } from '../store/useStore';
 import './InteractiveBody.css';
 
 import { EXERCISES_DB, EXERCISE_CATEGORIES, getAllExercises, normalizeName } from '../data/exercises';
 import { tr } from '../i18n';
+import { computeMuscleFatigue, fatigueLevel, FATIGUE_COLORS, FATIGUE_LEVELS, FATIGUE_MUSCLES } from '../utils/muscleFatigue';
+
+const RECOVERED_COLOR = '#B6BDC3';
 
 // Maps our internal EXERCISE_CATEGORIES to the react-body-highlighter valid muscle names
 const mapCategoryToMuscles = (category, exerciseName) => {
@@ -114,6 +117,7 @@ const getIntensity = (sets) => {
 
 export const InteractiveBody = () => {
   const navigate = useNavigate();
+  const [showFatigue, setShowFatigue] = useState(false);
   const history = useStore(state => state.history);
   const customExercises = useStore(state => state.customExercises);
   const exerciseOverrides = useStore(state => state.exerciseOverrides);
@@ -151,42 +155,60 @@ export const InteractiveBody = () => {
     });
   }, [history, allExercises]);
 
+  const fatigueData = useMemo(() => computeMuscleFatigue(history, allExercises)
+    .filter(m => FATIGUE_MUSCLES[m.muscle] && fatigueLevel(m.fatigue) > 0)
+    .map(m => ({ name: m.muscle, muscles: [m.muscle], frequency: fatigueLevel(m.fatigue) })), [history, allExercises]);
+
+  const toggle = () => setShowFatigue(v => !v);
+  const data = showFatigue ? fatigueData : workoutData;
+  const colors = showFatigue ? FATIGUE_COLORS : INTENSITY_COLORS;
+  const legend = showFatigue
+    ? [[tr('Recuperato'), RECOVERED_COLOR], ...FATIGUE_LEVELS.map((label, i) => [tr(label), FATIGUE_COLORS[i]])]
+    : INTENSITY_LEGEND.map((label, i) => [label, INTENSITY_COLORS[i]]);
+
   return (
     <div
-      className="ej-card interactive-body-container is-tappable"
+      className={`ej-card interactive-body-container is-tappable ${showFatigue ? 'is-fatigue' : ''}`}
       role="button"
       tabIndex={0}
-      aria-label={tr('Apri la mappa della fatica')}
-      onClick={() => navigate('/fatigue')}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/fatigue'); } }}
+      aria-pressed={showFatigue}
+      aria-label={showFatigue ? tr('Mostra le serie della settimana') : tr('Mostra la mappa della fatica')}
+      onClick={toggle}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } }}
     >
       <div className="ib-header">
-        <h3>{tr('Mappa Muscolare')}</h3>
-        <p>{tr('Gruppi allenati negli ultimi 7 giorni')}</p>
+        <h3>{showFatigue ? tr('Mappa della fatica') : tr('Mappa Muscolare')}</h3>
+        <p>{showFatigue ? tr('Fatica residua stimata per muscolo, adesso') : tr('Gruppi allenati negli ultimi 7 giorni')}</p>
       </div>
 
       <div className="ib-views">
         <figure className="ib-view">
-          <Model data={workoutData} type="anterior" highlightedColors={INTENSITY_COLORS} />
+          <Model data={data} type="anterior" bodyColor={RECOVERED_COLOR} highlightedColors={colors} />
           <figcaption>{tr('Vista Frontale')}</figcaption>
         </figure>
         <figure className="ib-view">
-          <Model data={workoutData} type="posterior" highlightedColors={INTENSITY_COLORS} />
+          <Model data={data} type="posterior" bodyColor={RECOVERED_COLOR} highlightedColors={colors} />
           <figcaption>{tr('Vista Posteriore')}</figcaption>
         </figure>
       </div>
 
       <div className="ib-legend">
-        <span className="ib-legend-label">{tr('Serie:')}</span>
-        {INTENSITY_LEGEND.map((label, i) => (
+        {!showFatigue && <span className="ib-legend-label">{tr('Serie:')}</span>}
+        {legend.map(([label, color]) => (
           <span key={label} className="ib-legend-item">
-            <span className="ib-legend-swatch" style={{ background: INTENSITY_COLORS[i] }} />
+            <span className="ib-legend-swatch" style={{ background: color }} />
             {label}
           </span>
         ))}
       </div>
 
-      <p className="ib-fatigue-link"><Activity size={14} /> {tr('Tocca per vedere la mappa della fatica')}</p>
+      {showFatigue ? (
+        <button type="button" className="ib-fatigue-link" onClick={e => { e.stopPropagation(); navigate('/fatigue'); }}>
+          {tr('Dettagli per muscolo e fonti')} <ArrowRight size={14} />
+        </button>
+      ) : (
+        <p className="ib-fatigue-link"><Activity size={14} /> {tr('Tocca per vedere la mappa della fatica')}</p>
+      )}
     </div>
   );
 };

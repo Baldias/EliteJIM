@@ -100,3 +100,18 @@
   font-weight: 700;
   color: var(--c-accent);
 }
+
+button.ib-fatigue-link {
+  align-self: center;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.is-fatigue .ib-legend {
+  flex-wrap: wrap;
+}
