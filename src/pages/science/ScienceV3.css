@@ -263,3 +263,7 @@
 .sv3-ring-wrap .mn-ring-center span { font-size: .55rem; color: var(--c-text-muted); margin-top: 4px; }
 .sv3-ring-caption { font-size: .625rem; color: var(--c-text-muted); font-weight: 700; }
 @media (max-width: 350px) { .sv3-week-dashboard { gap: 5px; } .sv3-countdown-values { gap: 7px; } .sv3-ring-wrap { transform: scale(.9); transform-origin: right center; margin-left: -10px; } }
+.sv3-panel-toggle { width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+.sv3-panel-chevron { flex-shrink:0; color:var(--c-text-muted); transition:transform .2s ease; }
+.sv3-panel-toggle[aria-expanded="true"] .sv3-panel-chevron { transform:rotate(180deg); }
+.sv3-volumes.is-collapsed .sv3-panel-heading { margin-bottom:0; }

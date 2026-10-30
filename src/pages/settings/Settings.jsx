@@ -2,9 +2,10 @@ import { GymLocationSettings } from '../../components/GymLocation';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Sparkles, Bell, Weight, CookingPot } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Bell, Weight, CookingPot } from 'lucide-react';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
-import { AiTemplateModal } from '../../components/AiTemplateModal';
+import { ThemeSettingRow } from '../../components/ThemePicker';
+import { LanguageSettingRow } from '../../components/LanguagePicker';
 import { sanitizeDecimalInput } from '../../utils/number';
 import { REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './Settings.css';
@@ -28,7 +29,6 @@ function Settings() {
   const quizBodyweight = useStore(state => parseFloat(state.scienceReport?.inputStats?.bw) || null);
   const setBodyweight = useStore(state => state.setBodyweight);
 
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [persistenceLoading, setPersistenceLoading] = useState(false);
   const [mountedAt] = useState(() => Date.now());
@@ -82,14 +82,8 @@ function Settings() {
 
       {/* Navigation rows */}
       <div className="st-rows">
-        <button type="button" className="ej-card st-row" onClick={() => setIsAiModalOpen(true)}>
-          <span className="st-row-icon is-ai"><Sparkles size={20} /></span>
-          <span className="st-row-text">
-            <span className="st-row-title">{tr('Crea Scheda con AI & JSON')} <span className="st-new">{tr('Nuovo')}</span></span>
-            <span className="st-row-sub">{tr('Genera prompt per ChatGPT o importa schede da JSON')}</span>
-          </span>
-          <ChevronRight size={18} className="st-row-chevron" />
-        </button>
+        <ThemeSettingRow />
+        <LanguageSettingRow />
 
         <button type="button" className="ej-card st-row" onClick={() => navigate('/settings/exercises')}>
           <span className="st-row-icon is-primary"><Dumbbell size={20} /></span>
@@ -248,7 +242,6 @@ function Settings() {
       </section>
 
       <ScienceDebugEntry />
-      <AiTemplateModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
     </div>
   );
 }

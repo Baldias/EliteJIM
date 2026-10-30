@@ -133,7 +133,7 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
           <div className="share-guide-box">
             <p className="share-guide-title">{tr('Come fa il tuo amico ad importarla?')}</p>
             <p className="share-guide-text">
-              {tr('Gli basterà copiare il codice, aprire')} <strong>EliteJIM</strong>, {tr('andare su')} <strong>{tr('Impostazioni → Crea Scheda con AI & JSON → Importa JSON')}</strong> {tr('e incollare il testo. La scheda sarà subito pronta per allenarsi!')}
+              {tr('Gli basterà copiare il codice, aprire')} <strong>EliteJIM</strong>, {tr('andare su')} <strong>{tr('Nuova Scheda → Crea con AI & JSON → Importa JSON')}</strong> {tr('e incollare il testo. La scheda sarà subito pronta per allenarsi!')}
             </p>
           </div>
 

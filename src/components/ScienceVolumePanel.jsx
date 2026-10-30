@@ -2,7 +2,7 @@ import { scienceSessionBudget } from '../utils/scienceBalanced';
 import { scienceCompletedSets, scienceUnconfirmedSets } from '../utils/scienceCarry';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, ChevronRight, Flame, Info, Target } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, ChevronRight, Flame, Info, Target } from 'lucide-react';
 import { useScienceStore as useStore } from '../store/scienceContext';
 import { useScienceClock } from '../hooks/useScienceClock';
 import { getAllExercises } from '../data/exercises';
@@ -23,9 +23,10 @@ function TargetEditor({ muscle, target, ceiling, maximum = 100 }) {
   </form>;
 }
 
-export function ScienceVolumePanel({ compact = false, editable = false, workout, previewWeek }) {
+export function ScienceVolumePanel({ compact = false, collapsible = false, editable = false, workout, previewWeek }) {
   const now = useScienceClock();
   const [selected, setSelected] = useState(null);
+  const [open, setOpen] = useState(!collapsible);
   const science = useStore(s => s.scienceState);
   const legacy = useStore(s => s.scienceReport);
   const enabled = useStore(s => s.showScience);
@@ -47,8 +48,11 @@ export function ScienceVolumePanel({ compact = false, editable = false, workout,
   const missing = names.reduce((n, m) => n + scienceUnconfirmedSets(muscles[m]), 0);
   const lm = selected && (summary.landmarks || p.landmarks)[selected];
   return <>
-    <section className={`ej-card sv3-volumes ${compact ? 'is-compact' : ''}`}>
-      <div className="sv3-panel-heading"><span className="sv3-panel-icon"><Target size={17} /></span><div><h2>{workout ? tr('Il lavoro di oggi, nel tuo percorso') : estimated ? tr('Stima settimana {week}', { week: summary.week }) : summary.kind === 'archive' ? tr('Settimana {week} · registrata', { week: summary.week }) : tr('Obiettivi Settimana {week}', { week: summary.week })}</h2><p>{new Date(summary.start).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })} – {new Date(summary.end - 1).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}</p></div></div>
+    <section className={`ej-card sv3-volumes ${compact ? 'is-compact' : ''} ${collapsible && !open ? 'is-collapsed' : ''}`}>
+      {collapsible
+        ? <button type="button" className="sv3-panel-heading sv3-panel-toggle" aria-expanded={open} onClick={() => setOpen(o => !o)}><span className="sv3-panel-icon"><Target size={17} /></span><div><h2>{workout ? tr('Il lavoro di oggi, nel tuo percorso') : estimated ? tr('Stima settimana {week}', { week: summary.week }) : summary.kind === 'archive' ? tr('Settimana {week} · registrata', { week: summary.week }) : tr('Obiettivi Settimana {week}', { week: summary.week })}</h2><p>{new Date(summary.start).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })} – {new Date(summary.end - 1).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}</p></div><ChevronDown size={18} className="sv3-panel-chevron" /></button>
+        : <div className="sv3-panel-heading"><span className="sv3-panel-icon"><Target size={17} /></span><div><h2>{workout ? tr('Il lavoro di oggi, nel tuo percorso') : estimated ? tr('Stima settimana {week}', { week: summary.week }) : summary.kind === 'archive' ? tr('Settimana {week} · registrata', { week: summary.week }) : tr('Obiettivi Settimana {week}', { week: summary.week })}</h2><p>{new Date(summary.start).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })} – {new Date(summary.end - 1).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}</p></div></div>}
+      {open && <>
       {estimated && <p className="sv3-estimate-note">{summary.kind === 'deload-estimate' ? tr('Proposta di scarico completo al 50%: si applica solo se la accetti. Puoi scegliere anche uno scarico locale o rimandare.') : summary.redistribution ? tr('Stima favorevole con redistribuzione accettata: parte delle serie fuori priorità passa alle priorità, mantenendo il totale contenuto. Non è ancora applicata.') : tr('Stima in uno scenario favorevole: target completati, recupero buono e serie pulite. Gli aumenti reali dipenderanno dai tuoi dati; nessuna modifica è già applicata.')}</p>}
       <div className="sv3-volume-list">{visible.map(muscle => {
         const v = muscles[muscle], target = targets[muscle], completed = scienceCompletedSets(v), unknown = scienceUnconfirmedSets(v);
@@ -65,6 +69,7 @@ export function ScienceVolumePanel({ compact = false, editable = false, workout,
       {missing > 0 && <p className="sv3-inline-note"><Info size={13} /><span>{tr('{n} serie conteggiate senza RIR.', { n: missing })}</span></p>}
       {workout && <Link className="sv3-program-link" to="/science">{tr('Vai al programma completo')}<ArrowRight size={14} /></Link>}
       {!compact && summary.unclassified?.length > 0 && <p className="sv3-inline-note"><Info size={13} /><span>{tr('{n} esercizi da classificare nel check delle sedute.', { n: summary.unclassified.length })}</span></p>}
+      </>}
     </section>
     {selected && lm && <Sheet title={tr(selected)} onClose={() => setSelected(null)}>
       <div className="sv3-goal-summary"><span>{estimated ? tr('STIMA · ') : ''}{tr('SETTIMANA {week}', { week: summary.week })}</span><p><strong>{estimated ? targets[selected] : scienceCompletedSets(muscles[selected])}</strong><span>{estimated ? tr('serie stimate') : tr('/ {n} serie', { n: targets[selected] })}</span></p><small>{tr('Serie dirette completate, anche senza RIR')}</small></div>

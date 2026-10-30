@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
-import { Plus, Play, Dumbbell, Zap, Bell, CheckCircle2, Trash2, Edit3, Share2, Flame } from 'lucide-react';
+import { Plus, Play, Dumbbell, Zap, Bell, CheckCircle2, Trash2, Edit3, Share2, Flame, Sparkles, FileJson, PenLine } from 'lucide-react';
 import { InteractiveBody } from '../../components/InteractiveBody';
 import { WelcomeBack } from '../../components/WelcomeBack';
 import { BackupReminderBanner } from '../../components/BackupReminderBanner';
 import { ShareTemplateModal } from '../../components/ShareTemplateModal';
+import { AiTemplateModal } from '../../components/AiTemplateModal';
 import { DailyRecapCard } from '../../components/DailyRecapCard';
 import pkg from '../../../package.json';
 import RoutineCard from './RoutineCard';
@@ -45,6 +46,8 @@ function Home() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [sharingTemplate, setSharingTemplate] = useState(null);
   const [actionTemplate, setActionTemplate] = useState(null);
+  const [newTemplateOpen, setNewTemplateOpen] = useState(false);
+  const [aiTab, setAiTab] = useState(null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -140,7 +143,7 @@ function Home() {
           <div className="home-routines-heading">
             <div className="ej-section-header">
               <h2 className="ej-section-title" id="home-routines-title">{tr('Le tue schede')}</h2>
-              <button type="button" className="ej-btn ej-btn--secondary home-new-btn" onClick={() => navigate('/build')}>
+              <button type="button" className="ej-btn ej-btn--secondary home-new-btn" onClick={() => setNewTemplateOpen(true)}>
                 <Plus size={16} className="home-new-icon" /> {tr('Nuova Scheda')}
               </button>
             </div>
@@ -204,6 +207,10 @@ function Home() {
       </div>
 
       {actionTemplate && <Sheet title={tr('Opzioni scheda')} onClose={() => setActionTemplate(null)}><div className="home-routine-menu"><p>{actionTemplate.name}</p><button type="button" onClick={() => { setSharingTemplate(actionTemplate); setActionTemplate(null); }}><Share2 size={19} /><span>{tr('Condividi scheda')}<small>{tr('Esporta o invia a un amico')}</small></span></button><button type="button" onClick={() => { setActionTemplate(null); navigate('/build', { state: { template: actionTemplate } }); }}><Edit3 size={19} /><span>{tr(tr('Modifica scheda'))}<small>{tr('Esercizi, serie e dettagli')}</small></span></button><button type="button" className="is-danger" onClick={() => handleDelete(actionTemplate)}><Trash2 size={19} /><span>{tr(tr('Elimina scheda'))}<small>{tr('Ti chiederemo conferma')}</small></span></button></div></Sheet>}
+
+      {newTemplateOpen && <Sheet title={tr('Nuova Scheda')} onClose={() => setNewTemplateOpen(false)}><div className="home-routine-menu"><p>{tr('Come vuoi crearla?')}</p><button type="button" onClick={() => { setNewTemplateOpen(false); navigate('/build'); }}><PenLine size={19} /><span>{tr('Crea a mano')}<small>{tr('Scegli tu esercizi e serie')}</small></span></button><button type="button" onClick={() => { setNewTemplateOpen(false); setAiTab('prompt'); }}><Sparkles size={19} /><span>{tr('Crea con l’AI')}<small>{tr('Genera un prompt per ChatGPT e importa la scheda')}</small></span></button><button type="button" onClick={() => { setNewTemplateOpen(false); setAiTab('import'); }}><FileJson size={19} /><span>{tr('Importa da JSON')}<small>{tr('Incolla una scheda condivisa o generata')}</small></span></button></div></Sheet>}
+
+      <AiTemplateModal isOpen={!!aiTab} initialTab={aiTab || 'prompt'} onClose={() => setAiTab(null)} />
 
       <ShareTemplateModal
         isOpen={!!sharingTemplate}

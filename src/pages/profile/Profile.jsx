@@ -10,8 +10,6 @@ import { getRankByXp } from '../../utils/gamification';
 import { computeOverloadStats } from '../../utils/overload';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './Profile.css';
-import { ProfileThemePicker } from '../../components/ThemePicker';
-import { ProfileLanguagePicker } from '../../components/LanguagePicker';
 import ProgressShare from '../../components/ProgressShare';
 import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
 import { hasLegacyScience } from '../../utils/scienceV3';
@@ -198,9 +196,6 @@ function Profile() {
         </div>
       </div>
 
-      <ProfileThemePicker />
-      <ProfileLanguagePicker />
-      <ProgressShare />
 
       {/* ── MUSCLE LEVELS ──────────────────────────── */}
       {showScience && (
@@ -212,7 +207,7 @@ function Profile() {
       )}
 
       {/* ── RP VOLUME ──────────────────────────────── */}
-      <ScienceVolumePanel compact />
+      <ScienceVolumePanel compact collapsible />
       {showScience && useLegacyVolume && rpVolumes && (
         <section className="pf-section">
           <h2 className="ej-section-title">{tr("Volume RP (Ultimi 7 Giorni)")}</h2>
@@ -326,6 +321,8 @@ function Profile() {
           </>
         )}
       </section>
+
+      <ProgressShare />
     </div>
   );
 }
