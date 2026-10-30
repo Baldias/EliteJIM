@@ -45,6 +45,32 @@ describe('weekly muscle progress', () => {
     expect(weeklyMuscleProgress(history, EXERCISES_DB, {}, 'Petto', older).weeks).toEqual([]);
     expect(weeklyMuscleProgress([workout(5, [set(1, { done: false })])], EXERCISES_DB, {}, 'Petto', custom).average).toBe(0);
   });
+  it('aggregates multiple sessions and exercises into one week and attributes only direct work', () => {
+    const history = [workout(5, [set(1), set(2)]), workout(6, [set(3)]), { ...workout(12, [set(4)]), exercises: [
+      { id: 'dip', name: 'Dip alle Parallele', sets: [set(5), set(6)] },
+      { id: 'curl', name: 'Curl Bilanciere', sets: [set(7)] },
+    ] }];
+    const range = { start: new Date(2026, 9, 5).getTime(), end: new Date(2026, 9, 19).getTime() };
+    expect(weeklyMuscleProgress(history, EXERCISES_DB, {}, 'Petto', range).weeks.map(w => w.sets)).toEqual([3, 2]);
+    expect(weeklyMuscleProgress(history, EXERCISES_DB, {}, 'Bicipiti', range).weeks.map(w => w.sets)).toEqual([0, 1]);
+    expect(weeklyMuscleProgress(history, EXERCISES_DB, {}, 'Tricipiti', range).total).toBe(0);
+  });
+  it('uses saved science classifications for custom exercises, without counting excluded sets', () => {
+    const history = [{ id: 1, startTime: time(5), exercises: [{ id: 'ex', name: 'Macchina speciale', sets: [set(1), set(2), set(3)] }] }];
+    const science = emptyScienceState();
+    science.exerciseSnapshots[1] = { ex: { name: 'Macchina speciale', primary: 'Petto', indirect: ['Tricipiti'] } };
+    science.annotations[1] = { ex: { 2: { excluded: true } } };
+    const range = progressRange('12', history, time(29));
+    expect(weeklyMuscleProgress(history, EXERCISES_DB, science, 'Petto', range).total).toBe(2);
+    expect(weeklyMuscleProgress(history, EXERCISES_DB, science, 'Tricipiti', range).total).toBe(0);
+  });
+  it('keeps consecutive local weeks over the spring time change', () => {
+    const history = [workout(22, [set(1)]), workout(29, [set(1)])].map(w => ({ ...w, startTime: new Date(2026, 2, new Date(w.startTime).getDate(), 12).getTime() }));
+    const range = { start: new Date(2026, 2, 16).getTime(), end: new Date(2026, 2, 30).getTime() };
+    const result = weeklyMuscleProgress(history, EXERCISES_DB, {}, 'Petto', range);
+    expect(result.weeks.map(w => w.sets)).toEqual([1, 1]);
+    expect(result.weeks.map(w => new Date(w.time).getHours())).toEqual([0, 0]);
+  });
   it('uses Monday calendar boundaries over daylight-saving changes', () => {
     const result = weeklyMuscleProgress([workout(25, [set(1)]), workout(26, [set(1), set(2)])], EXERCISES_DB, {}, 'Petto', { start: new Date(2026, 9, 19).getTime(), end: new Date(2026, 10, 2).getTime() });
     expect(result.weeks.map(w => w.sets)).toEqual([1, 2]);

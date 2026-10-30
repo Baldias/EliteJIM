@@ -1,3 +1,5 @@
+import { machineHistory } from '../../utils/gymLocation';
+import WorkoutGymLocation from '../../components/GymLocation';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell, TrendingUp } from 'lucide-react';
@@ -69,7 +71,7 @@ function Workout() {
   const celebrateIfNewPR = (ex, set) => {
     if (!ex || !set || set.isDropset) return;
     const bodyweightLoad = getBodyweightLoad(ex.name, allDB, bodyweight);
-    const previousPR = getExercise1RMStats(history, ex.name, bodyweightLoad).allTime?.max1RM || 0;
+    const previousPR = getExercise1RMStats(machineHistory(history, ex.name, allDB, activeWorkout), ex.name, bodyweightLoad).allTime?.max1RM || 0;
     if (previousPR <= 0) return; // first time on this exercise: nothing to beat yet
     const others = findSessionBest(ex.sets.filter(s => s.id !== set.id), bodyweightLoad);
     const rm = round1(estimate1RM(set.kg, set.reps, bodyweightLoad));
@@ -103,10 +105,11 @@ function Workout() {
   const handleUpdateExerciseNameLocally = (exerciseId, newName) => {
     useStore.setState(state => {
       if (!state.activeWorkout) return state;
-      const hist = state.history || [];
+      const hist = machineHistory(state.history || [], newName, allDB, state.activeWorkout);
       const templates = state.templates || [];
       const targetEx = state.activeWorkout.exercises.find(e => e.id === exerciseId);
-      const isAdded = targetEx?.isAdded;
+      if (!targetEx || targetEx.name === newName) return state;
+      const isAdded = targetEx.isAdded;
 
       const norm = normalizeName(newName);
       // Most recent session with completed working sets for this exercise
@@ -132,6 +135,7 @@ function Workout() {
       return {
         activeWorkout: {
           ...state.activeWorkout,
+          lastActivityAt: Date.now(),
           exercises: state.activeWorkout.exercises.map(ex => {
             if (ex.id !== exerciseId) return ex;
             const sets = ex.sets.map((s, i) => {
@@ -198,7 +202,8 @@ function Workout() {
 
       {/* ── EXERCISES ─────────────────────── */}
       <div className="wk-body">
-        <TrainingReminder key={activeWorkout.id} workout={activeWorkout} />
+        <WorkoutGymLocation key={activeWorkout.id} workout={activeWorkout} />
+      <TrainingReminder key={activeWorkout.id} workout={activeWorkout} />
 
         {/* Empty state */}
         {activeWorkout.exercises.length === 0 && (
@@ -213,7 +218,7 @@ function Workout() {
           const weightStep = getWeightStep(ex, allDB);
           const doneCount = ex.sets.filter(s => s.done).length;
           const bodyweightLoad = getBodyweightLoad(ex.name, allDB, bodyweight);
-          const stats1RM = getExercise1RMStats(history, ex.name, bodyweightLoad);
+          const stats1RM = getExercise1RMStats(machineHistory(history, ex.name, allDB, activeWorkout), ex.name, bodyweightLoad);
           const rmPrefix = bodyweightLoad > 0 ? '+' : '';
           const hasLast1RM = !!(stats1RM.lastSession?.set && stats1RM.lastSession.max1RM > 0);
           const hasAllTime1RM = !!(stats1RM.allTime?.set && stats1RM.allTime.max1RM > 0);

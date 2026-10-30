@@ -1,3 +1,5 @@
+import { isMachineExercise, locationKey, gymLabel } from '../../utils/gymLocation';
+import ProgressLocationFilter from '../../components/ProgressLocationFilter';
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MuscleWeeklyProgress from './MuscleWeeklyProgress';
@@ -24,6 +26,7 @@ function ChartTooltip({ active, payload, unit }) {
             <p className="pg-tooltip-date">{fmtShortDate(d.time)}</p>
             <p className="pg-tooltip-value">{fmtNum(d.value)} {unit}</p>
             <p className="pg-tooltip-set">{d.kg > 0 ? `${fmtNum(d.kg)}kg × ${d.reps}` : `${d.reps} reps`}</p>
+            {d.locationLabel && <p className="pg-tooltip-set">{d.locationLabel}</p>}
             {d.isPR && <p className="pg-tooltip-pr"><Trophy size={11} /> Nuovo PR</p>}
         </div>
     );
@@ -43,6 +46,8 @@ function ProgressOverload() {
     const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
     const muscleXP = useStore(state => state.muscleXP) || {};
     const bodyweight = useStore(resolveBodyweight);
+    const aliases = useStore(state => state.gymLocationAliases);
+    const [locationChoice, setLocationChoice] = useState(null);
 
     const [searchParams] = useSearchParams();
     const requestedExercise = searchParams.get('exercise') || '';
@@ -92,6 +97,8 @@ function ProgressOverload() {
     }, [trainedExercises, activeCategory, allExercisesDB]);
 
     const currentExercise = availableExercises.includes(selectedExercise) ? selectedExercise : '';
+    const machine = isMachineExercise(currentExercise, allExercisesDB);
+    const locationFilter = machine && locationChoice?.exercise === currentExercise ? locationChoice.value : 'all';
 
     // Bodyweight moved by pull-ups, dips, push-ups: their 1RM is the added weight
     const bodyweightLoad = useMemo(
@@ -104,6 +111,7 @@ function ProgressOverload() {
         if (!currentExercise) return [];
         const list = [];
         history.forEach(workout => {
+            if (machine && locationFilter !== 'all' && locationKey(workout) !== locationFilter) return;
             const ex = workout.exercises.find(e => e.name === currentExercise);
             if (!ex) return;
             let best = null;
@@ -117,20 +125,21 @@ function ProgressOverload() {
                     || (!rm && !best.rm && reps > best.reps);
                 if (better) best = { kg, reps, rm };
             });
-            if (best) list.push({ time: workout.startTime, ...best });
+            if (best) list.push({ time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best });
         });
         list.sort((a, b) => a.time - b.time);
 
         const hasLoad = list.some(s => s.kg > 0);
-        let runningMax = 0;
-        return list.map((s, i) => {
+        const previous = new Map();
+        return list.map(s => {
+            const key = machine ? s.location : 'global';
+            const last = previous.get(key);
             const value = hasLoad ? round1(s.rm || 0) : s.reps;
-            const prev = i > 0 ? (hasLoad ? round1(list[i - 1].rm || 0) : list[i - 1].reps) : null;
-            const isPR = i > 0 && value > runningMax;
-            runningMax = Math.max(runningMax, value);
-            return { ...s, value, delta: prev == null ? null : round1(value - prev), isPR };
+            const isPR = Boolean(last && value > last.max);
+            previous.set(key, { value, max: Math.max(last?.max || 0, value) });
+            return { ...s, value, delta: last ? round1(value - last.value) : null, isPR };
         });
-    }, [history, currentExercise, bodyweightLoad]);
+    }, [history, currentExercise, bodyweightLoad, machine, locationFilter, aliases]);
 
     const hasLoad = sessions.some(s => s.kg > 0);
     const unit = hasLoad ? 'kg' : 'reps';
@@ -206,6 +215,7 @@ function ProgressOverload() {
 
                     {activeCategory && currentExercise && <button type="button" className="pg-overview-btn" onClick={() => { setSelectedExercise(''); setSearchText(''); }}>Torna alle serie settimanali</button>}
                     {activeCategory && !currentExercise && <MuscleWeeklyProgress muscle={EXERCISE_CATEGORIES[activeCategory]} history={history} db={allExercisesDB} science={science} />}
+                    {currentExercise && machine && <ProgressLocationFilter history={history} exercise={currentExercise} value={locationFilter} onChange={value => setLocationChoice({ exercise: currentExercise, value })} />}
                     {currentExercise && !summary && <div className="ej-card pg-empty">Nessuna sessione completata per {currentExercise}. I progressi appariranno dopo aver salvato l’allenamento.</div>}
                     {!activeCategory && !currentExercise && <p className="pg-hero-note">Scegli un distretto per vedere le serie settimanali oppure cerca un esercizio.</p>}
                     {summary && (

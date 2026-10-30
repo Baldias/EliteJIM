@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useWorkoutAutoFinish } from './hooks/useWorkoutAutoFinish';
 import { hasCurrentThemeChoice } from './utils/theme';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, TrendingUp, User, Dna, Utensils } from 'lucide-react';
@@ -19,7 +20,8 @@ import Activity from './pages/activity/Activity';
 import Monitoring from './pages/monitoring/Monitoring';
 import MyMeals from './pages/monitoring/MyMeals';
 import ReloadPrompt from './components/ReloadPrompt';
-import ReleaseNotes, { RELEASE_NOTES_VERSION } from './components/ReleaseNotes';
+import ReleaseNotes from './components/ReleaseNotes';
+import { RELEASE_NOTES_VERSION } from './utils/releaseNotes';
 import ScienceWeekPrompt from './components/ScienceWeekPrompt';
 import GlobalWorkoutBanner from './components/GlobalWorkoutBanner';
 import DemoBanner from './components/DemoBanner';
@@ -61,6 +63,7 @@ function Navigation() {
 }
 
 function App() {
+  useWorkoutAutoFinish();
   const themeChosen = useStore(hasCurrentThemeChoice);
   const releaseNotesSeen = useStore(state => state.releaseNotesSeen);
   const dismissReleaseNotes = useStore(state => state.dismissReleaseNotes);
@@ -69,7 +72,7 @@ function App() {
   }, []);
 
   if (!themeChosen) return <><DemoBanner /><ThemeOnboarding /></>;
-  if (releaseNotesSeen !== RELEASE_NOTES_VERSION) return <><DemoBanner /><div className="ej-page release-background"><div className="ej-glow" aria-hidden="true" /></div><ReleaseNotes onClose={() => dismissReleaseNotes(RELEASE_NOTES_VERSION)} /></>;
+  if (releaseNotesSeen !== RELEASE_NOTES_VERSION) return <><DemoBanner /><div className="ej-page release-background"><div className="ej-glow" aria-hidden="true" /></div><ReleaseNotes previousVersion={releaseNotesSeen} onClose={() => dismissReleaseNotes(RELEASE_NOTES_VERSION)} /></>;
 
   return (
     <BrowserRouter>

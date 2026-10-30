@@ -27,6 +27,8 @@ export function exportDataBackup() {
           history: currentState.history || [],
           customExercises: currentState.customExercises || [],
           exerciseOverrides: currentState.exerciseOverrides || {},
+          gymLocationPreferences: currentState.gymLocationPreferences,
+          gymLocationAliases: currentState.gymLocationAliases || {},
           scienceReport: currentState.scienceReport || null,
           scienceState: currentState.scienceState || emptyScienceState(),
           userXP: currentState.userXP || 0,

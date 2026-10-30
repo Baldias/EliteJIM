@@ -1,3 +1,4 @@
+import { isMachineExercise, locationKey } from './gymLocation';
 import { balancedStartingTargets, BALANCED_VOLUME_VERSION, fitBalancedTargets, scienceSessionBudget } from './scienceBalanced';
 import { normalizeName } from '../data/exercises';
 import { scienceProgramWeekRange } from './scienceCalendar';
@@ -240,13 +241,13 @@ export function sciencePerformance(history, db, science, muscle, end) {
           return s.done && !s.isDropset && !s.isRestPause && !s.isWarmup && !a.excluded && a.rir === rir && Number(s.reps) > 0;
         });
         const best = sets.reduce((a, s) => !a || Number(s.kg) > Number(a.kg) || (Number(s.kg) === Number(a.kg) && Number(s.reps) > Number(a.reps)) ? s : a, null);
-        if (best) exposures.push({ name: normalizeName(ex.name), rir, kg: Number(best.kg) || 0, reps: Number(best.reps), time: Number(workout.startTime), workoutId: workout.id });
+        if (best) exposures.push({ name: normalizeName(ex.name), rir, kg: Number(best.kg) || 0, reps: Number(best.reps), time: Number(workout.startTime), workoutId: workout.id, location: isMachineExercise(ex.name, db) ? locationKey(workout) : null, scoped: workout.machineLocationScoped });
       }
     }
   }
   const latest = exposures.at(-1);
   if (!latest) return { status: 'insufficient', count: 0 };
-  const comparable = exposures.filter(e => e.name === latest.name && e.rir === latest.rir && e.time >= end - 42 * 86400000);
+  const comparable = exposures.filter(e => e.name === latest.name && e.rir === latest.rir && (!latest.scoped || latest.location !== 'unlocated' && e.location === latest.location) && e.time >= end - 42 * 86400000);
   const unique = comparable.filter((e, i, a) => a.findLastIndex(v => v.workoutId === e.workoutId) === i).slice(-3);
   if (unique.length < 3) return { status: 'insufficient', count: unique.length };
   const increases = (a, b) => (b.kg >= a.kg && b.reps >= a.reps && (b.kg > a.kg || b.reps > a.reps));

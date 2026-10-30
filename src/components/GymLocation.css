@@ -1,0 +1,18 @@
+.gym-privacy { color:var(--c-text-muted); font-size:.72rem; line-height:1.6; margin:18px 0; }
+.gym-privacy a { color:var(--c-primary); }
+.gym-slide-progress { display:flex; gap:5px; margin:8px 0 28px; }
+.gym-slide-progress span { height:4px; border-radius:4px; flex:1; background:var(--c-border); }
+.gym-slide-progress .is-active { background:var(--c-primary); }
+.gym-slide-icon { color:var(--c-primary); padding:30px; width:max-content; margin:20px auto 32px; border:1px solid var(--c-border); border-radius:30px; background:var(--c-surface-2); }
+.gym-intro h3 { font-size:1.6rem; line-height:1.2; letter-spacing:-.03em; }
+.gym-intro-footer { display:flex; flex-wrap:wrap; gap:10px; }
+.gym-intro-footer > button { flex:1 1 140px; justify-content:center; }
+.gym-workout-location { display:flex; align-items:center; gap:7px; color:var(--c-text-muted); font-size:.72rem; margin:0 0 12px; }
+.gym-workout-location span { flex:1; }
+.gym-workout-location button { color:var(--c-primary); background:none; border:0; padding:8px; }
+.gym-settings h3 { display:flex; align-items:center; gap:8px; margin-top:0; }
+.gym-settings > p { color:var(--c-text-muted); font-size:.8rem; line-height:1.5; }
+.gym-settings label { display:flex; gap:10px; align-items:center; padding:12px 0; font-size:.85rem; }
+.pg-gym-filter { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.pg-gym-filter select { flex:1; min-width:0; padding:10px; border-radius:10px; border:1px solid var(--c-border); color:var(--c-text); background:var(--c-surface); font:inherit; font-size:.8rem; }
+.pg-gym-filter button { padding:8px; background:var(--c-surface); color:var(--c-text-muted); border:1px solid var(--c-border); border-radius:10px; }
