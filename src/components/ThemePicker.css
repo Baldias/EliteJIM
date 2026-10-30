@@ -22,10 +22,6 @@
 .theme-option-copy small { font-size:11px; line-height:1.6; font-weight:400; color:var(--c-text-muted); }
 .theme-option-check { position:absolute; bottom:32px; right:15px; display:grid; place-items:center; width:23px; height:23px; border:1px solid var(--c-border); border-radius:50%; color:var(--c-primary); }
 .theme-confirm { width:100%; min-height:48px; margin-top:24px; }
-.theme-profile-entry { display:flex; align-items:center; gap:14px; text-align:left; color:var(--c-primary); }
-.theme-profile-entry > span { flex:1; display:flex; flex-direction:column; gap:6px; }
-.theme-profile-entry strong { color:var(--c-text); font-size:14px; }
-.theme-profile-entry small { color:var(--c-text-muted); font-size:11px; }
 
 .theme-glow-picker { margin:24px 0 0; padding:0; border:0; }
 .theme-glow-picker legend { font-size:14px; font-weight:700; }
