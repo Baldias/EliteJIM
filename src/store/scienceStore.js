@@ -4,6 +4,7 @@ import { SCIENCE_REFERENCE_VERSION } from '../utils/scienceReferences';
 import { migrateLegacyScience } from '../utils/scienceMigration';
 import { applyScienceBackfill } from '../utils/scienceBackfill';
 import { decideLegacyDynamicVolume } from '../utils/scienceEvolution';
+import { tr } from '../i18n';
 import {
   SCIENCE_MUSCLES, OPTIONAL_MUSCLES, emptyScienceState, hasLegacyScience,
   createScienceProgram, closeScienceWeek, respondScienceRecommendation,
@@ -79,7 +80,7 @@ export function scienceActions(set) {
       if (profile.goal === 'balanced') Object.assign(targets, fitBalancedTargets(targets, scienceSessionBudget(profile, p)));
       const total = Object.values(targets).reduce((a,n)=>a+n,0);
       const minutes = (profile.daysPerWeek || 4) * (profile.minutesPerSession || 60);
-      const timeWarning = fresh.timeRestricted ? fresh.timeWarning : total * 4 > minutes ? `Stima: ~${total * 4} min/settimana, ne hai indicati ${minutes}. I target sono conservati: valuta più tempo o priorità diverse.` : null;
+      const timeWarning = fresh.timeRestricted ? fresh.timeWarning : total * 4 > minutes ? tr('Stima: ~{needed} min/settimana, ne hai indicati {available}. I target sono conservati: valuta più tempo o priorità diverse.', { needed: total * 4, available: minutes }) : null;
       return {scienceState:{...science,profile,program:{...p,targets,initialTargets,landmarks,ceilings,decisions,roles,
         startingDoseVersion:SCIENCE_REFERENCE_VERSION,balancedVolumeVersion:profile.goal === 'balanced' ? BALANCED_VOLUME_VERSION : p.balancedVolumeVersion,timeRestricted:fresh.timeRestricted,timeWarning,initialEstimates:fresh.initialEstimates,
         referenceUpdate:{at:now,version:SCIENCE_REFERENCE_VERSION,changes},

@@ -2,13 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 import { Sheet } from './Sheet';
+import { tr } from '../../i18n';
 
 const FORMATS = [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E, BarcodeFormat.CODE_128];
 
 export default function BarcodeScanner({ onDetected, onClose }) {
   const videoRef = useRef(null);
   const cameraSupported = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
-  const [error, setError] = useState(cameraSupported ? '' : 'La fotocamera non è disponibile su questo dispositivo o browser. Inserisci il codice a mano.');
+  const [error, setError] = useState(cameraSupported ? '' : tr('La fotocamera non è disponibile su questo dispositivo o browser. Inserisci il codice a mano.'));
   const [manual, setManual] = useState('');
 
   useEffect(() => {
@@ -34,8 +35,8 @@ export default function BarcodeScanner({ onDetected, onClose }) {
       })
       .catch((err) => {
         setError(err?.name === 'NotAllowedError'
-          ? 'Permesso fotocamera negato. Abilitalo dalle impostazioni del browser oppure inserisci il codice a mano.'
-          : 'Impossibile avviare la fotocamera. Inserisci il codice a mano.');
+          ? tr('Permesso fotocamera negato. Abilitalo dalle impostazioni del browser oppure inserisci il codice a mano.')
+          : tr('Impossibile avviare la fotocamera. Inserisci il codice a mano.'));
       });
 
     return () => {
@@ -51,7 +52,7 @@ export default function BarcodeScanner({ onDetected, onClose }) {
   };
 
   return (
-    <Sheet title="Scansiona codice a barre" onClose={onClose} full>
+    <Sheet title={tr('Scansiona codice a barre')} onClose={onClose} full>
       <div className="mn-scanner">
         {error ? (
           <p className="mn-scanner-error">{error}</p>
@@ -59,18 +60,18 @@ export default function BarcodeScanner({ onDetected, onClose }) {
           <div className="mn-scanner-view">
             <video ref={videoRef} muted playsInline />
             <span className="mn-scanner-frame" aria-hidden="true" />
-            <p>Inquadra il codice a barre della confezione</p>
+            <p>{tr('Inquadra il codice a barre della confezione')}</p>
           </div>
         )}
         <form className="mn-scanner-manual" onSubmit={submitManual}>
           <input
             className="mn-input"
             inputMode="numeric"
-            placeholder="Oppure digita il codice (es. 8076800195057)"
+            placeholder={tr('Oppure digita il codice (es. 8076800195057)')}
             value={manual}
             onChange={(e) => setManual(e.target.value)}
           />
-          <button type="submit" className="ej-btn ej-btn--primary" disabled={manual.replace(/\D/g, '').length < 6}>Cerca</button>
+          <button type="submit" className="ej-btn ej-btn--primary" disabled={manual.replace(/\D/g, '').length < 6}>{tr('Cerca')}</button>
         </form>
       </div>
     </Sheet>

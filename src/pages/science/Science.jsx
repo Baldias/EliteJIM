@@ -33,6 +33,7 @@ import { hasLegacyScience } from '../../utils/scienceV3';
 import { evolvedLegacyReport, legacyEvolutionFor } from '../../utils/scienceEvolution';
 import { ScienceEvolution, LegacyDynamicVolume } from './ScienceEvolution';
 import ScienceTutorialButton from './ScienceTutorial';
+import { locale } from '../../i18n';
 
 const RP_BASE_LANDMARKS = {
   'Petto': { mev: 10, mav: 12, mrv: 20 },
@@ -178,7 +179,7 @@ function PendingStartScreen({ report, reset }) {
 
   const options = [
     { key: 'today', icon: Rocket, title: 'Inizia Subito (Oggi)', sub: 'Gli allenamenti di oggi conteranno per la W1' },
-    { key: 'next_monday', icon: Calendar, title: 'Inizia Lunedì Prossimo', sub: nextMonday.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' }) },
+    { key: 'next_monday', icon: Calendar, title: 'Inizia Lunedì Prossimo', sub: nextMonday.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'short' }) },
     { key: 'custom', icon: CalendarDays, title: 'Scegli Data di Inizio', sub: 'Seleziona un giorno specifico' }
   ];
 

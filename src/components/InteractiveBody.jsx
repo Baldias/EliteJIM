@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore';
 import './InteractiveBody.css';
 
 import { EXERCISES_DB, EXERCISE_CATEGORIES, getAllExercises, normalizeName } from '../data/exercises';
+import { tr } from '../i18n';
 
 // Maps our internal EXERCISE_CATEGORIES to the react-body-highlighter valid muscle names
 const mapCategoryToMuscles = (category, exerciseName) => {
@@ -150,23 +151,23 @@ export const InteractiveBody = () => {
   return (
     <div className="ej-card interactive-body-container">
       <div className="ib-header">
-        <h3>Mappa Muscolare</h3>
-        <p>Gruppi allenati negli ultimi 7 giorni</p>
+        <h3>{tr('Mappa Muscolare')}</h3>
+        <p>{tr('Gruppi allenati negli ultimi 7 giorni')}</p>
       </div>
 
       <div className="ib-views">
         <figure className="ib-view">
           <Model data={workoutData} type="anterior" highlightedColors={INTENSITY_COLORS} />
-          <figcaption>Vista Frontale</figcaption>
+          <figcaption>{tr('Vista Frontale')}</figcaption>
         </figure>
         <figure className="ib-view">
           <Model data={workoutData} type="posterior" highlightedColors={INTENSITY_COLORS} />
-          <figcaption>Vista Posteriore</figcaption>
+          <figcaption>{tr('Vista Posteriore')}</figcaption>
         </figure>
       </div>
 
       <div className="ib-legend">
-        <span className="ib-legend-label">Serie:</span>
+        <span className="ib-legend-label">{tr('Serie:')}</span>
         {INTENSITY_LEGEND.map((label, i) => (
           <span key={label} className="ib-legend-item">
             <span className="ib-legend-swatch" style={{ background: INTENSITY_COLORS[i] }} />

@@ -6,6 +6,7 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { getAllExercises } from '../../data/exercises';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './History.css';
+import { locale, tr } from '../../i18n';
 
 function History() {
   const navigate = useNavigate();
@@ -43,13 +44,13 @@ function History() {
   // e is undefined when called from SwipeToDelete
   const handleDelete = (e, id) => {
     e?.stopPropagation();
-    if (window.confirm("Sei sicuro di voler eliminare questo allenamento dallo storico?")) {
+    if (window.confirm(tr('Sei sicuro di voler eliminare questo allenamento dallo storico?'))) {
       deleteWorkout(id);
     }
   };
 
   const formatDate = (timestamp) => {
-    return new Date(timestamp).toLocaleDateString('it-IT', {
+    return new Date(timestamp).toLocaleDateString(locale(), {
       weekday: 'short',
       day: 'numeric',
       month: 'short'
@@ -57,7 +58,7 @@ function History() {
   };
 
   const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString('it-IT', {
+    return new Date(timestamp).toLocaleTimeString(locale(), {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -87,7 +88,7 @@ function History() {
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       let g = groups.find(x => x.key === key);
       if (!g) {
-        g = { key, label: d.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }), workouts: [] };
+        g = { key, label: d.toLocaleDateString(locale(), { month: 'long', year: 'numeric' }), workouts: [] };
         groups.push(g);
       }
       g.workouts.push(w);
@@ -100,20 +101,20 @@ function History() {
       <div className="ej-glow" aria-hidden="true" />
 
       <header className="hs-header">
-        <button type="button" className="ej-icon-btn ej-icon-btn--round hs-back" onClick={() => navigate(-1)} title="Indietro">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round hs-back" onClick={() => navigate(-1)} title={tr('Indietro')}>
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h1 className="hs-title">Storico</h1>
-          <p className="ej-eyebrow">I tuoi allenamenti passati</p>
+          <h1 className="hs-title">{tr('Storico')}</h1>
+          <p className="ej-eyebrow">{tr('I tuoi allenamenti passati')}</p>
         </div>
       </header>
 
       {history.length === 0 ? (
         <div className="ej-card hs-empty">
           <span className="hs-empty-icon"><Calendar size={28} /></span>
-          <p className="hs-empty-title">Non hai ancora registrato nessun allenamento.</p>
-          <p className="hs-empty-sub">Esegui e termina una scheda per vederla qui.</p>
+          <p className="hs-empty-title">{tr('Non hai ancora registrato nessun allenamento.')}</p>
+          <p className="hs-empty-sub">{tr('Esegui e termina una scheda per vederla qui.')}</p>
         </div>
       ) : (
         <>
@@ -130,7 +131,7 @@ function History() {
                         <div className="hs-card-text">
                           <div className="hs-card-title">
                             <h3>{workout.name}</h3>
-                            <button type="button" className="ej-icon-btn hs-edit" onClick={(e) => handleEdit(e, workout.id)} title="Modifica sessione">
+                            <button type="button" className="ej-icon-btn hs-edit" onClick={(e) => handleEdit(e, workout.id)} title={tr('Modifica sessione')}>
                               <Edit2 size={13} />
                             </button>
                           </div>
@@ -160,7 +161,7 @@ function History() {
                             <div key={ex.id} className="hs-ex">
                               <div className="hs-ex-head">
                                 <span className="hs-ex-name">{ex.name}</span>
-                                <span className="hs-ex-count">{visibleSets.length} set completati</span>
+                                <span className="hs-ex-count">{visibleSets.length} {tr('set completati')}</span>
                               </div>
                               {isExpanded && (
                                 <div className="hs-table">
@@ -168,7 +169,7 @@ function History() {
                                     <span>Set</span>
                                     <span>Kg</span>
                                     <span>Reps</span>
-                                    <span>1RM Est.</span>
+                                    <span>{tr('1RM Est.')}</span>
                                   </div>
                                   {visibleSets.map((set, setIdx) => {
                                     const est1rm = estimate1RM(set.kg, set.reps, bodyweightLoad);
@@ -199,7 +200,7 @@ function History() {
               })}
             </section>
           ))}
-          <p className="hs-hint">← Scorri una sessione verso sinistra per eliminarla</p>
+          <p className="hs-hint">{tr('← Scorri una sessione verso sinistra per eliminarla')}</p>
         </>
       )}
     </div>

@@ -9,6 +9,7 @@ import { FuelBar, MacroMeter, MacroStrip } from './Fuel';
 import { Sheet } from './Sheet';
 import { ScorePanel, BetterAlternatives } from './ScorePanel';
 import { athleteScore } from '../../utils/athleteScore';
+import { tr } from '../../i18n';
 
 const GRAM_PRESETS = [50, 100, 150, 200];
 const SERVING_PRESETS = [0.5, 1, 2, 3];
@@ -58,24 +59,24 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
   const footer = (
     <div className="mn-detail-actions">
       {mode === 'edit' && (
-        <button type="button" className="mn-btn-ghost-danger" onClick={onDelete} aria-label="Rimuovi dal diario">
+        <button type="button" className="mn-btn-ghost-danger" onClick={onDelete} aria-label={tr('Rimuovi dal diario')}>
           <Trash2 size={18} />
         </button>
       )}
       <button type="button" className="mn-cta" disabled={!valid} onClick={() => onSubmit({ grams, meal })}>
-        {mode === 'edit' ? 'Salva' : 'Aggiungi'} · {fmtInt(values.kcal)} kcal
+        {mode === 'edit' ? tr('Salva') : tr('Aggiungi')} · {fmtInt(values.kcal)} kcal
       </button>
     </div>
   );
 
   return (
-    <Sheet title={mode === 'edit' ? 'Modifica' : 'Quanto ne mangi?'} onClose={onClose} footer={footer}>
+    <Sheet title={mode === 'edit' ? tr('Modifica') : tr('Quanto ne mangi?')} onClose={onClose} footer={footer}>
       <div className="mn-detail">
         <div className="mn-detail-head">
           {food.image && <img src={food.image} alt="" className="mn-detail-img" loading="lazy" />}
           <div className="mn-detail-name">
             <h3>{food.name}</h3>
-            <p>{[food.brand, food.quantity].filter(Boolean).join(' · ') || (isQuick ? 'Inserimento rapido' : 'Valori medi')}</p>
+            <p>{[food.brand, food.quantity].filter(Boolean).join(' · ') || (isQuick ? tr('Inserimento rapido') : tr('Valori medi'))}</p>
             <div className="mn-detail-per100">
               <MacroStrip per100={food.per100} />
               <span>{fmtInt(food.per100?.kcal)} kcal / 100 g</span>
@@ -89,14 +90,14 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
           <div className="mn-qty">
             {hasServing && (
               <div className="mn-seg" role="tablist">
-                <button type="button" className={unit === 'g' ? 'is-active' : ''} onClick={() => setUnit('g')}>Grammi</button>
+                <button type="button" className={unit === 'g' ? 'is-active' : ''} onClick={() => setUnit('g')}>{tr('Grammi')}</button>
                 <button type="button" className={unit === 'serving' ? 'is-active' : ''} onClick={() => setUnit('serving')}>
-                  Porzioni · {fmtDec(food.servingSize)} g
+                  {tr('Porzioni')} · {fmtDec(food.servingSize)} g
                 </button>
               </div>
             )}
             <div className="mn-stepper">
-              <button type="button" onClick={() => setAmount(round(amount - step, step))} disabled={amount <= step} aria-label="Diminuisci">
+              <button type="button" onClick={() => setAmount(round(amount - step, step))} disabled={amount <= step} aria-label={tr('Diminuisci')}>
                 <Minus size={20} />
               </button>
               <label className="mn-stepper-value">
@@ -110,11 +111,11 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
                   }}
                   onFocus={(e) => e.target.select()}
                   onBlur={() => setDraft(null)}
-                  aria-label="Quantità"
+                  aria-label={tr('Quantità')}
                 />
-                <span>{unit === 'serving' ? (amount === 1 ? 'porzione' : 'porzioni') : 'grammi'}</span>
+                <span>{unit === 'serving' ? (amount === 1 ? tr('porzione') : tr('porzioni')) : tr('grammi')}</span>
               </label>
-              <button type="button" onClick={() => setAmount(round(amount + step, step))} aria-label="Aumenta">
+              <button type="button" onClick={() => setAmount(round(amount + step, step))} aria-label={tr('Aumenta')}>
                 <Plus size={20} />
               </button>
             </div>
@@ -128,7 +129,7 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
           </div>
         )}
 
-        <div className="mn-chips" role="radiogroup" aria-label="Pasto">
+        <div className="mn-chips" role="radiogroup" aria-label={tr('Pasto')}>
           {MEALS.map(m => (
             <button key={m.id} type="button" className={`mn-chip ${meal === m.id ? 'is-active' : ''}`} onClick={() => setMeal(m.id)} aria-pressed={meal === m.id}>
               {m.label}
@@ -137,7 +138,7 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
         </div>
 
         <section className="mn-impact">
-          <p className="mn-label">Dopo questo pasto</p>
+          <p className="mn-label">{tr('Dopo questo pasto')}</p>
           <FuelBar totals={base} budget={budget} preview={values} height={10} />
           <p className="mn-impact-kcal">
             <strong>{fmtInt(base.kcal + values.kcal)}</strong> / {fmtInt(budget)} kcal
@@ -152,7 +153,7 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
         {food.recipe?.ingredients?.length > 0 && (
           <>
             <button type="button" className={`mn-facts-toggle ${showIngredients ? 'is-open' : ''}`} onClick={() => setShowIngredients(s => !s)}>
-              Ingredienti ({food.recipe.ingredients.length}) <ChevronDown size={16} />
+              {tr('Ingredienti')} ({food.recipe.ingredients.length}) <ChevronDown size={16} />
             </button>
             {showIngredients && (
               <ul className="mn-recipe-list">
@@ -163,8 +164,8 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
                   </li>
                 ))}
                 <li className="is-note">
-                  Pasto intero: {fmtInt(food.recipe.cookedWeight || food.recipe.ingredients.reduce((a, i) => a + i.grams, 0))} g
-                  {food.recipe.portions > 1 ? `, ${food.recipe.portions} porzioni` : ''}
+                  {tr('Pasto intero:')} {fmtInt(food.recipe.cookedWeight || food.recipe.ingredients.reduce((a, i) => a + i.grams, 0))} g
+                  {food.recipe.portions > 1 ? `, ${tr('{n} porzioni', { n: food.recipe.portions })}` : ''}
                 </li>
               </ul>
             )}
@@ -172,7 +173,7 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
         )}
 
         <button type="button" className={`mn-facts-toggle ${showFacts ? 'is-open' : ''}`} onClick={() => setShowFacts(s => !s)}>
-          Valori nutrizionali <ChevronDown size={16} />
+          {tr('Valori nutrizionali')} <ChevronDown size={16} />
         </button>
         {showFacts && (
           <dl className="mn-facts">

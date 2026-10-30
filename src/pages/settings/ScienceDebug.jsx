@@ -8,6 +8,7 @@ import { Sheet } from '../monitoring/Sheet';
 import ScienceV3 from '../science/ScienceV3';
 import ScienceWeekPrompt from '../../components/ScienceWeekPrompt';
 import packageInfo from '../../../package.json';
+import { locale } from '../../i18n';
 
 function Simulator({ onReset }) {
   const now = useScienceStore(s => s.scienceDebugNow);
@@ -17,7 +18,7 @@ function Simulator({ onReset }) {
   const [scenario, setScenario] = useState('good');
   const due = program && now >= scienceProgramWeekRange(program).end;
   return <div className="sv3-debug">
-    <div className="sv3-debug-toolbar"><span className="sv3-debug-label"><Bug size={14} />SIMULAZIONE · {new Date(now).toLocaleDateString('it-IT')}</span><p>Copia temporanea di Scienza. Serie di test, decisioni e tempo simulato non vengono salvati nei dati reali. Gli scenari sostituiscono le sedute della settimana solo in questa copia; “Dati copiati” usa lo storico esistente.</p>
+    <div className="sv3-debug-toolbar"><span className="sv3-debug-label"><Bug size={14} />SIMULAZIONE · {new Date(now).toLocaleDateString(locale())}</span><p>Copia temporanea di Scienza. Serie di test, decisioni e tempo simulato non vengono salvati nei dati reali. Gli scenari sostituiscono le sedute della settimana solo in questa copia; “Dati copiati” usa lo storico esistente.</p>
       <div className="sv3-debug-scenarios" role="group" aria-label="Dati della settimana simulata">{[['recorded', 'Dati copiati'], ['empty', 'Nessun dato'], ['good', 'Recupero buono'], ['fatigue', 'Fatica elevata']].map(([id, text]) => <button type="button" key={id} aria-pressed={scenario === id} onClick={() => setScenario(id)}>{text}</button>)}</div>
       <button type="button" className="ej-btn ej-btn--primary sv3-wide-button" disabled={!program || program.status !== 'active' || due} onClick={() => advance(scenario)}><FastForward size={16} />{due ? 'Check settimanale disponibile qui sotto' : 'Simula il passaggio della settimana'}</button>
       {due && program?.status === 'active' && <button type="button" className="ej-btn ej-btn--secondary sv3-wide-button sv3-debug-late-day" onClick={lateDay}>+1 giorno di ritardo</button>}

@@ -2,6 +2,7 @@
 // (database aperto e gratuito di prodotti confezionati, nessuna chiave API).
 // https://openfoodfacts.github.io/openfoodfacts-server/api/
 import { GENERIC_FOODS } from '../data/genericFoods';
+import { tr } from '../i18n';
 
 // La ricerca non invia header CORS: si passa dal proxy sullo stesso dominio
 // (vite.config.js in sviluppo, vercel.json in produzione).
@@ -102,7 +103,7 @@ export async function searchOffFoods(query, { signal, pageSize = 25 } = {}) {
   const params = new URLSearchParams({ q, page_size: String(pageSize), langs: 'it,en', fields: PRODUCT_FIELDS });
   const res = await fetch(`${OFF_SEARCH}?${params}`, { signal });
   if (!res.ok || !res.headers.get('content-type')?.includes('json')) {
-    throw new Error(`Ricerca non disponibile (${res.status})`);
+    throw new Error(tr('Ricerca non disponibile ({status})', { status: res.status }));
   }
   const data = await res.json();
   const seen = new Set();
@@ -129,7 +130,7 @@ export async function searchAlternatives(food, { signal, limit = 40, enough = 8 
       fields: PRODUCT_FIELDS,
     });
     const res = await fetch(`${OFF_SEARCH}?${params}`, { signal });
-    if (!res.ok || !res.headers.get('content-type')?.includes('json')) throw new Error(`Ricerca non disponibile (${res.status})`);
+    if (!res.ok || !res.headers.get('content-type')?.includes('json')) throw new Error(tr('Ricerca non disponibile ({status})', { status: res.status }));
     const hits = ((await res.json()).hits || []).map(normalizeOffProduct).filter(f => f && f.id !== food.id);
     found = [...found, ...hits.filter(f => !found.some(x => x.id === f.id))];
     if (found.length >= enough) break;
@@ -142,7 +143,7 @@ export async function fetchProductByBarcode(barcode, { signal } = {}) {
   if (!code) return null;
   const res = await fetch(`${OFF_PRODUCT}/${code}.json?fields=${PRODUCT_FIELDS}`, { signal });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Servizio non disponibile (${res.status})`);
+  if (!res.ok) throw new Error(tr('Servizio non disponibile ({status})', { status: res.status }));
   const data = await res.json();
   if (data.status === 0 || !data.product) return null;
   return normalizeOffProduct({ code, ...data.product });

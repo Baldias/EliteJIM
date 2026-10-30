@@ -1,13 +1,14 @@
 // Calcoli per la sezione Diario: alimentazione, peso, macro e obiettivi.
+import { locale, tr, translated } from '../i18n';
 
-export const MEALS = [
+export const MEALS = translated([
   { id: 'breakfast', label: 'Colazione' },
   { id: 'lunch', label: 'Pranzo' },
   { id: 'dinner', label: 'Cena' },
   { id: 'snacks', label: 'Spuntini' },
-];
+]);
 
-export const NUTRIENTS = [
+export const NUTRIENTS = translated([
   { id: 'kcal', label: 'Calorie', unit: 'kcal' },
   { id: 'carbs', label: 'Carboidrati', unit: 'g' },
   { id: 'protein', label: 'Proteine', unit: 'g' },
@@ -16,7 +17,7 @@ export const NUTRIENTS = [
   { id: 'sugar', label: 'Zuccheri', unit: 'g' },
   { id: 'satFat', label: 'Grassi saturi', unit: 'g' },
   { id: 'salt', label: 'Sale', unit: 'g' },
-];
+]);
 
 // kcal per grammo di macro (Atwater)
 export const KCAL_PER_G = { carbs: 4, protein: 4, fat: 9 };
@@ -36,23 +37,23 @@ export const DEFAULT_NUTRITION_GOALS = {
 
 // Passi quotidiani, allenamenti esclusi: i fattori coprono solo il movimento
 // di tutti i giorni, perché le kcal degli allenamenti si sommano a parte
-export const ACTIVITY_LEVELS = [
+export const ACTIVITY_LEVELS = translated([
   { id: 'sedentary', label: 'Meno di 5.000 passi', desc: 'Scrivania, ci si muove poco', factor: 1.2 },
   { id: 'light', label: '5.000–7.500 passi', desc: 'Qualche spostamento a piedi', factor: 1.3 },
   { id: 'moderate', label: '7.500–10.000 passi', desc: 'Spesso in piedi o in giro', factor: 1.4 },
   { id: 'active', label: '10.000–12.500 passi', desc: 'Lavoro in movimento', factor: 1.5 },
   { id: 'very', label: 'Oltre 12.500 passi', desc: 'Lavoro fisico, sempre in piedi', factor: 1.6 },
-];
+], ['label', 'desc']);
 
 // Frequenza di allenamento: regola le proteine; le kcal di ogni seduta
 // si aggiungono in automatico nei giorni in cui registri l'allenamento
-export const TRAINING_LEVELS = [
+export const TRAINING_LEVELS = translated([
   { id: 'none', label: 'Non mi alleno', desc: 'Per ora niente palestra', proteinAdj: -0.4 },
   { id: 'low', label: '1–2 volte a settimana', desc: 'Allenamento occasionale', proteinAdj: -0.2 },
   { id: 'mid', label: '3–4 volte a settimana', desc: 'Allenamento regolare', proteinAdj: 0 },
   { id: 'high', label: '5–6 volte a settimana', desc: 'Allenamento intenso', proteinAdj: 0 },
   { id: 'daily', label: 'Tutti i giorni', desc: 'Anche doppie sedute', proteinAdj: 0.2 },
-];
+], ['label', 'desc']);
 
 // Proteine (g/kg) e grassi (% kcal) consigliati per fase: in deficit servono
 // più proteine per conservare la massa magra
@@ -70,11 +71,11 @@ export function macrosFor(phase, training) {
 }
 
 // Fasi di allenamento e ritmo settimanale proposto (kg/settimana)
-export const PHASES = [
+export const PHASES = translated([
   { id: 'cut', label: 'Definizione', desc: 'Perdere grasso mantenendo la forza', rates: [-0.25, -0.5, -0.75, -1] },
   { id: 'maintain', label: 'Mantenimento', desc: 'Ricomposizione a peso stabile', rates: [0] },
   { id: 'bulk', label: 'Massa', desc: 'Costruire muscolo con un surplus pulito', rates: [0.25, 0.5] },
-];
+], ['label', 'desc']);
 
 export const phaseForRate = (rate) => (rate < 0 ? 'cut' : rate > 0 ? 'bulk' : 'maintain');
 
@@ -99,10 +100,10 @@ export function shiftDateKey(key, days) {
 
 export function formatDayLabel(key) {
   const today = toDateKey();
-  if (key === today) return 'Oggi';
-  if (key === shiftDateKey(today, -1)) return 'Ieri';
-  if (key === shiftDateKey(today, 1)) return 'Domani';
-  const label = fromDateKey(key).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (key === today) return tr('Oggi');
+  if (key === shiftDateKey(today, -1)) return tr('Ieri');
+  if (key === shiftDateKey(today, 1)) return tr('Domani');
+  const label = fromDateKey(key).toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -219,15 +220,15 @@ export function estimateWorkoutKcal(history, dateKey, bodyweight) {
   return Math.round(kcal);
 }
 
-export const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString('it-IT');
-export const fmtDec = (n) => round1(Number(n) || 0).toLocaleString('it-IT', { maximumFractionDigits: 1 });
+export const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString(locale());
+export const fmtDec = (n) => round1(Number(n) || 0).toLocaleString(locale(), { maximumFractionDigits: 1 });
 
 // Ordine di lettura: le proteine prima, sono la priorità per chi si allena
-export const MACROS = [
+export const MACROS = translated([
   { id: 'protein', label: 'Proteine', short: 'P' },
   { id: 'carbs', label: 'Carboidrati', short: 'C' },
   { id: 'fat', label: 'Grassi', short: 'G' },
-];
+], ['label', 'short']);
 
 // Ripartizione percentuale delle kcal tra i macro
 export function macroSplit({ carbs = 0, protein = 0, fat = 0 }) {

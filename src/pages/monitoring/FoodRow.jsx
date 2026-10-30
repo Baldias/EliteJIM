@@ -4,6 +4,7 @@ import { KCAL_PER_G, fmtInt, fmtDec } from '../../utils/nutrition';
 import { athleteScore } from '../../utils/athleteScore';
 import { MacroStrip } from './Fuel';
 import { ScoreBadge } from './ScorePanel';
+import { tr } from '../../i18n';
 
 const isHighProtein = (per100) => {
   const kcal = per100?.kcal || 0;
@@ -24,21 +25,21 @@ export function FoodRow({ food, grams, onOpen, onQuickAdd, onDelete, onEdit, jus
       <button type="button" className="mn-row-main" onClick={() => onOpen(food)}>
         <span className="mn-row-name">
           {food.name}
-          {food.source === 'recipe' && <em className="mn-badge mn-badge--recipe">Pasto</em>}
-          {isHighProtein(food.per100) && <em className="mn-badge">Proteico</em>}
+          {food.source === 'recipe' && <em className="mn-badge mn-badge--recipe">{tr('Pasto')}</em>}
+          {isHighProtein(food.per100) && <em className="mn-badge">{tr('Proteico')}</em>}
         </span>
         <span className="mn-row-meta">
           <MacroStrip per100={food.per100} />
-          {[food.brand, portion, `${fmtInt(kcal)} kcal`, `${fmtInt(protein)} g P`].filter(Boolean).join(' · ')}
+          {[food.brand, portion, `${fmtInt(kcal)} kcal`, `${fmtInt(protein)} g ${tr('P')}`].filter(Boolean).join(' · ')}
         </span>
       </button>
       {onEdit && (
-        <button type="button" className="mn-row-btn is-ghost" onClick={() => onEdit(food)} aria-label={`Modifica ${food.name}`}>
+        <button type="button" className="mn-row-btn is-ghost" onClick={() => onEdit(food)} aria-label={tr('Modifica {name}', { name: food.name })}>
           <Pencil size={15} />
         </button>
       )}
       {onDelete && (
-        <button type="button" className="mn-row-btn is-danger" onClick={() => onDelete(food)} aria-label={`Elimina ${food.name}`}>
+        <button type="button" className="mn-row-btn is-danger" onClick={() => onDelete(food)} aria-label={tr('Elimina {name}', { name: food.name })}>
           <X size={16} />
         </button>
       )}
@@ -46,7 +47,7 @@ export function FoodRow({ food, grams, onOpen, onQuickAdd, onDelete, onEdit, jus
         type="button"
         className={`mn-row-btn ${justAdded ? 'is-done' : ''}`}
         onClick={() => onQuickAdd(food, grams)}
-        aria-label={`Aggiungi ${fmtDec(grams)} g di ${food.name}`}
+        aria-label={tr('Aggiungi {g} g di {name}', { g: fmtDec(grams), name: food.name })}
       >
         {justAdded ? <Check size={18} /> : <Plus size={18} />}
       </button>

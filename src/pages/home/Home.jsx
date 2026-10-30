@@ -14,12 +14,13 @@ import eliteJimLogo from '../../assets/elitejim-logo-script.png?inline';
 import { Sheet } from '../monitoring/Sheet';
 import { themePreferences } from '../../utils/theme';
 import './Home.css';
+import { locale, tr } from '../../i18n';
 
 function getGreeting() {
   const h = new Date().getHours();
-  if (h < 12) return 'Buongiorno';
-  if (h < 18) return 'Buon pomeriggio';
-  return 'Buonasera';
+  if (h < 12) return tr('Buongiorno');
+  if (h < 18) return tr('Buon pomeriggio');
+  return tr('Buonasera');
 }
 
 function formatElapsed(startTime, now) {
@@ -55,19 +56,19 @@ function Home() {
   const elapsed = activeWorkout ? formatElapsed(activeWorkout.startTime, now) : '00:00';
 
   const handleStartTemplate = (template) => {
-    if (activeWorkout && !window.confirm("Hai un allenamento in corso. Vuoi abbandonarlo?")) return;
+    if (activeWorkout && !window.confirm(tr('Hai un allenamento in corso. Vuoi abbandonarlo?'))) return;
     startWorkout(template);
     navigate('/workout');
   };
 
   const handleStartEmpty = () => {
-    if (activeWorkout && !window.confirm("Hai un allenamento in corso. Vuoi abbandonarlo?")) return;
+    if (activeWorkout && !window.confirm(tr('Hai un allenamento in corso. Vuoi abbandonarlo?'))) return;
     startWorkout(null);
     navigate('/workout');
   };
 
   const handleDelete = (template) => {
-    if (window.confirm(`Sei sicuro di voler eliminare la scheda "${template.name}"?\nQuesta azione è irreversibile.`)) {
+    if (window.confirm(tr('Sei sicuro di voler eliminare la scheda "{name}"?\nQuesta azione è irreversibile.', { name: template.name }))) {
       deleteTemplate(template.id);
       setActionTemplate(null);
     }
@@ -93,13 +94,13 @@ function Home() {
               type="button"
               className={`home-streak ${currentStreak > 0 ? 'is-active' : ''}`}
               onClick={() => navigate('/activity')}
-              title="Visualizza attività e streak"
+              title={tr('Visualizza attività e streak')}
             >
               <Flame size={16} />
-              <span>{currentStreak} sett</span>
+              <span>{currentStreak} {tr('sett')}</span>
             </button>
             {lastWorkoutDate && (
-              <button type="button" className="ej-icon-btn ej-icon-btn--round" onClick={() => setShowWelcome(true)} title="Riepilogo">
+              <button type="button" className="ej-icon-btn ej-icon-btn--round" onClick={() => setShowWelcome(true)} title={tr('Riepilogo')}>
                 <Bell size={18} />
               </button>
             )}
@@ -113,7 +114,7 @@ function Home() {
           <button type="button" className="home-active" onClick={() => navigate('/workout')}>
             <div className="home-active-info">
               <span className="home-active-live">
-                <span className="home-active-dot" /> In corso · {elapsed}
+                <span className="home-active-dot" /> {tr('In corso')} · {elapsed}
               </span>
               <span className="home-active-name">{activeWorkout.name || 'Sessione Libera'}</span>
             </div>
@@ -128,9 +129,9 @@ function Home() {
 
         {/* ── ALLENAMENTO LIBERO ─────────────────────── */}
         <section className="home-section" aria-labelledby="home-training-title">
-          <h2 className="ej-section-title" id="home-training-title">Allenati</h2>
+          <h2 className="ej-section-title" id="home-training-title">{tr('Allenati')}</h2>
           <button type="button" className="home-free" onClick={handleStartEmpty}>
-            <Dumbbell size={20} /> Sessione Libera
+            <Dumbbell size={20} /> {tr('Sessione Libera')}
           </button>
         </section>
 
@@ -138,12 +139,12 @@ function Home() {
         <section className="home-section" aria-labelledby="home-routines-title">
           <div className="home-routines-heading">
             <div className="ej-section-header">
-              <h2 className="ej-section-title" id="home-routines-title">Le tue schede</h2>
+              <h2 className="ej-section-title" id="home-routines-title">{tr('Le tue schede')}</h2>
               <button type="button" className="ej-btn ej-btn--secondary home-new-btn" onClick={() => navigate('/build')}>
-                <Plus size={16} className="home-new-icon" /> Nuova Scheda
+                <Plus size={16} className="home-new-icon" /> {tr('Nuova Scheda')}
               </button>
             </div>
-            {!isOgTheme && templates.length > 0 && <p className="home-routine-hint" id="routine-gesture-hint">Tocca per iniziare · Tieni premuto per le opzioni</p>}
+            {!isOgTheme && templates.length > 0 && <p className="home-routine-hint" id="routine-gesture-hint">{tr('Tocca per iniziare · Tieni premuto per le opzioni')}</p>}
           </div>
           {templates.length > 0 && !isOgTheme && <div className="home-routines">{templates.map(template => <RoutineCard key={template.id} template={template} onStart={() => handleStartTemplate(template)} onActions={() => setActionTemplate(template)} />)}</div>}
           {/* OG: rectangular cards with inline actions, as before the grid redesign. */}
@@ -157,23 +158,23 @@ function Home() {
                       <span className="home-routine-badge">{(template.name || '?').trim().charAt(0).toUpperCase()}</span>
                       <div className="home-routine-text">
                         <h3>{template.name}</h3>
-                        <p>{(template.exercises || []).length} esercizi · {setsTotal} serie</p>
+                        <p>{(template.exercises || []).length} {tr('esercizi')} · {setsTotal} {tr('serie')}</p>
                       </div>
                     </div>
                     <div className="home-routine-actions">
                       <div className="home-routine-tools">
-                        <button type="button" className="ej-icon-btn ej-icon-btn--danger" onClick={() => handleDelete(template)} title="Elimina scheda">
+                        <button type="button" className="ej-icon-btn ej-icon-btn--danger" onClick={() => handleDelete(template)} title={tr('Elimina scheda')}>
                           <Trash2 size={16} />
                         </button>
-                        <button type="button" className="ej-icon-btn ej-icon-btn--primary" onClick={() => setSharingTemplate(template)} title="Condividi ed esporta scheda">
+                        <button type="button" className="ej-icon-btn ej-icon-btn--primary" onClick={() => setSharingTemplate(template)} title={tr('Condividi ed esporta scheda')}>
                           <Share2 size={16} />
                         </button>
-                        <button type="button" className="ej-icon-btn" onClick={() => navigate('/build', { state: { template } })} title="Modifica scheda">
+                        <button type="button" className="ej-icon-btn" onClick={() => navigate('/build', { state: { template } })} title={tr('Modifica scheda')}>
                           <Edit3 size={16} />
                         </button>
                       </div>
-                      <button type="button" className="ej-btn ej-btn--primary" onClick={() => handleStartTemplate(template)} title="Inizia allenamento">
-                        <Play size={14} fill="currentColor" /> Inizia
+                      <button type="button" className="ej-btn ej-btn--primary" onClick={() => handleStartTemplate(template)} title={tr('Inizia allenamento')}>
+                        <Play size={14} fill="currentColor" /> {tr('Inizia')}
                       </button>
                     </div>
                   </article>
@@ -187,11 +188,11 @@ function Home() {
         {userXP > 0 && (
           <div className="home-xp-row">
             <div className="ej-card home-stat home-stat--xp">
-              <span className="home-stat-label"><Zap size={13} fill="currentColor" /> XP Totali</span>
-              <span className="home-stat-value">{userXP.toLocaleString('it-IT')}</span>
+              <span className="home-stat-label"><Zap size={13} fill="currentColor" /> {tr('XP Totali')}</span>
+              <span className="home-stat-value">{userXP.toLocaleString(locale())}</span>
             </div>
             <div className="ej-card home-stat">
-              <span className="home-stat-label"><CheckCircle2 size={13} /> Sessioni</span>
+              <span className="home-stat-label"><CheckCircle2 size={13} /> {tr('Sessioni')}</span>
               <span className="home-stat-value">{history.length}</span>
             </div>
           </div>
@@ -202,7 +203,7 @@ function Home() {
         <p className="ej-footer-version">ELITEJIM v{pkg.version.replace(/\.0$/, '')}</p>
       </div>
 
-      {actionTemplate && <Sheet title="Opzioni scheda" onClose={() => setActionTemplate(null)}><div className="home-routine-menu"><p>{actionTemplate.name}</p><button type="button" onClick={() => { setSharingTemplate(actionTemplate); setActionTemplate(null); }}><Share2 size={19} /><span>Condividi scheda<small>Esporta o invia a un amico</small></span></button><button type="button" onClick={() => { setActionTemplate(null); navigate('/build', { state: { template: actionTemplate } }); }}><Edit3 size={19} /><span>Modifica scheda<small>Esercizi, serie e dettagli</small></span></button><button type="button" className="is-danger" onClick={() => handleDelete(actionTemplate)}><Trash2 size={19} /><span>Elimina scheda<small>Ti chiederemo conferma</small></span></button></div></Sheet>}
+      {actionTemplate && <Sheet title={tr('Opzioni scheda')} onClose={() => setActionTemplate(null)}><div className="home-routine-menu"><p>{actionTemplate.name}</p><button type="button" onClick={() => { setSharingTemplate(actionTemplate); setActionTemplate(null); }}><Share2 size={19} /><span>{tr('Condividi scheda')}<small>{tr('Esporta o invia a un amico')}</small></span></button><button type="button" onClick={() => { setActionTemplate(null); navigate('/build', { state: { template: actionTemplate } }); }}><Edit3 size={19} /><span>{tr(tr('Modifica scheda'))}<small>{tr('Esercizi, serie e dettagli')}</small></span></button><button type="button" className="is-danger" onClick={() => handleDelete(actionTemplate)}><Trash2 size={19} /><span>{tr(tr('Elimina scheda'))}<small>{tr('Ti chiederemo conferma')}</small></span></button></div></Sheet>}
 
       <ShareTemplateModal
         isOpen={!!sharingTemplate}

@@ -1,4 +1,5 @@
 import { getScienceTargetForMuscle } from './rpVolume';
+import { tr } from '../i18n';
 import { hasLegacyScience, isScienceV3Active, legacyScienceKey, scienceVolumes, scienceWeekRange } from './scienceV3';
 
 // Compatibility views for archived V2 proposals. Current protocols migrate
@@ -76,7 +77,7 @@ export function legacyDynamicProposal(report, history, db, science, now = Date.n
       // Historical work without RIR can inform a proposal, never a confirmed
       // productive dose or a measured MRV. The user must accept the change.
       target = Math.min(planned + 2, observed, Math.max(planned, Number(report.baseLandmarks[muscle].mrv) || planned));
-      reason = `Mediana di ${samples.length} settimane: ${observed} serie ordinarie. ${samples.some(s => s.unknown) ? 'Sforzo storico non sempre registrato: stima da confermare.' : 'Serie con sforzo registrato.'}`;
+      reason = `${tr('Mediana di {weeks} settimane: {n} serie ordinarie.', { weeks: samples.length, n: observed })} ${samples.some(s => s.unknown) ? tr('Sforzo storico non sempre registrato: stima da confermare.') : tr('Serie con sforzo registrato.')}`;
       if (target > planned) increases++;
     } else if (good && recentVolume?.direct >= previous * 0.8 && previous > 0 && increases < 2) {
       target = Math.min(planned + 1, previous + 1, Math.max(planned, Number(report.baseLandmarks[muscle].mrv) || planned));

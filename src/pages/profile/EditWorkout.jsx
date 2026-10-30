@@ -5,6 +5,7 @@ import { ChevronLeft, Check, Plus, Trash2, X } from 'lucide-react';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { sanitizeDecimalInput } from '../../utils/number';
 import './EditWorkout.css';
+import { tr } from '../../i18n';
 
 function EditWorkout() {
   const navigate = useNavigate();
@@ -33,8 +34,8 @@ function EditWorkout() {
   if (!workout) {
     return (
       <div className="edit-workout-page edit-not-found">
-        <p>Allenamento non trovato.</p>
-        <button type="button" onClick={() => navigate(-1)} className="edit-cancel-add">Torna indietro</button>
+        <p>{tr('Allenamento non trovato.')}</p>
+        <button type="button" onClick={() => navigate(-1)} className="edit-cancel-add">{tr('Torna indietro')}</button>
       </div>
     );
   }
@@ -54,7 +55,7 @@ function EditWorkout() {
   };
 
   const hndRmSet = (exId, setId) => {
-    if (window.confirm("Eliminare questa serie?")) {
+    if (window.confirm(tr('Eliminare questa serie?'))) {
       setDraftExercises(p => p.map(ex => ex.id === exId ? {
         ...ex, sets: ex.sets.filter(s => s.id !== setId)
       } : ex));
@@ -62,7 +63,7 @@ function EditWorkout() {
   };
 
   const hndRmEx = (exId) => {
-    if (window.confirm("Eliminare intero esercizio?")) {
+    if (window.confirm(tr('Eliminare intero esercizio?'))) {
       setDraftExercises(p => p.filter(ex => ex.id !== exId));
     }
   };
@@ -98,20 +99,20 @@ function EditWorkout() {
     <div className="edit-workout-page">
       {/* Header */}
       <div className="edit-workout-header">
-        <button type="button" onClick={() => navigate(-1)} className="edit-workout-back" title="Indietro">
+        <button type="button" onClick={() => navigate(-1)} className="edit-workout-back" title={tr('Indietro')}>
           <ChevronLeft size={22} />
         </button>
-        <h2>Modifica Sessione</h2>
+        <h2>{tr('Modifica Sessione')}</h2>
         <button type="button" onClick={handleSave} className="edit-workout-save">
           <Check size={20} />
-          <span>Salva</span>
+          <span>{tr('Salva')}</span>
         </button>
       </div>
 
       {/* Session Info */}
       <div className="edit-workout-content">
         <div className="edit-section">
-          <label className="edit-label">Data e Ora</label>
+          <label className="edit-label">{tr('Data e Ora')}</label>
           <div className="edit-row">
             <input
               type="date"
@@ -129,7 +130,7 @@ function EditWorkout() {
         </div>
 
         <div className="edit-section">
-          <label className="edit-label">Durata (minuti)</label>
+          <label className="edit-label">{tr('Durata (minuti)')}</label>
           <input
             type="number"
             min="1"
@@ -190,7 +191,7 @@ function EditWorkout() {
               </div>
 
               <button onClick={() => hndAddSet(ex.id)} className="edit-add-set-btn">
-                <Plus size={14} /> Aggiungi Set
+                <Plus size={14} /> {tr('Aggiungi Set')}
               </button>
             </div>
           ))}
@@ -200,12 +201,12 @@ function EditWorkout() {
         <div className="edit-add-exercise-area">
           {showAddEx ? (
             <div>
-              <ExerciseAutocomplete onChange={(name) => hndAddEx(name)} placeholder="Cerca esercizio..." />
-              <button onClick={() => setShowAddEx(false)} className="edit-cancel-add">Annulla</button>
+              <ExerciseAutocomplete onChange={(name) => hndAddEx(name)} placeholder={tr('Cerca esercizio...')} />
+              <button onClick={() => setShowAddEx(false)} className="edit-cancel-add">{tr('Annulla')}</button>
             </div>
           ) : (
             <button onClick={() => setShowAddEx(true)} className="edit-add-exercise-btn">
-              <Plus size={18} /> Nuovo Esercizio
+              <Plus size={18} /> {tr('Nuovo Esercizio')}
             </button>
           )}
         </div>

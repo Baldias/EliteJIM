@@ -1,4 +1,5 @@
 // Firefox Android can intercept application/pdf blob downloads with its PDF
+import { tr } from '../i18n';
 // viewer (or a blank tab in an installed PWA). Keep the PDF bytes and .pdf
 // filename, but use Mozilla's binary-download workaround for that browser.
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1945314
@@ -23,7 +24,7 @@ export function canShareProgressPdf(file, nav = navigator) {
 }
 
 export function createProgressDownloads(artifacts, userAgent = '', urls = URL) {
-  if (!artifacts.pdfBlob?.size) throw new Error('Il PDF è vuoto. Riprova a preparare il report.');
+  if (!artifacts.pdfBlob?.size) throw new Error(tr('Il PDF è vuoto. Riprova a preparare il report.'));
   const pdfUrl = urls.createObjectURL(progressDownloadBlob(artifacts.pdfBlob,userAgent));
   let pngUrl;
   try { pngUrl = artifacts.summaryPng ? urls.createObjectURL(artifacts.summaryPng) : null; }

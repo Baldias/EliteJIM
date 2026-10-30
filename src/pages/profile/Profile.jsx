@@ -11,9 +11,11 @@ import { computeOverloadStats } from '../../utils/overload';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './Profile.css';
 import { ProfileThemePicker } from '../../components/ThemePicker';
+import { ProfileLanguagePicker } from '../../components/LanguagePicker';
 import ProgressShare from '../../components/ProgressShare';
 import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
 import { hasLegacyScience } from '../../utils/scienceV3';
+import { locale, tr } from '../../i18n';
 
 function Profile() {
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ function Profile() {
   // e is undefined when called from SwipeToDelete
   const handleDelete = (e, workoutId) => {
     e?.stopPropagation();
-    if (window.confirm("Eliminare questa sessione?")) {
+    if (window.confirm(tr("Eliminare questa sessione?"))) {
       deleteWorkout(workoutId);
     }
   };
@@ -77,10 +79,10 @@ function Profile() {
   }, [history, allKnownExercises]);
 
   const welcomePhrase = useMemo(() => {
-    if (history.length === 0) return "Inizia la tua sfida";
-    if (history.length < 5) return "Ottimo inizio, Campione";
-    if (history.length < 20) return "Sei sulla strada giusta";
-    return "Atleta d'Elite";
+    if (history.length === 0) return tr("Inizia la tua sfida");
+    if (history.length < 5) return tr("Ottimo inizio, Campione");
+    if (history.length < 20) return tr("Sei sulla strada giusta");
+    return tr("Atleta d'Elite");
   }, [history.length]);
 
   const rank = getRankByXp(userXP || 0);
@@ -130,16 +132,16 @@ function Profile() {
 
     const diffWeeks = Math.round((thisMonday - monday) / (7 * 24 * 60 * 60 * 1000));
 
-    if (diffWeeks === 0) return "Questa Settimana";
-    if (diffWeeks === 1) return "Settimana Scorsa";
+    if (diffWeeks === 0) return tr("Questa Settimana");
+    if (diffWeeks === 1) return tr("Settimana Scorsa");
 
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
 
-    return `${monday.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} - ${sunday.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}`;
+    return `${monday.toLocaleDateString(locale(), { day: 'numeric', month: 'short' })} - ${sunday.toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}`;
   };
 
-  const formatWeekday = (ts) => new Date(ts).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric' });
+  const formatWeekday = (ts) => new Date(ts).toLocaleDateString(locale(), { weekday: 'short', day: 'numeric' });
 
   return (
     <div className="ej-page pf-page">
@@ -148,10 +150,10 @@ function Profile() {
       {/* ── HEADER ─────────────────────────────────── */}
       <header className="pf-header">
         <div>
-          <h1 className="ej-title">Profilo</h1>
+          <h1 className="ej-title">{tr("Profilo")}</h1>
           <p className="ej-eyebrow">{welcomePhrase}</p>
         </div>
-        <button type="button" className="ej-icon-btn ej-icon-btn--round pf-settings" onClick={() => navigate('/settings')} title="Impostazioni">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round pf-settings" onClick={() => navigate('/settings')} title={tr("Impostazioni")}>
           <SettingsIcon size={20} />
         </button>
       </header>
@@ -164,17 +166,17 @@ function Profile() {
             <span className="pf-kicker">Rank</span>
             <span className="pf-rank-title">{rank.title}</span>
           </div>
-          <button type="button" className="pf-streak" onClick={() => navigate('/activity')} title="Apri pagina attività e streak">
+          <button type="button" className="pf-streak" onClick={() => navigate('/activity')} title={tr("Apri pagina attività e streak")}>
             <span className="pf-streak-value">
-              {currentStreak || 0} sett. <Flame size={18} fill={currentStreak >= 1 ? 'currentColor' : 'none'} />
+              {currentStreak || 0} {tr('sett.')} <Flame size={18} fill={currentStreak >= 1 ? 'currentColor' : 'none'} />
             </span>
             <span className="pf-streak-label">Streak</span>
           </button>
         </div>
         <div className="pf-rank-progress">
           <div className="pf-rank-progress-label">
-            <span>Progresso Rank</span>
-            <span>{(userXP || 0).toLocaleString('it-IT')}{rank.nextRank ? ` / ${rank.nextRank.minXp.toLocaleString('it-IT')} XP` : ' XP · MAX'}</span>
+            <span>{tr("Progresso Rank")}</span>
+            <span>{(userXP || 0).toLocaleString(locale())}{rank.nextRank ? ` / ${rank.nextRank.minXp.toLocaleString(locale())} XP` : ' XP · MAX'}</span>
           </div>
           <div className="pf-rank-track"><span style={{ width: `${rank.progressPercent}%` }} /></div>
         </div>
@@ -188,7 +190,7 @@ function Profile() {
         </div>
         <div className="ej-card pf-stat">
           <span className="pf-stat-value">{stats.prs}</span>
-          <span className="pf-stat-label">PR battuti</span>
+          <span className="pf-stat-label">{tr("PR battuti")}</span>
         </div>
         <div className="ej-card pf-stat">
           <span className="pf-stat-value">{stats.overload}</span>
@@ -197,13 +199,14 @@ function Profile() {
       </div>
 
       <ProfileThemePicker />
+      <ProfileLanguagePicker />
       <ProgressShare />
 
       {/* ── MUSCLE LEVELS ──────────────────────────── */}
       {showScience && (
         <button type="button" className="pf-levels" onClick={() => navigate('/levels')}>
           <span className="pf-levels-icon"><Zap size={18} fill="currentColor" /></span>
-          <span className="pf-levels-label">I Tuoi Livelli Muscolari</span>
+          <span className="pf-levels-label">{tr("I Tuoi Livelli Muscolari")}</span>
           <ChevronRight size={18} />
         </button>
       )}
@@ -212,9 +215,9 @@ function Profile() {
       <ScienceVolumePanel compact />
       {showScience && useLegacyVolume && rpVolumes && (
         <section className="pf-section">
-          <h2 className="ej-section-title">Volume RP (Ultimi 7 Giorni)</h2>
+          <h2 className="ej-section-title">{tr("Volume RP (Ultimi 7 Giorni)")}</h2>
           <div className="ej-card pf-rp">
-            <p className="pf-muted">Serie completate negli ultimi 7 giorni rispetto ai landmark di Dr. Mike Israetel (MEV, MAV, MRV).</p>
+            <p className="pf-muted">{tr("Serie completate negli ultimi 7 giorni rispetto ai landmark di Dr. Mike Israetel (MEV, MAV, MRV).")}</p>
 
             {Object.entries(rpVolumes).map(([category, sets]) => {
               if (sets === 0) return null;
@@ -226,12 +229,12 @@ function Profile() {
               return (
                 <div key={category} className="pf-rp-item">
                   <div className="pf-rp-head">
-                    <span className="pf-rp-name">{category}</span>
-                    <span className="pf-rp-sets">{sets} serie</span>
+                    <span className="pf-rp-name">{tr(category)}</span>
+                    <span className="pf-rp-sets">{sets} {tr('serie')}</span>
                   </div>
                   <div className="pf-track"><span style={{ width: `${visualPercent}%`, background: status.color }} /></div>
                   <div className="pf-rp-foot">
-                    <span>Stato: <strong style={{ color: status.color }}>{status.status}</strong></span>
+                    <span>{tr('Stato:')} <strong style={{ color: status.color }}>{status.status}</strong></span>
                     <span>MRV: {landmarks.MRV}</span>
                   </div>
                 </div>
@@ -239,7 +242,7 @@ function Profile() {
             })}
 
             {Object.values(rpVolumes).every(v => v === 0) && (
-              <p className="pf-empty-inline">Nessuna serie registrata negli ultimi 7 giorni.</p>
+              <p className="pf-empty-inline">{tr("Nessuna serie registrata negli ultimi 7 giorni.")}</p>
             )}
           </div>
         </section>
@@ -247,15 +250,15 @@ function Profile() {
 
       {/* ── HISTORY ────────────────────────────────── */}
       <section className="pf-section">
-        <h2 className="ej-section-title">Il Tuo Percorso</h2>
+        <h2 className="ej-section-title">{tr("Il Tuo Percorso")}</h2>
 
         {(!history || history.length === 0) ? (
-          <div className="ej-card pf-empty">Ancora nessun passo registrato nel tuo percorso.</div>
+          <div className="ej-card pf-empty">{tr("Ancora nessun passo registrato nel tuo percorso.")}</div>
         ) : (
           <>
             {displayedGroups.map(group => (
               <div key={group.weekKey} className="pf-week">
-                <p className="pf-week-label">{getWeekLabel(group.monday)} · {group.workouts.length} {group.workouts.length === 1 ? 'sessione' : 'sessioni'}</p>
+                <p className="pf-week-label">{getWeekLabel(group.monday)} · {group.workouts.length} {group.workouts.length === 1 ? tr("sessione") : tr("sessioni")}</p>
 
                 {group.workouts.map(workout => {
                   const isExpanded = expandedSessions[workout.id];
@@ -264,15 +267,15 @@ function Profile() {
                       <div className={`ej-card pf-session ${isExpanded ? 'is-open' : ''}`} onClick={() => toggleSession(workout.id)}>
                         <div className="pf-session-head">
                           <div className="pf-session-text">
-                            <span className="pf-session-name">{workout.name || 'Sessione Elite'}</span>
+                            <span className="pf-session-name">{workout.name || tr("Sessione Elite")}</span>
                             <span className="pf-session-meta">
-                              {formatWeekday(workout.startTime)} · {formatDuration(workout.startTime, workout.endTime)} · {calculateCompletedSets(workout.exercises)} serie
+                              {formatWeekday(workout.startTime)} · {formatDuration(workout.startTime, workout.endTime)} · {calculateCompletedSets(workout.exercises)} {tr('serie')}
                             </span>
                           </div>
-                          <button type="button" className="ej-icon-btn pf-session-btn" onClick={(e) => { e.stopPropagation(); navigate(`/edit-workout/${workout.id}`); }} title="Modifica sessione">
+                          <button type="button" className="ej-icon-btn pf-session-btn" onClick={(e) => { e.stopPropagation(); navigate(`/edit-workout/${workout.id}`); }} title={tr("Modifica sessione")}>
                             <Edit2 size={14} />
                           </button>
-                          <button type="button" className="ej-icon-btn ej-icon-btn--danger pf-session-btn" onClick={(e) => handleDelete(e, workout.id)} title="Elimina sessione">
+                          <button type="button" className="ej-icon-btn ej-icon-btn--danger pf-session-btn" onClick={(e) => handleDelete(e, workout.id)} title={tr("Elimina sessione")}>
                             <Trash2 size={14} />
                           </button>
                           {isExpanded ? <ChevronUp size={20} className="pf-chevron" /> : <ChevronDown size={20} className="pf-chevron" />}
@@ -313,12 +316,12 @@ function Profile() {
 
             {groupedHistory.length > visibleWeeks && (
               <button type="button" className="pf-more" onClick={() => setVisibleWeeks(prev => prev + 1)}>
-                Mostra settimana precedente
+                {tr("Mostra settimana precedente")}
               </button>
             )}
 
             <button type="button" className="pf-all-history" onClick={() => navigate('/history')}>
-              Vedi tutto lo storico <ChevronRight size={16} />
+              {tr("Vedi tutto lo storico")} <ChevronRight size={16} />
             </button>
           </>
         )}

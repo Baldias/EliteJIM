@@ -6,6 +6,7 @@ import { fetchProductByBarcode } from '../../utils/foodApi';
 import { FoodRow } from './FoodRow';
 import { useFoodSearch } from './useFoodSearch';
 import { Sheet } from './Sheet';
+import { tr } from '../../i18n';
 
 const BarcodeScanner = lazy(() => import('./BarcodeScanner'));
 
@@ -40,9 +41,9 @@ function IngredientPicker({ excludeId, onPick, onClose }) {
     try {
       const food = await fetchProductByBarcode(code);
       if (food) onPick(food, defaultGrams(food));
-      else setScanMsg({ loading: false, text: `Il codice ${code} non è nel database: crealo da "Nuovo alimento" e poi aggiungilo qui.` });
+      else setScanMsg({ loading: false, text: tr('Il codice {code} non è nel database: crealo da "Nuovo alimento" e poi aggiungilo qui.', { code }) });
     } catch {
-      setScanMsg({ loading: false, text: 'Non riesco a raggiungere il database prodotti. Controlla la connessione.' });
+      setScanMsg({ loading: false, text: tr('Non riesco a raggiungere il database prodotti. Controlla la connessione.') });
     }
   }, [customFoods, onPick]);
 
@@ -54,34 +55,34 @@ function IngredientPicker({ excludeId, onPick, onClose }) {
 
   return (
     <>
-      <Sheet title="Aggiungi ingrediente" onClose={onClose} full>
+      <Sheet title={tr('Aggiungi ingrediente')} onClose={onClose} full>
         <div className="mn-search">
           <div className="mn-searchbar">
             <Search size={18} />
-            <input type="search" placeholder="Cerca tra prodotti e alimenti" value={query} onChange={e => setQuery(e.target.value)} aria-label="Cerca ingrediente" />
-            <button type="button" className="mn-searchbar-scan" onClick={() => setScan(true)} aria-label="Scansiona codice a barre">
+            <input type="search" placeholder={tr('Cerca tra prodotti e alimenti')} value={query} onChange={e => setQuery(e.target.value)} aria-label={tr('Cerca ingrediente')} />
+            <button type="button" className="mn-searchbar-scan" onClick={() => setScan(true)} aria-label={tr('Scansiona codice a barre')}>
               <ScanBarcode size={20} />
             </button>
           </div>
-          {scanMsg.loading && <p className="mn-hint mn-hint--center"><Loader2 size={14} className="mn-spin" /> Cerco il prodotto…</p>}
+          {scanMsg.loading && <p className="mn-hint mn-hint--center"><Loader2 size={14} className="mn-spin" /> {tr('Cerco il prodotto…')}</p>}
           {scanMsg.text && <p className="mn-hint mn-hint--warn">{scanMsg.text}</p>}
 
           {trimmed ? (
             <>
-              {visible(local).length > 0 && <section><h3 className="mn-label">Di base e tuoi</h3>{rows(local.slice(0, 15))}</section>}
+              {visible(local).length > 0 && <section><h3 className="mn-label">{tr('Di base e tuoi')}</h3>{rows(local.slice(0, 15))}</section>}
               <section>
-                <h3 className="mn-label">Prodotti confezionati {online.loading && <Loader2 size={13} className="mn-spin" />}</h3>
+                <h3 className="mn-label">{tr('Prodotti confezionati')} {online.loading && <Loader2 size={13} className="mn-spin" />}</h3>
                 {online.error && <p className="mn-hint">{online.error}</p>}
-                {noOnlineResults && <p className="mn-hint">Nessun prodotto con questo nome.</p>}
+                {noOnlineResults && <p className="mn-hint">{tr('Nessun prodotto con questo nome.')}</p>}
                 {rows(onlineItems)}
               </section>
             </>
           ) : (
             <>
-              {visible(recentFoods).length > 0 && <section><h3 className="mn-label">Usati di recente</h3>{rows(recentFoods)}</section>}
-              {visible(customFoods).length > 0 && <section><h3 className="mn-label">Creati da te</h3>{rows(customFoods)}</section>}
+              {visible(recentFoods).length > 0 && <section><h3 className="mn-label">{tr('Usati di recente')}</h3>{rows(recentFoods)}</section>}
+              {visible(customFoods).length > 0 && <section><h3 className="mn-label">{tr('Creati da te')}</h3>{rows(customFoods)}</section>}
               {visible(recentFoods).length === 0 && visible(customFoods).length === 0 && (
-                <p className="mn-empty">Cerca un ingrediente per nome o marca, oppure scansiona la confezione.</p>
+                <p className="mn-empty">{tr('Cerca un ingrediente per nome o marca, oppure scansiona la confezione.')}</p>
               )}
             </>
           )}
@@ -125,7 +126,7 @@ export function RecipeSheet({ recipe, onSaved, onClose }) {
   const save = () => {
     const per100 = Object.fromEntries(NUTRIENTS.map(n => [n.id, round2((totals[n.id] / totalWeight) * 100)]));
     per100.kcal = Math.round(per100.kcal);
-    const label = portionName.trim() || 'porzione';
+    const label = portionName.trim() || tr('porzione');
     const food = {
       id: recipe?.id || newId('recipe'),
       name: name.trim(),
@@ -146,7 +147,7 @@ export function RecipeSheet({ recipe, onSaved, onClose }) {
   };
 
   const remove = () => {
-    if (window.confirm(`Eliminare "${recipe.name}" dai tuoi alimenti? Le voci già nel diario restano.`)) {
+    if (window.confirm(tr('Eliminare "{name}" dai tuoi alimenti? Le voci già nel diario restano.', { name: recipe.name }))) {
       deleteCustomFood(recipe.id);
       onClose();
     }
@@ -155,27 +156,27 @@ export function RecipeSheet({ recipe, onSaved, onClose }) {
   const footer = (
     <div className="mn-detail-actions">
       {recipe && (
-        <button type="button" className="mn-btn-ghost-danger" onClick={remove} aria-label="Elimina pasto">
+        <button type="button" className="mn-btn-ghost-danger" onClick={remove} aria-label={tr('Elimina pasto')}>
           <Trash2 size={18} />
         </button>
       )}
       <button type="button" className="mn-cta" disabled={!valid} onClick={save}>
-        {recipe ? 'Salva modifiche' : 'Salva il pasto'}
+        {recipe ? tr('Salva modifiche') : tr('Salva il pasto')}
       </button>
     </div>
   );
 
   return (
     <>
-      <Sheet title={recipe ? 'Modifica pasto' : 'Componi un pasto'} onClose={onClose} full footer={footer}>
+      <Sheet title={recipe ? tr('Modifica pasto') : tr('Componi un pasto')} onClose={onClose} full footer={footer}>
         <div className="mn-recipe">
           <label className="mn-field">
-            <span>Nome</span>
-            <input className="mn-input mn-input--big" value={name} onChange={e => setName(e.target.value)} placeholder="Es. Pancake proteici" />
+            <span>{tr('Nome')}</span>
+            <input className="mn-input mn-input--big" value={name} onChange={e => setName(e.target.value)} placeholder={tr('Es. Pancake proteici')} />
           </label>
 
           <section>
-            <h3 className="mn-label">Ingredienti</h3>
+            <h3 className="mn-label">{tr('Ingredienti')}</h3>
             {items.length > 0 && (
               <ul className="mn-ingredients">
                 {parsed.map(i => (
@@ -190,11 +191,11 @@ export function RecipeSheet({ recipe, onSaved, onClose }) {
                         value={i.grams}
                         onChange={e => setItems(list => list.map(x => (x.key === i.key ? { ...x, grams: e.target.value } : x)))}
                         onFocus={e => e.target.select()}
-                        aria-label={`Grammi di ${i.food.name}`}
+                        aria-label={tr('Grammi di {name}', { name: i.food.name })}
                       />
                       <small>g</small>
                     </label>
-                    <button type="button" className="mn-ingredient-remove" onClick={() => setItems(list => list.filter(x => x.key !== i.key))} aria-label={`Togli ${i.food.name}`}>
+                    <button type="button" className="mn-ingredient-remove" onClick={() => setItems(list => list.filter(x => x.key !== i.key))} aria-label={tr('Togli {name}', { name: i.food.name })}>
                       <X size={16} />
                     </button>
                   </li>
@@ -202,32 +203,32 @@ export function RecipeSheet({ recipe, onSaved, onClose }) {
               </ul>
             )}
             <button type="button" className="mn-add-ingredient" onClick={() => setPicking(true)}>
-              <Plus size={18} /> Aggiungi ingrediente
+              <Plus size={18} /> {tr(tr('Aggiungi ingrediente'))}
             </button>
           </section>
 
           <section>
-            <h3 className="mn-label">Quante porzioni fa?</h3>
+            <h3 className="mn-label">{tr('Quante porzioni fa?')}</h3>
             <div className="mn-recipe-yield">
               <div className="mn-stepper mn-stepper--inline">
-                <button type="button" onClick={() => setPortions(p => Math.max(1, p - 1))} disabled={portions <= 1} aria-label="Una porzione in meno"><Minus size={16} /></button>
+                <button type="button" onClick={() => setPortions(p => Math.max(1, p - 1))} disabled={portions <= 1} aria-label={tr('Una porzione in meno')}><Minus size={16} /></button>
                 <span className="mn-stepper-inline-value">{portions}</span>
-                <button type="button" onClick={() => setPortions(p => Math.min(50, p + 1))} aria-label="Una porzione in più"><Plus size={16} /></button>
+                <button type="button" onClick={() => setPortions(p => Math.min(50, p + 1))} aria-label={tr('Una porzione in più')}><Plus size={16} /></button>
               </div>
-              <input className="mn-input" value={portionName} onChange={e => setPortionName(e.target.value)} placeholder="porzione, pancake, fetta…" aria-label="Nome della porzione" />
+              <input className="mn-input" value={portionName} onChange={e => setPortionName(e.target.value)} placeholder={tr('porzione, pancake, fetta…')} aria-label={tr('Nome della porzione')} />
             </div>
             <label className="mn-field mn-field--inline">
-              <span>Peso finale da cotto</span>
+              <span>{tr('Peso finale da cotto')}</span>
               <input className="mn-input" inputMode="decimal" value={cooked} onChange={e => setCooked(e.target.value)} placeholder={rawWeight ? fmtInt(rawWeight) : '—'} />
               <small>g</small>
             </label>
-            <p className="mn-hint">Facoltativo: se pesi il pasto pronto, i valori per 100 g tengono conto dell'acqua persa o assorbita in cottura.</p>
+            <p className="mn-hint">{tr("Facoltativo: se pesi il pasto pronto, i valori per 100 g tengono conto dell'acqua persa o assorbita in cottura.")}</p>
           </section>
 
           {parsed.length > 0 && (
             <section className="mn-plan">
               <p className="mn-plan-phase">
-                1 {portionName.trim() || 'porzione'} · {fmtInt(totalWeight / portions)} g{portions > 1 ? ` · totale ${fmtInt(totals.kcal)} kcal` : ''}
+                1 {portionName.trim() || tr('porzione')} · {fmtInt(totalWeight / portions)} g{portions > 1 ? ` · ${tr('totale {kcal} kcal', { kcal: fmtInt(totals.kcal) })}` : ''}
               </p>
               <p className="mn-plan-kcal">{fmtInt(perPortion.kcal)}<small>kcal</small></p>
               <div className="mn-plan-macros">

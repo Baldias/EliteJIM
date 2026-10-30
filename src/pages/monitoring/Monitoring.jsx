@@ -11,6 +11,7 @@ import { AnalysisSheet } from './AnalysisSheet';
 import { FoodSearchSheet } from './FoodSearchSheet';
 import { FoodDetailSheet } from './FoodDetailSheet';
 import './Monitoring.css';
+import { tr, trc } from '../../i18n';
 
 const VIEWS = [
   { id: 'cibo', label: 'Cibo' },
@@ -62,15 +63,15 @@ export default function Monitoring() {
       <div className="ej-glow" aria-hidden="true" />
 
       <header className="mn-header">
-        <h1 className="mn-title">Diario</h1>
-        <div className="mn-switch" role="tablist" aria-label="Sezioni">
+        <h1 className="mn-title">{tr('Diario')}</h1>
+        <div className="mn-switch" role="tablist" aria-label={tr('Sezioni')}>
           {VIEWS.map(({ id, label }) => (
             <button key={id} type="button" role="tab" className={view === id ? 'is-active' : ''} onClick={() => setView(id)} aria-selected={view === id}>
-              {label}
+              {tr(label)}
             </button>
           ))}
         </div>
-        <button type="button" className="ej-icon-btn ej-icon-btn--round mn-header-btn" onClick={() => setSheet({ type: 'goals' })} aria-label="I tuoi obiettivi">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round mn-header-btn" onClick={() => setSheet({ type: 'goals' })} aria-label={tr('I tuoi obiettivi')}>
           <Target size={18} />
         </button>
       </header>
@@ -79,10 +80,10 @@ export default function Monitoring() {
         <div className="mn-setup-card">
           <Sparkles size={22} />
           <button type="button" className="mn-setup-open" onClick={() => setSheet({ type: 'setup' })}>
-            <strong>Calcola il tuo piano</strong>
-            <span>Sette domande per calorie e macro su misura</span>
+            <strong>{tr('Calcola il tuo piano')}</strong>
+            <span>{tr('Sette domande per calorie e macro su misura')}</span>
           </button>
-          <button type="button" className="mn-setup-close" onClick={hideDietSetupCard} aria-label="Nascondi">
+          <button type="button" className="mn-setup-close" onClick={hideDietSetupCard} aria-label={tr('Nascondi')}>
             <X size={16} />
           </button>
         </div>
@@ -94,10 +95,10 @@ export default function Monitoring() {
             <label className="mn-dayline-date">
               {formatDayLabel(date)}
               <ChevronDown size={16} />
-              <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Scegli il giorno" />
+              <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label={tr('Scegli il giorno')} />
             </label>
             {date !== today && (
-              <button type="button" className="mn-link" onClick={() => setDate(today)}>Torna a oggi</button>
+              <button type="button" className="mn-link" onClick={() => setDate(today)}>{tr('Torna a oggi')}</button>
             )}
           </div>
           <WeekStrip date={date} onChange={setDate} />
@@ -111,8 +112,8 @@ export default function Monitoring() {
           {removed && (
             <div className="mn-toast mn-toast--page" role="status">
               <Trash2 size={16} />
-              <span><strong>{removed.entry.food.name}</strong> rimosso</span>
-              <button type="button" onClick={undoRemove}>Annulla</button>
+              <span><strong>{removed.entry.food.name}</strong> {tr('rimosso')}</span>
+              <button type="button" onClick={undoRemove}>{trc('undo', 'Annulla')}</button>
             </div>
           )}
         </>

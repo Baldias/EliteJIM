@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Share2, Copy, Download, Check, X, Dumbbell, MessageSquareShare } from 'lucide-react';
 import { formatTemplatesForExport, downloadTemplatesAsJson } from '../utils/aiRoutineHelper';
 import './ShareTemplateModal.css';
+import { tr } from '../i18n';
 
 export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }) {
   const [copied, setCopied] = useState(false);
@@ -11,8 +12,8 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
   const targetTemplates = template ? [template] : templates;
   const isMultiple = targetTemplates.length > 1;
   const routineTitle = isMultiple 
-    ? `${targetTemplates.length} Schede Selezionate` 
-    : (targetTemplates[0]?.name || 'Scheda Workout');
+    ? tr('{n} Schede Selezionate', { n: targetTemplates.length }) 
+    : (targetTemplates[0]?.name || tr('Scheda Workout'));
 
   const totalExercises = targetTemplates.reduce((acc, t) => acc + (t.exercises?.length || 0), 0);
   const jsonString = formatTemplatesForExport(targetTemplates);
@@ -65,11 +66,11 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
           <div className="share-modal-title-group">
             <Share2 size={18} className="share-modal-icon" />
             <div>
-              <h3 className="share-modal-title">Esporta & Condividi</h3>
-              <p className="share-modal-subtitle">Invia la tua scheda ai tuoi compagni di allenamento</p>
+              <h3 className="share-modal-title">{tr('Esporta & Condividi')}</h3>
+              <p className="share-modal-subtitle">{tr('Invia la tua scheda ai tuoi compagni di allenamento')}</p>
             </div>
           </div>
-          <button className="share-modal-close-btn" onClick={onClose} aria-label="Chiudi">
+          <button className="share-modal-close-btn" onClick={onClose} aria-label={tr('Chiudi')}>
             <X size={18} />
           </button>
         </div>
@@ -82,7 +83,7 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
             <div className="share-routine-title-row">
               <Dumbbell size={16} color="#00e5ff" />
               <span className="share-routine-name">{routineTitle}</span>
-              <span className="share-routine-count">{totalExercises} esercizi</span>
+              <span className="share-routine-count">{totalExercises} {tr('esercizi')}</span>
             </div>
 
             {!isMultiple && targetTemplates[0]?.exercises && (
@@ -105,7 +106,7 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
                 onClick={handleNativeShare}
               >
                 <Share2 size={16} />
-                <span>Condividi su WhatsApp / Altro</span>
+                <span>{tr('Condividi su WhatsApp / Altro')}</span>
               </button>
             )}
 
@@ -115,7 +116,7 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
               onClick={handleCopyJson}
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
-              <span>{copied ? 'JSON Copiato negli Appunti!' : 'Copia Codice Scheda (JSON)'}</span>
+              <span>{copied ? tr('JSON Copiato negli Appunti!') : tr('Copia Codice Scheda (JSON)')}</span>
             </button>
 
             <button
@@ -124,15 +125,15 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
               onClick={handleDownload}
             >
               <Download size={16} />
-              <span>Scarica file .json</span>
+              <span>{tr('Scarica file .json')}</span>
             </button>
           </div>
 
           {/* Istruzioni per l'amico */}
           <div className="share-guide-box">
-            <p className="share-guide-title">Come fa il tuo amico ad importarla?</p>
+            <p className="share-guide-title">{tr('Come fa il tuo amico ad importarla?')}</p>
             <p className="share-guide-text">
-              Gli basterà copiare il codice, aprire <strong>EliteJIM</strong>, andare su <strong>Impostazioni → Crea Scheda con AI & JSON → Importa JSON</strong> e incollare il testo. La scheda sarà subito pronta per allenarsi!
+              {tr('Gli basterà copiare il codice, aprire')} <strong>EliteJIM</strong>, {tr('andare su')} <strong>{tr('Impostazioni → Crea Scheda con AI & JSON → Importa JSON')}</strong> {tr('e incollare il testo. La scheda sarà subito pronta per allenarsi!')}
             </p>
           </div>
 

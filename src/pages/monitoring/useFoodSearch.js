@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { searchLocalFoods, searchOffFoods } from '../../utils/foodApi';
+import { tr } from '../../i18n';
 
 // Ricerca alimenti: base + creati da te subito, Open Food Facts con debounce
 export function useFoodSearch(query, customFoods) {
@@ -16,7 +17,7 @@ export function useFoodSearch(query, customFoods) {
         .then(items => setOnline({ q: trimmed, items, loading: false, error: '' }))
         .catch(err => {
           if (err.name === 'AbortError') return;
-          setOnline({ q: trimmed, items: [], loading: false, error: navigator.onLine ? 'La ricerca dei prodotti non risponde: riprova tra poco.' : 'Sei offline: trovi solo gli alimenti salvati.' });
+          setOnline({ q: trimmed, items: [], loading: false, error: navigator.onLine ? tr('La ricerca dei prodotti non risponde: riprova tra poco.') : tr('Sei offline: trovi solo gli alimenti salvati.') });
         });
     }, 400);
     return () => { clearTimeout(t); ctrl.abort(); };

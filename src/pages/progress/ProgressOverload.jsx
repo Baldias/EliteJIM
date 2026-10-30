@@ -11,12 +11,13 @@ import { getMuscleLevelByXp } from '../../utils/gamification';
 import { Zap, Search, Trophy, TrendingUp, TrendingDown } from 'lucide-react';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight, MAX_RELIABLE_REPS, REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './ProgressOverload.css';
+import { locale, tr } from '../../i18n';
 
 const round1 = (n) => Math.round(n * 10) / 10;
-const fmtNum = (n) => round1(n).toLocaleString('it-IT', { maximumFractionDigits: 1 });
+const fmtNum = (n) => round1(n).toLocaleString(locale(), { maximumFractionDigits: 1 });
 const fmtSigned = (n) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${fmtNum(Math.abs(n))}`;
-const fmtShortDate = (t) => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '');
-const fmtAxisDate = (t) => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'numeric' });
+const fmtShortDate = (t) => new Date(t).toLocaleDateString(locale(), { day: 'numeric', month: 'short' }).replace('.', '');
+const fmtAxisDate = (t) => new Date(t).toLocaleDateString(locale(), { day: 'numeric', month: 'numeric' });
 
 function ChartTooltip({ active, payload, unit }) {
     if (!active || !payload || !payload.length) return null;
@@ -27,7 +28,7 @@ function ChartTooltip({ active, payload, unit }) {
             <p className="pg-tooltip-value">{fmtNum(d.value)} {unit}</p>
             <p className="pg-tooltip-set">{d.kg > 0 ? `${fmtNum(d.kg)}kg × ${d.reps}` : `${d.reps} reps`}</p>
             {d.locationLabel && <p className="pg-tooltip-set">{d.locationLabel}</p>}
-            {d.isPR && <p className="pg-tooltip-pr"><Trophy size={11} /> Nuovo PR</p>}
+            {d.isPR && <p className="pg-tooltip-pr"><Trophy size={11} /> {tr('Nuovo PR')}</p>}
         </div>
     );
 }
@@ -163,13 +164,13 @@ function ProgressOverload() {
             <div className="ej-glow" aria-hidden="true" />
 
             <header>
-                <h1 className="ej-title">Progressi</h1>
-                <p className="ej-eyebrow">Volume settimanale &amp; sovraccarico progressivo</p>
+                <h1 className="ej-title">{tr('Progressi')}</h1>
+                <p className="ej-eyebrow">{tr('Volume settimanale & sovraccarico progressivo')}</p>
             </header>
 
             {/* Muscle group filter: one scrollable row, only trained groups */}
             {categories.length > 0 && (
-                <div className="pg-filter" role="tablist" aria-label="Filtra per gruppo muscolare">
+                <div className="pg-filter" role="tablist" aria-label={tr('Filtra per gruppo muscolare')}>
                     <button
                         type="button"
                         role="tab"
@@ -177,7 +178,7 @@ function ProgressOverload() {
                         className={`pg-filter-chip ${!activeCategory ? 'is-active' : ''}`}
                         onClick={() => selectCategory(null)}
                     >
-                        Tutti <span className="pg-filter-count">{trainedExercises.length}</span>
+                        {tr('Tutti')} <span className="pg-filter-count">{trainedExercises.length}</span>
                     </button>
                     {categories.map(({ key, label, count }) => (
                         <button
@@ -188,7 +189,7 @@ function ProgressOverload() {
                             className={`pg-filter-chip ${activeCategory === key ? 'is-active' : ''}`}
                             onClick={() => selectCategory(key)}
                         >
-                            {label} <span className="pg-filter-count">{count}</span>
+                            {tr(label)} <span className="pg-filter-count">{count}</span>
                         </button>
                     ))}
                 </div>
@@ -197,8 +198,8 @@ function ProgressOverload() {
             {availableExercises.length === 0 ? (
                 <div className="ej-card pg-empty">
                     {activeCategory
-                        ? `Nessun esercizio completato per ${EXERCISE_CATEGORIES[activeCategory]}.`
-                        : 'Nessun dato disponibile. Inizia ad allenarti per vedere i tuoi progressi!'}
+                        ? tr('Nessun esercizio completato per {group}.', { group: tr(EXERCISE_CATEGORIES[activeCategory]) })
+                        : tr('Nessun dato disponibile. Inizia ad allenarti per vedere i tuoi progressi!')}
                 </div>
             ) : (
                 <>
@@ -209,15 +210,15 @@ function ProgressOverload() {
                             onChange={val => { setSearchText(val); setSelectedExercise(''); }}
                             onSelect={setSelectedExercise}
                             options={availableExercises}
-                            placeholder="Cerca esercizio..."
+                            placeholder={tr('Cerca esercizio...')}
                         />
                     </div>
 
-                    {activeCategory && currentExercise && <button type="button" className="pg-overview-btn" onClick={() => { setSelectedExercise(''); setSearchText(''); }}>Torna alle serie settimanali</button>}
+                    {activeCategory && currentExercise && <button type="button" className="pg-overview-btn" onClick={() => { setSelectedExercise(''); setSearchText(''); }}>{tr('Torna alle serie settimanali')}</button>}
                     {activeCategory && !currentExercise && <MuscleWeeklyProgress muscle={EXERCISE_CATEGORIES[activeCategory]} history={history} db={allExercisesDB} science={science} />}
                     {currentExercise && machine && <ProgressLocationFilter history={history} exercise={currentExercise} value={locationFilter} onChange={value => setLocationChoice({ exercise: currentExercise, value })} />}
-                    {currentExercise && !summary && <div className="ej-card pg-empty">Nessuna sessione completata per {currentExercise}. I progressi appariranno dopo aver salvato l’allenamento.</div>}
-                    {!activeCategory && !currentExercise && <p className="pg-hero-note">Scegli un distretto per vedere le serie settimanali oppure cerca un esercizio.</p>}
+                    {currentExercise && !summary && <div className="ej-card pg-empty">{tr('Nessuna sessione completata per {exercise}. I progressi appariranno dopo aver salvato l’allenamento.', { exercise: currentExercise })}</div>}
+                    {!activeCategory && !currentExercise && <p className="pg-hero-note">{tr('Scegli un distretto per vedere le serie settimanali oppure cerca un esercizio.')}</p>}
                     {summary && (
                         <>
                             {/* 1RM hero + chart */}
@@ -225,14 +226,14 @@ function ProgressOverload() {
                                 <div className="pg-hero-head">
                                     <div>
                                         <p className="pg-kicker">
-                                            {hasLoad ? (bodyweightLoad > 0 ? '1RM stimato · zavorra' : '1RM stimato') : 'Ripetizioni massime'}
+                                            {hasLoad ? (bodyweightLoad > 0 ? tr('1RM stimato · zavorra') : '1RM stimato') : tr('Ripetizioni massime')}
                                         </p>
                                         <p className="pg-hero-value">
                                             {hasLoad && bodyweightLoad > 0 ? '+' : ''}{fmtNum(summary.last.value)} <span>{unit}</span>
                                         </p>
                                     </div>
                                     {summary.last.isPR && (
-                                        <span className="pg-pr-badge"><Trophy size={14} /> Nuovo PR</span>
+                                        <span className="pg-pr-badge"><Trophy size={14} /> {tr('Nuovo PR')}</span>
                                     )}
                                 </div>
 
@@ -280,18 +281,18 @@ function ProgressOverload() {
                                 </div>
 
                                 <div className="pg-legend">
-                                    <span><i style={{ background: 'var(--c-primary)' }} /> {hasLoad ? '1RM stimato' : 'Reps'}</span>
-                                    <span><i style={{ background: 'var(--c-streak)' }} /> Nuovo PR</span>
+                                    <span><i style={{ background: 'var(--c-primary)' }} /> {hasLoad ? tr('1RM stimato') : 'Reps'}</span>
+                                    <span><i style={{ background: 'var(--c-streak)' }} /> {tr('Nuovo PR')}</span>
                                 </div>
 
                                 {hasLoad && summary.last.reps > MAX_RELIABLE_REPS && (
                                     <p className="pg-hero-note">
-                                        Stima meno precisa: sopra le {MAX_RELIABLE_REPS} ripetizioni l'1RM stimato può scostarsi del 5-10%. Per un dato affidabile usa serie da 3-10 reps.
+                                        {tr('Stima meno precisa: sopra le {n} ripetizioni l\'1RM stimato può scostarsi del 5-10%. Per un dato affidabile usa serie da 3-10 reps.', { n: MAX_RELIABLE_REPS })}
                                     </p>
                                 )}
                                 {hasLoad && bodyweightLoad > 0 && !bodyweight && (
                                     <p className="pg-hero-note">
-                                        Calcolato con un peso corporeo di {REFERENCE_BODYWEIGHT_KG} kg: impostalo in Impostazioni per una stima esatta.
+                                        {tr('Calcolato con un peso corporeo di {kg} kg: impostalo in Impostazioni per una stima esatta.', { kg: REFERENCE_BODYWEIGHT_KG })}
                                     </p>
                                 )}
                             </section>
@@ -301,10 +302,10 @@ function ProgressOverload() {
                                 <div className="ej-card pg-insight">
                                     <span className="pg-insight-label">Personal Best</span>
                                     <span className="pg-insight-value is-primary">{hasLoad && bodyweightLoad > 0 ? '+' : ''}{fmtNum(summary.best)}{unit === 'kg' ? 'kg' : ''}</span>
-                                    <span className="pg-insight-sub">{hasLoad ? '1RM stimato' : 'reps'}</span>
+                                    <span className="pg-insight-sub">{hasLoad ? tr('1RM stimato') : 'reps'}</span>
                                 </div>
                                 <div className="ej-card pg-insight">
-                                    <span className="pg-insight-label">Ultima Sessione</span>
+                                    <span className="pg-insight-label">{tr('Ultima Sessione')}</span>
                                     <span className="pg-insight-value">
                                         {summary.last.kg > 0 ? `${fmtNum(summary.last.kg)}kg × ${summary.last.reps}` : `${summary.last.reps} reps`}
                                     </span>
@@ -315,7 +316,7 @@ function ProgressOverload() {
                                     <span className={`pg-insight-value ${summary.last.delta > 0 ? 'is-up' : summary.last.delta < 0 ? 'is-down' : ''}`}>
                                         {summary.last.delta == null ? '—' : `${fmtSigned(summary.last.delta)}${unit === 'kg' ? 'kg' : ''}`}
                                     </span>
-                                    <span className="pg-insight-sub">vs sessione prec.</span>
+                                    <span className="pg-insight-sub">{tr('vs sessione prec.')}</span>
                                 </div>
                             </div>
 
@@ -326,31 +327,31 @@ function ProgressOverload() {
                                         <span className="pg-status-icon"><TrendingUp size={20} /></span>
                                         <div>
                                             <p className="pg-status-title">
-                                                {summary.streak === 1 ? 'Overload nell\'ultima sessione' : `${summary.streak} sessioni di fila in overload`}
+                                                {summary.streak === 1 ? tr('Overload nell\'ultima sessione') : tr('{n} sessioni di fila in overload', { n: summary.streak })}
                                             </p>
-                                            <p className="pg-status-sub">Prossimo obiettivo: {summary.nextTarget}{summary.altTarget ? ` o ${summary.altTarget}` : ''}</p>
+                                            <p className="pg-status-sub">{tr('Prossimo obiettivo:')} {summary.nextTarget}{summary.altTarget ? ` ${tr('o')} ${summary.altTarget}` : ''}</p>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="pg-status is-flat">
                                         <span className="pg-status-icon"><TrendingDown size={20} /></span>
                                         <div>
-                                            <p className="pg-status-title">Nessun overload nell'ultima sessione</p>
-                                            <p className="pg-status-sub">Per sbloccarlo punta a {summary.nextTarget}{summary.altTarget ? ` o ${summary.altTarget}` : ''}</p>
+                                            <p className="pg-status-title">{tr("Nessun overload nell'ultima sessione")}</p>
+                                            <p className="pg-status-sub">{tr('Per sbloccarlo punta a')} {summary.nextTarget}{summary.altTarget ? ` ${tr('o')} ${summary.altTarget}` : ''}</p>
                                         </div>
                                     </div>
                                 )
                             )}
 
                             {/* Session log */}
-                            <h2 className="ej-section-title">Storico sovraccarico</h2>
+                            <h2 className="ej-section-title">{tr('Storico sovraccarico')}</h2>
                             <div className="ej-card pg-log">
                                 {log.map((s) => (
                                     <div key={s.time} className="pg-log-row">
                                         <span className="pg-log-date">{fmtShortDate(s.time)}</span>
                                         <div className="pg-log-main">
                                             <span className="pg-log-set">{s.kg > 0 ? `${fmtNum(s.kg)}kg × ${s.reps}` : `${s.reps} reps`}</span>
-                                            <span className="pg-log-cap">Miglior serie</span>
+                                            <span className="pg-log-cap">{tr('Miglior serie')}</span>
                                         </div>
                                         <div className="pg-log-rm">
                                             <span className="pg-log-set">
@@ -360,7 +361,7 @@ function ProgressOverload() {
                                             <span className="pg-log-cap">{hasLoad ? '1RM' : 'Reps'}</span>
                                         </div>
                                         <span className={`ej-pill ${s.delta == null ? 'ej-pill--flat' : s.delta > 0 ? 'ej-pill--up' : s.delta < 0 ? 'ej-pill--down' : 'ej-pill--flat'}`}>
-                                            {s.delta == null ? 'Inizio' : fmtSigned(s.delta)}
+                                            {s.delta == null ? tr('Inizio') : fmtSigned(s.delta)}
                                         </span>
                                     </div>
                                 ))}
@@ -374,12 +375,12 @@ function ProgressOverload() {
                         const levelData = getMuscleLevelByXp(xp);
                         return (
                             <div className="ej-card pg-rpg">
-                                <h3 className="pg-rpg-title"><Zap size={18} /> Livelli RPG</h3>
+                                <h3 className="pg-rpg-title"><Zap size={18} /> {tr('Livelli RPG')}</h3>
                                 <div className="pg-rpg-level">
                                     <div className="pg-rpg-row">
-                                        <span className="pg-rpg-name">{label}</span>
+                                        <span className="pg-rpg-name">{tr(label)}</span>
                                         <span className="pg-rpg-meta">
-                                            <span>{xp.toLocaleString('it-IT')} XP</span>
+                                            <span>{xp.toLocaleString(locale())} XP</span>
                                             <strong>Lv. {levelData.level}</strong>
                                         </span>
                                     </div>

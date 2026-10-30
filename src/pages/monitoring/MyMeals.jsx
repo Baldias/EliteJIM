@@ -6,6 +6,7 @@ import { MACROS, fmtInt, fmtDec } from '../../utils/nutrition';
 import { MacroStrip } from './Fuel';
 import { RecipeSheet } from './RecipeSheet';
 import './Monitoring.css';
+import { tr } from '../../i18n';
 
 // Impostazioni → I tuoi pasti: crea e gestisci i pasti composti fuori dal Diario
 export default function MyMeals() {
@@ -21,27 +22,27 @@ export default function MyMeals() {
       <div className="ej-glow" aria-hidden="true" />
 
       <header className="mn-header">
-        <button type="button" className="ej-icon-btn ej-icon-btn--round mn-header-btn" onClick={() => navigate(-1)} aria-label="Indietro">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round mn-header-btn" onClick={() => navigate(-1)} aria-label={tr('Indietro')}>
           <ChevronLeft size={20} />
         </button>
-        <h1 className="mn-title">I tuoi pasti</h1>
+        <h1 className="mn-title">{tr('I tuoi pasti')}</h1>
       </header>
 
       <p className="mn-meals-intro">
-        Componi un pasto con gli alimenti che conosci (pancake, porridge, la tua insalata) e salvalo: lo ritrovi nel Diario, in Aggiungi → Creati da te.
+        {tr('Componi un pasto con gli alimenti che conosci (pancake, porridge, la tua insalata) e salvalo: lo ritrovi nel Diario, in Aggiungi → Creati da te.')}
       </p>
 
       <button type="button" className="mn-add-ingredient" onClick={() => { setSavedName(''); setEditing(null); }}>
-        <Plus size={18} /> Crea un nuovo pasto
+        <Plus size={18} /> {tr('Crea un nuovo pasto')}
       </button>
 
-      {savedName && <p className="mn-hint mn-hint--center">“{savedName}” salvato.</p>}
+      {savedName && <p className="mn-hint mn-hint--center">{tr('“{name}” salvato.', { name: savedName })}</p>}
 
       {recipes.length === 0 ? (
         <div className="mn-wt-empty">
           <CookingPot size={34} />
-          <h3>Ancora nessun pasto</h3>
-          <p>Quando mangi spesso la stessa ricetta, crearla una volta ti fa risparmiare tempo: dopo basta un tocco per aggiungerla.</p>
+          <h3>{tr('Ancora nessun pasto')}</h3>
+          <p>{tr('Quando mangi spesso la stessa ricetta, crearla una volta ti fa risparmiare tempo: dopo basta un tocco per aggiungerla.')}</p>
         </div>
       ) : (
         <ul className="mn-saved-meals">
@@ -59,7 +60,7 @@ export default function MyMeals() {
                     </span>
                     <span className="mn-saved-meal-macros">
                       <MacroStrip per100={r.per100} />
-                      P {fmtInt(per.protein)} · C {fmtInt(per.carbs)} · G {fmtInt(per.fat)} g · {r.recipe?.ingredients?.length || 0} ingredienti
+                      {tr('P')} {fmtInt(per.protein)} · {tr('C')} {fmtInt(per.carbs)} · {tr('G')} {fmtInt(per.fat)} g · {r.recipe?.ingredients?.length || 0} {tr('ingredienti')}
                     </span>
                   </span>
                   <ChevronRight size={18} className="mn-saved-meal-chevron" />

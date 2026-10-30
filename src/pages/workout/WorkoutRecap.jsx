@@ -11,6 +11,7 @@ import { exportDataBackup } from '../../utils/backup';
 import { ScienceWorkoutFeedback } from '../../components/ScienceTraining';
 import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
 import './WorkoutRecap.css';
+import { tr } from '../../i18n';
 
 function WorkoutRecap() {
   const navigate = useNavigate();
@@ -94,8 +95,8 @@ function WorkoutRecap() {
   if (!recapData) {
     return (
       <div className="ej-page rc-loading">
-        <h2>Elaborazione in corso...</h2>
-        <p>Se questa schermata rimane bloccata, c'è un errore nel salvataggio. Torna alla <a href="/">Home</a>.</p>
+        <h2>{tr('Elaborazione in corso...')}</h2>
+        <p>{tr('Se questa schermata rimane bloccata, c\'è un errore nel salvataggio. Torna alla')} <a href="/">Home</a>.</p>
       </div>
     );
   }
@@ -127,7 +128,7 @@ function WorkoutRecap() {
 
       <header className="rc-hero">
         <span className="rc-hero-icon"><CheckCircle2 size={32} /></span>
-        <h1 className="rc-title">Allenamento Completato</h1>
+        <h1 className="rc-title">{tr('Allenamento Completato')}</h1>
         <p className="rc-subtitle">{workout.name} · {mm} min</p>
       </header>
 
@@ -137,15 +138,15 @@ function WorkoutRecap() {
           <span className="rc-grade-badge">{score.grade}</span>
           <div className="rc-grade-info">
             <div className="rc-grade-tags">
-              <span className="rc-grade-tag">{score.gradeLabel || 'Grado Sessione'}</span>
+              <span className="rc-grade-tag">{score.gradeLabel || tr('Grado Sessione')}</span>
               {score.overloadCount > 0 && (
                 <span className="rc-overload-chip">
                   <Flame size={11} fill="currentColor" /> {score.overloadCount}/{score.totalExercises || 1} Overload
                 </span>
               )}
             </div>
-            <h3 className="rc-grade-headline">{headlines[score.grade]}</h3>
-            <p className="rc-grade-desc">{score.gradeDescription || 'Analisi dei parametri e del sovraccarico completata.'}</p>
+            <h3 className="rc-grade-headline">{tr(headlines[score.grade])}</h3>
+            <p className="rc-grade-desc">{score.gradeDescription || tr('Analisi dei parametri e del sovraccarico completata.')}</p>
           </div>
         </div>
 
@@ -154,8 +155,8 @@ function WorkoutRecap() {
             <TrendingUp size={16} />
             <span>
               {showGradeDetails
-                ? 'Nascondi analisi dettagliata'
-                : `Perché Grado ${score.grade}? Sovraccarico per esercizio (${score.overloadCount || 0}/${score.totalExercises || score.exercisesAnalysis.length})`}
+                ? tr('Nascondi analisi dettagliata')
+                : tr('Perché Grado {grade}? Sovraccarico per esercizio ({done}/{total})', { grade: score.grade, done: score.overloadCount || 0, total: score.totalExercises || score.exercisesAnalysis.length })}
             </span>
             {showGradeDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
@@ -177,8 +178,8 @@ function WorkoutRecap() {
                 <p className="rc-analysis-detail">{item.detail}</p>
                 {item.pastMetric && item.currentMetric && (
                   <div className="rc-analysis-compare">
-                    <span>Oggi <strong>{item.currentMetric}</strong></span>
-                    <span>Prec. <em>{item.pastMetric}</em></span>
+                    <span>{tr('Oggi')} <strong>{item.currentMetric}</strong></span>
+                    <span>{tr('Prec.')} <em>{item.pastMetric}</em></span>
                   </div>
                 )}
               </div>
@@ -186,7 +187,7 @@ function WorkoutRecap() {
 
             {score.nextTip && (
               <div className="rc-tip">
-                <span className="rc-tip-head"><Zap size={14} fill="currentColor" /> Consiglio per il prossimo workout</span>
+                <span className="rc-tip-head"><Zap size={14} fill="currentColor" /> {tr('Consiglio per il prossimo workout')}</span>
                 <p>{score.nextTip}</p>
               </div>
             )}
@@ -199,12 +200,12 @@ function WorkoutRecap() {
         <div className="ej-card rc-stat">
           <Clock size={18} className="rc-stat-icon" />
           <span className="rc-stat-value">{mm}m</span>
-          <span className="rc-stat-label">Durata</span>
+          <span className="rc-stat-label">{tr('Durata')}</span>
         </div>
         <div className={`ej-card rc-stat ${sphTone}`}>
           <Target size={18} className="rc-stat-icon" />
           <span className="rc-stat-value">{score.setsPerHour}</span>
-          <span className="rc-stat-label">Serie / Ora</span>
+          <span className="rc-stat-label">{tr('Serie / Ora')}</span>
         </div>
         <div className="ej-card rc-stat is-streak">
           <Flame size={18} className="rc-stat-icon" />
@@ -218,7 +219,7 @@ function WorkoutRecap() {
       {/* Science weekly progression */}
       {scienceGoalsThisWeek.length > 0 && (
         <section className="ej-card rc-card">
-          <h3 className="rc-card-title">Progressione Settimanale</h3>
+          <h3 className="rc-card-title">{tr('Progressione Settimanale')}</h3>
           {scienceGoalsThisWeek.map(g => {
             const totalTarget = Math.max(1, g.target);
             const prevPct = Math.min(100, (g.previousDone / totalTarget) * 100);
@@ -227,7 +228,7 @@ function WorkoutRecap() {
             return (
               <div key={g.muscle} className="rc-row">
                 <div className="rc-row-head">
-                  <span>{g.muscle}</span>
+                  <span>{tr(g.muscle)}</span>
                   <span className={reached ? 'is-good' : ''}>{g.previousDone + g.addedNow} / {g.target}</span>
                 </div>
                 <div className="rc-track">
@@ -246,7 +247,7 @@ function WorkoutRecap() {
       {/* Muscle levels */}
       {score.muscleXpGained && Object.keys(score.muscleXpGained).length > 0 && (
         <section className="ej-card rc-card">
-          <h3 className="rc-card-title">Livelli Muscolari</h3>
+          <h3 className="rc-card-title">{tr('Livelli Muscolari')}</h3>
           {Object.entries(score.muscleXpGained).map(([muscle, gained]) => {
             // muscleXP in the store already includes `gained` after finishWorkout
             const currentTotalXp = muscleXPState[muscle] || gained;
@@ -261,7 +262,7 @@ function WorkoutRecap() {
               <div key={muscle} className="rc-row">
                 <div className="rc-row-head">
                   <span className="rc-level-name">
-                    {muscle}
+                    {tr(muscle)}
                     {isLevelUp && <span className="rc-levelup">Level up!</span>}
                   </span>
                   <span className="rc-level-meta">
@@ -311,8 +312,8 @@ function WorkoutRecap() {
       <div className={`rc-backup ${backupSaved ? 'is-saved' : ''}`}>
         <span className="rc-backup-icon">{backupSaved ? <Check size={18} /> : <ShieldCheck size={18} />}</span>
         <div className="rc-backup-text">
-          <p>{backupSaved ? 'Sessione salvata' : 'Metti al sicuro la sessione'}</p>
-          <span>{backupSaved ? 'Copia offline aggiornata sul dispositivo' : 'Salva i record odierni e l\'XP guadagnato'}</span>
+          <p>{backupSaved ? tr('Sessione salvata') : tr('Metti al sicuro la sessione')}</p>
+          <span>{backupSaved ? tr('Copia offline aggiornata sul dispositivo') : tr("Salva i record odierni e l'XP guadagnato")}</span>
         </div>
         <button
           type="button"
@@ -324,12 +325,12 @@ function WorkoutRecap() {
           className="rc-backup-btn"
         >
           {backupSaved ? <Check size={14} /> : <Download size={14} />}
-          {backupSaved ? 'Salvato' : 'Salva'}
+          {backupSaved ? tr('Salvato') : tr('Salva')}
         </button>
       </div>
 
       <button type="button" className="rc-continue" onClick={handleClose}>
-        Continua <ChevronRight size={18} />
+        {tr('Continua')} <ChevronRight size={18} />
       </button>
     </div>
   );

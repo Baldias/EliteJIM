@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { tr } from '../i18n';
 
 function ReloadPrompt() {
   const {
@@ -23,14 +24,14 @@ function ReloadPrompt() {
   return (
     <div className="pwa-toast">
       <div className="pwa-message">
-        <span>C'è un nuovo aggiornamento dell'app!</span>
+        <span>{tr("C'è un nuovo aggiornamento dell'app!")}</span>
       </div>
       <div className="pwa-buttons">
         <button className="pwa-btn pwa-btn-reload" onClick={() => updateServiceWorker(true)}>
-          Aggiorna ora
+          {tr('Aggiorna ora')}
         </button>
         <button className="pwa-btn pwa-btn-close" onClick={() => setNeedRefresh(false)}>
-          Più tardi
+          {tr('Più tardi')}
         </button>
       </div>
     </div>

@@ -5,8 +5,9 @@ import { ChevronLeft, Flame, Trophy, Dumbbell, Info } from 'lucide-react';
 import { getMondayOfWeek } from '../../utils/gamification';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
 import './Activity.css';
+import { locale, tr } from '../../i18n';
 
-const ITALIAN_MONTHS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+const monthLabel = m => { const name = new Date(2000, m, 1).toLocaleDateString(locale(), { month: 'short' }).replace('.', ''); return name.charAt(0).toUpperCase() + name.slice(1); };
 
 function formatDateKey(d) {
   const year = d.getFullYear();
@@ -84,7 +85,7 @@ export default function Activity() {
       const mDate = new Date(currentYear, m, 1);
       const mMonday = getMondayOfWeek(mDate);
       const startCol = Math.max(0, Math.round((mMonday - firstMonday) / (7 * 86400000)));
-      rawMonths.push({ name: ITALIAN_MONTHS[m], startCol });
+      rawMonths.push({ name: monthLabel(m), startCol });
     }
 
     // Calcolo dello span su griglia CSS per ogni mese in modo da non sovrapporsi e non tagliarsi mai
@@ -132,30 +133,30 @@ export default function Activity() {
       <div className="ej-glow" aria-hidden="true" />
 
       <header className="ac-header">
-        <button type="button" className="ej-icon-btn ej-icon-btn--round ac-back" onClick={() => navigate(-1)} aria-label="Torna indietro">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round ac-back" onClick={() => navigate(-1)} aria-label={tr('Torna indietro')}>
           <ChevronLeft size={20} />
         </button>
-        <h1 className="ac-title">Attività</h1>
+        <h1 className="ac-title">{tr('Attività')}</h1>
       </header>
 
       {/* Streak hero */}
       <section className={`ej-card ac-hero ${streakInfo.currentStreak > 0 ? 'is-active' : ''}`}>
         <Flame size={34} className="ac-hero-flame" fill={streakInfo.currentStreak > 0 ? 'currentColor' : 'none'} />
         <p className="ac-hero-value">
-          {streakInfo.currentStreak} <span>{streakInfo.currentStreak === 1 ? 'settimana' : 'settimane'}</span>
+          {streakInfo.currentStreak} <span>{streakInfo.currentStreak === 1 ? tr('settimana') : tr('settimane')}</span>
         </p>
-        <p className="ac-hero-sub">Settimane consecutive con almeno un allenamento</p>
+        <p className="ac-hero-sub">{tr('Settimane consecutive con almeno un allenamento')}</p>
       </section>
 
       {/* Stats */}
       <div className="ac-stats">
         <div className="ej-card ac-stat">
           <span className="ac-stat-label"><Flame size={13} className="is-streak" /> Streak</span>
-          <strong>{streakInfo.currentStreak} sett.</strong>
+          <strong>{streakInfo.currentStreak} {tr('sett.')}</strong>
         </div>
         <div className="ej-card ac-stat">
-          <span className="ac-stat-label"><Trophy size={13} className="is-xp" /> Record</span>
-          <strong>{streakInfo.highestStreak} sett.</strong>
+          <span className="ac-stat-label"><Trophy size={13} className="is-xp" /> {tr('Record')}</span>
+          <strong>{streakInfo.highestStreak} {tr('sett.')}</strong>
         </div>
         <div className="ej-card ac-stat">
           <span className="ac-stat-label"><Dumbbell size={13} className="is-primary" /> Workout</span>
@@ -167,7 +168,7 @@ export default function Activity() {
       <section className="ej-card ac-heatmap">
         <div className="ac-heatmap-head">
           <span className="ac-year">{currentYear}</span>
-          <span className="ac-year-count">{yearWorkoutsCount} allenamenti</span>
+          <span className="ac-year-count">{yearWorkoutsCount} {tr('allenamenti')}</span>
         </div>
 
         <div className="ac-months" style={{ gridTemplateColumns: `repeat(${weeksGrid.length}, 1fr)` }}>
@@ -194,14 +195,14 @@ export default function Activity() {
         </div>
 
         <div className="ac-legend">
-          <span><i className="ac-dot is-rest" /> Riposo</span>
-          <span><i className="ac-dot is-workout" /> Allenamento</span>
+          <span><i className="ac-dot is-rest" /> {tr('Riposo')}</span>
+          <span><i className="ac-dot is-workout" /> {tr('Allenamento')}</span>
         </div>
       </section>
 
       {/* Last 8 weeks */}
       <section className="ej-card ac-weeks">
-        <h3 className="ac-weeks-title">Ultime 8 settimane</h3>
+        <h3 className="ac-weeks-title">{tr('Ultime 8 settimane')}</h3>
         <div className="ac-weeks-row">
           {lastWeeks.map(w => (
             <div key={w.start} className="ac-week">
@@ -211,7 +212,7 @@ export default function Activity() {
               >
                 {w.count > 0 ? w.count : '–'}
               </span>
-              <span className="ac-week-label">{new Date(w.start).toLocaleDateString('it-IT', { day: 'numeric', month: 'numeric' })}</span>
+              <span className="ac-week-label">{new Date(w.start).toLocaleDateString(locale(), { day: 'numeric', month: 'numeric' })}</span>
             </div>
           ))}
         </div>
@@ -219,9 +220,9 @@ export default function Activity() {
 
       {/* How it works */}
       <section className="ej-card ac-guide">
-        <h3 className="ac-guide-title"><Info size={15} /> Come funziona la streak a settimane?</h3>
+        <h3 className="ac-guide-title"><Info size={15} /> {tr('Come funziona la streak a settimane?')}</h3>
         <p>
-          Ogni settimana (Lun–Dom) in cui ti alleni almeno una volta aggiunge <strong>+1 alla streak</strong>. Più sessioni nella stessa settimana mantengono la streak attiva. Se passano <strong>7 giorni consecutivi</strong> dall'ultimo allenamento, la streak si azzera.
+          {tr('Ogni settimana (Lun–Dom) in cui ti alleni almeno una volta aggiunge')} <strong>{tr('+1 alla streak')}</strong>. {tr('Più sessioni nella stessa settimana mantengono la streak attiva. Se passano')} <strong>{tr('7 giorni consecutivi')}</strong> {tr('dall\'ultimo allenamento, la streak si azzera.')}
         </p>
       </section>
     </div>

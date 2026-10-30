@@ -8,6 +8,7 @@ import { renderProgressReport } from '../utils/progressReportRender';
 import { canShareProgressPdf, createProgressDownloads, progressPdfFile, shareProgressPdf } from '../utils/progressReportExport';
 import './ProgressShare.css';
 import { IS_DEMO } from '../demo/demoMode';
+import { tr } from '../i18n';
 
 const SNAPSHOT_FIELDS = ['history', 'userXP', 'scienceState', 'scienceReport', 'bodyweight', 'weightLog', 'customExercises', 'exerciseOverrides', 'theme', 'scienceGlow'];
 
@@ -26,11 +27,11 @@ function PreparedReport({ report, onClose, onRetry, onEdit }) {
       const file = progressPdfFile(result);
       setArtifacts({ ...result, downloads, file, nativeShare:canShareProgressPdf(file) });
     }).catch(reason => {
-      if (!controller.signal.aborted) setError(reason.message || 'Impossibile preparare il report.');
+      if (!controller.signal.aborted) setError(reason.message || tr('Impossibile preparare il report.'));
     });
     return () => { controller.abort(); downloads?.dispose(); };
   }, [report]);
-  const downloadMessage = () => setMessage(`Download del PDF completo richiesto: ${artifacts.pages.length} pagine in un solo file. Aprilo dai Download e usa Condividi per inviarlo.`);
+  const downloadMessage = () => setMessage(tr('Download del PDF completo richiesto: {n} pagine in un solo file. Aprilo dai Download e usa Condividi per inviarlo.', { n: artifacts.pages.length }));
   const share = async () => {
     if (!artifacts || sharing) return;
     setSharing(true); setMessage('');
@@ -42,22 +43,22 @@ function PreparedReport({ report, onClose, onRetry, onEdit }) {
       });
       if (result === 'download') downloadMessage();
     } catch {
-      setMessage('Usa “Salva PDF completo” qui sotto per scaricare tutte le pagine e condividerle dai Download.');
+      setMessage(tr('Usa “Salva PDF completo” qui sotto per scaricare tutte le pagine e condividerle dai Download.'));
     } finally { setSharing(false); }
   };
   const footer = artifacts && <div className="progress-share-actions">
-    <span className="progress-share-format">REPORT COMPLETO · {artifacts.pages.length} {artifacts.pages.length === 1 ? 'PAGINA' : 'PAGINE'}</span>
-    {artifacts.nativeShare ? <><button type="button" className="ej-btn ej-btn--primary" disabled={sharing} onClick={share}><Share2 size={17} />{sharing ? 'Apro la condivisione…' : 'Condividi PDF completo'}</button><a className="ej-btn ej-btn--secondary" href={artifacts.downloads.pdfUrl} download={artifacts.filename} onClick={downloadMessage}><Download size={15} />Salva PDF completo</a></> : <a className="ej-btn ej-btn--primary" href={artifacts.downloads.pdfUrl} download={artifacts.filename} onClick={downloadMessage}><Download size={17} />Salva PDF completo</a>}
-    <p>{artifacts.nativeShare ? 'Il PDF contiene tutte le pagine, anche quelle che non stai visualizzando.' : 'Per inviarlo: salva il PDF, aprilo nei Download del telefono e scegli Condividi.'}</p>
-    {artifacts.downloads.pngUrl && <a className="progress-share-cover" href={artifacts.downloads.pngUrl} download={artifacts.filename.replace('.pdf','-copertina.png')}>Salva solo la copertina (PNG · 1 pagina)</a>}
+    <span className="progress-share-format">{tr('REPORT COMPLETO')} · {artifacts.pages.length} {artifacts.pages.length === 1 ? tr('PAGINA') : tr('PAGINE')}</span>
+    {artifacts.nativeShare ? <><button type="button" className="ej-btn ej-btn--primary" disabled={sharing} onClick={share}><Share2 size={17} />{sharing ? tr('Apro la condivisione…') : tr('Condividi PDF completo')}</button><a className="ej-btn ej-btn--secondary" href={artifacts.downloads.pdfUrl} download={artifacts.filename} onClick={downloadMessage}><Download size={15} />{tr('Salva PDF completo')}</a></> : <a className="ej-btn ej-btn--primary" href={artifacts.downloads.pdfUrl} download={artifacts.filename} onClick={downloadMessage}><Download size={17} />{tr('Salva PDF completo')}</a>}
+    <p>{artifacts.nativeShare ? tr('Il PDF contiene tutte le pagine, anche quelle che non stai visualizzando.') : tr('Per inviarlo: salva il PDF, aprilo nei Download del telefono e scegli Condividi.')}</p>
+    {artifacts.downloads.pngUrl && <a className="progress-share-cover" href={artifacts.downloads.pngUrl} download={artifacts.filename.replace('.pdf','-copertina.png')}>{tr('Salva solo la copertina (PNG · 1 pagina)')}</a>}
     {message && <p role="status" className="progress-share-message">{message}</p>}
   </div>;
-  return <Sheet title="Condividi i progressi" full onClose={onClose} footer={footer}>
-    <p className="science-sheet-intro">I tuoi esercizi, divisi per gruppo muscolare, con grafici e record. {report.science ? 'Include tutte le settimane del protocollo Scienza corrente, con le stime indicate.' : 'Condividi le tue progressioni senza i dati di Scienza.'} Nessun account richiesto a chi lo riceve.</p>
-    <button type="button" className="progress-share-edit" onClick={onEdit}>Modifica contenuto del report</button>
-    {error ? <div className="progress-share-empty"><h3>Il report non è pronto</h3><p>{error}</p><button type="button" className="ej-btn ej-btn--primary" onClick={onRetry}>Riprova</button></div> : !artifacts ? <div className="progress-share-loading" role="status"><LoaderCircle size={30} /><strong>Preparo i tuoi progressi</strong><p>Grafici e tutti i {report.exercises.length} esercizi registrati.</p></div> : <>
-      <div className="progress-share-pager"><button type="button" className="ej-icon-btn" disabled={page === 0} aria-label="Pagina precedente del report" onClick={() => setPage(n => n - 1)}><ArrowLeft size={18} /></button><span>Pagina {page + 1} di {artifacts.pages.length}<small>{artifacts.pages[page].title}</small></span><button type="button" className="ej-icon-btn" disabled={page === artifacts.pages.length - 1} aria-label="Pagina successiva del report" onClick={() => setPage(n => n + 1)}><ArrowRight size={18} /></button></div>
-      <img className="progress-share-preview" src={artifacts.images[page]} alt={`${artifacts.pages[page].title} · pagina ${page + 1} del report dei progressi`} />
+  return <Sheet title={tr('Condividi i progressi')} full onClose={onClose} footer={footer}>
+    <p className="science-sheet-intro">{tr('I tuoi esercizi, divisi per gruppo muscolare, con grafici e record.')} {report.science ? tr('Include tutte le settimane del protocollo Scienza corrente, con le stime indicate.') : tr('Condividi le tue progressioni senza i dati di Scienza.')} {tr('Nessun account richiesto a chi lo riceve.')}</p>
+    <button type="button" className="progress-share-edit" onClick={onEdit}>{tr('Modifica contenuto del report')}</button>
+    {error ? <div className="progress-share-empty"><h3>{tr('Il report non è pronto')}</h3><p>{error}</p><button type="button" className="ej-btn ej-btn--primary" onClick={onRetry}>{tr('Riprova')}</button></div> : !artifacts ? <div className="progress-share-loading" role="status"><LoaderCircle size={30} /><strong>{tr('Preparo i tuoi progressi')}</strong><p>{tr('Grafici e tutti i {n} esercizi registrati.', { n: report.exercises.length })}</p></div> : <>
+      <div className="progress-share-pager"><button type="button" className="ej-icon-btn" disabled={page === 0} aria-label={tr('Pagina precedente del report')} onClick={() => setPage(n => n - 1)}><ArrowLeft size={18} /></button><span>{tr('Pagina {page} di {total}', { page: page + 1, total: artifacts.pages.length })}<small>{artifacts.pages[page].title}</small></span><button type="button" className="ej-icon-btn" disabled={page === artifacts.pages.length - 1} aria-label={tr('Pagina successiva del report')} onClick={() => setPage(n => n + 1)}><ArrowRight size={18} /></button></div>
+      <img className="progress-share-preview" src={artifacts.images[page]} alt={`${artifacts.pages[page].title} · ${tr('pagina {n} del report dei progressi', { n: page + 1 })}`} />
     </>}
   </Sheet>;
 }
@@ -75,15 +76,15 @@ export default function ProgressShare() {
     setIncludeWeight(false); setIncludeScience(false); setPrepared(false); setAttempt(0);
   };
   return <>
-    <button type="button" className="ej-card progress-share-entry" onClick={open}><span><Share2 size={21} /></span><div><strong>Condividi i tuoi progressi</strong><small>Un report grafico completo, pronto da inviare</small></div><ChevronRight size={18} /></button>
-    {capture && !prepared && <Sheet title="Cosa vuoi condividere?" onClose={() => setCapture(null)} footer={<button type="button" className="ej-btn ej-btn--primary progress-share-prepare" onClick={() => setPrepared(true)}>Prepara il report<ArrowRight size={17} /></button>}>
-      <p className="science-sheet-intro">Il report segue il tuo tema {capture.state.theme === 'og' ? 'OG Elite Jim' : 'Science V3 Edition'}. Scegli tu cosa includere.</p>
-      <div className="progress-share-choices" role="radiogroup" aria-label="Contenuto del report">
-        <button type="button" role="radio" aria-checked={!includeScience} onClick={() => setIncludeScience(false)}><TrendingUp size={24} /><span><strong>Solo progressioni</strong><small>Esercizi per muscolo, record e continuità.</small></span><i>{!includeScience && <Check size={15} />}</i></button>
-        <button type="button" role="radio" aria-checked={includeScience} disabled={!capture.state.scienceState?.program && !capture.state.scienceReport?.baseLandmarks} onClick={() => setIncludeScience(true)}><Dna size={24} /><span><strong>Progressioni + Scienza</strong><small>Tutte le settimane del protocollo corrente. Le settimane future sono stime.</small></span><i>{includeScience && <Check size={15} />}</i></button>
+    <button type="button" className="ej-card progress-share-entry" onClick={open}><span><Share2 size={21} /></span><div><strong>{tr('Condividi i tuoi progressi')}</strong><small>{tr('Un report grafico completo, pronto da inviare')}</small></div><ChevronRight size={18} /></button>
+    {capture && !prepared && <Sheet title={tr('Cosa vuoi condividere?')} onClose={() => setCapture(null)} footer={<button type="button" className="ej-btn ej-btn--primary progress-share-prepare" onClick={() => setPrepared(true)}>{tr('Prepara il report')}<ArrowRight size={17} /></button>}>
+      <p className="science-sheet-intro">{tr('Il report segue il tuo tema {theme}. Scegli tu cosa includere.', { theme: capture.state.theme === 'og' ? 'OG Elite Jim' : 'Science V3 Edition' })}</p>
+      <div className="progress-share-choices" role="radiogroup" aria-label={tr('Contenuto del report')}>
+        <button type="button" role="radio" aria-checked={!includeScience} onClick={() => setIncludeScience(false)}><TrendingUp size={24} /><span><strong>{tr('Solo progressioni')}</strong><small>{tr('Esercizi per muscolo, record e continuità.')}</small></span><i>{!includeScience && <Check size={15} />}</i></button>
+        <button type="button" role="radio" aria-checked={includeScience} disabled={!capture.state.scienceState?.program && !capture.state.scienceReport?.baseLandmarks} onClick={() => setIncludeScience(true)}><Dna size={24} /><span><strong>{tr('Progressioni + Scienza')}</strong><small>{tr('Tutte le settimane del protocollo corrente. Le settimane future sono stime.')}</small></span><i>{includeScience && <Check size={15} />}</i></button>
       </div>
-      {!capture.state.scienceState?.program && !capture.state.scienceReport?.baseLandmarks && <p className="science-sheet-intro">Non hai ancora un protocollo Scienza da includere.</p>}
-      {capture.state.weightLog?.length > 0 && <ScienceSwitch label="Includi anche il peso" description="Aggiunge le pesate registrate nel Diario" checked={includeWeight} onChange={setIncludeWeight} />}
+      {!capture.state.scienceState?.program && !capture.state.scienceReport?.baseLandmarks && <p className="science-sheet-intro">{tr('Non hai ancora un protocollo Scienza da includere.')}</p>}
+      {capture.state.weightLog?.length > 0 && <ScienceSwitch label={tr('Includi anche il peso')} description={tr('Aggiunge le pesate registrate nel Diario')} checked={includeWeight} onChange={setIncludeWeight} />}
     </Sheet>}
     {prepared && report && <PreparedReport key={`${includeWeight}-${includeScience}-${attempt}`} report={report} onEdit={() => setPrepared(false)} onClose={() => setCapture(null)} onRetry={() => setAttempt(n => n + 1)} />}
 

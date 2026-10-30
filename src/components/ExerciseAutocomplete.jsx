@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { EXERCISES_DB, getAllExercises, getExerciseCategories } from '../data/exercises';
 import './Autocomplete.css';
+import { tr } from '../i18n';
 
-export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca esercizio...", options = null, onSelect }) {
+export function ExerciseAutocomplete({ value, onChange, placeholder = tr('Cerca esercizio...'), options = null, onSelect }) {
   const customExercises = useStore(state => state.customExercises || []);
   const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
   const [isOpen, setIsOpen] = useState(false);
@@ -64,7 +65,7 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
             filteredExercises.map((ex, idx) => {
               const name = typeof ex === 'string' ? ex : ex.name;
               const categories = typeof ex === 'string' ? null : getExerciseCategories(ex);
-              const categoryLabel = categories ? categories.join(' · ') : null;
+              const categoryLabel = categories ? categories.map(cat => tr(cat)).join(' · ') : null;
               const id = typeof ex === 'string' ? `opt-${idx}` : ex.id;
               
               return (
@@ -84,7 +85,7 @@ export function ExerciseAutocomplete({ value, onChange, placeholder = "Cerca ese
               );
             })
           ) : (
-             <li className="autocomplete-item-empty">Nessun esercizio trovato</li>
+             <li className="autocomplete-item-empty">{tr('Nessun esercizio trovato')}</li>
           )}
         </ul>
       )}
