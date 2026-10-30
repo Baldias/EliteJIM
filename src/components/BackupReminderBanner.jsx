@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { ShieldCheck, Download, Check, FileCheck } from 'lucide-react';
 import { exportDataBackup, shouldShowBackupBanner } from '../utils/backup';
 import './BackupReminderBanner.css';
+import { tr } from '../i18n';
 
 export function BackupReminderBanner() {
   const store = useStore();
@@ -40,16 +41,16 @@ export function BackupReminderBanner() {
         <div className="backup-banner-text">
           <div className="backup-banner-header-row">
             <h4 className="backup-banner-title">
-              {savedSuccess ? 'Backup completato' : 'Proteggi i tuoi dati'}
+              {savedSuccess ? tr('Backup completato') : tr('Proteggi i tuoi dati')}
             </h4>
             <span className="backup-banner-status-tag">
-              {savedSuccess ? 'Salvato' : 'Consigliato'}
+              {savedSuccess ? tr('Salvato') : tr('Consigliato')}
             </span>
           </div>
           <p className="backup-banner-desc">
             {savedSuccess 
-              ? 'Copia scaricata con successo sul tuo dispositivo.'
-              : 'Salva una copia offline per non perdere mai schede, note e XP.'}
+              ? tr('Copia scaricata con successo sul tuo dispositivo.')
+              : tr('Salva una copia offline per non perdere mai schede, note e XP.')}
           </p>
         </div>
       </div>
@@ -57,10 +58,10 @@ export function BackupReminderBanner() {
       {!savedSuccess && (
         <div className="backup-banner-actions">
           <button className="backup-banner-btn-save" onClick={handleQuickBackup}>
-            <Download size={15} /> Salva ora
+            <Download size={15} /> {tr('Salva ora')}
           </button>
           <button className="backup-banner-btn-later" onClick={handleSnooze}>
-            Ricordamelo dopo
+            {tr('Ricordamelo dopo')}
           </button>
         </div>
       )}

@@ -9,10 +9,11 @@ import { evolvedLegacyReport, legacyEvolutionFor } from './scienceEvolution';
 import { themePreferences } from './theme';
 import { scienceWeekPreview } from './sciencePlanning';
 import { localScienceDate, scienceLandmarkBand } from './sciencePlanning';
+import { locale, tr } from '../i18n';
 
 const n = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
 const ordinary = sets => (sets || []).filter(s => s.done && !s.isDropset && !s.isRestPause && !s.isWarmup && n(s.reps) > 0);
-const day = time => new Date(time).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+const day = time => new Date(time).toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' });
 
 function activitySeries(history) {
   if (!history.length) return { granularity: 'settimana', points: [] };
@@ -117,7 +118,7 @@ export function buildProgressReport(state, now = Date.now(), { includeWeight = f
   return {
     theme: themePreferences(state).theme, scienceGlow: themePreferences(state).scienceGlow,
     demo, generatedAt: now, filename: `EliteJIM-progressi-${localScienceDate(now)}.pdf`,
-    period: history.length ? `${day(history[0].startTime)} – ${day(history.at(-1).startTime)}` : 'Nessuna seduta registrata',
+    period: history.length ? `${day(history[0].startTime)} – ${day(history.at(-1).startTime)}` : tr('Nessuna seduta registrata'),
     totals: { workouts: history.length, completedSets, repetitions, externalKg, minutes: Math.round(minutes), xp: n(state.userXP), prCount, overloadRate, currentStreak: streak.currentStreak, highestStreak: streak.highestStreak },
     rank: { title: rank.title, color: rank.color, progress: rank.progressPercent },
     activity: activitySeries(history), exercises, science, weight,

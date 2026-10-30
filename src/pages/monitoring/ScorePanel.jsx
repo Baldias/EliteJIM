@@ -5,12 +5,13 @@ import { athleteScore } from '../../utils/athleteScore';
 import { fmtInt } from '../../utils/nutrition';
 import { MacroStrip } from './Fuel';
 import './ScorePanel.css';
+import { tr } from '../../i18n';
 
 // Numero del voto in un cerchio colorato per fascia
 export function ScoreBadge({ result, size = 'md' }) {
   if (!result) return null;
   return (
-    <span className={`mn-score is-${result.level.id} is-${size}`} title={`Voto atleta ${result.score}/100 · ${result.level.label}`}>
+    <span className={`mn-score is-${result.level.id} is-${size}`} title={`${tr(tr('Voto atleta'))} ${result.score}/100 · ${result.level.label}`}>
       {result.score}
     </span>
   );
@@ -25,8 +26,8 @@ export function ScorePanel({ result }) {
       <div className="mn-score-head">
         <ScoreBadge result={result} size="lg" />
         <div>
-          <p className="mn-score-title">Voto atleta</p>
-          <p className="mn-score-level">{result.level.label}{result.partial && <small> · dati parziali</small>}</p>
+          <p className="mn-score-title">{tr('Voto atleta')}</p>
+          <p className="mn-score-level">{result.level.label}{result.partial && <small> · {tr('dati parziali')}</small>}</p>
         </div>
       </div>
       {(result.pros.length > 0 || result.cons.length > 0) && (
@@ -36,7 +37,7 @@ export function ScorePanel({ result }) {
         </ul>
       )}
       <button type="button" className={`mn-facts-toggle ${open ? 'is-open' : ''}`} onClick={() => setOpen(o => !o)}>
-        Come si calcola <ChevronDown size={16} />
+        {tr('Come si calcola')} <ChevronDown size={16} />
       </button>
       {open && (
         <div className="mn-score-parts">
@@ -51,7 +52,7 @@ export function ScorePanel({ result }) {
             </div>
           ))}
           <p className="mn-hint">
-            Dati di Open Food Facts; additivi secondo le valutazioni EFSA. Un'indicazione per scegliere tra prodotti simili, non un consiglio medico.
+            {tr("Dati di Open Food Facts; additivi secondo le valutazioni EFSA. Un'indicazione per scegliere tra prodotti simili, non un consiglio medico.")}
           </p>
         </div>
       )}
@@ -75,7 +76,7 @@ export function BetterAlternatives({ food, result, onPick }) {
         setState({ loading: false, items, error: '' });
       })
       .catch(err => {
-        if (err.name !== 'AbortError') setState({ loading: false, items: [], error: 'Alternative non disponibili al momento.' });
+        if (err.name !== 'AbortError') setState({ loading: false, items: [], error: tr('Alternative non disponibili al momento.') });
       });
     return () => ctrl.abort();
   }, [food, result.score]);
@@ -85,7 +86,7 @@ export function BetterAlternatives({ food, result, onPick }) {
   return (
     <section className="mn-alternatives">
       <h3 className="mn-label">
-        Alternative migliori {state.loading && <Loader2 size={13} className="mn-spin" />}
+        {tr('Alternative migliori')} {state.loading && <Loader2 size={13} className="mn-spin" />}
       </h3>
       {state.error && <p className="mn-hint">{state.error}</p>}
       <ul>

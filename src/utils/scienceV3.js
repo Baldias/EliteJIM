@@ -2,6 +2,7 @@ import { isMachineExercise, locationKey } from './gymLocation';
 import { balancedStartingTargets, BALANCED_VOLUME_VERSION, fitBalancedTargets, scienceSessionBudget } from './scienceBalanced';
 import { normalizeName } from '../data/exercises';
 import { scienceProgramWeekRange } from './scienceCalendar';
+import { tr } from '../i18n';
 import { allocateScienceGrowth } from './scienceAllocation';
 import { scienceSetKey, scienceCompletedSets } from './scienceCarry';
 import { SCIENCE_REFERENCE_VERSION, scienceReference, scienceGrowthStep } from './scienceReferences';
@@ -212,8 +213,8 @@ export function createScienceProgram(profile, history, db, science, legacy, now 
     ceilings: Object.fromEntries(active.map(m => [m, Math.max(scienceReference(m, experience).mrvEstimate, targets[m])])),
     landmarks, weeks: [], recommendations: [], pauses: {},
     timeWarning: sum > budget ? timeRestricted
-      ? `Forte carenza di tempo: ~${budget * 4} minuti disponibili contro ~${sum * 4} richiesti. La base è ridotta e può scendere sotto la dose di crescita di riferimento. Aumenta la disponibilità per ripristinarla.`
-      : `Stima: ~${sum * 4} min/settimana, ne hai indicati ${budget * 4}. I target sono conservati: valuta più tempo o priorità diverse.` : null,
+      ? tr('Forte carenza di tempo: ~{available} minuti disponibili contro ~{needed} richiesti. La base è ridotta e può scendere sotto la dose di crescita di riferimento. Aumenta la disponibilità per ripristinarla.', { available: budget * 4, needed: sum * 4 })
+      : tr('Stima: ~{needed} min/settimana, ne hai indicati {available}. I target sono conservati: valuta più tempo o priorità diverse.', { needed: sum * 4, available: budget * 4 }) : null,
     decisions: {},
   };
   return { ...science, profile: { ...profile, experience, priorities }, program };
@@ -340,19 +341,19 @@ export function closeScienceWeek(science, history, db, now = Date.now()) {
       beforeTotal: allocation.beforeTotal, afterTotal: allocation.afterTotal,
       reason: 'Spostiamo parte del lavoro dai distretti fuori priorità alle priorità nelle ultime due settimane, mantenendo il totale stabile o con una piccola crescita. Applichiamo la redistribuzione solo se la accetti.',
     });
-    for (const m of Object.keys(allocation.increases)) decisions[m] = `+${allocation.increases[m]} serie proposte con redistribuzione: in attesa della tua scelta.`;
+    for (const m of Object.keys(allocation.increases)) decisions[m] = tr('+{n} serie proposte con redistribuzione: in attesa della tua scelta.', { n: allocation.increases[m] });
   } else {
     Object.assign(targets, allocation.targets);
     nextRoles = allocation.roles;
     for (const muscle of candidates) {
       const increase = allocation.increases[muscle];
       decisions[muscle] = increase
-        ? `+${increase} serie: nessun problema di recupero marcato. Incremento graduale entro il budget settimanale.`
+        ? tr('+{n} serie: nessun problema di recupero marcato. Incremento graduale entro il budget settimanale.', { n: increase })
         : science.profile.goal === 'balanced' ? 'Volume conservato: limite di 20 serie per seduta; gli aumenti seguono recupero e andamento dei carichi.' : 'Incremento rimandato: budget settimanale assegnato alle altre priorità, nessun blocco del recupero.';
     }
   }
   if (science.profile.goal === 'balanced') for (const [muscle, reduction] of Object.entries(allocation.reductions)) {
-    decisions[muscle] = `−${reduction} serie: volume ridistribuito entro il limite di 20 serie per seduta, privilegiando i distretti che recuperano meglio.`;
+    decisions[muscle] = tr('−{n} serie: volume ridistribuito entro il limite di 20 serie per seduta, privilegiando i distretti che recuperano meglio.', { n: reduction });
   }
   const affected = systemic ? Object.keys(targets).filter(m => targets[m] > 0) : fatigued;
   if (p.currentWeek < 4 && affected.length && !recommendations.some(r => r.status === 'pending' && r.type === 'recovery')) {

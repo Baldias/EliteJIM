@@ -6,6 +6,7 @@ import { EXERCISE_CATEGORIES, EQUIPMENT_TYPES, getAllExercises, getExerciseCateg
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import './Settings.css';
 import './Exercises.css';
+import { tr } from '../../i18n';
 
 function Exercises() {
   const navigate = useNavigate();
@@ -78,12 +79,12 @@ function Exercises() {
 
   const handleAdd = () => {
     if (!newExName.trim()) {
-      alert("Inserisci un nome per l'esercizio");
+      alert(tr("Inserisci un nome per l'esercizio"));
       return;
     }
     // Check if exists
     if (allExercises.some(e => normalizeName(e.name) === normalizeName(newExName))) {
-      alert("Questo esercizio esiste già nel database!");
+      alert(tr('Questo esercizio esiste già nel database!'));
       return;
     }
 
@@ -103,7 +104,7 @@ function Exercises() {
 
   const handleSaveEdit = () => {
     if (!editName.trim()) {
-      alert("Inserisci un nome per l'esercizio");
+      alert(tr("Inserisci un nome per l'esercizio"));
       return;
     }
 
@@ -112,7 +113,7 @@ function Exercises() {
       e => e.id !== editingExercise.id && normalizeName(e.name) === normalizeName(editName)
     );
     if (isDuplicate) {
-      alert("Un altro esercizio con questo nome esiste già nel database!");
+      alert(tr('Un altro esercizio con questo nome esiste già nel database!'));
       return;
     }
 
@@ -130,7 +131,7 @@ function Exercises() {
 
   const handleResetDefault = () => {
     if (!editingExercise) return;
-    if (window.confirm(`Vuoi ripristinare "${editingExercise.name}" ai valori originali predefiniti?`)) {
+    if (window.confirm(tr('Vuoi ripristinare "{name}" ai valori originali predefiniti?', { name: editingExercise.name }))) {
       resetExerciseToDefault(editingExercise.id, editSyncHistory);
       setEditingExercise(null);
     }
@@ -138,7 +139,7 @@ function Exercises() {
 
   const handleDeleteCustom = () => {
     if (!editingExercise) return;
-    if (window.confirm(`Sei sicuro di voler eliminare "${editingExercise.name}"?`)) {
+    if (window.confirm(tr('Sei sicuro di voler eliminare "{name}"?', { name: editingExercise.name }))) {
       removeCustomExercise(editingExercise.id);
       setEditingExercise(null);
     }
@@ -149,10 +150,10 @@ function Exercises() {
       <div className="ej-glow" aria-hidden="true" />
 
       <header className="ex-header">
-        <button type="button" className="ej-icon-btn ej-icon-btn--round ex-back" onClick={() => navigate(-1)} title="Indietro">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round ex-back" onClick={() => navigate(-1)} title={tr('Indietro')}>
           <ChevronLeft size={20} />
         </button>
-        <h1 className="ex-title">Database Esercizi</h1>
+        <h1 className="ex-title">{tr('Database Esercizi')}</h1>
       </header>
 
       <main className="ex-content">
@@ -160,7 +161,7 @@ function Exercises() {
           <Search size={20} className="search-icon" />
           <input 
             type="text" 
-            placeholder="Cerca esercizio o categoria..." 
+            placeholder={tr('Cerca esercizio o categoria...')} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
@@ -170,23 +171,23 @@ function Exercises() {
         <div className="add-exercise-section">
           {!isAdding ? (
             <button className="btn-add-exercise" onClick={() => setIsAdding(true)}>
-              <Plus size={20} /> Nuovo Esercizio Personalizzato
+              <Plus size={20} /> {tr('Nuovo Esercizio Personalizzato')}
             </button>
           ) : (
             <div className="add-exercise-form">
-              <h3>Aggiungi Esercizio Personalizzato</h3>
+              <h3>{tr('Aggiungi Esercizio Personalizzato')}</h3>
               <div className="form-group">
-                <label>Nome Esercizio</label>
+                <label>{tr('Nome Esercizio')}</label>
                 <input 
                   type="text" 
-                  placeholder="Es. Panca Piana Bilanciere" 
+                  placeholder={tr('Es. Panca Piana Bilanciere')} 
                   value={newExName}
                   onChange={(e) => setNewExName(e.target.value)}
                   autoFocus
                 />
               </div>
               <div className="form-group">
-                <label>Gruppo Muscolare Principale</label>
+                <label>{tr('Gruppo Muscolare Principale')}</label>
                 <select 
                   value={newExCategory} 
                   onChange={(e) => {
@@ -195,12 +196,12 @@ function Exercises() {
                   }}
                 >
                   {Object.values(EXERCISE_CATEGORIES).map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat} value={cat}>{tr(cat)}</option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label>Gruppi Muscolari Secondari (Opzionali)</label>
+                <label>{tr('Gruppi Muscolari Secondari (Opzionali)')}</label>
                 <div className="chips-container">
                   {Object.values(EXERCISE_CATEGORIES)
                     .filter(cat => cat !== newExCategory)
@@ -212,25 +213,25 @@ function Exercises() {
                         onClick={() => handleToggleSecondary(cat, true)}
                       >
                         {newExSecondary.includes(cat) && <Check size={12} className="ex-chip-check" />}
-                        {cat}
+                        {tr(cat)}
                       </button>
                     ))}
                 </div>
               </div>
               <div className="form-group">
-                <label>Tipo Attrezzo</label>
+                <label>{tr('Tipo Attrezzo')}</label>
                 <select
                   value={newExEquipment}
                   onChange={(e) => setNewExEquipment(e.target.value)}
                 >
-                  <option value={EQUIPMENT_TYPES.BARBELL}>Bilanciere (+2.5kg)</option>
-                  <option value={EQUIPMENT_TYPES.MACHINE}>Macchinario / Cavi (+2.5kg)</option>
-                  <option value={EQUIPMENT_TYPES.DUMBBELL}>Manubri (+2kg)</option>
+                  <option value={EQUIPMENT_TYPES.BARBELL}>{tr('Bilanciere (+2.5kg)')}</option>
+                  <option value={EQUIPMENT_TYPES.MACHINE}>{tr('Macchinario / Cavi (+2.5kg)')}</option>
+                  <option value={EQUIPMENT_TYPES.DUMBBELL}>{tr('Manubri (+2kg)')}</option>
                 </select>
               </div>
               <div className="form-actions">
-                <button className="btn-cancel" onClick={() => setIsAdding(false)}>Annulla</button>
-                <button className="btn-save" onClick={handleAdd}>Salva</button>
+                <button className="btn-cancel" onClick={() => setIsAdding(false)}>{tr('Annulla')}</button>
+                <button className="btn-save" onClick={handleAdd}>{tr('Salva')}</button>
               </div>
             </div>
           )}
@@ -242,14 +243,14 @@ function Exercises() {
             return (
               <div key={category} className="category-group">
                 <h3 className="category-title">
-                  {category} <span className="category-count">{exercises.length}</span>
+                  {tr(category)} <span className="category-count">{exercises.length}</span>
                 </h3>
                 <div className="category-list">
                   {exercises.map(ex => {
                     const isDumbbell = ex.equipmentType === EQUIPMENT_TYPES.DUMBBELL;
-                    const equipmentLabel = isDumbbell ? 'Manubri (+2kg)' : ex.equipmentType === EQUIPMENT_TYPES.MACHINE ? 'Macchinario / Cavi (+2.5kg)' : 'Bilanciere (+2.5kg)';
+                    const equipmentLabel = isDumbbell ? tr('Manubri (+2kg)') : ex.equipmentType === EQUIPMENT_TYPES.MACHINE ? tr('Macchinario / Cavi (+2.5kg)') : tr('Bilanciere (+2.5kg)');
                     const secondaryLabel = ex.secondaryCategories && ex.secondaryCategories.length > 0
-                      ? `+ ${ex.secondaryCategories.join(', ')}`
+                      ? `+ ${ex.secondaryCategories.map(cat => tr(cat)).join(', ')}`
                       : null;
 
                     const content = (
@@ -276,11 +277,11 @@ function Exercises() {
 
                         <div className="ex-item-actions" onClick={e => e.stopPropagation()}>
                           {ex.isCustom && <span className="badge-custom">Custom</span>}
-                          {ex.isModified && <span className="badge-modified">Modificato</span>}
+                          {ex.isModified && <span className="badge-modified">{tr('Modificato')}</span>}
                           <button
                             type="button"
                             className="ex-action-btn edit-btn"
-                            title="Modifica esercizio"
+                            title={tr('Modifica esercizio')}
                             onClick={(e) => handleOpenEdit(ex, e)}
                           >
                             <Edit2 size={15} />
@@ -289,10 +290,10 @@ function Exercises() {
                             <button
                               type="button"
                               className="ex-action-btn delete-btn"
-                              title="Elimina"
+                              title={tr('Elimina')}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (window.confirm(`Sei sicuro di voler eliminare "${ex.name}"?`)) {
+                                if (window.confirm(tr('Sei sicuro di voler eliminare "{name}"?', { name: ex.name }))) {
                                   removeCustomExercise(ex.id);
                                 }
                               }}
@@ -308,7 +309,7 @@ function Exercises() {
                       <SwipeToDelete
                         key={ex.id}
                         onDelete={() => {
-                          if (window.confirm(`Sei sicuro di voler eliminare "${ex.name}"?`)) {
+                          if (window.confirm(tr('Sei sicuro di voler eliminare "{name}"?', { name: ex.name }))) {
                             removeCustomExercise(ex.id);
                           }
                         }}
@@ -329,9 +330,9 @@ function Exercises() {
 
         {/* Mini Guida Esercizi */}
         <div className="settings-guide-box">
-          <p className="settings-guide-title"><Info size={14} /> Come funzionano gli esercizi?</p>
+          <p className="settings-guide-title"><Info size={14} /> {tr('Come funzionano gli esercizi?')}</p>
           <p className="settings-guide-text">
-            Puoi modificare qualsiasi esercizio predefinito o crearne di nuovi con <strong>Nuovo Esercizio</strong> in alto. Vengono tutti integrati istantaneamente nel generatore di schede AI e nel calcolo automatico dei tuoi massimali (1RM).
+            {tr('Puoi modificare qualsiasi esercizio predefinito o crearne di nuovi con')} <strong>{tr('Nuovo Esercizio')}</strong> {tr('in alto. Vengono tutti integrati istantaneamente nel generatore di schede AI e nel calcolo automatico dei tuoi massimali (1RM).')}
           </p>
         </div>
       </main>
@@ -342,7 +343,7 @@ function Exercises() {
           <div className="edit-modal-card" onClick={e => e.stopPropagation()}>
             <header className="modal-header">
               <h3>
-                <Edit2 size={18} className="ex-modal-icon" /> Modifica Esercizio
+                <Edit2 size={18} className="ex-modal-icon" /> {tr('Modifica Esercizio')}
               </h3>
               <button 
                 type="button" 
@@ -355,17 +356,17 @@ function Exercises() {
 
             <div className="modal-body">
               <div className="form-group">
-                <label>Nome Esercizio</label>
+                <label>{tr('Nome Esercizio')}</label>
                 <input 
                   type="text" 
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Nome dell'esercizio"
+                  placeholder={tr("Nome dell'esercizio")}
                 />
               </div>
 
               <div className="form-group">
-                <label>Gruppo Muscolare Principale</label>
+                <label>{tr('Gruppo Muscolare Principale')}</label>
                 <select 
                   value={editCategory}
                   onChange={(e) => {
@@ -375,13 +376,13 @@ function Exercises() {
                   }}
                 >
                   {Object.values(EXERCISE_CATEGORIES).map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat} value={cat}>{tr(cat)}</option>
                   ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Gruppi Muscolari Secondari / Sinergici</label>
+                <label>{tr('Gruppi Muscolari Secondari / Sinergici')}</label>
                 <div className="chips-container">
                   {Object.values(EXERCISE_CATEGORIES)
                     .filter(cat => cat !== editCategory)
@@ -393,21 +394,21 @@ function Exercises() {
                         onClick={() => handleToggleSecondary(cat, false)}
                       >
                         {editSecondary.includes(cat) && <Check size={12} className="ex-chip-check" />}
-                        {cat}
+                        {tr(cat)}
                       </button>
                     ))}
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Tipo Attrezzo (Incremento Carico)</label>
+                <label>{tr('Tipo Attrezzo (Incremento Carico)')}</label>
                 <select
                   value={editEquipment}
                   onChange={(e) => setEditEquipment(e.target.value)}
                 >
-                  <option value={EQUIPMENT_TYPES.BARBELL}>Bilanciere (+2.5kg per volta)</option>
-                  <option value={EQUIPMENT_TYPES.MACHINE}>Macchinario / Cavi (+2.5kg)</option>
-                  <option value={EQUIPMENT_TYPES.DUMBBELL}>Manubri (+2kg: 1kg per mano)</option>
+                  <option value={EQUIPMENT_TYPES.BARBELL}>{tr('Bilanciere (+2.5kg per volta)')}</option>
+                  <option value={EQUIPMENT_TYPES.MACHINE}>{tr('Macchinario / Cavi (+2.5kg)')}</option>
+                  <option value={EQUIPMENT_TYPES.DUMBBELL}>{tr('Manubri (+2kg: 1kg per mano)')}</option>
                 </select>
               </div>
 
@@ -418,9 +419,9 @@ function Exercises() {
                   onChange={(e) => setEditSyncHistory(e.target.checked)}
                 />
                 <div className="sync-option-text">
-                  <div className="sync-option-title">Aggiorna anche nelle schede e nello storico</div>
+                  <div className="sync-option-title">{tr('Aggiorna anche nelle schede e nello storico')}</div>
                   <div className="sync-option-desc">
-                    Se cambi il nome, aggiorna automaticamente le tue schede e gli allenamenti passati per preservare 1RM, note e grafici di progresso.
+                    {tr('Se cambi il nome, aggiorna automaticamente le tue schede e gli allenamenti passati per preservare 1RM, note e grafici di progresso.')}
                   </div>
                 </div>
               </label>
@@ -433,7 +434,7 @@ function Exercises() {
                   className="modal-reset-btn"
                   onClick={handleResetDefault}
                 >
-                  <RotateCcw size={15} /> Ripristina valori predefiniti
+                  <RotateCcw size={15} /> {tr('Ripristina valori predefiniti')}
                 </button>
               )}
 
@@ -443,7 +444,7 @@ function Exercises() {
                   className="modal-delete-btn"
                   onClick={handleDeleteCustom}
                 >
-                  <Trash2 size={15} /> Elimina esercizio
+                  <Trash2 size={15} /> {tr('Elimina esercizio')}
                 </button>
               )}
 
@@ -453,14 +454,14 @@ function Exercises() {
                   className="btn-cancel" 
                   onClick={() => setEditingExercise(null)}
                 >
-                  Annulla
+                  {tr('Annulla')}
                 </button>
                 <button 
                   type="button" 
                   className="btn-save" 
                   onClick={handleSaveEdit}
                 >
-                  Salva Modifiche
+                  {tr('Salva Modifiche')}
                 </button>
               </div>
             </footer>

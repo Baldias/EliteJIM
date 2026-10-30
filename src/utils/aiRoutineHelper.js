@@ -1,5 +1,6 @@
 import { normalizeName, getExerciseCategories } from '../data/exercises.js';
 import { parseNonNegativeInt } from './number.js';
+import { tr } from '../i18n';
 
 /**
  * Genera il Master Prompt da copiare per un'AI esterna (ChatGPT, Claude, Gemini, DeepSeek).
@@ -86,7 +87,7 @@ ${userNotes ? `• Special requirements / injuries / focus: ${userNotes}` : '•
  */
 export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
   if (!rawText || typeof rawText !== 'string' || !rawText.trim()) {
-    return { success: false, error: 'Il testo inserito è vuoto.' };
+    return { success: false, error: tr('Il testo inserito è vuoto.') };
   }
 
   // 1. Rimuovi blocchi di codice markdown (```json ... ``` o ``` ... ```)
@@ -129,7 +130,7 @@ export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
   } catch (err) {
     return {
       success: false,
-      error: `Formato JSON non valido: ${err.message}. Assicurati di aver copiato solo la struttura JSON restituita dall'AI.`
+      error: tr('Formato JSON non valido: {message}. Assicurati di aver copiato solo la struttura JSON restituita dall\'AI.', { message: err.message })
     };
   }
 
@@ -154,15 +155,15 @@ export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
     } else {
       return {
         success: false,
-        error: "Struttura non riconosciuta. Il JSON deve contenere un array di schede o una scheda con un elenco di 'exercises'."
+        error: tr("Struttura non riconosciuta. Il JSON deve contenere un array di schede o una scheda con un elenco di 'exercises'.")
       };
     }
   } else {
-    return { success: false, error: 'Il JSON fornito non contiene un oggetto o un array valido.' };
+    return { success: false, error: tr('Il JSON fornito non contiene un oggetto o un array valido.') };
   }
 
   if (templatesList.length === 0) {
-    return { success: false, error: 'Nessuna scheda trovata nel JSON inserito.' };
+    return { success: false, error: tr('Nessuna scheda trovata nel JSON inserito.') };
   }
 
   // 5. Crea una mappa degli esercizi noti per il matching
@@ -227,7 +228,7 @@ export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
   if (validatedTemplates.length === 0) {
     return {
       success: false,
-      error: "Nessun esercizio valido trovato nelle schede. Verifica che ogni scheda contenga un campo 'exercises' con almeno un esercizio."
+      error: tr("Nessun esercizio valido trovato nelle schede. Verifica che ogni scheda contenga un campo 'exercises' con almeno un esercizio.")
     };
   }
 

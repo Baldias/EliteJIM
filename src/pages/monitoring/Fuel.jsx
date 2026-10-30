@@ -1,6 +1,7 @@
 import React from 'react';
 import { KCAL_PER_G, MACROS, fmtInt } from '../../utils/nutrition';
 import './Fuel.css';
+import { tr } from '../../i18n';
 
 // Barra "carburante": le kcal assunte, divise per macro, rispetto al budget
 // del giorno. `preview` (facoltativo) mostra in trasparenza l'alimento che
@@ -59,7 +60,7 @@ export function MacroMeter({ macro, value, goal, preview = 0, featured = false }
       </div>
       {featured && (
         <p className="mn-meter-note">
-          {left > 0 ? `Ne mancano ${fmtInt(left)} g per l'obiettivo` : 'Obiettivo proteico raggiunto'}
+          {left > 0 ? tr('Ne mancano {g} g per l\'obiettivo', { g: fmtInt(left) }) : tr('Obiettivo proteico raggiunto')}
         </p>
       )}
     </div>

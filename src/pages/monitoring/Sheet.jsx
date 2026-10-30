@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { tr } from '../../i18n';
 
 // Pannelli aperti: lo scroll del body si sblocca solo quando si chiude l'ultimo,
 // anche se pannelli annidati vengono smontati insieme in ordine qualsiasi.
@@ -37,7 +38,7 @@ export function Sheet({ title, onClose, children, footer, full = false, headerEx
         <header className="mn-sheet-head">
           <h2>{title}</h2>
           {headerExtra}
-          <button type="button" className="ej-icon-btn" onClick={onClose} aria-label="Chiudi">
+          <button type="button" className="ej-icon-btn" onClick={onClose} aria-label={tr('Chiudi')}>
             <X size={18} />
           </button>
         </header>

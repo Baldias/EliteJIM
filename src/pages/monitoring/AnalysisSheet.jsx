@@ -7,14 +7,15 @@ import {
   shiftDateKey, fromDateKey, fmtInt, fmtDec
 } from '../../utils/nutrition';
 import { Sheet } from './Sheet';
+import { locale, tr, translated } from '../../i18n';
 
 // Riferimenti OMS/LARN: le fibre sono un minimo, il resto sono limiti massimi
-const MICROS = [
+const MICROS = translated([
   { id: 'fiber', label: 'Fibre', ref: 30, kind: 'min' },
   { id: 'sugar', label: 'Zuccheri', ref: 50, kind: 'max' },
   { id: 'satFat', label: 'Grassi saturi', ref: 20, kind: 'max' },
   { id: 'salt', label: 'Sale', ref: 5, kind: 'max' },
-];
+]);
 const MEAL_TONES = { breakfast: 1, lunch: 0.75, dinner: 0.5, snacks: 0.3 };
 
 function WeekTooltip({ active, payload, unit }) {
@@ -57,8 +58,8 @@ export function AnalysisSheet({ date, onClose }) {
     const d = fromDateKey(key);
     return {
       key,
-      label: d.toLocaleDateString('it-IT', { weekday: 'short' }).slice(0, 3),
-      full: d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' }),
+      label: d.toLocaleDateString(locale(), { weekday: 'short' }).slice(0, 3),
+      full: d.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'short' }),
       totals: dayTotals(diary[key]),
     };
   }), [diary, date]);
@@ -99,21 +100,21 @@ export function AnalysisSheet({ date, onClose }) {
   const dayKcal = byMeal.reduce((a, m) => a + m.kcal, 0);
 
   return (
-    <Sheet title="Analisi" onClose={onClose} full>
+    <Sheet title={tr('Analisi')} onClose={onClose} full>
       <div className="mn-analysis">
         <div className="mn-seg">
-          <button type="button" className={view === 'day' ? 'is-active' : ''} onClick={() => setView('day')}>Giorno</button>
-          <button type="button" className={view === 'week' ? 'is-active' : ''} onClick={() => setView('week')}>Ultimi 7 giorni</button>
+          <button type="button" className={view === 'day' ? 'is-active' : ''} onClick={() => setView('day')}>{tr('Giorno')}</button>
+          <button type="button" className={view === 'week' ? 'is-active' : ''} onClick={() => setView('week')}>{tr('Ultimi 7 giorni')}</button>
         </div>
 
         {view === 'week' && (
           <section className="mn-panel">
             <div className="mn-panel-head">
               <div className="mn-seg mn-seg--tiny">
-                <button type="button" className={metric === 'kcal' ? 'is-active' : ''} onClick={() => setMetric('kcal')}>Calorie</button>
-                <button type="button" className={metric === 'protein' ? 'is-active' : ''} onClick={() => setMetric('protein')}>Proteine</button>
+                <button type="button" className={metric === 'kcal' ? 'is-active' : ''} onClick={() => setMetric('kcal')}>{tr('Calorie')}</button>
+                <button type="button" className={metric === 'protein' ? 'is-active' : ''} onClick={() => setMetric('protein')}>{tr('Proteine')}</button>
               </div>
-              <span className="mn-panel-meta">media {fmtInt(logged.length ? logged.reduce((a, d) => a + d.totals[metric], 0) / logged.length : 0)} {unit}</span>
+              <span className="mn-panel-meta">{tr('media')} {fmtInt(logged.length ? logged.reduce((a, d) => a + d.totals[metric], 0) / logged.length : 0)} {unit}</span>
             </div>
             <div className="mn-chart">
               <ResponsiveContainer width="100%" height={170}>
@@ -132,18 +133,18 @@ export function AnalysisSheet({ date, onClose }) {
               </ResponsiveContainer>
             </div>
             <div className="mn-stats">
-              <div><strong>{onTarget}/7</strong><span>giorni nel budget ±10%</span></div>
-              <div><strong>{proteinHit}/7</strong><span>giorni con proteine centrate</span></div>
+              <div><strong>{onTarget}/7</strong><span>{tr('giorni nel budget ±10%')}</span></div>
+              <div><strong>{proteinHit}/7</strong><span>{tr('giorni con proteine centrate')}</span></div>
             </div>
           </section>
         )}
 
         <section className="mn-panel">
           <div className="mn-panel-head">
-            <h3>Da dove arrivano le calorie</h3>
+            <h3>{tr('Da dove arrivano le calorie')}</h3>
           </div>
-          <SplitBar label="Tu" split={macroSplit(totals)} />
-          <SplitBar label="Obiettivo" split={goalSplit} />
+          <SplitBar label={tr('Tu')} split={macroSplit(totals)} />
+          <SplitBar label={tr('Obiettivo')} split={goalSplit} />
           <div className="mn-legend">
             {MACROS.map(m => <span key={m.id}><i className={`is-${m.id}`} /> {m.label} {fmtInt(totals[m.id])} g</span>)}
           </div>
@@ -151,8 +152,8 @@ export function AnalysisSheet({ date, onClose }) {
 
         <section className="mn-panel">
           <div className="mn-panel-head">
-            <h3>Qualità</h3>
-            <span className="mn-panel-meta">riferimenti OMS/LARN</span>
+            <h3>{tr('Qualità')}</h3>
+            <span className="mn-panel-meta">{tr('riferimenti OMS/LARN')}</span>
           </div>
           <div className="mn-micros">
             {MICROS.map(m => {
@@ -164,7 +165,7 @@ export function AnalysisSheet({ date, onClose }) {
                   <span>{m.label}</span>
                   <strong>{fmtDec(v)}<small> / {m.ref} g</small></strong>
                   <div className="mn-micro-track"><span style={{ width: `${Math.min(100, ratio * 100)}%` }} /></div>
-                  <em>{m.kind === 'min' ? 'almeno' : 'non oltre'}</em>
+                  <em>{m.kind === 'min' ? tr('almeno') : tr('non oltre')}</em>
                 </div>
               );
             })}
@@ -174,11 +175,11 @@ export function AnalysisSheet({ date, onClose }) {
         {processing.known > 0 && (
           <section className="mn-panel">
             <div className="mn-panel-head">
-              <h3>Lavorazione</h3>
-              <span className="mn-panel-meta">prodotti confezionati</span>
+              <h3>{tr('Lavorazione')}</h3>
+              <span className="mn-panel-meta">{tr('prodotti confezionati')}</span>
             </div>
             <p className="mn-processing-big">
-              <strong>{Math.round((processing.ultra / processing.known) * 100)}%</strong> delle kcal da ultra-processati
+              <strong>{Math.round((processing.ultra / processing.known) * 100)}%</strong> {tr('delle kcal da ultra-processati')}
             </p>
             <div className="mn-split-bar mn-split-bar--processing">
               {[['minimal', processing.minimal], ['processed', processing.processed], ['ultra', processing.ultra]].map(([k, v]) => v > 0 && (
@@ -186,13 +187,13 @@ export function AnalysisSheet({ date, onClose }) {
               ))}
             </div>
             <div className="mn-legend">
-              <span><i className="is-minimal" /> Poco lavorati {fmtInt(processing.minimal)} kcal</span>
-              <span><i className="is-processed" /> Trasformati {fmtInt(processing.processed)} kcal</span>
-              <span><i className="is-ultra" /> Ultra-processati {fmtInt(processing.ultra)} kcal</span>
+              <span><i className="is-minimal" /> {tr('Poco lavorati')} {fmtInt(processing.minimal)} kcal</span>
+              <span><i className="is-processed" /> {tr('Trasformati')} {fmtInt(processing.processed)} kcal</span>
+              <span><i className="is-ultra" /> {tr('Ultra-processati')} {fmtInt(processing.ultra)} kcal</span>
             </div>
             {processing.unknown > 0 && (
               <p className="mn-hint">
-                Calcolato sui prodotti con dati di lavorazione: {fmtInt(processing.unknown)} kcal (alimenti di base, pasti composti, inserimenti rapidi) restano fuori.
+                {tr('Calcolato sui prodotti con dati di lavorazione: {kcal} kcal (alimenti di base, pasti composti, inserimenti rapidi) restano fuori.', { kcal: fmtInt(processing.unknown) })}
               </p>
             )}
           </section>
@@ -201,7 +202,7 @@ export function AnalysisSheet({ date, onClose }) {
         {view === 'day' && dayKcal > 0 && (
           <section className="mn-panel">
             <div className="mn-panel-head">
-              <h3>Ritmo della giornata</h3>
+              <h3>{tr('Ritmo della giornata')}</h3>
               <span className="mn-panel-meta">{fmtInt(dayKcal)} kcal</span>
             </div>
             <div className="mn-split-bar mn-split-bar--meals">
@@ -215,13 +216,13 @@ export function AnalysisSheet({ date, onClose }) {
                   <i style={{ opacity: MEAL_TONES[m.id] }} />
                   <span>{m.label}</span>
                   <strong>{Math.round((m.kcal / dayKcal) * 100)}%</strong>
-                  <small>{fmtInt(m.kcal)} kcal · {fmtInt((sumNutrients(diary[date]?.[m.id] || []).protein))} g P</small>
+                  <small>{fmtInt(m.kcal)} kcal · {fmtInt((sumNutrients(diary[date]?.[m.id] || []).protein))} g {tr('P')}</small>
                 </li>
               ))}
             </ul>
           </section>
         )}
-        <p className="mn-hint mn-hint--center">{KCAL_PER_G.protein} kcal per g di proteine e carboidrati, {KCAL_PER_G.fat} per g di grassi.</p>
+        <p className="mn-hint mn-hint--center">{tr('{p} kcal per g di proteine e carboidrati, {f} per g di grassi.', { p: KCAL_PER_G.protein, f: KCAL_PER_G.fat })}</p>
       </div>
     </Sheet>
   );

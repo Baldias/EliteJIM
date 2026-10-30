@@ -8,6 +8,7 @@ import {
 } from '../utils/nutrition';
 import { FuelBar } from '../pages/monitoring/Fuel';
 import './DailyRecapCard.css';
+import { tr } from '../i18n';
 
 // Riepilogo giornaliero in Home: porta alla sezione Diario
 export function DailyRecapCard() {
@@ -30,7 +31,7 @@ export function DailyRecapCard() {
   return (
     <button type="button" className="drc" onClick={() => navigate('/diario')}>
       <div className="drc-head">
-        <span className="drc-eyebrow">Carburante di oggi</span>
+        <span className="drc-eyebrow">{tr('Carburante di oggi')}</span>
         {trend != null && (
           <span className="drc-weight"><Scale size={12} /> {fmtDec(trend)} kg</span>
         )}
@@ -41,7 +42,7 @@ export function DailyRecapCard() {
         <div className="drc-empty">
           <div>
             <strong>{fmtInt(budget)} kcal</strong>
-            <span>da distribuire oggi, di cui {fmtInt(goalG.protein)} g di proteine</span>
+            <span>{tr('da distribuire oggi, di cui {g} g di proteine', { g: fmtInt(goalG.protein) })}</span>
           </div>
           <span className="drc-plus"><Plus size={20} /></span>
         </div>
@@ -50,12 +51,12 @@ export function DailyRecapCard() {
           <div className="drc-numbers">
             <p className={`drc-big ${left < 0 ? 'is-over' : ''}`}>
               {fmtInt(Math.abs(left))}
-              <span>{left < 0 ? 'kcal oltre' : 'kcal disponibili'}</span>
+              <span>{left < 0 ? tr('kcal oltre') : tr('kcal disponibili')}</span>
             </p>
             <div className="drc-protein">
               <span><b>{fmtInt(totals.protein)}</b>/{fmtInt(goalG.protein)} g</span>
               <div className="drc-protein-track"><i style={{ width: `${proteinPct}%` }} /></div>
-              <small>proteine</small>
+              <small>{tr('proteine')}</small>
             </div>
           </div>
           <FuelBar totals={totals} budget={budget} height={10} />

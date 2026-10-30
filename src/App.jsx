@@ -30,6 +30,7 @@ import { ThemeOnboarding } from './components/ThemePicker';
 import OptionalFeature from './components/OptionalFeature';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
+import { tr } from './i18n';
 
 function Navigation() {
   const location = useLocation();
@@ -40,11 +41,11 @@ function Navigation() {
     <nav className="bottom-nav">
         <NavLink to="/science" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <Dna size={24} />
-          <span>Scienza</span>
+          <span>{tr("Scienza")}</span>
         </NavLink>
       <NavLink to="/diario" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <Utensils size={24} />
-        <span>Diario</span>
+        <span>{tr("Diario")}</span>
       </NavLink>
       <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} end>
         <HomeIcon size={24} />
@@ -52,17 +53,17 @@ function Navigation() {
       </NavLink>
       <NavLink to="/progress" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <TrendingUp size={24} />
-        <span>Progressi</span>
+        <span>{tr("Progressi")}</span>
       </NavLink>
       <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
         <User size={24} />
-        <span>Profilo</span>
+        <span>{tr("Profilo")}</span>
       </NavLink>
     </nav>
   );
 }
 
-function App() {
+function AppContent() {
   useWorkoutAutoFinish();
   const themeChosen = useStore(hasCurrentThemeChoice);
   const releaseNotesSeen = useStore(state => state.releaseNotesSeen);
@@ -103,6 +104,12 @@ function App() {
       </div>
     </BrowserRouter>
   );
+}
+
+// Remount the whole UI when the language changes, so every label is rendered again.
+function App() {
+  const language = useStore(state => state.language);
+  return <AppContent key={language ?? 'auto'} />;
 }
 
 export default App;

@@ -8,9 +8,9 @@ import {
 } from '../../utils/nutrition';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { FuelBar } from './Fuel';
+import { locale, tr } from '../../i18n';
 
 const MEAL_ICONS = { breakfast: Coffee, lunch: UtensilsCrossed, dinner: Moon, snacks: Apple };
-const WEEKDAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
 
 function mondayOf(key) {
   const d = fromDateKey(key);
@@ -27,7 +27,7 @@ export function WeekStrip({ date, onChange }) {
 
   return (
     <div className="mn-week">
-      <button type="button" className="mn-week-arrow" onClick={() => onChange(shiftDateKey(date, -7))} aria-label="Settimana precedente">
+      <button type="button" className="mn-week-arrow" onClick={() => onChange(shiftDateKey(date, -7))} aria-label={tr('Settimana precedente')}>
         <ChevronLeft size={18} />
       </button>
       {days.map((key, i) => {
@@ -39,16 +39,16 @@ export function WeekStrip({ date, onChange }) {
             type="button"
             className={`mn-day ${key === date ? 'is-selected' : ''} ${key === today ? 'is-today' : ''} ${key > today ? 'is-future' : ''}`}
             onClick={() => onChange(key)}
-            aria-label={fromDateKey(key).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+            aria-label={fromDateKey(key).toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' })}
             aria-pressed={key === date}
           >
-            <span className="mn-day-letter">{WEEKDAYS[i]}</span>
+            <span className="mn-day-letter">{tr('L,M,M,G,V,S,D').split(',')[i]}</span>
             <span className="mn-day-num">{fromDateKey(key).getDate()}</span>
             <i className={`mn-day-dot ${status}`} aria-hidden="true" />
           </button>
         );
       })}
-      <button type="button" className="mn-week-arrow" onClick={() => onChange(shiftDateKey(date, 7))} aria-label="Settimana successiva">
+      <button type="button" className="mn-week-arrow" onClick={() => onChange(shiftDateKey(date, 7))} aria-label={tr('Settimana successiva')}>
         <ChevronRight size={18} />
       </button>
     </div>
@@ -73,13 +73,13 @@ export function FuelCard({ date, onAnalysis }) {
       <div className="mn-summary-top">
         <div>
           <p className={`mn-summary-big ${left < 0 ? 'is-over' : ''}`}>{fmtInt(Math.abs(left))}</p>
-          <p className="mn-summary-sub">{left < 0 ? 'kcal oltre il budget' : 'kcal rimaste'}</p>
+          <p className="mn-summary-sub">{left < 0 ? tr('kcal oltre il budget') : tr('kcal rimaste')}</p>
           <p className="mn-summary-meta">
-            {fmtInt(totals.kcal)} di {fmtInt(budget)}
-            {training > 0 && <span className="mn-summary-train"> · +{fmtInt(training)} allenamento</span>}
+            {tr('{eaten} di {budget}', { eaten: fmtInt(totals.kcal), budget: fmtInt(budget) })}
+            {training > 0 && <span className="mn-summary-train"> · +{fmtInt(training)} {tr('allenamento')}</span>}
           </p>
         </div>
-        <button type="button" className="ej-icon-btn mn-summary-btn" onClick={onAnalysis} aria-label="Analisi della giornata">
+        <button type="button" className="ej-icon-btn mn-summary-btn" onClick={onAnalysis} aria-label={tr('Analisi della giornata')}>
           <BarChart3 size={18} />
         </button>
       </div>
@@ -104,10 +104,10 @@ export function FuelCard({ date, onAnalysis }) {
 
 function portionText(entry) {
   const f = entry.food;
-  if (f.source === 'quick') return 'inserimento rapido';
+  if (f.source === 'quick') return tr('inserimento rapido');
   const servings = f.servingSize > 0 ? entry.grams / f.servingSize : 0;
   if (servings > 0 && servings !== 1 && Math.abs(servings * 4 - Math.round(servings * 4)) < 0.01) {
-    return `${fmtDec(servings)} porzioni`;
+    return tr('{n} porzioni', { n: fmtDec(servings) });
   }
   return `${fmtDec(entry.grams)} g`;
 }
@@ -133,10 +133,10 @@ export function MealList({ date, onAdd, onEdit, onDelete }) {
               {entries.length > 0 && <span className="mn-meal-kcal">{fmtInt(kcal)} kcal</span>}
               {canRepeat && (
                 <button type="button" className="mn-meal-repeat" onClick={() => copyMeal(shiftDateKey(date, -1), date, meal.id)}>
-                  come ieri
+                  {tr('come ieri')}
                 </button>
               )}
-              <button type="button" className="mn-meal-add" onClick={() => onAdd(meal.id)} aria-label={`Aggiungi a ${meal.label}`}>
+              <button type="button" className="mn-meal-add" onClick={() => onAdd(meal.id)} aria-label={tr('Aggiungi a {meal}', { meal: meal.label })}>
                 <Plus size={18} />
               </button>
             </div>

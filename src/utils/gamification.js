@@ -1,6 +1,7 @@
 import { machineHistory } from './gymLocation';
 import { normalizeName } from '../data/exercises';
 import { estimate1RM, repFactor, getBodyweightLoad, REFERENCE_BODYWEIGHT_KG } from './oneRepMax';
+import { tr } from '../i18n';
 
 export const RANKS = [
   { level: 0, title: 'Rame III', minXp: 0, color: '#B87333' },
@@ -46,7 +47,8 @@ export const getRankByXp = (xp) => {
 
   return {
     ...currentRank,
-    nextRank,
+    title: tr(currentRank.title),
+    nextRank: nextRank && { ...nextRank, title: tr(nextRank.title) },
     progressPercent
   };
 };
@@ -100,15 +102,15 @@ export const evaluateExerciseOverload = (currentSets, pastSets, bodyweightLoad =
     const prev = Math.max(...past.map(s => s.reps));
     const metrics = { currentMetric: `${cur} reps`, pastMetric: `${prev} reps` };
     if (cur > prev) {
-      return { status: 'pr', overloaded: true, badge: '⚡ Nuovo Record Reps', badgeColor: '#34c759',
-        detail: `+${cur - prev} reps sulla serie migliore (${cur} vs ${prev})`, ...metrics };
+      return { status: 'pr', overloaded: true, badge: tr('⚡ Nuovo Record Reps'), badgeColor: '#34c759',
+        detail: tr('+{diff} reps sulla serie migliore ({cur} vs {prev})', { diff: cur - prev, cur, prev }), ...metrics };
     }
     if (repFactor(cur) < repFactor(prev) * 0.95) {
-      return { status: 'decreased', overloaded: false, badge: '🔻 Sotto Target', badgeColor: '#ff9500',
-        detail: `Serie migliore più corta della scorsa volta (${cur} vs ${prev} reps)`, ...metrics };
+      return { status: 'decreased', overloaded: false, badge: tr('🔻 Sotto Target'), badgeColor: '#ff9500',
+        detail: tr('Serie migliore più corta della scorsa volta ({cur} vs {prev} reps)', { cur, prev }), ...metrics };
     }
-    return { status: 'maintained', overloaded: false, badge: '⚖️ Mantenimento', badgeColor: '#8e8e93',
-      detail: cur === prev ? `Stesse ripetizioni sulla serie migliore (${cur} reps)` : `Ripetizioni stabili sulla serie migliore (${cur} vs ${prev})`,
+    return { status: 'maintained', overloaded: false, badge: tr('⚖️ Mantenimento'), badgeColor: '#8e8e93',
+      detail: cur === prev ? tr('Stesse ripetizioni sulla serie migliore ({cur} reps)', { cur }) : tr('Ripetizioni stabili sulla serie migliore ({cur} vs {prev})', { cur, prev }),
       ...metrics };
   }
 
@@ -119,15 +121,15 @@ export const evaluateExerciseOverload = (currentSets, pastSets, bodyweightLoad =
   const cur = topSet(current);
   const prev = topSet(past);
   const metrics = { currentMetric: `${fmtLoad(cur.kg)}kg × ${cur.reps}`, pastMetric: `${fmtLoad(prev.kg)}kg × ${prev.reps}` };
-  const rmText = `${bodyweightLoad > 0 ? 'zavorra ' : ''}${fmtKg(cur.rm)}kg vs ${fmtKg(prev.rm)}kg`;
+  const rmText = `${bodyweightLoad > 0 ? `${tr('zavorra')} ` : ''}${fmtKg(cur.rm)}kg vs ${fmtKg(prev.rm)}kg`;
   // Thresholds are relative to the whole mass lifted (body + added weight)
   const curTotal = cur.rm + bodyweightLoad;
   const prevTotal = prev.rm + bodyweightLoad;
 
   // Beyond the estimate's noise (different rep ranges give slightly different 1RMs)
   if (cur.rm > 0 && curTotal >= prevTotal * 1.015) {
-    return { status: 'pr', overloaded: true, badge: '⚡ Record Forza (1RM)', badgeColor: '#ffd700',
-      detail: `+${fmtKg(cur.rm - prev.rm)} kg di 1RM stimato (${rmText})`, ...metrics };
+    return { status: 'pr', overloaded: true, badge: tr('⚡ Record Forza (1RM)'), badgeColor: '#ffd700',
+      detail: tr('+{kg} kg di 1RM stimato ({text})', { kg: fmtKg(cur.rm - prev.rm), text: rmText }), ...metrics };
   }
 
   // Small but certain progressions: a set that beats the previous top set on
@@ -139,21 +141,21 @@ export const evaluateExerciseOverload = (currentSets, pastSets, bodyweightLoad =
     const heavier = beatsTop.kg > prev.kg;
     return {
       status: 'overload', overloaded: true,
-      badge: heavier ? '⚡ Più Carico' : '🔥 Più Ripetizioni', badgeColor: '#34c759',
+      badge: heavier ? tr('⚡ Più Carico') : tr('🔥 Più Ripetizioni'), badgeColor: '#34c759',
       detail: heavier
-        ? `Più peso sulla serie migliore: ${fmtLoad(beatsTop.kg)}kg × ${beatsTop.reps} (prec. ${fmtLoad(prev.kg)}kg × ${prev.reps})`
-        : `+${beatsTop.reps - prev.reps} reps a ${fmtLoad(beatsTop.kg)}kg sulla serie migliore`,
+        ? tr('Più peso sulla serie migliore: {kg}kg × {reps} (prec. {prevKg}kg × {prevReps})', { kg: fmtLoad(beatsTop.kg), reps: beatsTop.reps, prevKg: fmtLoad(prev.kg), prevReps: prev.reps })
+        : tr('+{reps} reps a {kg}kg sulla serie migliore', { reps: beatsTop.reps - prev.reps, kg: fmtLoad(beatsTop.kg) }),
       currentMetric: `${fmtLoad(beatsTop.kg)}kg × ${beatsTop.reps}`, pastMetric: metrics.pastMetric
     };
   }
 
   if (curTotal < prevTotal * 0.95) {
-    return { status: 'decreased', overloaded: false, badge: '🔻 Sotto Target', badgeColor: '#ff9500',
-      detail: `1RM stimato in calo (${rmText})`, ...metrics };
+    return { status: 'decreased', overloaded: false, badge: tr('🔻 Sotto Target'), badgeColor: '#ff9500',
+      detail: tr('1RM stimato in calo ({text})', { text: rmText }), ...metrics };
   }
 
-  return { status: 'maintained', overloaded: false, badge: '⚖️ Mantenimento', badgeColor: '#8e8e93',
-    detail: `1RM stimato stabile (${rmText})`, ...metrics };
+  return { status: 'maintained', overloaded: false, badge: tr('⚖️ Mantenimento'), badgeColor: '#8e8e93',
+    detail: tr('1RM stimato stabile ({text})', { text: rmText }), ...metrics };
 };
 
 export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], scienceReport = null, bodyweight = null) => {
@@ -161,9 +163,9 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
     return {
       xp: 0,
       grade: 'D',
-      gradeLabel: 'Serie Insufficienti',
-      gradeDescription: 'Nessun esercizio completato nella sessione.',
-      nextTip: 'Completa almeno un esercizio per iniziare a guadagnare punti.',
+      gradeLabel: tr('Serie Insufficienti'),
+      gradeDescription: tr('Nessun esercizio completato nella sessione.'),
+      nextTip: tr('Completa almeno un esercizio per iniziare a guadagnare punti.'),
       exercisesAnalysis: [],
       overloadRatio: 0,
       totalExercises: 0,
@@ -231,10 +233,10 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
         name: ex.name,
         status: 'new',
         overloaded: false,
-        badge: '✨ Nuova Baseline',
+        badge: tr('✨ Nuova Baseline'),
         badgeColor: '#3b82f6',
-        detail: 'Prima sessione registrata: servirà da riferimento per i prossimi allenamenti',
-        currentMetric: `${currentDoneSets.length} serie fatte`,
+        detail: tr('Prima sessione registrata: servirà da riferimento per i prossimi allenamenti'),
+        currentMetric: tr('{n} serie fatte', { n: currentDoneSets.length }),
         pastMetric: null
       });
       return;
@@ -306,59 +308,59 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
   if (isDeloadWeek) {
     if (doneSets >= 4 && doneSets <= 16) {
       grade = 'S';
-      gradeLabel = 'Scarico Perfetto (Deload)';
-      gradeDescription = `Hai completato ${doneSets} serie controllate, rispettando alla perfezione il recupero sistemico del mesociclo.`;
-      nextTip = 'Ottimo lavoro! Ripartirai fresco e con i tessuti muscolari supercompensati per la prossima fase.';
+      gradeLabel = tr('Scarico Perfetto (Deload)');
+      gradeDescription = tr('Hai completato {n} serie controllate, rispettando alla perfezione il recupero sistemico del mesociclo.', { n: doneSets });
+      nextTip = tr('Ottimo lavoro! Ripartirai fresco e con i tessuti muscolari supercompensati per la prossima fase.');
     } else if (doneSets > 16) {
       grade = 'B';
-      gradeLabel = 'Volume Elevato per Deload';
-      gradeDescription = `Hai eseguito ${doneSets} serie: in settimana di scarico è consigliabile mantenersi sotto le 12-14 serie per smaltire la fatica.`;
-      nextTip = 'Non spingere troppe serie durante lo scarico, l\'obiettivo scientifico è far riposare il sistema nervoso.';
+      gradeLabel = tr('Volume Elevato per Deload');
+      gradeDescription = tr('Hai eseguito {n} serie: in settimana di scarico è consigliabile mantenersi sotto le 12-14 serie per smaltire la fatica.', { n: doneSets });
+      nextTip = tr("Non spingere troppe serie durante lo scarico, l'obiettivo scientifico è far riposare il sistema nervoso.");
     } else {
       grade = 'C';
-      gradeLabel = 'Scarico Troppo Breve';
-      gradeDescription = `Hai completato meno di 4 serie totali (${doneSets} serie).`;
-      nextTip = 'Fai almeno 1-2 serie leggere per gruppo muscolare per mantenere attivi i pattern motori.';
+      gradeLabel = tr('Scarico Troppo Breve');
+      gradeDescription = tr('Hai completato meno di 4 serie totali ({n} serie).', { n: doneSets });
+      nextTip = tr('Fai almeno 1-2 serie leggere per gruppo muscolare per mantenere attivi i pattern motori.');
     }
   } else if (isJunk) {
     grade = 'D';
-    gradeLabel = 'Serie Insufficienti';
-    gradeDescription = `Hai completato solo ${doneSets} serie: sotto le 5 serie allenanti la sessione non basta per valutare la progressione.`;
-    nextTip = 'Completa almeno 6-8 serie allenanti con impegno per stimolare la crescita muscolare e guadagnare un grado superiore.';
+    gradeLabel = tr('Serie Insufficienti');
+    gradeDescription = tr('Hai completato solo {n} serie: sotto le 5 serie allenanti la sessione non basta per valutare la progressione.', { n: doneSets });
+    nextTip = tr('Completa almeno 6-8 serie allenanti con impegno per stimolare la crescita muscolare e guadagnare un grado superiore.');
   } else if (allNew) {
     grade = 'B';
-    gradeLabel = 'Prima Sessione (Baseline)';
-    gradeDescription = `Tutti i ${totalExercises} esercizi sono nuovi: i risultati odierni sono stati salvati come punto di riferimento per le prossime progressioni.`;
-    nextTip = 'Nel prossimo allenamento prova ad aggiungere 1 ripetizione o 1-2 kg su questi stessi esercizi per puntare al Grado S!';
+    gradeLabel = tr('Prima Sessione (Baseline)');
+    gradeDescription = tr('Tutti i {n} esercizi sono nuovi: i risultati odierni sono stati salvati come punto di riferimento per le prossime progressioni.', { n: totalExercises });
+    nextTip = tr('Nel prossimo allenamento prova ad aggiungere 1 ripetizione o 1-2 kg su questi stessi esercizi per puntare al Grado S!');
   } else if (overloadRatio >= 0.75) {
     grade = 'S';
-    gradeLabel = 'Sovraccarico Totale';
-    gradeDescription = `Prestazione eccezionale: hai ottenuto un sovraccarico progressivo su ${overloadCount} esercizi su ${totalExercises} (${Math.round(overloadRatio * 100)}%).`;
-    nextTip = 'Sei al massimo del rendimento! Continua così e cura recupero, alimentazione e sonno.';
+    gradeLabel = tr('Sovraccarico Totale');
+    gradeDescription = tr('Prestazione eccezionale: hai ottenuto un sovraccarico progressivo su {n} esercizi su {total} ({pct}%).', { n: overloadCount, total: totalExercises, pct: Math.round(overloadRatio * 100) });
+    nextTip = tr('Sei al massimo del rendimento! Continua così e cura recupero, alimentazione e sonno.');
   } else if (overloadRatio >= 0.5) {
     grade = 'A';
-    gradeLabel = 'Grande Progressione';
-    gradeDescription = `Ottimo lavoro: progressione netta su oltre la metà degli esercizi (${overloadCount} su ${totalExercises}).`;
-    nextTip = 'Per raggiungere il leggendario Grado S, prova a forzare anche solo 1 ripetizione in più su uno degli altri esercizi.';
+    gradeLabel = tr('Grande Progressione');
+    gradeDescription = tr('Ottimo lavoro: progressione netta su oltre la metà degli esercizi ({n} su {total}).', { n: overloadCount, total: totalExercises });
+    nextTip = tr('Per raggiungere il leggendario Grado S, prova a forzare anche solo 1 ripetizione in più su uno degli altri esercizi.');
   } else if (overloadRatio > 0) {
     grade = 'B';
-    gradeLabel = 'Buona Sessione';
-    gradeDescription = `Hai superato i tuoi standard su ${overloadCount} ${overloadCount === 1 ? 'esercizio' : 'esercizi'} su ${totalExercises}. C'è ancora margine sugli altri movimenti.`;
-    nextTip = 'Focalizzati sui primi 2 esercizi base della scheda per aumentare il carico e raggiungere il Grado A.';
+    gradeLabel = tr('Buona Sessione');
+    gradeDescription = tr(overloadCount === 1 ? 'Hai superato i tuoi standard su {n} esercizio su {total}. C\'è ancora margine sugli altri movimenti.' : 'Hai superato i tuoi standard su {n} esercizi su {total}. C\'è ancora margine sugli altri movimenti.', { n: overloadCount, total: totalExercises });
+    nextTip = tr('Focalizzati sui primi 2 esercizi base della scheda per aumentare il carico e raggiungere il Grado A.');
   } else {
     // No overload: strength held or dropped? Doing more sets does not change the grade.
     const compared = exercisesAnalysis.filter(e => e.status !== 'new').length;
     const decreased = exercisesAnalysis.filter(e => e.status === 'decreased').length;
     if (decreased > compared / 2) {
       grade = 'D';
-      gradeLabel = 'Calo di Forza';
-      gradeDescription = `Il 1RM stimato è sceso su ${decreased} ${decreased === 1 ? 'esercizio' : 'esercizi'} su ${compared} rispetto all'ultima volta.`;
-      nextTip = 'Controlla recupero, sonno e alimentazione: se il calo continua per 2-3 sessioni valuta una settimana di scarico.';
+      gradeLabel = tr('Calo di Forza');
+      gradeDescription = tr(decreased === 1 ? 'Il 1RM stimato è sceso su {n} esercizio su {total} rispetto all\'ultima volta.' : 'Il 1RM stimato è sceso su {n} esercizi su {total} rispetto all\'ultima volta.', { n: decreased, total: compared });
+      nextTip = tr('Controlla recupero, sonno e alimentazione: se il calo continua per 2-3 sessioni valuta una settimana di scarico.');
     } else {
       grade = 'C';
-      gradeLabel = 'Mantenimento / Stagnazione';
-      gradeDescription = 'Forza stabile: nessun esercizio ha superato il 1RM stimato o la serie migliore della scorsa volta.';
-      nextTip = 'Basta 1 ripetizione o 1,25-2,5 kg in più sulla serie migliore per trasformare la sessione in progressione.';
+      gradeLabel = tr('Mantenimento / Stagnazione');
+      gradeDescription = tr('Forza stabile: nessun esercizio ha superato il 1RM stimato o la serie migliore della scorsa volta.');
+      nextTip = tr('Basta 1 ripetizione o 1,25-2,5 kg in più sulla serie migliore per trasformare la sessione in progressione.');
     }
   }
 
@@ -387,10 +389,10 @@ export const calculateSessionScore = (workout, pastHistory, exercisesDb = [], sc
   });
 
   const breakdown = [
-    { label: gradeLabel, value: `Grado ${grade}` },
-    { label: 'Serie Completate', value: `+${baseXP} XP` },
-    ...(overloadCount > 0 ? [{ label: `Sovraccarico su ${overloadCount} esercizi`, value: `+${overloadXP} XP` }] : []),
-    ...(gradeMult !== 1 ? [{ label: `Moltiplicatore Grado`, value: `×${gradeMult}` }] : [])
+    { label: gradeLabel, value: tr('Grado {grade}', { grade }) },
+    { label: tr('Serie Completate'), value: `+${baseXP} XP` },
+    ...(overloadCount > 0 ? [{ label: tr('Sovraccarico su {n} esercizi', { n: overloadCount }), value: `+${overloadXP} XP` }] : []),
+    ...(gradeMult !== 1 ? [{ label: tr('Moltiplicatore Grado'), value: `×${gradeMult}` }] : [])
   ];
 
   return {

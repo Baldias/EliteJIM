@@ -5,6 +5,7 @@ import { useStore } from '../../store/useStore';
 import { toDateKey, fromDateKey, shiftDateKey, fmtDec, weightTrend, weeklyRate } from '../../utils/nutrition';
 import { Sheet } from './Sheet';
 import { shiftWeightMonth, weightCalendarDays } from '../../utils/weightCalendar';
+import { locale, tr } from '../../i18n';
 
 const RANGES = [
   { id: '1m', label: '1M', days: 30 },
@@ -14,16 +15,16 @@ const RANGES = [
   { id: 'all', label: 'Tutto', days: null },
 ];
 
-const fmtAxisDate = (t) => new Date(t).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '');
-const fmtLongDate = (key) => fromDateKey(key).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'long' });
+const fmtAxisDate = (t) => new Date(t).toLocaleDateString(locale(), { day: 'numeric', month: 'short' }).replace('.', '');
+const fmtLongDate = (key) => fromDateKey(key).toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'long' });
 const fmtSigned = (raw) => {
   const n = Math.round(raw * 10) / 10;
   return `${n > 0 ? '+' : n < 0 ? '−' : '±'}${fmtDec(Math.abs(n))}`;
 };
 const relDay = (key) => {
   const today = toDateKey();
-  if (key === today) return 'Oggi';
-  if (key === shiftDateKey(today, -1)) return 'Ieri';
+  if (key === today) return tr('Oggi');
+  if (key === shiftDateKey(today, -1)) return tr('Ieri');
   return fmtLongDate(key);
 };
 
@@ -41,7 +42,7 @@ function WeightTooltip({ active, payload }) {
 
 function WeightCalendar({ value, max, onChange }) {
   const [month, setMonth] = useState(value.slice(0, 7));
-  return <div className="mn-weight-calendar" id="weighin-date" aria-label="Calendario della pesata"><div className="mn-weight-calendar-head"><button type="button" className="ej-icon-btn" aria-label="Mese precedente per la pesata" onClick={() => setMonth(m => shiftWeightMonth(m, -1))}><ChevronLeft size={18} /></button><strong aria-live="polite">{fromDateKey(`${month}-01`).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}</strong><button type="button" className="ej-icon-btn" aria-label="Mese successivo per la pesata" disabled={month >= max.slice(0, 7)} onClick={() => setMonth(m => shiftWeightMonth(m, 1))}><ChevronRight size={18} /></button></div><div className="mn-weight-calendar-days">{['L', 'M', 'M', 'G', 'V', 'S', 'D'].map((day, i) => <span key={`day-${i}`} aria-hidden="true">{day}</span>)}{weightCalendarDays(month).map((key, i) => key ? <button type="button" key={key} disabled={key > max} aria-pressed={key === value} aria-label={fromDateKey(key).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} onClick={() => onChange(key)}>{Number(key.slice(-2))}</button> : <span key={`blank-${i}`} />)}</div></div>;
+  return <div className="mn-weight-calendar" id="weighin-date" aria-label={tr('Calendario della pesata')}><div className="mn-weight-calendar-head"><button type="button" className="ej-icon-btn" aria-label={tr('Mese precedente per la pesata')} onClick={() => setMonth(m => shiftWeightMonth(m, -1))}><ChevronLeft size={18} /></button><strong aria-live="polite">{fromDateKey(`${month}-01`).toLocaleDateString(locale(), { month: 'long', year: 'numeric' })}</strong><button type="button" className="ej-icon-btn" aria-label={tr('Mese successivo per la pesata')} disabled={month >= max.slice(0, 7)} onClick={() => setMonth(m => shiftWeightMonth(m, 1))}><ChevronRight size={18} /></button></div><div className="mn-weight-calendar-days">{tr('L,M,M,G,V,S,D').split(',').map((day, i) => <span key={`day-${i}`} aria-hidden="true">{day}</span>)}{weightCalendarDays(month).map((key, i) => key ? <button type="button" key={key} disabled={key > max} aria-pressed={key === value} aria-label={fromDateKey(key).toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} onClick={() => onChange(key)}>{Number(key.slice(-2))}</button> : <span key={`blank-${i}`} />)}</div></div>;
 }
 
 // Registrazione della pesata: numero grande, ±100 g, giorno a scelta
@@ -69,35 +70,35 @@ export function WeighInSheet({ initialDate, onClose }) {
 
   return (
     <Sheet
-      title={existing ? 'Correggi la pesata' : 'Nuova pesata'}
+      title={existing ? tr('Correggi la pesata') : tr('Nuova pesata')}
       onClose={onClose}
       footer={(
         <div className="mn-detail-actions">
           {existing && (
-            <button type="button" className="mn-btn-ghost-danger" aria-label="Elimina pesata"
+            <button type="button" className="mn-btn-ghost-danger" aria-label={tr('Elimina pesata')}
               onClick={() => { deleteWeightEntry(date); onClose(); }}>
               <Trash2 size={18} />
             </button>
           )}
           <button type="button" className="mn-cta" disabled={!valid} onClick={() => { addWeightEntry(date, kg); onClose(); }}>
-            Salva {fmtDec(kg)} kg
+            {tr('Salva {kg} kg', { kg: fmtDec(kg) })}
           </button>
         </div>
       )}
     >
       <div className="mn-weighin">
         <div className="mn-chips">
-          <button type="button" className={`mn-chip ${date === today ? 'is-active' : ''}`} onClick={() => pickDate(today)}>Oggi</button>
-          <button type="button" className={`mn-chip ${date === shiftDateKey(today, -1) ? 'is-active' : ''}`} onClick={() => pickDate(shiftDateKey(today, -1))}>Ieri</button>
+          <button type="button" className={`mn-chip ${date === today ? 'is-active' : ''}`} onClick={() => pickDate(today)}>{tr('Oggi')}</button>
+          <button type="button" className={`mn-chip ${date === shiftDateKey(today, -1) ? 'is-active' : ''}`} onClick={() => pickDate(shiftDateKey(today, -1))}>{tr('Ieri')}</button>
           <button type="button" className={`mn-chip ${chooseDate || date < shiftDateKey(today, -1) ? 'is-active' : ''}`} onClick={() => setChooseDate(v => !v)} aria-expanded={chooseDate} aria-controls="weighin-date">
-            <CalendarDays size={14} />Altro giorno
+            <CalendarDays size={14} />{tr('Altro giorno')}
           </button>
         </div>
         {chooseDate && <WeightCalendar value={date} max={today} onChange={key => { pickDate(key); setChooseDate(false); }} />}
-        <p className="mn-weighin-selected"><CalendarDays size={15} />{relDay(date)} · {fromDateKey(date).toLocaleDateString('it-IT')}</p>
+        <p className="mn-weighin-selected"><CalendarDays size={15} />{relDay(date)} · {fromDateKey(date).toLocaleDateString(locale())}</p>
 
         <div className="mn-stepper mn-stepper--big">
-          <button type="button" onClick={() => bump(-0.1)} aria-label="Meno 100 grammi"><Minus size={22} /></button>
+          <button type="button" onClick={() => bump(-0.1)} aria-label={tr('Meno 100 grammi')}><Minus size={22} /></button>
           <label className="mn-stepper-value">
             <input
               inputMode="decimal"
@@ -109,14 +110,14 @@ export function WeighInSheet({ initialDate, onClose }) {
               }}
               onFocus={(e) => e.target.select()}
               onBlur={() => setDraft(null)}
-              aria-label="Peso in kg"
+              aria-label={tr('Peso in kg')}
             />
-            <span>chilogrammi</span>
+            <span>{tr('chilogrammi')}</span>
           </label>
-          <button type="button" onClick={() => bump(0.1)} aria-label="Più 100 grammi"><Plus size={22} /></button>
+          <button type="button" onClick={() => bump(0.1)} aria-label={tr('Più 100 grammi')}><Plus size={22} /></button>
         </div>
         <p className="mn-hint mn-hint--center">
-          {existing ? `Avevi registrato ${fmtDec(existing.kg)} kg per questo giorno.` : 'Pesati al mattino, a digiuno e dopo il bagno: i dati sono più confrontabili.'}
+          {existing ? tr('Avevi registrato {kg} kg per questo giorno.', { kg: fmtDec(existing.kg) }) : tr('Pesati al mattino, a digiuno e dopo il bagno: i dati sono più confrontabili.')}
         </p>
       </div>
     </Sheet>
@@ -173,9 +174,9 @@ export function WeightTab() {
       <>
         <section className="mn-wt-empty">
           <Scale size={34} />
-          <h3>Inizia dal numero di oggi</h3>
-          <p>Con qualche pesata a settimana calcolo il tuo peso di tendenza, che ignora le oscillazioni di acqua e sale, e il ritmo con cui ti muovi verso l'obiettivo.</p>
-          <button type="button" className="mn-cta" onClick={() => setWeighIn(today)}>Registra la prima pesata</button>
+          <h3>{tr('Inizia dal numero di oggi')}</h3>
+          <p>{tr("Con qualche pesata a settimana calcolo il tuo peso di tendenza, che ignora le oscillazioni di acqua e sale, e il ritmo con cui ti muovi verso l'obiettivo.")}</p>
+          <button type="button" className="mn-cta" onClick={() => setWeighIn(today)}>{tr('Registra la prima pesata')}</button>
         </section>
         {weighIn && <WeighInSheet initialDate={weighIn} onClose={() => setWeighIn(null)} />}
       </>
@@ -188,17 +189,17 @@ export function WeightTab() {
         <div className="mn-wt-top">
           <div>
             <p className="mn-wt-big">{fmtDec(current.trend)}<small>kg</small></p>
-            <p className="mn-wt-sub">peso di tendenza</p>
+            <p className="mn-wt-sub">{tr('peso di tendenza')}</p>
             <p className="mn-wt-rate">
               {rate != null ? (
                 <span className={Math.abs(rate) < 0.05 ? '' : rateGood ? 'is-good' : 'is-bad'}>
-                  {Math.abs(rate) < 0.05 ? 'stabile' : `${fmtSigned(rate)} kg a settimana`}
+                  {Math.abs(rate) < 0.05 ? tr('stabile') : tr('{kg} kg a settimana', { kg: fmtSigned(rate) })}
                 </span>
-              ) : 'ritmo in calcolo'}
+              ) : tr('ritmo in calcolo')}
             </p>
           </div>
           <button type="button" className="mn-wt-add" onClick={() => setWeighIn(today)}>
-            {todayEntry ? <><Check size={16} /> Oggi</> : <><Plus size={16} /> Pesati</>}
+            {todayEntry ? <><Check size={16} /> {tr('Oggi')}</> : <><Plus size={16} /> {tr('Pesati')}</>}
           </button>
         </div>
 
@@ -209,10 +210,10 @@ export function WeightTab() {
             </div>
             <p>
               {journey.reached
-                ? 'Obiettivo raggiunto: aggiornalo per la prossima fase.'
-                : <>Mancano <strong>{fmtDec(Math.abs(current.trend - target))} kg</strong> a {fmtDec(target)} kg</>}
+                ? tr('Obiettivo raggiunto: aggiornalo per la prossima fase.')
+                : <>{tr('Mancano')} <strong>{fmtDec(Math.abs(current.trend - target))} kg</strong> {tr('a {kg} kg', { kg: fmtDec(target) })}</>}
               {!journey.reached && journey.eta && (
-                <> · previsto il {journey.eta.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}</>
+                <> · {tr('previsto il')} {journey.eta.toLocaleDateString(locale(), { day: 'numeric', month: 'long' })}</>
               )}
             </p>
           </div>
@@ -221,15 +222,15 @@ export function WeightTab() {
 
       <section className="mn-panel">
         <div className="mn-panel-head">
-          <h3>Andamento</h3>
+          <h3>{tr('Andamento')}</h3>
           <div className="mn-seg mn-seg--tiny">
             {RANGES.map(r => (
-              <button key={r.id} type="button" className={range === r.id ? 'is-active' : ''} onClick={() => setRange(r.id)}>{r.label}</button>
+              <button key={r.id} type="button" className={range === r.id ? 'is-active' : ''} onClick={() => setRange(r.id)}>{tr(r.label)}</button>
             ))}
           </div>
         </div>
         {data.length === 0 ? (
-          <p className="mn-empty">Nessuna pesata in questo periodo.</p>
+          <p className="mn-empty">{tr('Nessuna pesata in questo periodo.')}</p>
         ) : (
           <>
             <div className="mn-chart">
@@ -253,14 +254,14 @@ export function WeightTab() {
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-            <p className="mn-hint">La linea è la tendenza, i punti sono le singole pesate.</p>
+            <p className="mn-hint">{tr('La linea è la tendenza, i punti sono le singole pesate.')}</p>
           </>
         )}
       </section>
 
       <section className="mn-panel">
         <div className="mn-panel-head">
-          <h3>Pesate</h3>
+          <h3>{tr('Pesate')}</h3>
           <span className="mn-panel-meta">{list.length}</span>
         </div>
         <ul className="mn-weighins">
@@ -282,7 +283,7 @@ export function WeightTab() {
         </ul>
         {list.length > 4 && (
           <button type="button" className="mn-link" onClick={() => setShowAll(s => !s)}>
-            {showAll ? 'Mostra meno' : `Mostra tutte (${list.length})`}
+            {showAll ? tr('Mostra meno') : tr('Mostra tutte ({n})', { n: list.length })}
           </button>
         )}
       </section>

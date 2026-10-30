@@ -188,6 +188,9 @@ export const useStore = create(
       themeChosen: false,
       themeChoiceVersion: 0,
       scienceGlow: 'gold',
+      // Language picked in the Profile; null follows the browser language
+      language: null,
+      setLanguage: (language) => set({ language }),
       chooseTheme: (theme, glow = get().scienceGlow) => { if (THEMES.includes(theme)) set({ theme, themeChosen: true, themeChoiceVersion: THEME_SELECTION_VERSION, scienceGlow: SCIENCE_GLOWS.some(g => g.id === glow) ? glow : get().scienceGlow }); },
       trainingReminder: emptyTrainingReminder(),
       acknowledgeTrainingReminder: (now = Date.now()) => set(state => {

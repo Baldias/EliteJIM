@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore';
 import { STORAGE_KEY, getAppStorage } from '../demo/demoMode';
 import { emptyScienceState } from './scienceV3';
 import { existingFeaturePreferences } from './featurePreferences';
+import { tr } from '../i18n';
 
 export function normalizeBackupPayload(parsed) {
   const payload = parsed.state ? parsed : { state: parsed, version: 0 };
@@ -75,7 +76,7 @@ export function exportDataBackup() {
     return true;
   } catch (err) {
     console.error('Errore durante l\'esportazione del backup:', err);
-    alert('Errore durante il salvataggio del backup: ' + err.message);
+    alert(tr('Errore durante il salvataggio del backup: {message}', { message: err.message }));
     return false;
   }
 }
@@ -95,14 +96,14 @@ export function importDataBackup(file, onComplete) {
       const parsed = JSON.parse(content);
 
       if (!parsed || (!parsed.state && !parsed.history && !parsed.templates)) {
-        alert('Il file selezionato non sembra essere un backup valido di EliteJIM.');
+        alert(tr('Il file selezionato non sembra essere un backup valido di EliteJIM.'));
         return;
       }
 
       // Normalizza la struttura se proviene da versioni differenti
       const normalizedData = normalizeBackupPayload(parsed);
 
-      if (window.confirm('Attenzione: Importando questo backup sovrascriverai schede, progressi e cronologia attuali. Sei sicuro di voler procedere?')) {
+      if (window.confirm(tr('Attenzione: Importando questo backup sovrascriverai schede, progressi e cronologia attuali. Sei sicuro di voler procedere?'))) {
         getAppStorage().setItem(STORAGE_KEY, JSON.stringify(normalizedData));
         if (onComplete) {
           onComplete(true);
@@ -112,7 +113,7 @@ export function importDataBackup(file, onComplete) {
       }
     } catch (err) {
       console.error('Errore durante l\'importazione:', err);
-      alert('Errore durante la lettura del file: ' + err.message);
+      alert(tr('Errore durante la lettura del file: {message}', { message: err.message }));
     }
   };
   reader.readAsText(file);
@@ -146,7 +147,7 @@ export async function initPersistentStorage() {
  * @returns {string}
  */
 export function formatLastBackupDate(timestamp) {
-  if (!timestamp) return 'Mai effettuato';
+  if (!timestamp) return tr('Mai effettuato');
 
   const date = new Date(timestamp);
   const now = new Date();
@@ -156,16 +157,16 @@ export function formatLastBackupDate(timestamp) {
   const timeStr = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
   if (isToday) {
-    return `Oggi alle ${timeStr}`;
+    return tr('Oggi alle {time}', { time: timeStr });
   }
 
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   if (date.toDateString() === yesterday.toDateString()) {
-    return `Ieri alle ${timeStr}`;
+    return tr('Ieri alle {time}', { time: timeStr });
   }
 
-  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} alle ${timeStr}`;
+  return tr('{date} alle {time}', { date: `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`, time: timeStr });
 }
 
 /**

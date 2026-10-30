@@ -4,6 +4,7 @@ import { Play } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useRestTimer } from '../hooks/useRestTimer';
 import './GlobalWorkoutBanner.css';
+import { tr } from '../i18n';
 
 function GlobalWorkoutBanner() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ function GlobalWorkoutBanner() {
         </div>
         {isResting && (
           <div className="global-banner-rest">
-            <span className="global-banner-rest-label">Rec.</span>
+            <span className="global-banner-rest-label">{tr('Rec.')}</span>
             <span className="global-banner-rest-time">{formatRestTime(restTimeLeft)}</span>
           </div>
         )}

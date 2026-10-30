@@ -13,6 +13,7 @@ import { sanitizeDecimalInput } from '../../utils/number';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import TrainingReminder from '../../components/TrainingReminder';
 import './Workout.css';
+import { tr, trc } from '../../i18n';
 
 const round1 = (n) => Math.round(n * 10) / 10;
 
@@ -95,10 +96,10 @@ function Workout() {
   };
 
   const handleFinishWorkout = () => {
-    if (window.confirm("Terminare e salvare l'allenamento?")) {
+    if (window.confirm(tr("Terminare e salvare l'allenamento?"))) {
       isFinishing.current = true;
       try { finishStoreWorkout(); navigate('/recap'); }
-      catch (err) { isFinishing.current = false; alert('Errore: ' + err.message); }
+      catch (err) { isFinishing.current = false; alert(tr('Errore: {message}', { message: err.message })); }
     }
   };
 
@@ -167,12 +168,12 @@ function Workout() {
       {/* ── STICKY HEADER & TIMER ─────────────────── */}
       <div className="wk-sticky">
         <div className="wk-header">
-          <button type="button" className="ej-icon-btn ej-icon-btn--round wk-back" onClick={() => navigate('/')} title="Torna alla Home">
+          <button type="button" className="ej-icon-btn ej-icon-btn--round wk-back" onClick={() => navigate('/')} title={tr('Torna alla Home')}>
             <ChevronLeft size={20} />
           </button>
 
           <div className="wk-header-center">
-            <p className="wk-header-name">{activeWorkout.name || 'Sessione Libera'}</p>
+            <p className="wk-header-name">{activeWorkout.name || tr('Sessione Libera')}</p>
             <div className="wk-header-time">
               <span className="wk-clock">{sessionTimeStr}</span>
               <span className="wk-sets-pill">{doneSets}/{totalSets}</span>
@@ -180,7 +181,7 @@ function Workout() {
           </div>
 
           <button type="button" className="ej-btn ej-btn--primary wk-finish" onClick={handleFinishWorkout}>
-            Termina
+            {tr('Termina')}
           </button>
         </div>
 
@@ -189,11 +190,11 @@ function Workout() {
           <div className="wk-rest">
             <Clock size={20} className="wk-rest-icon" />
             <div className="wk-rest-text">
-              <span className="wk-rest-label">Recupero</span>
+              <span className="wk-rest-label">{trc('rest', 'Recupero')}</span>
               <span className="wk-rest-time">{fmtRest(restTimeLeft)}</span>
             </div>
             <button type="button" className="wk-rest-add" onClick={() => setGlobalRestEndTime(globalRestEndTime + 30000)}>+30s</button>
-            <button type="button" className="ej-icon-btn ej-icon-btn--danger wk-rest-stop" onClick={() => clearGlobalRestTimer()} title="Interrompi recupero">
+            <button type="button" className="ej-icon-btn ej-icon-btn--danger wk-rest-stop" onClick={() => clearGlobalRestTimer()} title={tr('Interrompi recupero')}>
               <X size={18} />
             </button>
           </div>
@@ -209,8 +210,8 @@ function Workout() {
         {activeWorkout.exercises.length === 0 && (
           <div className="wk-empty">
             <span className="wk-empty-icon"><Dumbbell size={28} /></span>
-            <p className="wk-empty-title">Nessun esercizio</p>
-            <p className="wk-empty-sub">Tocca "+ Esercizio" qui sotto per iniziare la sessione</p>
+            <p className="wk-empty-title">{tr('Nessun esercizio')}</p>
+            <p className="wk-empty-sub">{tr('Tocca "+ Esercizio" qui sotto per iniziare la sessione')}</p>
           </div>
         )}
 
@@ -244,7 +245,7 @@ function Workout() {
                   <ExerciseAutocomplete 
                     value={ex.name} 
                     onChange={val => handleUpdateExerciseNameLocally(ex.id, val)} 
-                    placeholder="Seleziona esercizio…" 
+                    placeholder={tr('Seleziona esercizio…')} 
                   />
                 </div>
               </div>
@@ -255,15 +256,15 @@ function Workout() {
                 <div className="workout-exercise-subbar">
                   <div className="workout-exercise-meta-left">
                     <span className={`workout-progress-pill ${doneCount === ex.sets.length && ex.sets.length > 0 ? 'all-done' : ''}`}>
-                      {doneCount}/{ex.sets.length} {doneCount === ex.sets.length && ex.sets.length > 0 ? 'completate' : 'serie'}
+                      {doneCount}/{ex.sets.length} {doneCount === ex.sets.length && ex.sets.length > 0 ? tr('completate') : tr('serie')}
                     </span>
                   </div>
                   <div className="workout-exercise-meta-right">
                     <button
                       type="button"
                       className="workout-exercise-progress-btn"
-                      title="Vedi progressi"
-                      aria-label={`Vedi progressi di ${ex.name || 'questo esercizio'}`}
+                      title={tr('Vedi progressi')}
+                      aria-label={tr('Vedi progressi di {name}', { name: ex.name || tr('questo esercizio') })}
                       disabled={!ex.name?.trim()}
                       onClick={() => navigate(`/progress?exercise=${encodeURIComponent(ex.name.trim())}`)}
                     >
@@ -272,22 +273,22 @@ function Workout() {
                     <button
                       type="button"
                       onClick={() => toggleNotes(ex.id)}
-                      title={ex.notes ? "Modifica nota" : "Aggiungi nota"}
+                      title={ex.notes ? tr('Modifica nota') : tr('Aggiungi nota')}
                       className={`workout-note-btn ${ex.notes ? 'has-note' : ''}`}
                     >
                       <FileText size={13} />
-                      <span>{ex.notes ? 'Nota' : '+ Nota'}</span>
+                      <span>{ex.notes ? tr('Nota') : tr('+ Nota')}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        const exName = ex.name?.trim() ? `l'esercizio "${ex.name}"` : 'questo esercizio';
-                        if (window.confirm(`Sei sicuro di voler eliminare ${exName} dalla sessione?`)) {
+                        const exName = ex.name?.trim() ? tr('l\'esercizio "{name}"', { name: ex.name }) : tr('questo esercizio');
+                        if (window.confirm(tr('Sei sicuro di voler eliminare {exercise} dalla sessione?', { exercise: exName }))) {
                           deleteExercise(ex.id);
                         }
                       }}
                       className="workout-delete-ex-btn"
-                      title="Rimuovi esercizio"
+                      title={tr('Rimuovi esercizio')}
                     >
                       <Trash2 size={15} />
                     </button>
@@ -304,7 +305,7 @@ function Workout() {
                       <div className="workout-1rm-item">
                         <div className="workout-1rm-label-group">
                           <Zap size={11} className="workout-1rm-icon-zap" />
-                          <span className="workout-1rm-tag">Ult:</span>
+                          <span className="workout-1rm-tag">{tr('Ult:')}</span>
                         </div>
                         <span className="workout-1rm-val">
                           {stats1RM.lastSession.set.kg}kg × {stats1RM.lastSession.set.reps}
@@ -344,7 +345,7 @@ function Workout() {
                           {newPR.set.kg || 0}kg × {newPR.set.reps}
                         </span>
                         <span className="workout-1rm-new">
-                          Nuovo +{round1(newPR.rm - stats1RM.allTime.max1RM)}
+                          {tr('Nuovo')} +{round1(newPR.rm - stats1RM.allTime.max1RM)}
                         </span>
                         <span className="workout-1rm-badge">
                           1RM {rmPrefix}{newPR.rm}kg
@@ -360,7 +361,7 @@ function Workout() {
                   <FileText size={13} className="workout-notes-icon" />
                   <input
                     type="text"
-                    placeholder="Aggiungi nota (es. presa larga, fermo al petto 1s)..."
+                    placeholder={tr('Aggiungi nota (es. presa larga, fermo al petto 1s)...')}
                     value={ex.notes || ''}
                     onChange={e => updateExerciseNotes(ex.id, e.target.value)}
                     className="workout-notes-input"
@@ -382,7 +383,7 @@ function Workout() {
                   <SwipeToDelete 
                     key={set.id} 
                     onDelete={() => {
-                      if (window.confirm(`Eliminare la serie ${set.isDropset ? 'Drop' : sIdx + 1}?`)) {
+                      if (window.confirm(tr('Eliminare la serie {n}?', { n: set.isDropset ? 'Drop' : sIdx + 1 }))) {
                         deleteSet(ex.id, set.id);
                       }
                     }}
@@ -441,7 +442,7 @@ function Workout() {
                         type="button"
                         onClick={() => handleToggleSet(ex.id, set.id, set.done)} 
                         className={`workout-check-btn ${set.done ? 'checked' : ''}`}
-                        title={set.done ? "Segna come da completare" : "Completa serie"}
+                        title={set.done ? tr('Segna come da completare') : tr('Completa serie')}
                       >
                         <Check size={17} strokeWidth={set.done ? 3 : 2} />
                       </button>
@@ -456,7 +457,7 @@ function Workout() {
                     onClick={() => addSet(ex.id)} 
                     className="workout-add-set-btn"
                   >
-                    + Serie
+                    {tr('+ Serie')}
                   </button>
                 </div>
               </div>
@@ -467,10 +468,10 @@ function Workout() {
 
         <div className="wk-footer">
           <button type="button" className="wk-add-exercise" onClick={() => addExercise('')}>
-            <Plus size={16} /> Esercizio
+            <Plus size={16} /> {tr('Esercizio')}
           </button>
-          <button type="button" className="wk-cancel" onClick={() => { if (window.confirm('Annullare senza salvare?')) { cancelWorkout(); navigate('/'); } }}>
-            Annulla
+          <button type="button" className="wk-cancel" onClick={() => { if (window.confirm(tr('Annullare senza salvare?'))) { cancelWorkout(); navigate('/'); } }}>
+            {tr('Annulla')}
           </button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { getAllExercises } from '../../data/exercises';
 import { legacyDynamicProposal, legacyEvolutionFor, needsScienceEvolution } from '../../utils/scienceEvolution';
 import MicroLoading from '../../components/MicroLoading';
 import './ScienceEvolution.css';
+import { tr } from '../../i18n';
 
 const STEPS = [
   { icon: Sparkles, tag: 'L’evoluzione del tuo allenamento', title: 'Scienza V3.0 è finalmente fuori!', body: 'Un nuovo modo di leggere il tuo allenamento. Più personale, più chiaro, sempre al tuo fianco.' },
@@ -49,18 +50,18 @@ function ReleaseTour({ report, animate, onComplete, onReveal }) {
   }, [phase]);
   const active = STEPS[step], Icon = active.icon, week = report.currentWeek || 1;
   return createPortal(<div className={`science-release-overlay is-${phase}`}>
-    {phase === 'transform' ? <div className="science-release-loading" role="status"><span className="science-release-orb"><Dna size={44} /></span><strong>Il tuo percorso sta evolvendo.</strong><span>La tua esperienza, al centro.</span><button type="button" ref={skip} onClick={() => setPhase('tour')}>Salta animazione</button></div> :
+    {phase === 'transform' ? <div className="science-release-loading" role="status"><span className="science-release-orb"><Dna size={44} /></span><strong>{tr('Il tuo percorso sta evolvendo.')}</strong><span>{tr('La tua esperienza, al centro.')}</span><button type="button" ref={skip} onClick={() => setPhase('tour')}>{tr('Salta animazione')}</button></div> :
       <section className="science-release-dialog" role="dialog" aria-modal="true" aria-labelledby="science-release-title" aria-describedby="science-release-description" ref={dialog} tabIndex={-1}>
-        <div className="science-release-dots" aria-label={`Novità ${step + 1} di ${STEPS.length}`}>{STEPS.map((_, i) => <span key={i} className={i <= step ? 'is-done' : ''} />)}</div>
+        <div className="science-release-dots" aria-label={tr('Novità {n} di {total}', { n: step + 1, total: STEPS.length })}>{STEPS.map((_, i) => <span key={i} className={i <= step ? 'is-done' : ''} />)}</div>
         <div key={step} className="science-release-slide">
           <div className="science-release-art" aria-hidden="true"><span className="science-release-ring" /><span className="science-release-emblem"><Icon size={52} strokeWidth={1.6} /></span><i /><i /><i /></div>
-          <span className="science-release-tag">{active.tag}</span><h2 id="science-release-title">{active.title}</h2><p id="science-release-description">{active.body}</p>
-          {step === 0 && <div className="science-release-version"><span>SCIENZA</span><strong>V3.0</strong><span>Su misura per te</span></div>}
-          {step === 1 && <div className="science-release-kept"><Check size={20} /><span>{report.status === 'pending' ? 'Il protocollo che hai preparato ti aspetta.' : `Continui dalla settimana ${week}, con i tuoi progressi.`}</span></div>}
-          {step === 2 && <><div className="science-release-formula"><span><History size={18} />Storico</span><b>+</b><span><Activity size={18} />Qualità</span><b>+</b><span><Waves size={18} />Recupero</span></div><small className="science-release-disclaimer">Le serie già svolte vengono riportate come progressi del protocollo precedente. Lo sforzo non registrato resta sconosciuto: nessun RIR viene inventato.</small></>}
-          {step === 3 && <div className="science-release-kept"><ShieldCheck size={20} /><span>Accetta o rifiuta. Le tue schede restano tue.</span></div>}
+          <span className="science-release-tag">{tr(active.tag)}</span><h2 id="science-release-title">{tr(active.title)}</h2><p id="science-release-description">{tr(active.body)}</p>
+          {step === 0 && <div className="science-release-version"><span>{tr('SCIENZA')}</span><strong>V3.0</strong><span>{tr('Su misura per te')}</span></div>}
+          {step === 1 && <div className="science-release-kept"><Check size={20} /><span>{report.status === 'pending' ? tr('Il protocollo che hai preparato ti aspetta.') : tr('Continui dalla settimana {week}, con i tuoi progressi.', { week })}</span></div>}
+          {step === 2 && <><div className="science-release-formula"><span><History size={18} />{tr('Storico')}</span><b>+</b><span><Activity size={18} />{tr('Qualità')}</span><b>+</b><span><Waves size={18} />{tr('Recupero')}</span></div><small className="science-release-disclaimer">{tr('Le serie già svolte vengono riportate come progressi del protocollo precedente. Lo sforzo non registrato resta sconosciuto: nessun RIR viene inventato.')}</small></>}
+          {step === 3 && <div className="science-release-kept"><ShieldCheck size={20} /><span>{tr('Accetta o rifiuta. Le tue schede restano tue.')}</span></div>}
         </div>
-        <footer><button type="button" className="science-release-primary" onClick={() => step < STEPS.length - 1 ? setStep(n => n + 1) : onComplete()}>{step < STEPS.length - 1 ? 'Scopri cosa cambia' : report.status === 'pending' ? 'Torna al tuo protocollo' : `Continua dalla settimana ${week}`}<ArrowRight size={18} /></button><div className="science-release-secondary">{step > 0 && <button type="button" onClick={() => setStep(n => n - 1)}>Indietro</button>}<button type="button" onClick={onComplete}>Vai al mio protocollo</button></div></footer>
+        <footer><button type="button" className="science-release-primary" onClick={() => step < STEPS.length - 1 ? setStep(n => n + 1) : onComplete()}>{step < STEPS.length - 1 ? tr('Scopri cosa cambia') : report.status === 'pending' ? tr('Torna al tuo protocollo') : tr('Continua dalla settimana {week}', { week })}<ArrowRight size={18} /></button><div className="science-release-secondary">{step > 0 && <button type="button" onClick={() => setStep(n => n - 1)}>{tr('Indietro')}</button>}<button type="button" onClick={onComplete}>{tr('Vai al mio protocollo')}</button></div></footer>
       </section>}
   </div>, document.body);
 }
@@ -76,7 +77,7 @@ export function ScienceEvolution({ report, children }) {
   const evolving = open && !revealed && !reduced;
   // A stable callback keeps the reveal effect independent of store updates.
   const reveal = useMemo(() => () => setRevealed(true), []);
-  if (!open) return <div className="ej-page"><MicroLoading title="Passo a Scienza V3.0" description="Porto con te obiettivi e progressi della settimana." /></div>;
+  if (!open) return <div className="ej-page"><MicroLoading title={tr('Passo a Scienza V3.0')} description={tr('Porto con te obiettivi e progressi della settimana.')} /></div>;
   return <><div className={`science-evolution-stage ${evolving ? 'is-evolving' : revealed ? 'is-revealed' : ''}`} inert={open ? true : undefined}>{children}</div>
     {open && <ReleaseTour report={report} animate={!reduced} onReveal={reveal} onComplete={() => complete()} />}</>;
 }
@@ -91,10 +92,10 @@ export function LegacyDynamicVolume({ report }) {
   if (!evolution || !proposal) return null;
   const decision = evolution.decisions?.[proposal.id];
   const shown = decision || proposal;
-  return <section className="ej-card science-dynamic-panel"><div className="science-dynamic-heading"><span><Waves size={19} /></span><div><small>IL PROSSIMO PASSO</small><h2>Scienza V3.0</h2></div><span className="science-dynamic-week">W{shown.week}</span></div>
-    <p>{decision ? decision.choice === 'accept' ? 'Proposta accettata. Si applicherà quando passerai alla prossima settimana.' : 'Hai scelto il programma originale per questa settimana. Puoi continuare ad allenarti come previsto.' : shown.reason}</p>
-    {shown.changes.length > 0 && <div className="science-dynamic-changes">{shown.changes.map(c => <div key={c.muscle}><span><strong>{c.muscle}</strong><small>{c.reason}</small></span><b>{c.before}<ArrowRight size={13} />{c.after}</b></div>)}</div>}
-    {!decision && shown.changes.length > 0 && <div className="science-dynamic-actions"><button type="button" className="ej-btn ej-btn--primary" onClick={() => decide('accept')}>Accetta per W{shown.week}<Check size={16} /></button><button type="button" className="science-release-text" onClick={() => decide('reject')}>Mantieni il programma</button></div>}
-    <small className="science-dynamic-note">La settimana attuale non cambia. {shown.evidence.length} settimane rappresentative disponibili. Segna 0–1 RIR e completa il check dopo la seduta per migliorare le prossime stime.</small>
+  return <section className="ej-card science-dynamic-panel"><div className="science-dynamic-heading"><span><Waves size={19} /></span><div><small>{tr('IL PROSSIMO PASSO')}</small><h2>{tr('Scienza V3.0')}</h2></div><span className="science-dynamic-week">W{shown.week}</span></div>
+    <p>{decision ? decision.choice === 'accept' ? tr('Proposta accettata. Si applicherà quando passerai alla prossima settimana.') : tr('Hai scelto il programma originale per questa settimana. Puoi continuare ad allenarti come previsto.') : tr(shown.reason)}</p>
+    {shown.changes.length > 0 && <div className="science-dynamic-changes">{shown.changes.map(c => <div key={c.muscle}><span><strong>{tr(c.muscle)}</strong><small>{tr(c.reason)}</small></span><b>{c.before}<ArrowRight size={13} />{c.after}</b></div>)}</div>}
+    {!decision && shown.changes.length > 0 && <div className="science-dynamic-actions"><button type="button" className="ej-btn ej-btn--primary" onClick={() => decide('accept')}>{tr('Accetta per W{week}', { week: shown.week })}<Check size={16} /></button><button type="button" className="science-release-text" onClick={() => decide('reject')}>{tr('Mantieni il programma')}</button></div>}
+    <small className="science-dynamic-note">{tr('La settimana attuale non cambia. {n} settimane rappresentative disponibili. Segna 0–1 RIR e completa il check dopo la seduta per migliorare le prossime stime.', { n: shown.evidence.length })}</small>
   </section>;
 }

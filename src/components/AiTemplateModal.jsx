@@ -12,6 +12,7 @@ import {
   ClipboardPaste, ArrowRight, ChevronDown, ChevronUp, Share2, Download 
 } from 'lucide-react';
 import './AiTemplateModal.css';
+import { tr } from '../i18n';
 
 export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
   const customExercises = useStore(state => state.customExercises || []);
@@ -100,7 +101,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
         setJsonInput(text);
       }
     } catch (err) {
-      alert("Incolla manualmente premendo a lungo nell'area di testo.");
+      alert(tr("Incolla manualmente premendo a lungo nell'area di testo."));
     }
   };
 
@@ -111,7 +112,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
     setImportStatus({
       success: true,
       count,
-      message: count === 1 ? '1 scheda importata con successo!' : `${count} schede importate!`
+      message: count === 1 ? tr('1 scheda importata con successo!') : tr('{n} schede importate!', { n: count })
     });
 
     setTimeout(() => {
@@ -192,11 +193,11 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
           <div className="ai-modal-title-group">
             <Sparkles size={18} className="ai-modal-sparkle-icon" />
             <div>
-              <h2 className="ai-modal-title">Schede AI & Condivisione</h2>
-              <p className="ai-modal-subtitle">Genera con AI, importa o invia schede agli amici</p>
+              <h2 className="ai-modal-title">{tr('Schede AI & Condivisione')}</h2>
+              <p className="ai-modal-subtitle">{tr('Genera con AI, importa o invia schede agli amici')}</p>
             </div>
           </div>
-          <button className="ai-modal-close-btn" onClick={onClose} aria-label="Chiudi">
+          <button className="ai-modal-close-btn" onClick={onClose} aria-label={tr('Chiudi')}>
             <X size={18} />
           </button>
         </div>
@@ -210,7 +211,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               onClick={() => setActiveTab('prompt')}
             >
               <Sparkles size={13} />
-              <span>Prompt AI</span>
+              <span>{tr('Prompt AI')}</span>
             </button>
             <button
               type="button"
@@ -218,7 +219,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               onClick={() => setActiveTab('import')}
             >
               <Code2 size={13} />
-              <span>Importa</span>
+              <span>{tr('Importa')}</span>
               {validationResult?.success && (
                 <span className="ai-segment-badge">{validationResult.templates.length}</span>
               )}
@@ -229,7 +230,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               onClick={() => setActiveTab('export')}
             >
               <Share2 size={13} />
-              <span>Esporta</span>
+              <span>{tr('Esporta')}</span>
               {templates.length > 0 && (
                 <span className="ai-segment-count">({templates.length})</span>
               )}
@@ -247,7 +248,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                 
                 {/* Frequenza */}
                 <div className="ai-option-item">
-                  <span className="ai-option-label">Frequenza settimanale</span>
+                  <span className="ai-option-label">{tr('Frequenza settimanale')}</span>
                   <div className="ai-capsule-row">
                     {[2, 3, 4, 5, 6].map(days => (
                       <button
@@ -264,7 +265,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
 
                 {/* Obiettivo */}
                 <div className="ai-option-item">
-                  <span className="ai-option-label">Obiettivo principale</span>
+                  <span className="ai-option-label">{tr('Obiettivo principale')}</span>
                   <div className="ai-capsule-row">
                     {['Ipertrofia', 'Forza', 'Definizione', 'Full Body'].map(goal => (
                       <button
@@ -273,7 +274,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                         className={`ai-capsule-btn ${customGoal === goal ? 'active' : ''}`}
                         onClick={() => setCustomGoal(goal)}
                       >
-                        {goal}
+                        {tr(goal)}
                       </button>
                     ))}
                   </div>
@@ -281,11 +282,11 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
 
                 {/* Note opzionali */}
                 <div className="ai-option-item">
-                  <span className="ai-option-label">Note & personalizzazioni (opzionale)</span>
+                  <span className="ai-option-label">{tr('Note & personalizzazioni (opzionale)')}</span>
                   <input
                     type="text"
                     className="ai-minimal-input"
-                    placeholder="Es. Focus spalle, no stacco per schiena..."
+                    placeholder={tr('Es. Focus spalle, no stacco per schiena...')}
                     value={userNotes}
                     onChange={e => setUserNotes(e.target.value)}
                   />
@@ -297,15 +298,15 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               <div className="ai-prompt-card">
                 <div className="ai-prompt-card-header">
                   <div className="ai-prompt-card-info">
-                    <span className="ai-card-title">Prompt Master pronto</span>
-                    <span className="ai-card-meta">• {allExercises.length} esercizi DB inclusi</span>
+                    <span className="ai-card-title">{tr('Prompt Master pronto')}</span>
+                    <span className="ai-card-meta">• {tr('{n} esercizi DB inclusi', { n: allExercises.length })}</span>
                   </div>
                   <button
                     type="button"
                     className="ai-toggle-preview-btn"
                     onClick={() => setShowRawPrompt(!showRawPrompt)}
                   >
-                    <span>{showRawPrompt ? 'Nascondi' : 'Vedi testo'}</span>
+                    <span>{showRawPrompt ? tr('Nascondi') : tr('Vedi testo')}</span>
                     {showRawPrompt ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
                 </div>
@@ -327,7 +328,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                   onClick={handleCopyPrompt}
                 >
                   {copied ? <Check size={17} /> : <Copy size={17} />}
-                  <span>{copied ? 'Prompt Copiato negli Appunti!' : 'Copia Prompt per ChatGPT / Claude'}</span>
+                  <span>{copied ? tr('Prompt Copiato negli Appunti!') : tr('Copia Prompt per ChatGPT / Claude')}</span>
                 </button>
 
                 <button
@@ -335,18 +336,18 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                   className="ai-subtle-nav-btn"
                   onClick={() => setActiveTab('import')}
                 >
-                  <span>Hai già la risposta dell'AI? Incolla il JSON</span>
+                  <span>{tr("Hai già la risposta dell'AI? Incolla il JSON")}</span>
                   <ArrowRight size={14} />
                 </button>
               </div>
 
               {/* Mini Guida in basso */}
               <div className="ai-friend-guide-box">
-                <p className="ai-friend-guide-title">Come funziona?</p>
+                <p className="ai-friend-guide-title">{tr('Come funziona?')}</p>
                 <p className="ai-friend-guide-text">
-                  1. Clicca <strong>Copia Prompt</strong> qui sopra.<br />
-                  2. Incollalo su <strong>ChatGPT, Claude o Gemini</strong>.<br />
-                  3. Copia il JSON restituito dall'AI e incollalo nella scheda <strong>Importa</strong>.
+                  {tr('1. Clicca')} <strong>{tr('Copia Prompt')}</strong> {tr('qui sopra.')}<br />
+                  {tr('2. Incollalo su')} <strong>ChatGPT, Claude {tr('o')} Gemini</strong>.<br />
+                  {tr('3. Copia il JSON restituito dall\'AI e incollalo nella scheda')} <strong>{tr('Importa')}</strong>.
                 </p>
               </div>
 
@@ -357,20 +358,20 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               {/* Textarea Section */}
               <div className="ai-import-pane">
                 <div className="ai-import-pane-header">
-                  <span className="ai-option-label">Risposta JSON dall'AI</span>
+                  <span className="ai-option-label">{tr("Risposta JSON dall'AI")}</span>
                   <button
                     type="button"
                     className="ai-btn-paste-quick"
                     onClick={handlePasteFromClipboard}
                   >
                     <ClipboardPaste size={13} />
-                    <span>Incolla</span>
+                    <span>{tr('Incolla')}</span>
                   </button>
                 </div>
 
                 <textarea
                   className="ai-minimal-textarea"
-                  placeholder='Incolla qui il JSON generato da ChatGPT o inviato da un amico (es. [ { "name": "Push A", "exercises": [...] } ])'
+                  placeholder={tr('Incolla qui il JSON generato da ChatGPT o inviato da un amico (es. [ { "name": "Push A", "exercises": [...] } ])')}
                   value={jsonInput}
                   onChange={e => setJsonInput(e.target.value)}
                   rows={7}
@@ -386,7 +387,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                       <div className="ai-success-headline">
                         <Check size={16} className="ai-check-icon" />
                         <span>
-                          <strong>{validationResult.stats.templatesCount} {validationResult.stats.templatesCount === 1 ? 'scheda pronta' : 'schede pronte'}</strong> ({validationResult.stats.totalExercises} esercizi)
+                          <strong>{validationResult.stats.templatesCount} {validationResult.stats.templatesCount === 1 ? tr('scheda pronta') : tr('schede pronte')}</strong> ({validationResult.stats.totalExercises} {tr('esercizi')})
                         </span>
                       </div>
 
@@ -394,7 +395,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                         <div className="ai-warning-pill">
                           <AlertTriangle size={13} />
                           <span>
-                            {validationResult.stats.unknownCount} es. non in lista verranno importati come personalizzati.
+                            {tr('{n} es. non in lista verranno importati come personalizzati.', { n: validationResult.stats.unknownCount })}
                           </span>
                         </div>
                       )}
@@ -408,7 +409,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                                 <Dumbbell size={14} color="#00e5ff" />
                                 <span>{tpl.name}</span>
                               </div>
-                              <span className="ai-validated-badge">{tpl.exercises.length} es.</span>
+                              <span className="ai-validated-badge">{tpl.exercises.length} {tr('es.')}</span>
                             </div>
                             <div className="ai-validated-chips">
                               {tpl.exercises.map((ex, exIdx) => (
@@ -449,17 +450,17 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                   <Check size={17} />
                   <span>
                     {validationResult?.success
-                      ? `Salva ${validationResult.templates.length} ${validationResult.templates.length === 1 ? 'Scheda' : 'Schede'} in EliteJIM`
-                      : 'Incolla un JSON valido per continuare'}
+                      ? tr(validationResult.templates.length === 1 ? 'Salva {n} Scheda in EliteJIM' : 'Salva {n} Schede in EliteJIM', { n: validationResult.templates.length })
+                      : tr('Incolla un JSON valido per continuare')}
                   </span>
                 </button>
               </div>
 
               {/* Mini Guida in basso */}
               <div className="ai-friend-guide-box">
-                <p className="ai-friend-guide-title">Come funziona l'importazione?</p>
+                <p className="ai-friend-guide-title">{tr("Come funziona l'importazione?")}</p>
                 <p className="ai-friend-guide-text">
-                  Incolla il codice generato dall'AI o inviato da un amico. Verrà convalidato all'istante verificando tutti gli esercizi del database di EliteJIM e salvato tra le tue schede in 1 click.
+                  {tr("Incolla il codice generato dall'AI o inviato da un amico. Verrà convalidato all'istante verificando tutti gli esercizi del database di EliteJIM e salvato tra le tue schede in 1 click.")}
                 </p>
               </div>
 
@@ -470,9 +471,9 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               {templates.length === 0 ? (
                 <div className="ai-empty-export-state">
                   <Dumbbell size={28} color="rgba(255,255,255,0.2)" />
-                  <p className="ai-empty-export-title">Nessuna scheda salvata</p>
+                  <p className="ai-empty-export-title">{tr('Nessuna scheda salvata')}</p>
                   <p className="ai-empty-export-text">
-                    Crea una scheda dalla schermata Home o genera un prompt con l'AI per poterla esportare e inviare ai tuoi amici.
+                    {tr("Crea una scheda dalla schermata Home o genera un prompt con l'AI per poterla esportare e inviare ai tuoi amici.")}
                   </p>
                 </div>
               ) : (
@@ -487,7 +488,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                       className="ai-btn-text-action"
                       onClick={handleSelectAllTemplates}
                     >
-                      {selectedTemplateIds.length === templates.length ? 'Deseleziona tutte' : 'Seleziona tutte'}
+                      {selectedTemplateIds.length === templates.length ? tr('Deseleziona tutte') : tr('Seleziona tutte')}
                     </button>
                   </div>
 
@@ -510,7 +511,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                           <div className="ai-export-item-info">
                             <span className="ai-export-item-name">{tpl.name}</span>
                             <span className="ai-export-item-meta">
-                              {tpl.exercises?.length || 0} esercizi · {tpl.exercises?.reduce((a, e) => a + (Number(e.setsCount) || 0), 0)} serie
+                              {tpl.exercises?.length || 0} {tr('esercizi')} · {tpl.exercises?.reduce((a, e) => a + (Number(e.setsCount) || 0), 0)} {tr('serie')}
                             </span>
                           </div>
                         </div>
@@ -528,7 +529,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                         onClick={handleNativeShareExport}
                       >
                         <Share2 size={16} />
-                        <span>Condividi su WhatsApp / Telegram</span>
+                        <span>{tr('Condividi su WhatsApp / Telegram')}</span>
                       </button>
                     )}
 
@@ -539,7 +540,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                       onClick={handleCopyExportJson}
                     >
                       {exportCopied ? <Check size={16} /> : <Copy size={16} />}
-                      <span>{exportCopied ? 'Codice Copiato!' : 'Copia Codice Schede (JSON)'}</span>
+                      <span>{exportCopied ? tr('Codice Copiato!') : tr('Copia Codice Schede (JSON)')}</span>
                     </button>
 
                     <button
@@ -550,15 +551,15 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                       style={{ marginTop: '2px' }}
                     >
                       <Download size={14} />
-                      <span>Scarica file .json</span>
+                      <span>{tr('Scarica file .json')}</span>
                     </button>
                   </div>
 
                   {/* Guida amico */}
                   <div className="ai-friend-guide-box">
-                    <p className="ai-friend-guide-title">Come fa il tuo amico ad usarla?</p>
+                    <p className="ai-friend-guide-title">{tr('Come fa il tuo amico ad usarla?')}</p>
                     <p className="ai-friend-guide-text">
-                      Invia il codice JSON. L'amico apre EliteJIM → <strong>Impostazioni → Schede AI & Condivisione → Importa</strong> e incolla il testo. La scheda verrà caricata subito sul suo account!
+                      {tr('Invia il codice JSON. L\'amico apre EliteJIM →')} <strong>{tr('Impostazioni → Schede AI & Condivisione → Importa')}</strong> {tr('e incolla il testo. La scheda verrà caricata subito sul suo account!')}
                     </p>
                   </div>
                 </>

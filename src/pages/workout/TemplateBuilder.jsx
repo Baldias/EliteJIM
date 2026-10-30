@@ -6,6 +6,7 @@ import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { ShareTemplateModal } from '../../components/ShareTemplateModal';
 import { parseNonNegativeInt } from '../../utils/number';
 import './TemplateBuilder.css';
+import { tr, trc } from '../../i18n';
 
 const REPS_PRESETS = ['4-6', '6-8', '8-10', '10-12', '12-15', '15-20'];
 
@@ -58,9 +59,9 @@ function TemplateBuilder() {
   };
 
   const handleSave = () => {
-    if (!name.trim()) return alert('Inserisci il nome della scheda');
-    if (!exercises.length) return alert('Aggiungi almeno un esercizio');
-    if (exercises.some(e => !e.name.trim())) return alert('Tutti gli esercizi devono avere un nome');
+    if (!name.trim()) return alert(tr('Inserisci il nome della scheda'));
+    if (!exercises.length) return alert(tr('Aggiungi almeno un esercizio'));
+    if (exercises.some(e => !e.name.trim())) return alert(tr('Tutti gli esercizi devono avere un nome'));
     
     if (isEditing) {
       updateTemplate({ id: editTemplateData.id, name, exercises });
@@ -83,17 +84,17 @@ function TemplateBuilder() {
 
       {/* ── HEADER ─────────────────────────── */}
       <div className="tb-header">
-        <button type="button" className="ej-icon-btn ej-icon-btn--round tb-back" onClick={() => navigate('/')} title="Torna alla Home">
+        <button type="button" className="ej-icon-btn ej-icon-btn--round tb-back" onClick={() => navigate('/')} title={tr('Torna alla Home')}>
           <ArrowLeft size={20} />
         </button>
-        <span className="tb-header-title">{isEditing ? 'Modifica Scheda' : 'Nuova Scheda'}</span>
+        <span className="tb-header-title">{isEditing ? tr('Modifica Scheda') : tr('Nuova Scheda')}</span>
         {isValid && (
-          <button type="button" className="ej-icon-btn ej-icon-btn--primary tb-share" title="Condividi ed esporta" onClick={() => setShowShare(true)}>
+          <button type="button" className="ej-icon-btn ej-icon-btn--primary tb-share" title={tr('Condividi ed esporta')} onClick={() => setShowShare(true)}>
             <Share2 size={17} />
           </button>
         )}
         <button type="button" className={`tb-save ${isValid ? 'is-valid' : ''}`} onClick={handleSave}>
-          <Check size={15} strokeWidth={3} /> Salva
+          <Check size={15} strokeWidth={3} /> {tr('Salva')}
         </button>
       </div>
 
@@ -101,10 +102,10 @@ function TemplateBuilder() {
 
         {/* ── NOME ──────────────────────────── */}
         <div className="tb-name">
-          <p className="tb-label">Nome scheda</p>
+          <p className="tb-label">{tr('Nome scheda')}</p>
           <input
             type="text"
-            placeholder="Es. Petto & Tricipiti"
+            placeholder={tr('Es. Petto & Tricipiti')}
             value={name}
             onChange={e => setName(e.target.value)}
             className={`tb-name-input ${name ? 'has-value' : ''}`}
@@ -115,8 +116,8 @@ function TemplateBuilder() {
         {exercises.length > 0 && (
           <div className="tb-list">
             <div className="tb-list-head">
-              <p className="tb-label">Esercizi · {exercises.length}</p>
-              <span className="tb-list-hint">Trascina o usa ▲ ▼</span>
+              <p className="tb-label">{tr('Esercizi')} · {exercises.length}</p>
+              <span className="tb-list-hint">{tr('Trascina o usa ▲ ▼')}</span>
             </div>
 
             {exercises.map((ex, idx) => (
@@ -159,7 +160,7 @@ function TemplateBuilder() {
                 <div className="tb-card-head">
                   <div
                     className="tb-handle"
-                    title="Trascina per riordinare"
+                    title={tr('Trascina per riordinare')}
                     onTouchStart={(e) => {
                       const touch = e.touches[0];
                       dragTouchRef.current = { startY: touch.clientY, fromIndex: idx };
@@ -191,26 +192,26 @@ function TemplateBuilder() {
                   </div>
 
                   <div className="tb-ex-name">
-                    <ExerciseAutocomplete value={ex.name} onChange={val => updEx(ex.id, 'name', val)} placeholder="Cerca esercizio…" />
+                    <ExerciseAutocomplete value={ex.name} onChange={val => updEx(ex.id, 'name', val)} placeholder={tr('Cerca esercizio…')} />
                   </div>
 
                   <div className="tb-card-actions">
-                    <button type="button" className="tb-mini-btn" onClick={() => moveEx(idx, idx - 1)} disabled={idx === 0} title="Sposta su">
+                    <button type="button" className="tb-mini-btn" onClick={() => moveEx(idx, idx - 1)} disabled={idx === 0} title={tr('Sposta su')}>
                       <ChevronUp size={17} strokeWidth={2.5} />
                     </button>
-                    <button type="button" className="tb-mini-btn" onClick={() => moveEx(idx, idx + 1)} disabled={idx === exercises.length - 1} title="Sposta giù">
+                    <button type="button" className="tb-mini-btn" onClick={() => moveEx(idx, idx + 1)} disabled={idx === exercises.length - 1} title={tr('Sposta giù')}>
                       <ChevronDown size={17} strokeWidth={2.5} />
                     </button>
                     <button
                       type="button"
                       className="tb-mini-btn is-danger"
                       onClick={() => {
-                        const exName = ex.name?.trim() ? `l'esercizio "${ex.name}"` : 'questo esercizio';
-                        if (window.confirm(`Sei sicuro di voler eliminare ${exName} dalla scheda?`)) {
+                        const exName = ex.name?.trim() ? tr('l\'esercizio "{name}"', { name: ex.name }) : tr('questo esercizio');
+                        if (window.confirm(tr('Sei sicuro di voler eliminare {exercise} dalla scheda?', { exercise: exName }))) {
                           rmEx(ex.id);
                         }
                       }}
-                      title="Elimina"
+                      title={tr('Elimina')}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -219,12 +220,12 @@ function TemplateBuilder() {
 
                 {/* Controls */}
                 <div className="tb-controls">
-                  <NumInput label="Serie" value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
-                  <NumInput label="Recupero" value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
+                  <NumInput label={tr('Serie')} value={ex.setsCount} min={1} step={1} onChange={v => updEx(ex.id, 'setsCount', Math.round(v))} />
+                  <NumInput label={trc('rest', 'Recupero')} value={ex.restTime} min={0} step={15} format={fmtRest} onChange={v => updEx(ex.id, 'restTime', Math.round(v))} />
                 </div>
 
                 <div className="tb-field">
-                  <p className="tb-label">Reps target</p>
+                  <p className="tb-label">{tr('Reps target')}</p>
                   <div className="tb-reps">
                     {REPS_PRESETS.map(p => (
                       <button
@@ -240,10 +241,10 @@ function TemplateBuilder() {
                 </div>
 
                 <div className="tb-field">
-                  <p className="tb-label"><FileText size={11} /> Note esercizio</p>
+                  <p className="tb-label"><FileText size={11} /> {tr('Note esercizio')}</p>
                   <input
                     type="text"
-                    placeholder="Es. Impugnatura larga, fermo in basso 1 sec..."
+                    placeholder={tr('Es. Impugnatura larga, fermo in basso 1 sec...')}
                     value={ex.notes || ''}
                     onChange={e => updEx(ex.id, 'notes', e.target.value)}
                     className={`tb-notes ${ex.notes ? 'has-value' : ''}`}
@@ -256,11 +257,11 @@ function TemplateBuilder() {
 
         {/* ── ADD EXERCISE ──────────────────── */}
         <button type="button" className="tb-add" onClick={addEx}>
-          <Plus size={18} strokeWidth={2.5} /> Aggiungi esercizio
+          <Plus size={18} strokeWidth={2.5} /> {tr('Aggiungi esercizio')}
         </button>
 
         {exercises.length === 0 && (
-          <p className="tb-empty">Aggiungi il primo esercizio per iniziare</p>
+          <p className="tb-empty">{tr('Aggiungi il primo esercizio per iniziare')}</p>
         )}
       </div>
 
@@ -268,7 +269,7 @@ function TemplateBuilder() {
       <ShareTemplateModal
         isOpen={showShare}
         onClose={() => setShowShare(false)}
-        template={{ name: name.trim() || 'Nuova Scheda', exercises }}
+        template={{ name: name.trim() || tr('Nuova Scheda'), exercises }}
       />
     </div>
   );

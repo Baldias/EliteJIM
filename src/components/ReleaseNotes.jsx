@@ -3,6 +3,7 @@ import { Activity, BarChart3, ChevronDown, ChevronUp, Timer, MapPin, Sparkles } 
 import { releaseNotesFor } from '../utils/releaseNotes';
 import { Sheet } from '../pages/monitoring/Sheet';
 import './ReleaseNotes.css';
+import { tr } from '../i18n';
 
 const highlights = [
   { icon: MapPin, title: 'Ogni palestra, i suoi carichi', text: 'Filtra i macchinari per comune e scegli se adattare carichi e PR alla palestra.' },
@@ -17,10 +18,10 @@ export default function ReleaseNotes({ onClose, previousVersion }) {
   const [expanded, setExpanded] = useState(false);
   const releases = releaseNotesFor(previousVersion);
   const visibleHighlights = releases.length > 1 ? [...highlights, ...previousHighlights] : highlights;
-  return <Sheet title="Novità della versione 1.5" onClose={onClose} className="release-sheet" footer={<button type="button" className="ej-btn ej-btn--primary release-done" onClick={onClose}>Continua</button>}>
-    <div className="release-intro"><span className="release-icon"><Sparkles size={22} /></span><div><p>ELITEJIM 1.5</p><h3>Allenati, osserva, migliora.</h3><span>Le novità pensate per seguire meglio i tuoi progressi.</span></div></div>
-    <div className="release-highlights">{visibleHighlights.map(item => <div className="release-highlight" key={item.title}><span className="release-highlight-icon"><item.icon size={19} /></span><div><h4>{item.title}</h4><p>{item.text}</p></div></div>)}</div>
-    <button type="button" className="release-more" aria-expanded={expanded} aria-controls="release-full-changelog" onClick={() => setExpanded(value => !value)}>{expanded ? 'Mostra meno' : 'Scopri di più'}{expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
-    {expanded && <div id="release-full-changelog" className="release-full"><h3>Changelog completo</h3>{releases.map(release => <section key={release.version}><h3>Versione {release.version}</h3>{release.changes.map(([section, items]) => <section key={section}><h4>{section}</h4><ul>{items.map(item => <li key={item}>{item}</li>)}</ul></section>)}</section>)}</div>}
+  return <Sheet title={tr('Novità della versione 1.5')} onClose={onClose} className="release-sheet" footer={<button type="button" className="ej-btn ej-btn--primary release-done" onClick={onClose}>{tr('Continua')}</button>}>
+    <div className="release-intro"><span className="release-icon"><Sparkles size={22} /></span><div><p>ELITEJIM 1.5</p><h3>{tr('Allenati, osserva, migliora.')}</h3><span>{tr('Le novità pensate per seguire meglio i tuoi progressi.')}</span></div></div>
+    <div className="release-highlights">{visibleHighlights.map(item => <div className="release-highlight" key={item.title}><span className="release-highlight-icon"><item.icon size={19} /></span><div><h4>{tr(item.title)}</h4><p>{tr(item.text)}</p></div></div>)}</div>
+    <button type="button" className="release-more" aria-expanded={expanded} aria-controls="release-full-changelog" onClick={() => setExpanded(value => !value)}>{expanded ? tr('Mostra meno') : tr('Scopri di più')}{expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
+    {expanded && <div id="release-full-changelog" className="release-full"><h3>{tr('Changelog completo')}</h3>{releases.map(release => <section key={release.version}><h3>{tr('Versione {version}', { version: release.version })}</h3>{release.changes.map(([section, items]) => <section key={section}><h4>{tr(section)}</h4><ul>{items.map(item => <li key={item}>{tr(item)}</li>)}</ul></section>)}</section>)}</div>}
   </Sheet>;
 }
