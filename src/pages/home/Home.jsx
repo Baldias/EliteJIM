@@ -12,6 +12,7 @@ import pkg from '../../../package.json';
 import RoutineCard from './RoutineCard';
 import eliteJimLogo from '../../assets/elitejim-logo-script.png?inline';
 import { Sheet } from '../monitoring/Sheet';
+import { themePreferences } from '../../utils/theme';
 import './Home.css';
 
 function getGreeting() {
@@ -37,6 +38,7 @@ function Home() {
   const history = useStore(state => state.history);
   const lastWorkoutDate = useStore(state => state.lastWorkoutDate);
   const userXP = useStore(state => state.userXP) || 0;
+  const isOgTheme = useStore(state => themePreferences(state).theme === 'og');
   const { currentStreak } = useWeeklyStreak();
 
   const [showWelcome, setShowWelcome] = useState(false);
@@ -82,7 +84,9 @@ function Home() {
         <header className="home-header">
           <div className="home-brand">
             <p className="ej-eyebrow">{getGreeting()}</p>
-            <h1 className="home-logo-title"><img src={eliteJimLogo} alt="EliteJIM" width="272" height="116" /></h1>
+            {isOgTheme
+              ? <h1 className="ej-title">EliteJIM</h1>
+              : <h1 className="home-logo-title"><img src={eliteJimLogo} alt="EliteJIM" width="272" height="116" /></h1>}
           </div>
           <div className="home-header-actions">
             <button
@@ -139,9 +143,44 @@ function Home() {
                 <Plus size={16} className="home-new-icon" /> Nuova Scheda
               </button>
             </div>
-            {templates.length > 0 && <p className="home-routine-hint" id="routine-gesture-hint">Tocca per iniziare · Tieni premuto per le opzioni</p>}
+            {!isOgTheme && templates.length > 0 && <p className="home-routine-hint" id="routine-gesture-hint">Tocca per iniziare · Tieni premuto per le opzioni</p>}
           </div>
-          {templates.length > 0 && <div className="home-routines">{templates.map(template => <RoutineCard key={template.id} template={template} onStart={() => handleStartTemplate(template)} onActions={() => setActionTemplate(template)} />)}</div>}
+          {templates.length > 0 && !isOgTheme && <div className="home-routines">{templates.map(template => <RoutineCard key={template.id} template={template} onStart={() => handleStartTemplate(template)} onActions={() => setActionTemplate(template)} />)}</div>}
+          {/* OG: rectangular cards with inline actions, as before the grid redesign. */}
+          {templates.length > 0 && isOgTheme && (
+            <div className="home-routine-list">
+              {templates.map(template => {
+                const setsTotal = (template.exercises || []).reduce((a, ex) => a + (Number(ex.setsCount) || 0), 0);
+                return (
+                  <article key={template.id} className="ej-card home-routine-row">
+                    <div className="home-routine-head">
+                      <span className="home-routine-badge">{(template.name || '?').trim().charAt(0).toUpperCase()}</span>
+                      <div className="home-routine-text">
+                        <h3>{template.name}</h3>
+                        <p>{(template.exercises || []).length} esercizi · {setsTotal} serie</p>
+                      </div>
+                    </div>
+                    <div className="home-routine-actions">
+                      <div className="home-routine-tools">
+                        <button type="button" className="ej-icon-btn ej-icon-btn--danger" onClick={() => handleDelete(template)} title="Elimina scheda">
+                          <Trash2 size={16} />
+                        </button>
+                        <button type="button" className="ej-icon-btn ej-icon-btn--primary" onClick={() => setSharingTemplate(template)} title="Condividi ed esporta scheda">
+                          <Share2 size={16} />
+                        </button>
+                        <button type="button" className="ej-icon-btn" onClick={() => navigate('/build', { state: { template } })} title="Modifica scheda">
+                          <Edit3 size={16} />
+                        </button>
+                      </div>
+                      <button type="button" className="ej-btn ej-btn--primary" onClick={() => handleStartTemplate(template)} title="Inizia allenamento">
+                        <Play size={14} fill="currentColor" /> Inizia
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* ── XP & SESSIONI ──────────────────────────── */}
