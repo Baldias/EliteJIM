@@ -7,6 +7,8 @@ export const RP_LANDMARKS = {
   Quadricipiti: { MEV: 8, MAV_MIN: 12, MAV_MAX: 18, MRV: 20 },
   Femorali: { MEV: 6, MAV_MIN: 10, MAV_MAX: 16, MRV: 18 },
   Glutei: { MEV: 0, MAV_MIN: 8, MAV_MAX: 14, MRV: 18 },
+  // Not in the RP tables: see SCIENCE_VOLUME_REFERENCES.Adduttori for the rationale.
+  Adduttori: { MEV: 0, MAV_MIN: 4, MAV_MAX: 12, MRV: 16 },
   Polpacci: { MEV: 8, MAV_MIN: 12, MAV_MAX: 16, MRV: 20 },
   Spalle: { MEV: 8, MAV_MIN: 16, MAV_MAX: 22, MRV: 26 },
   Bicipiti: { MEV: 8, MAV_MIN: 14, MAV_MAX: 20, MRV: 26 },

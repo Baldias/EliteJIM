@@ -10,12 +10,12 @@ import { SCIENCE_REFERENCE_VERSION, scienceReference, scienceGrowthStep } from '
 // Product starting doses, not measured biological thresholds. Direct-set accounting
 // follows RP's convention; indirect work is displayed separately, never added.
 export const SCIENCE_MUSCLES = [
-  'Petto', 'Dorso', 'Quadricipiti', 'Femorali', 'Glutei', 'Polpacci',
+  'Petto', 'Dorso', 'Quadricipiti', 'Femorali', 'Glutei', 'Adduttori', 'Polpacci',
   'Spalle',
   'Bicipiti', 'Tricipiti', 'Addome', 'Collo', 'Avambracci',
 ];
 export const LARGE_MUSCLES = ['Petto', 'Dorso', 'Quadricipiti', 'Femorali'];
-export const OPTIONAL_MUSCLES = ['Collo', 'Avambracci'];
+export const OPTIONAL_MUSCLES = ['Adduttori', 'Collo', 'Avambracci'];
 // The MEV floor is identical across experience levels. Historical evidence
 // influences the starting dose; MAV/MRV estimates guide subsequent accumulation.
 export const SCIENCE_STARTING_DOSES = Object.fromEntries(['beginner','intermediate','advanced'].map(level =>
@@ -34,8 +34,8 @@ export const annotationFor = (science, workoutId, exerciseId, setId) =>
 
 const SHOULDER_PRESS_IDS = ['s1', 's2', 's6', 's9', 's12', 's13', 's14', 's15', 's16'];
 // These catalog entries train muscles outside the tracked districts. In
-// particular, adductors and tibialis must not become quad/calf work by accident.
-const UNTRACKED_IDS = ['b12', 'b13', 'l14', 'l24'];
+// particular, tibialis must not become calf work by accident.
+const UNTRACKED_IDS = ['b12', 'b13', 'l24'];
 const PRESS_IDS = ['c1', 'c2', 'c4', 'c5', 'c6', 'c8', 'c9', 'c10', 'c13', 'c14'];
 const PULL_IDS = ['b1', 'b2', 'b3', 'b4', 'b5', 'b7', 'b9', 'b10', 'b14', 'b15', 'b16'];
 const LEG_IDS = ['l1', 'l2', 'l3', 'l10', 'l11', 'l12', 'l16', 'l18'];

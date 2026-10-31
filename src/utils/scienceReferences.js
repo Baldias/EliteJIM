@@ -8,6 +8,10 @@ export const SCIENCE_VOLUME_REFERENCES = {
   Quadricipiti: { mv:6, mev:8, mav:[12,18], mrv:20 },
   Femorali: { mv:4, mev:6, mav:[10,16], mrv:20 },
   Glutei: { mv:0, mev:0, mav:[4,12], mrv:16 },
+  // Adductors are absent from RP's published tables. Deep squats, lunges and
+  // deadlifts already grow them about as much as the quads (Kubo 2019), so
+  // like glutes direct work starts from MEV 0 and a low MAV. Product estimate.
+  Adduttori: { mv:0, mev:0, mav:[4,12], mrv:16 },
   Polpacci: { mv:6, mev:8, mav:[12,16], mrv:20 },
   Spalle: { mv:0, mev:8, mav:[16,22], mrv:26 },
   Bicipiti: { mv:5, mev:8, mav:[14,20], mrv:26 },
@@ -25,7 +29,7 @@ export function scienceReference(muscle, experience = 'beginner') {
     // modestly shifts the estimated ceiling above the table's open-ended MRV.
     mavTarget: Math.round(row.mav[0] + (row.mav[1] - row.mav[0]) * level / 2),
     mrvEstimate: row.mrv + level * 2,
-    start: row.mev || (muscle === 'Glutei' ? 4 : 6),
+    start: row.mev || (['Glutei', 'Adduttori'].includes(muscle) ? 4 : 6),
   };
 }
 export function scienceGrowthStep(program, muscle, strongQuality = false) {

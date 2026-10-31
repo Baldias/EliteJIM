@@ -77,6 +77,8 @@ export function categoryTargets(category, exerciseName = '') {
       if (has(name, 'calf')) return { primary: ['calves'], assist: [] };
       if (has(name, 'femorali', 'curl', 'stacc')) return categoryTargets(EXERCISE_CATEGORIES.HAMSTRINGS, name);
       return categoryTargets(EXERCISE_CATEGORIES.QUADRICEPS, name);
+    case EXERCISE_CATEGORIES.ADDUCTORS:
+      return { primary: ['adductor'], assist: [] };
     case EXERCISE_CATEGORIES.QUADRICEPS:
       if (has(name, 'adductor')) return { primary: ['adductor'], assist: [] };
       if (has(name, 'extension', 'sissy')) return { primary: ['quadriceps'], assist: [] };

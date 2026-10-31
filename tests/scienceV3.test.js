@@ -21,7 +21,10 @@ describe('direct scientific accounting', () => {
   it('keeps shoulders as one district and has no fuzzy press inference', () => {
     expect(classifyScienceExercise({ name: 'Alzate Laterali Manubri' }, EXERCISES_DB, emptyScienceState()).primary).toBe('Spalle');
     expect(classifyScienceExercise({ name: 'Chest Press Custom' }, EXERCISES_DB, emptyScienceState()).primary).toBeNull();
-    expect(classifyScienceExercise({ name: 'Adductor Machine' }, EXERCISES_DB, emptyScienceState()).primary).toBeNull();
+    expect(classifyScienceExercise({ name: 'Tibiale Anteriore al Cavo/Macchina' }, EXERCISES_DB, emptyScienceState()).primary).toBeNull();
+  });
+  it('counts the adductor machine as its own district, never as quads', () => {
+    expect(classifyScienceExercise({ name: 'Adductor Machine' }, EXERCISES_DB, emptyScienceState()).primary).toBe('Adduttori');
   });
   it('counts only 0/1 RIR ordinary sets and separates indirect work', () => {
     const science = program();

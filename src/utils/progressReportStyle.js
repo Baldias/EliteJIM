@@ -3,12 +3,13 @@ import { SCIENCE_GLOWS } from './theme';
 
 const MUSCLES = {
   Petto: ['chest'], Dorso: ['upper-back', 'lower-back', 'trapezius'],
-  Quadricipiti: ['quadriceps'], Femorali: ['hamstring'], Glutei: ['gluteal'],
+  Quadricipiti: ['quadriceps'], Femorali: ['hamstring'], Glutei: ['gluteal'], Adduttori: ['adductor'],
   Polpacci: ['calves'], Spalle: ['front-deltoids', 'back-deltoids'],
   Bicipiti: ['biceps'], Tricipiti: ['triceps'], Addome: ['abs', 'obliques'],
   Avambracci: ['forearm'], Collo: ['neck'], Gambe: ['quadriceps', 'hamstring', 'gluteal', 'calves'],
 };
-const BACK = ['Dorso', 'Femorali', 'Glutei', 'Tricipiti', 'Polpacci'];
+// The library draws the inner thigh ('adductor') only on the posterior view.
+const BACK = ['Dorso', 'Femorali', 'Glutei', 'Adduttori', 'Tricipiti', 'Polpacci'];
 
 export function progressReportPalette(theme, glow) {
   const minimal = theme !== 'og';
