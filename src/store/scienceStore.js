@@ -3,7 +3,7 @@ import { getAllExercises, normalizeName } from '../data/exercises';
 import { SCIENCE_REFERENCE_VERSION } from '../utils/scienceReferences';
 import { migrateLegacyScience } from '../utils/scienceMigration';
 import { applyScienceBackfill } from '../utils/scienceBackfill';
-import { decideLegacyDynamicVolume } from '../utils/scienceEvolution';
+import { decideLegacyDynamicVolume, scienceTrackingEnabled } from '../utils/scienceEvolution';
 import { tr } from '../i18n';
 import {
   SCIENCE_MUSCLES, OPTIONAL_MUSCLES, emptyScienceState, hasLegacyScience,
@@ -145,6 +145,20 @@ export function scienceActions(set) {
       if (Object.hasOwn(changes, 'rir')) annotation.rir = changes.rir === 0 || changes.rir === 1 ? changes.rir : null;
       if (Object.hasOwn(changes, 'excluded')) annotation.excluded = Boolean(changes.excluded);
       return { ...(state.activeWorkout?.id === workoutId ? { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now() } } : {}), scienceState: { ...science, annotations: { ...science.annotations, [workoutId]: { ...perWorkout, [exerciseId]: { ...perExercise, [setId]: annotation } } } } };
+    }),
+    // Scienza trains every ordinary set to failure: a completed set without an
+    // effort yet is recorded as 0 RIR. An explicit choice is never overwritten.
+    markScienceSetCompleted: (workoutId, exerciseId, setId) => set(state => {
+      if (!state.showScience || !scienceTrackingEnabled(state) || state.activeWorkout?.id !== workoutId) return state;
+      const ex = state.activeWorkout.exercises?.find(e => String(e.id) === String(exerciseId));
+      const done = ex?.sets?.find(s => String(s.id) === String(setId));
+      if (!done || done.isWarmup || done.isDropset || done.isRestPause) return state;
+      const science = state.scienceState || emptyScienceState();
+      const perWorkout = science.annotations[workoutId] || {};
+      const perExercise = perWorkout[exerciseId] || {};
+      const old = perExercise[setId] || {};
+      if (old.excluded || old.rir === 0 || old.rir === 1) return state;
+      return { scienceState: { ...science, annotations: { ...science.annotations, [workoutId]: { ...perWorkout, [exerciseId]: { ...perExercise, [setId]: { ...old, rir: 0 } } } } } };
     }),
     classifyScienceExercise: (workoutId, exerciseId, primary) => set(state => {
       if (!SCIENCE_MUSCLES.includes(primary)) return state;

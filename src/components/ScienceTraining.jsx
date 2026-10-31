@@ -25,7 +25,31 @@ export function ScienceSwitch({ label, description, checked, onChange, icon: Ico
   </button>;
 }
 
-export function ScienceSetControls({ workoutId, exerciseId, setId, disabled = false }) {
+const RIR_OPTIONS = () => [[0, tr('Cedimento')], [1, tr('1 rep in riserva')]];
+
+// Outside Scienza the effort is an optional field of the set itself.
+function RirSelector({ value, onChange }) {
+  return <div className="science-set-controls" aria-label={tr('Sforzo della serie')}>
+    <span className="science-rir-label">RIR</span>
+    <div className="science-rir-segments">
+      {RIR_OPTIONS().map(([rir, label]) => <button key={rir} type="button" aria-label={`${rir} RIR`} aria-pressed={value === rir}
+        onClick={() => onChange(value === rir ? null : rir)}>
+        <strong>{rir}</strong><span>{label}</span>
+      </button>)}
+    </div>
+  </div>;
+}
+
+export function WorkoutSetEffort({ workoutId, exerciseId, set, onChange }) {
+  const science = useStore(s => s.showScience && scienceTrackingEnabled(s));
+  const showRir = useStore(s => s.showRirSelector ?? true);
+  const technique = Boolean(set.isDropset || set.isRestPause || set.isWarmup);
+  if (science) return <ScienceSetControls workoutId={workoutId} exerciseId={exerciseId} setId={set.id} disabled={technique} hideRir={!showRir} />;
+  if (!showRir || technique) return null;
+  return <RirSelector value={set.rir === 0 || set.rir === 1 ? set.rir : null} onChange={onChange} />;
+}
+
+export function ScienceSetControls({ workoutId, exerciseId, setId, disabled = false, hideRir = false }) {
   const science = useStore(s => s.scienceState);
   const enabled = useStore(s => s.showScience && scienceTrackingEnabled(s));
   const annotate = useStore(s => s.annotateScienceSet);
@@ -33,10 +57,17 @@ export function ScienceSetControls({ workoutId, exerciseId, setId, disabled = fa
   if (workoutId == null || exerciseId == null || setId == null) return <p className="sci-muted">{tr('RIR non registrato')}</p>;
   const annotation = annotationFor(science, workoutId, exerciseId, setId);
   if (disabled) return <div className="science-set-controls is-excluded"><EyeOff size={12} /><span>{tr('Fuori dal volume Scienza')}</span></div>;
+  if (hideRir) return <div className={`science-set-controls is-compact ${annotation.excluded ? 'is-excluded' : ''}`}>
+    <span className="science-rir-auto">{annotation.excluded ? tr('Fuori dal volume Scienza') : annotation.rir === 1 ? '1 RIR' : annotation.rir === 0 ? tr('0 RIR · segnato in automatico') : tr('0 RIR al completamento')}</span>
+    <button type="button" className="science-exclude" aria-label={annotation.excluded ? tr('Includi in Scienza') : tr('Escludi da Scienza')} aria-pressed={Boolean(annotation.excluded)}
+      title={annotation.excluded ? tr('Includi in Scienza') : tr('Escludi da Scienza')} onClick={() => annotate(workoutId, exerciseId, setId, { excluded: !annotation.excluded })}>
+      {annotation.excluded ? <Plus size={15} /> : <EyeOff size={15} />}
+    </button>
+  </div>;
   return <div className={`science-set-controls ${annotation.excluded ? 'is-excluded' : ''}`} aria-label={tr('Sforzo della serie')}>
     <span className="science-rir-label">RIR</span>
     <div className="science-rir-segments">
-      {[[0, tr('Cedimento')], [1, tr('1 rep in riserva')]].map(([rir, label]) => <button key={rir} type="button" aria-label={`${rir} RIR`} aria-pressed={annotation.rir === rir && !annotation.excluded}
+      {RIR_OPTIONS().map(([rir, label]) => <button key={rir} type="button" aria-label={`${rir} RIR`} aria-pressed={annotation.rir === rir && !annotation.excluded}
         disabled={annotation.excluded} onClick={() => annotate(workoutId, exerciseId, setId, { rir: annotation.rir === rir ? null : rir })}>
         <strong>{rir}</strong><span>{label}</span>
       </button>)}

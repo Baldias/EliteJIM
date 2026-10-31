@@ -46,6 +46,7 @@ export function exportDataBackup() {
           dietSetup: currentState.dietSetup,
           showScience: currentState.showScience ?? false,
           showDiary: currentState.showDiary ?? false,
+          showRirSelector: currentState.showRirSelector ?? true,
           ...themePreferences(currentState),
           trainingReminder: currentState.trainingReminder || emptyTrainingReminder(),
           autoBackupEnabled: currentState.autoBackupEnabled ?? true,
