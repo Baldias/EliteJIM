@@ -204,6 +204,8 @@ export const useStore = create(
       }),
       showScience: false,
       showDiary: false,
+      // Per-set RIR 0/1 selector during workouts (Scienza always records RIR)
+      showRirSelector: true,
       // --- Backup & Storage State ---
       autoBackupEnabled: true,
       autoBackupFrequency: 'after_workout', // 'after_workout' | 'weekly' | 'monthly'
@@ -372,6 +374,7 @@ export const useStore = create(
       }),
       toggleScience: () => set((state) => ({ showScience: !state.showScience })),
       toggleDiary: () => set((state) => ({ showDiary: !state.showDiary })),
+      toggleRirSelector: () => set((state) => ({ showRirSelector: !(state.showRirSelector ?? true) })),
       
       // --- Exercise Management Actions ---
       addCustomExercise: (exercise) =>

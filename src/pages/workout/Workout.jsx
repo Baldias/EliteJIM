@@ -7,7 +7,7 @@ import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/u
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
-import { ScienceSetControls, ScienceExerciseClassification } from '../../components/ScienceTraining';
+import { WorkoutSetEffort, ScienceExerciseClassification } from '../../components/ScienceTraining';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 import { sanitizeDecimalInput } from '../../utils/number';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
@@ -33,6 +33,7 @@ function Workout() {
   const updateExerciseNotes = useStore(state => state.updateActiveWorkoutExerciseNotes);
   const addExercise = useStore(state => state.addExerciseToActiveSession);
   const addSet = useStore(state => state.addSetToActiveExercise);
+  const markScienceSetCompleted = useStore(state => state.markScienceSetCompleted);
   const deleteExercise = useStore(state => state.deleteExerciseFromActiveSession);
   const deleteSet = useStore(state => state.deleteSetFromActiveExercise);
   const cancelWorkout = useStore(state => state.cancelWorkout);
@@ -88,6 +89,7 @@ function Workout() {
     const nowDone = !done;
     updateSet(exerciseId, setId, 'done', nowDone);
     if (nowDone) {
+      markScienceSetCompleted(activeWorkout.id, exerciseId, setId);
       const ex = activeWorkout.exercises.find(e => e.id === exerciseId);
       celebrateIfNewPR(ex, ex?.sets.find(s => s.id === setId));
       const secs = ex?.restTime !== undefined && ex.restTime !== '' ? parseInt(ex.restTime) : 60;
@@ -447,7 +449,7 @@ function Workout() {
                         <Check size={17} strokeWidth={set.done ? 3 : 2} />
                       </button>
                     </div>
-                    <ScienceSetControls workoutId={activeWorkout.id} exerciseId={ex.id} setId={set.id} disabled={Boolean(set.isDropset || set.isRestPause || set.isWarmup)} />
+                    <WorkoutSetEffort workoutId={activeWorkout.id} exerciseId={ex.id} set={set} onChange={rir => updateSet(ex.id, set.id, 'rir', rir)} />
                   </SwipeToDelete>
                 ))}
 

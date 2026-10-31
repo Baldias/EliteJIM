@@ -2,7 +2,7 @@ import { GymLocationSettings } from '../../components/GymLocation';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Bell, Weight, CookingPot } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Bell, Weight, CookingPot, Gauge } from 'lucide-react';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import { ThemeSettingRow } from '../../components/ThemePicker';
 import { LanguageSettingRow } from '../../components/LanguagePicker';
@@ -19,6 +19,8 @@ function Settings() {
   const toggleScience = useStore(state => state.toggleScience);
   const showDiary = useStore(state => state.showDiary);
   const toggleDiary = useStore(state => state.toggleDiary);
+  const showRirSelector = useStore(state => state.showRirSelector ?? true);
+  const toggleRirSelector = useStore(state => state.toggleRirSelector);
   
   const autoBackupEnabled = useStore(state => state.autoBackupEnabled ?? true);
   const autoBackupFrequency = useStore(state => state.autoBackupFrequency || 'after_workout');
@@ -150,6 +152,11 @@ function Settings() {
         <span className="st-row-icon is-primary"><Utensils size={20} /></span>
         <span className="st-row-text"><span className="st-row-title">{tr('Sezione Diario')}</span><span className="st-row-sub">{tr('Alimentazione e andamento del peso')}</span></span>
         <button type="button" role="switch" aria-checked={showDiary} aria-label={tr('Attiva Sezione Diario')} className={`st-switch ${showDiary ? 'is-on' : ''}`} onClick={toggleDiary}><span /></button>
+      </div>
+      <div className="ej-card st-row">
+        <span className="st-row-icon is-primary"><Gauge size={20} /></span>
+        <span className="st-row-text"><span className="st-row-title">{tr('Selettore RIR')}</span><span className="st-row-sub">{tr('Segna 0 o 1 RIR su ogni serie. In Scienza le serie completate valgono 0 RIR in automatico.')}</span></span>
+        <button type="button" role="switch" aria-checked={showRirSelector} aria-label={tr('Attiva selettore RIR')} className={`st-switch ${showRirSelector ? 'is-on' : ''}`} onClick={toggleRirSelector}><span /></button>
       </div>
       <div className="st-disclosure"><ScienceTutorialButton inline /></div>
 

@@ -9,6 +9,8 @@
 .science-exclude { display:grid; place-items:center; width:32px; height:34px; flex-shrink:0; border:0; background:transparent; color:var(--c-text-dim); border-radius:8px; }
 .science-exclude[aria-pressed="true"] { background:var(--c-surface-2); color:var(--c-text); }
 .science-set-controls.is-excluded { color:var(--c-text-dim); }
+.science-set-controls.is-compact { justify-content:space-between; padding-top:0; }
+.science-rir-auto { font-size:11px; font-weight:700; }
 .science-feedback-entry { width:100%; display:flex; align-items:center; gap:12px; padding:17px 16px; text-align:left; font:inherit; color:var(--c-text); cursor:pointer; }
 .science-feedback-icon { display:grid; place-items:center; width:44px; height:44px; flex-shrink:0; border-radius:14px; background:rgba(var(--c-primary-rgb),.12); color:var(--c-primary); }
 .science-feedback-entry.is-saved .science-feedback-icon { color:var(--c-success); background:rgba(var(--c-success-rgb),.12); }
