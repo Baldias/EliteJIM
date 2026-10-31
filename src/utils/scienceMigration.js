@@ -1,5 +1,5 @@
 import { calculateScienceVolume, getScienceTargetForMuscle } from './rpVolume';
-import { annotationFor, captureScienceExercises, createScienceProgram, hasLegacyScience, legacyScienceKey, SCIENCE_MUSCLES, scienceVolumes, scienceWeekRange } from './scienceV3';
+import { annotationFor, captureScienceExercises, createScienceProgram, hasLegacyScience, legacyScienceKey, OPTIONAL_MUSCLES, SCIENCE_MUSCLES, scienceVolumes, scienceWeekRange } from './scienceV3';
 import { scienceSetKey } from './scienceCarry';
 
 const calendarShift = (time, days) => { const date = new Date(time); date.setDate(date.getDate() + days); return date.getTime(); };
@@ -30,7 +30,7 @@ export function migrateLegacyScience(science, report, history, db, now = Date.no
     gender, priorities, goal:priorities.length ? 'specialization' : 'balanced',
     daysPerWeek: Math.min(7,Math.max(1,Number(report.daysPerWeek) || 4)),
     minutesPerSession:science.profile?.minutesPerSession || 60,
-    optionalMuscles:SCIENCE_MUSCLES.filter(m => ['Collo','Avambracci'].includes(m) && report.baseLandmarks[m]),
+    optionalMuscles:SCIENCE_MUSCLES.filter(m => OPTIONAL_MUSCLES.includes(m) && report.baseLandmarks[m]),
     startDate:blockStart, useWeight:Boolean(science.profile?.useWeight), source:'legacy-migration',
   };
   let next = createScienceProgram(profile, history, db, science, report, now);

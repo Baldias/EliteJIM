@@ -48,6 +48,9 @@ const mapCategoryToMuscles = (category, exerciseName) => {
       if (name.includes('abductor')) return ['abductors'];
       return ['gluteal'];
 
+    case EXERCISE_CATEGORIES.ADDUCTORS:
+      return ['adductor'];
+
     case EXERCISE_CATEGORIES.CALVES:
       return ['calves'];
 
