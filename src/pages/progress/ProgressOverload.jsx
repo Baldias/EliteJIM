@@ -203,18 +203,36 @@ function ProgressOverload() {
                 </div>
             ) : (
                 <>
-                    <div className="pg-search">
-                        <Search size={18} className="pg-search-icon" />
-                        <ExerciseAutocomplete
-                            value={searchText}
-                            onChange={val => { setSearchText(val); setSelectedExercise(''); }}
-                            onSelect={setSelectedExercise}
-                            options={availableExercises}
-                            placeholder={tr('Cerca esercizio...')}
-                        />
-                    </div>
+                    {/* Search only in "Tutti"; a muscle group lists its exercises directly */}
+                    {activeCategory ? (
+                        <div className="pg-exercises" role="list" aria-label={tr('Esercizi')}>
+                            {availableExercises.map(name => (
+                                <button
+                                    type="button"
+                                    role="listitem"
+                                    key={name}
+                                    aria-pressed={currentExercise === name}
+                                    className={`pg-exercise-chip ${currentExercise === name ? 'is-active' : ''}`}
+                                    onClick={() => setSelectedExercise(currentExercise === name ? '' : name)}
+                                >
+                                    {name}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="pg-search">
+                            <Search size={18} className="pg-search-icon" />
+                            <ExerciseAutocomplete
+                                value={searchText}
+                                onChange={val => { setSearchText(val); setSelectedExercise(''); }}
+                                onSelect={setSelectedExercise}
+                                options={availableExercises}
+                                placeholder={tr('Cerca esercizio...')}
+                            />
+                        </div>
+                    )}
 
-                    {activeCategory && currentExercise && <button type="button" className="pg-overview-btn" onClick={() => { setSelectedExercise(''); setSearchText(''); }}>{tr('Torna alle serie settimanali')}</button>}
+                    {activeCategory && currentExercise && <button type="button" className="pg-overview-btn" onClick={() => setSelectedExercise('')}>{tr('Torna alle serie settimanali')}</button>}
                     {activeCategory && !currentExercise && <MuscleWeeklyProgress muscle={EXERCISE_CATEGORIES[activeCategory]} history={history} db={allExercisesDB} science={science} />}
                     {currentExercise && machine && <ProgressLocationFilter history={history} exercise={currentExercise} value={locationFilter} onChange={value => setLocationChoice({ exercise: currentExercise, value })} />}
                     {currentExercise && !summary && <div className="ej-card pg-empty">{tr('Nessuna sessione completata per {exercise}. I progressi appariranno dopo aver salvato l’allenamento.', { exercise: currentExercise })}</div>}
