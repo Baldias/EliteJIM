@@ -132,7 +132,7 @@ export const useStore = create(
       setGymLocationPreferences: changes => set(state => {
         const firstChoice = !state.gymLocationPreferences?.introVersion;
         const db = getAllExercises(state.customExercises, state.exerciseOverrides);
-        const activeWorkout = firstChoice && changes.adaptLoads && state.activeWorkout ? { ...state.activeWorkout, machineLocationScoped: true, exercises: state.activeWorkout.exercises.map(ex => !state.activeWorkout.gymIntroFresh || state.activeWorkout.lastActivityAt > state.activeWorkout.startTime + 10 || !isMachineExercise(ex.name, db) ? ex : { ...ex, sets: ex.sets.map(s => s.done ? s : { ...s, kg: '', reps: '' }) }) } : state.activeWorkout;
+        const activeWorkout = firstChoice && changes.adaptLoads && state.activeWorkout ? { ...state.activeWorkout, machineLocationScoped: true, exercises: state.activeWorkout.exercises.map(ex => !state.activeWorkout.gymIntroFresh || state.activeWorkout.lastActivityAt > state.activeWorkout.startTime + 10 || !isMachineExercise(ex.name, db) ? ex : { ...ex, sets: ex.sets.map(s => s.done || (s.kg === '' && s.reps === '') ? s : { ...s, genericPrefill: true }) }) } : state.activeWorkout;
         return { gymLocationPreferences: { ...state.gymLocationPreferences, ...changes }, activeWorkout };
       }),
       renameGymLocation: (id, name) => set(state => ({ gymLocationAliases: { ...state.gymLocationAliases, [id]: name.trim().slice(0, 80) } })),
@@ -147,7 +147,12 @@ export const useStore = create(
           if (!context.machineLocationScoped || !isMachineExercise(ex.name, db)) return ex;
           const past = machineHistory(state.history, ex.name, db, context).find(w => w.exercises.some(e => normalizeName(e.name) === normalizeName(ex.name) && e.sets.some(s => s.done && !s.isDropset)));
           const sets = past?.exercises.find(e => normalizeName(e.name) === normalizeName(ex.name))?.sets.filter(s => s.done && !s.isDropset) || [];
-          return { ...ex, sets: ex.sets.map((s, i) => s.done || s.kg !== '' || s.reps !== '' ? s : { ...s, kg: (sets[i] || sets.at(-1))?.kg || '', reps: (sets[i] || sets.at(-1))?.reps || '' }) };
+          return { ...ex, sets: ex.sets.map((s, i) => {
+            if (s.done || (!s.genericPrefill && (s.kg !== '' || s.reps !== ''))) return s;
+            const { genericPrefill: _GENERIC_PREFILL, ...rest } = s;
+            const source = sets[i] || sets.at(-1);
+            return source ? { ...rest, kg: source.kg || '', reps: source.reps || '' } : rest;
+          }) };
         });
         return { activeWorkout: { ...context, exercises } };
       }),
@@ -578,7 +583,6 @@ export const useStore = create(
         // Helper: completed working sets (no drop sets) of the most recent session with this exercise
         const findLastSets = (exerciseName) => {
           const norm = normalizeName(exerciseName);
-          if (scoped && isMachineExercise(exerciseName, db)) return null;
           for (const w of history) {
             const pastEx = w.exercises?.find(e => normalizeName(e.name) === norm);
             const workingSets = completedSets(pastEx).filter(s => !s.isDropset);
@@ -600,6 +604,9 @@ export const useStore = create(
           lastActivityAt: Date.now(),
           exercises: template ? template.exercises.map(ex => {
             const pastSets = findLastSets(ex.name);
+            // Location is detected after start: machine loads begin from the generic
+            // history and are replaced by the city's own data once it is known.
+            const genericPrefill = scoped && isMachineExercise(ex.name, db) && Boolean(pastSets);
             return {
               id: Date.now() + Math.random(),
               name: ex.name,
@@ -613,7 +620,8 @@ export const useStore = create(
                   kg: pastSet ? (pastSet.kg || '') : '',
                   reps: pastSet ? (pastSet.reps || '') : '',
                   targetReps: ex.targetReps,
-                  done: false
+                  done: false,
+                  ...(genericPrefill ? { genericPrefill: true } : {})
                 };
               })
             };
@@ -629,7 +637,8 @@ export const useStore = create(
             if (ex.id !== exerciseId) return ex;
             const updatedSets = ex.sets.map((s) => {
               if (s.id !== setId) return s;
-              return { ...s, [field]: value };
+              const { genericPrefill: _GENERIC_PREFILL, ...rest } = s;
+              return { ...rest, [field]: value };
             });
             return { ...ex, sets: updatedSets };
           });

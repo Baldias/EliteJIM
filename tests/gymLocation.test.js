@@ -30,24 +30,33 @@ describe('machine-only location comparisons', () => {
     for (const name of ['Panca Piana Bilanciere', 'Spinte Manubri Panca Piana']) expect(machineHistory(history, name, EXERCISES_DB, current)).toBe(history);
     expect(machineHistory(history, 'Chest Press', EXERCISES_DB, { ...current, machineLocationScoped: false })).toBe(history);
   });
-  it('has no machine baseline while location is missing or in a new city', () => {
-    expect(machineHistory(history, 'Chest Press', EXERCISES_DB, { machineLocationScoped: true })).toEqual([]);
-    expect(machineHistory(history, 'Chest Press', EXERCISES_DB, { machineLocationScoped: true, gymLocation: { id: 'new' } })).toEqual([]);
+  it('falls back to the generic history while location is missing or the city has no data', () => {
+    expect(machineHistory(history, 'Chest Press', EXERCISES_DB, { machineLocationScoped: true })).toBe(history);
+    expect(machineHistory(history, 'Chest Press', EXERCISES_DB, { machineLocationScoped: true, gymLocation: { id: 'new' } })).toBe(history);
+    const stats = getExercise1RMStats(machineHistory(history, 'Chest Press', EXERCISES_DB, { machineLocationScoped: true, gymLocation: { id: 'new' } }), 'Chest Press');
+    expect(stats.lastSession.set.kg).toBe(120);
+    expect(stats.allTime.set.kg).toBe(200);
+  });
+  it('ignores city workouts without completed sets for that machine', () => {
+    const pending = { ...workout(4, { id: 'new' }, 90), exercises: workout(4, { id: 'new' }, 90).exercises.map(ex => ({ ...ex, sets: ex.sets.map(s => ({ ...s, done: false })) })) };
+    expect(machineHistory([pending, ...history], 'Chest Press', EXERCISES_DB, { machineLocationScoped: true, gymLocation: { id: 'new' } })).toHaveLength(4);
   });
   it('keeps scoring comparisons on the same machine location', () => {
     const current = { ...workout(9, cityB, 80), machineLocationScoped: true, exercises: [workout(9, cityB, 80).exercises[0]] };
     const score = calculateSessionScore(current, history, EXERCISES_DB);
     expect(score.exercisesAnalysis[0].overloaded).toBe(false);
+    current.gymLocation = cityA;
+    expect(calculateSessionScore(current, history, EXERCISES_DB).exercisesAnalysis[0].overloaded).toBe(true);
     current.gymLocation = { id: 'new', name: 'Nuovo' };
-    expect(calculateSessionScore(current, history, EXERCISES_DB).exercisesAnalysis[0].status).toBe('new');
+    expect(calculateSessionScore(current, history, EXERCISES_DB).exercisesAnalysis[0].status).not.toBe('new');
   });
 });
 
 describe('location capture and prefill', () => {
-  it('waits for the city before prefilling machines and then uses local weights', () => {
+  it('prefills machines from generic data, then switches to local weights once the city is known', () => {
     useStore.getState().startWorkout(template);
     const session = useStore.getState().activeWorkout;
-    expect(session.exercises[0].sets[0].kg).toBe('');
+    expect(session.exercises[0].sets[0].kg).toBe(120);
     expect(session.exercises[1].sets[0].kg).toBe(120);
     useStore.getState().attachWorkoutLocation(session.id, cityA);
     expect(useStore.getState().activeWorkout.exercises[0].sets[0].kg).toBe(60);
@@ -63,13 +72,19 @@ describe('location capture and prefill', () => {
     useStore.getState().attachWorkoutLocation(session.id, cityA);
     expect(useStore.getState().activeWorkout.exercises[0].sets[0].kg).toBe('45');
   });
-  it('clears global prefill when the user opts in on the first workout', () => {
+  it('keeps generic data in a new city and replaces untouched prefill when local data exists', () => {
+    useStore.getState().startWorkout(template);
+    const session = useStore.getState().activeWorkout;
+    useStore.getState().attachWorkoutLocation(session.id, { id: 'new', name: 'Nuovo' });
+    expect(useStore.getState().activeWorkout.exercises[0].sets[0].kg).toBe(120);
+  });
+  it('keeps global prefill as a fallback when the user opts in on the first workout', () => {
     useStore.setState({ gymLocationPreferences: { introVersion: 0, capture: false, adaptLoads: false } });
     useStore.getState().startWorkout(template);
     expect(useStore.getState().activeWorkout.exercises[0].sets[0].kg).toBe(120);
     useStore.getState().setGymLocationPreferences({ introVersion: 1, capture: true, adaptLoads: true });
     const session = useStore.getState().activeWorkout;
-    expect(session.exercises[0].sets[0].kg).toBe('');
+    expect(session.exercises[0].sets[0].kg).toBe(120);
     useStore.getState().attachWorkoutLocation(session.id, cityA);
     expect(useStore.getState().activeWorkout.exercises[0].sets[0].kg).toBe(60);
   });
