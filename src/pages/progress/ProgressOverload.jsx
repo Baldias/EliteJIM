@@ -249,6 +249,10 @@ function ProgressOverload() {
                                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                                             <XAxis
                                                 dataKey="time"
+                                                type="number"
+                                                scale="time"
+                                                domain={['dataMin', 'dataMax']}
+                                                padding={{ left: 8, right: 8 }}
                                                 tickFormatter={fmtAxisDate}
                                                 stroke="var(--c-text-dim)"
                                                 fontSize={10}
