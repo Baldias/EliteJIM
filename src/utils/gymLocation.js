@@ -4,10 +4,15 @@ import { getLanguage, tr } from '../i18n';
 export const GYM_LOCATION_INTRO_VERSION = 1;
 export const isMachineExercise = (name, db) => db.find(ex => normalizeName(ex.name) === normalizeName(name))?.equipmentType === 'machine';
 export const locationKey = workout => workout?.gymLocation?.id || 'unlocated';
+const hasDoneSets = (workout, name) => workout.exercises?.some(ex => normalizeName(ex.name) === normalizeName(name) && ex.sets?.some(s => s.done));
+// Machines are compared within the current city. Until that city has completed sets
+// for the exercise (or while the city is unknown), fall back to the generic history,
+// so PRs and prefilled loads start from the best known data instead of from zero.
 export function machineHistory(history, name, db, workout) {
   if (!workout?.machineLocationScoped || !isMachineExercise(name, db)) return history;
-  if (!workout.gymLocation) return [];
-  return history.filter(previous => locationKey(previous) === locationKey(workout));
+  if (!workout.gymLocation) return history;
+  const local = history.filter(previous => locationKey(previous) === locationKey(workout));
+  return local.some(previous => hasDoneSets(previous, name)) ? local : history;
 }
 export const gymLabel = (location, aliases = {}) => location ? aliases[location.id] || location.name : tr('Località non disponibile');
 
