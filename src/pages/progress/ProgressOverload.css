@@ -169,6 +169,25 @@
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
+.pg-exercise-chip:has(.pg-exercise-streak) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pg-exercise-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--c-streak);
+  background: rgba(var(--c-streak-rgb), 0.14);
+  border: 1px solid rgba(var(--c-streak-rgb), 0.4);
+}
+
 .pg-exercise-chip.is-active {
   border-color: #ffffff78;
   color: var(--c-text);
@@ -230,6 +249,27 @@
   color: var(--c-streak);
   background: rgba(var(--c-streak-rgb), 0.15);
   border: 1px solid rgba(var(--c-streak-rgb), 0.35);
+}
+
+.pg-hero-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.pg-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--c-streak);
+  background: rgba(var(--c-streak-rgb), 0.14);
+  border: 1px solid rgba(var(--c-streak-rgb), 0.4);
 }
 
 .pg-chart {
