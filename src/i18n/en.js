@@ -129,6 +129,7 @@ export default {
   // pages/home/Home.jsx
   "Sei sicuro di voler eliminare la scheda \"{name}\"?\nQuesta azione è irreversibile.": "Are you sure you want to delete the plan \"{name}\"?\nThis action cannot be undone.",
   "sett": "wk",
+  "Streak: {n} settimane di fila": "Streak: {n} weeks in a row",
   "In corso": "In progress",
   "Sessione Libera": "Free Session",
   "Nuova Scheda": "New Plan",

@@ -8,7 +8,8 @@ import { EXERCISE_CATEGORIES, getAllExercises, getExerciseCategories } from '../
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { getMuscleLevelByXp } from '../../utils/gamification';
-import { Zap, Search, Trophy, TrendingUp, TrendingDown } from 'lucide-react';
+import { Zap, Search, Trophy, TrendingUp, TrendingDown, Flame } from 'lucide-react';
+import { getExerciseStats, sortExercisesByStreakAndRecency } from '../../utils/exerciseStreaks';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight, MAX_RELIABLE_REPS, REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './ProgressOverload.css';
 import { locale, tr } from '../../i18n';
@@ -64,17 +65,15 @@ function ProgressOverload() {
 
     const allExercisesDB = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
 
-    // Every exercise with at least one completed set
+    // Last use and weekly streak of every exercise with at least one completed set
+    const exerciseStats = useMemo(() => getExerciseStats(history), [history]);
+
+    // Exercises on a streak first (longest first), then the most recently used
     const trainedExercises = useMemo(() => {
-        const exSet = new Set();
-        history.forEach(workout => {
-            workout.exercises.forEach(ex => {
-                if (ex.sets.some(s => s.done)) exSet.add(ex.name);
-            });
-        });
-        if (requestedExercise) exSet.add(requestedExercise);
-        return Array.from(exSet).sort();
-    }, [history, requestedExercise]);
+        const names = new Set(exerciseStats.keys());
+        if (requestedExercise) names.add(requestedExercise);
+        return sortExercisesByStreakAndRecency(names, exerciseStats);
+    }, [exerciseStats, requestedExercise]);
 
     // Only muscle groups that actually have trained exercises, with their count
     const categories = useMemo(() => {
@@ -216,6 +215,11 @@ function ProgressOverload() {
                                     onClick={() => setSelectedExercise(currentExercise === name ? '' : name)}
                                 >
                                     {name}
+                                    {exerciseStats.get(name)?.streak > 0 && (
+                                        <span className="pg-exercise-streak" title={tr('Streak: {n} settimane di fila', { n: exerciseStats.get(name).streak })}>
+                                            <Flame size={12} fill="currentColor" />{exerciseStats.get(name).streak}
+                                        </span>
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -250,9 +254,16 @@ function ProgressOverload() {
                                             {hasLoad && bodyweightLoad > 0 ? '+' : ''}{fmtNum(summary.last.value)} <span>{unit}</span>
                                         </p>
                                     </div>
-                                    {summary.last.isPR && (
-                                        <span className="pg-pr-badge"><Trophy size={14} /> {tr('Nuovo PR')}</span>
-                                    )}
+                                    <div className="pg-hero-badges">
+                                        {summary.last.isPR && (
+                                            <span className="pg-pr-badge"><Trophy size={14} /> {tr('Nuovo PR')}</span>
+                                        )}
+                                        {exerciseStats.get(currentExercise)?.streak > 0 && (
+                                            <span className="pg-streak-badge" title={tr('Streak: {n} settimane di fila', { n: exerciseStats.get(currentExercise).streak })}>
+                                                <Flame size={14} fill="currentColor" /> {exerciseStats.get(currentExercise).streak} {tr('sett')}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="pg-chart">

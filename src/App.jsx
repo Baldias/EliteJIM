@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useWorkoutAutoFinish } from './hooks/useWorkoutAutoFinish';
 import { hasCurrentThemeChoice } from './utils/theme';
-import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, useLocation, useNavigationType } from 'react-router-dom';
 import { Home as HomeIcon, TrendingUp, User, Dna, Utensils } from 'lucide-react';
 import { initPersistentStorage } from './utils/backup';
 import Home from './pages/home/Home';
@@ -64,6 +64,18 @@ function Navigation() {
   );
 }
 
+// Open every new page from the top: without this the browser keeps the previous
+// page's scroll, so "Termina" at the end of a long workout opened the recap at the bottom.
+// Back/forward (POP) keeps the browser's own scroll restoration.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const navigationType = useNavigationType();
+  useEffect(() => {
+    if (navigationType !== 'POP') window.scrollTo(0, 0);
+  }, [pathname, navigationType]);
+  return null;
+}
+
 function AppContent() {
   useWorkoutAutoFinish();
   const themeChosen = useStore(hasCurrentThemeChoice);
@@ -78,6 +90,7 @@ function AppContent() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <div className="app-container">
         <DemoBanner />
         <ReloadPrompt />
