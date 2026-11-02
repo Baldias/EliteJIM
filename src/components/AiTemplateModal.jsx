@@ -131,6 +131,14 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
     }));
   };
 
+  const toggleSecondary = (idx, cat) => {
+    setPendingNewExercises(prev => prev.map((ex, i) => {
+      if (i !== idx) return ex;
+      const current = ex.secondaryCategories || [];
+      return { ...ex, secondaryCategories: current.includes(cat) ? current.filter(c => c !== cat) : [...current, cat] };
+    }));
+  };
+
   const handleImportWithNewExercises = (addToDb) => {
     const toAdd = addToDb ? pendingNewExercises.filter(ex => ex.selected && ex.category) : [];
     const added = toAdd.length ? addCustomExercises(toAdd) : 0;
@@ -443,27 +451,50 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                             : tr('Muscolo non riconosciuto: sceglilo per poterlo aggiungere.')}
                         </p>
                         <div className="ai-new-ex-fields">
-                          <select
-                            className="ai-new-ex-select"
-                            value={ex.category || ''}
-                            onChange={e => updatePendingExercise(idx, { category: e.target.value })}
-                            aria-label={tr('Muscolo principale')}
-                          >
-                            {!ex.category && <option value="" disabled>{tr('Muscolo principale')}</option>}
-                            {Object.values(EXERCISE_CATEGORIES).map(cat => (
-                              <option key={cat} value={cat}>{tr(cat)}</option>
-                            ))}
-                          </select>
-                          <select
-                            className="ai-new-ex-select"
-                            value={ex.equipmentType}
-                            onChange={e => updatePendingExercise(idx, { equipmentType: e.target.value })}
-                            aria-label={tr('Attrezzo')}
-                          >
-                            <option value={EQUIPMENT_TYPES.BARBELL}>{tr('Bilanciere (+2.5kg)')}</option>
-                            <option value={EQUIPMENT_TYPES.MACHINE}>{tr('Macchinario / Cavi (+2.5kg)')}</option>
-                            <option value={EQUIPMENT_TYPES.DUMBBELL}>{tr('Manubri (+2kg)')}</option>
-                          </select>
+                          <label className="ai-new-ex-field">
+                            <span className="ai-new-ex-label">{tr('Muscolo principale')}</span>
+                            <select
+                              className="ai-new-ex-select"
+                              value={ex.category || ''}
+                              onChange={e => updatePendingExercise(idx, { category: e.target.value })}
+                            >
+                              {!ex.category && <option value="" disabled>{tr('Scegli')}</option>}
+                              {Object.values(EXERCISE_CATEGORIES).map(cat => (
+                                <option key={cat} value={cat}>{tr(cat)}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="ai-new-ex-field">
+                            <span className="ai-new-ex-label">{tr('Attrezzo')}</span>
+                            <select
+                              className="ai-new-ex-select"
+                              value={ex.equipmentType}
+                              onChange={e => updatePendingExercise(idx, { equipmentType: e.target.value })}
+                            >
+                              <option value={EQUIPMENT_TYPES.BARBELL}>{tr('Bilanciere (+2.5kg)')}</option>
+                              <option value={EQUIPMENT_TYPES.MACHINE}>{tr('Macchinario / Cavi (+2.5kg)')}</option>
+                              <option value={EQUIPMENT_TYPES.DUMBBELL}>{tr('Manubri (+2kg)')}</option>
+                            </select>
+                          </label>
+                        </div>
+                        <div className="ai-new-ex-field">
+                          <span className="ai-new-ex-label">{tr('Muscoli secondari')}</span>
+                          <div className="ai-new-ex-chips">
+                            {Object.values(EXERCISE_CATEGORIES).filter(cat => cat !== ex.category).map(cat => {
+                              const active = (ex.secondaryCategories || []).includes(cat);
+                              return (
+                                <button
+                                  key={cat}
+                                  type="button"
+                                  className={`ai-new-ex-chip ${active ? 'active' : ''}`}
+                                  aria-pressed={active}
+                                  onClick={() => toggleSecondary(idx, cat)}
+                                >
+                                  {tr(cat)}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     ))}

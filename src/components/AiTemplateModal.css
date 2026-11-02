@@ -956,3 +956,17 @@
   padding: 6px 8px;
 }
 .ai-new-ex-select option { color: #000000; }
+.ai-new-ex-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px; min-width: 0; }
+.ai-new-ex-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.5); }
+.ai-new-ex-field .ai-new-ex-select { flex: none; width: 100%; }
+.ai-new-ex-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.ai-new-ex-chip {
+  font-size: 0.7rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+.ai-new-ex-chip.active { background: rgba(0, 229, 255, 0.15); border-color: rgba(0, 229, 255, 0.5); color: #00e5ff; }

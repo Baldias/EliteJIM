@@ -1582,4 +1582,6 @@ export default {
   "Importa senza aggiungerli": "Import without adding them",
   "1 esercizio aggiunto al database.": "1 exercise added to the database.",
   "{n} esercizi aggiunti al database.": "{n} exercises added to the database.",
+  "Scegli": "Choose",
+  "Muscoli secondari": "Secondary muscles",
 };
