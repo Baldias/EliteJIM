@@ -2,7 +2,7 @@ import { machineHistory, isMachineExercise } from '../utils/gymLocation';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
-import { EXERCISES_DB, getAllExercises, normalizeName } from '../data/exercises';
+import { EXERCISES_DB, EQUIPMENT_TYPES, getAllExercises, normalizeName } from '../data/exercises';
 import { parseNonNegativeInt } from '../utils/number';
 import { estimate1RM, resolveBodyweight } from '../utils/oneRepMax';
 import { DEFAULT_NUTRITION_GOALS } from '../utils/nutrition';
@@ -377,6 +377,29 @@ export const useStore = create(
       toggleRirSelector: () => set((state) => ({ showRirSelector: !(state.showRirSelector ?? true) })),
       
       // --- Exercise Management Actions ---
+      // Adds several custom exercises at once (e.g. from a JSON import), skipping names already in the DB.
+      addCustomExercises: (exercises) => {
+        const state = get();
+        const known = new Set(getAllExercises(state.customExercises, state.exerciseOverrides).map(ex => normalizeName(ex.name)));
+        const stamp = Date.now();
+        const added = [];
+        (exercises || []).forEach((ex, idx) => {
+          const name = (ex?.name || '').trim();
+          const norm = normalizeName(name);
+          if (!name || !ex.category || known.has(norm)) return;
+          known.add(norm);
+          added.push({
+            name,
+            category: ex.category,
+            secondaryCategories: (ex.secondaryCategories || []).filter(c => c !== ex.category),
+            equipmentType: ex.equipmentType || EQUIPMENT_TYPES.BARBELL,
+            id: `custom-${stamp}-${idx}`,
+            isCustom: true
+          });
+        });
+        if (added.length) set({ customExercises: [...(state.customExercises || []), ...added] });
+        return added.length;
+      },
       addCustomExercise: (exercise) =>
         set((state) => ({ customExercises: [...(state.customExercises || []), { ...exercise, id: `custom-${Date.now()}`, isCustom: true }] })),
 

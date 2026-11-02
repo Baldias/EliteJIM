@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { getAllExercises } from '../data/exercises';
+import { getAllExercises, EXERCISE_CATEGORIES, EQUIPMENT_TYPES } from '../data/exercises';
 import { 
   buildAiWorkoutPrompt, 
   parseAndValidateWorkoutJson,
@@ -18,6 +18,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
   const customExercises = useStore(state => state.customExercises || []);
   const exerciseOverrides = useStore(state => state.exerciseOverrides || {});
   const importTemplates = useStore(state => state.importTemplates);
+  const addCustomExercises = useStore(state => state.addCustomExercises);
   const templates = useStore(state => state.templates || []);
 
   const allExercises = useMemo(() => {
@@ -42,6 +43,8 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
   // Form state per import JSON
   const [jsonInput, setJsonInput] = useState('');
   const [importStatus, setImportStatus] = useState(null);
+  // Exercises not in the DB, waiting for the user's ok before the import
+  const [pendingNewExercises, setPendingNewExercises] = useState(null);
 
   // Form state per export
   const [selectedTemplateIds, setSelectedTemplateIds] = useState([]);
@@ -99,6 +102,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
       const text = await navigator.clipboard.readText();
       if (text) {
         setJsonInput(text);
+        setPendingNewExercises(null);
       }
     } catch (err) {
       alert(tr("Incolla manualmente premendo a lungo nell'area di testo."));
@@ -107,12 +111,42 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
 
   const handleConfirmImport = () => {
     if (!validationResult || !validationResult.success) return;
+    const newExercises = validationResult.stats.newExercises || [];
+    if (newExercises.length > 0) {
+      setPendingNewExercises(newExercises.map(ex => ({ ...ex, selected: Boolean(ex.category) })));
+      return;
+    }
+    finishImport(0);
+  };
 
+  const updatePendingExercise = (idx, changes) => {
+    setPendingNewExercises(prev => prev.map((ex, i) => {
+      if (i !== idx) return ex;
+      const next = { ...ex, ...changes };
+      if (changes.category) {
+        next.secondaryCategories = (ex.secondaryCategories || []).filter(c => c !== changes.category);
+        next.selected = true;
+      }
+      return next;
+    }));
+  };
+
+  const handleImportWithNewExercises = (addToDb) => {
+    const toAdd = addToDb ? pendingNewExercises.filter(ex => ex.selected && ex.category) : [];
+    const added = toAdd.length ? addCustomExercises(toAdd) : 0;
+    setPendingNewExercises(null);
+    finishImport(added);
+  };
+
+  const finishImport = (addedExercises) => {
     const count = importTemplates(validationResult.templates);
+    const base = count === 1 ? tr('1 scheda importata con successo!') : tr('{n} schede importate!', { n: count });
     setImportStatus({
       success: true,
       count,
-      message: count === 1 ? tr('1 scheda importata con successo!') : tr('{n} schede importate!', { n: count })
+      message: addedExercises > 0
+        ? `${base} ${addedExercises === 1 ? tr('1 esercizio aggiunto al database.') : tr('{n} esercizi aggiunti al database.', { n: addedExercises })}`
+        : base
     });
 
     setTimeout(() => {
@@ -373,14 +407,89 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                   className="ai-minimal-textarea"
                   placeholder={tr('Incolla qui il JSON generato da ChatGPT o inviato da un amico (es. [ { "name": "Push A", "exercises": [...] } ])')}
                   value={jsonInput}
-                  onChange={e => setJsonInput(e.target.value)}
+                  onChange={e => { setJsonInput(e.target.value); setPendingNewExercises(null); }}
                   rows={7}
                   spellCheck={false}
                 />
               </div>
 
+
+              {/* Conferma esercizi nuovi */}
+              {pendingNewExercises && (
+                <div className="ai-new-ex-panel">
+                  <p className="ai-new-ex-title">{tr('Vuoi aggiungere questi esercizi al database esercizi?')}</p>
+                  <p className="ai-new-ex-text">
+                    {tr('Non sono ancora nel tuo database. Se li aggiungi, contano per muscoli, mappa fatica e progressi, e li ritrovi quando crei una scheda.')}
+                  </p>
+                  <div className="ai-new-ex-list">
+                    {pendingNewExercises.map((ex, idx) => (
+                      <div key={ex.name} className={`ai-new-ex-card ${ex.selected ? 'selected' : ''}`}>
+                        <label className="ai-new-ex-head">
+                          <input
+                            type="checkbox"
+                            checked={ex.selected}
+                            disabled={!ex.category}
+                            onChange={e => updatePendingExercise(idx, { selected: e.target.checked })}
+                          />
+                          <span className="ai-new-ex-name">{ex.name}</span>
+                        </label>
+                        <p className="ai-new-ex-muscles">
+                          {ex.category
+                            ? <>
+                                {tr('Allena')}: <strong>{tr(ex.category)}</strong>
+                                {ex.secondaryCategories?.length > 0 && <> · {tr('secondari')}: {ex.secondaryCategories.map(c => tr(c)).join(', ')}</>}
+                                {ex.source === 'guess' && <span className="ai-new-ex-guess"> ({tr('stimato dal nome')})</span>}
+                              </>
+                            : tr('Muscolo non riconosciuto: sceglilo per poterlo aggiungere.')}
+                        </p>
+                        <div className="ai-new-ex-fields">
+                          <select
+                            className="ai-new-ex-select"
+                            value={ex.category || ''}
+                            onChange={e => updatePendingExercise(idx, { category: e.target.value })}
+                            aria-label={tr('Muscolo principale')}
+                          >
+                            {!ex.category && <option value="" disabled>{tr('Muscolo principale')}</option>}
+                            {Object.values(EXERCISE_CATEGORIES).map(cat => (
+                              <option key={cat} value={cat}>{tr(cat)}</option>
+                            ))}
+                          </select>
+                          <select
+                            className="ai-new-ex-select"
+                            value={ex.equipmentType}
+                            onChange={e => updatePendingExercise(idx, { equipmentType: e.target.value })}
+                            aria-label={tr('Attrezzo')}
+                          >
+                            <option value={EQUIPMENT_TYPES.BARBELL}>{tr('Bilanciere (+2.5kg)')}</option>
+                            <option value={EQUIPMENT_TYPES.MACHINE}>{tr('Macchinario / Cavi (+2.5kg)')}</option>
+                            <option value={EQUIPMENT_TYPES.DUMBBELL}>{tr('Manubri (+2kg)')}</option>
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="ai-footer-actions">
+                    <button
+                      type="button"
+                      className="ai-cta-primary"
+                      disabled={!pendingNewExercises.some(ex => ex.selected && ex.category)}
+                      onClick={() => handleImportWithNewExercises(true)}
+                    >
+                      <Check size={17} />
+                      <span>{tr('Aggiungi e importa')}</span>
+                    </button>
+                    <button type="button" className="ai-btn-secondary" onClick={() => handleImportWithNewExercises(false)}>
+                      <span>{tr('Importa senza aggiungerli')}</span>
+                    </button>
+                    <button type="button" className="ai-subtle-nav-btn" onClick={() => setPendingNewExercises(null)}>
+                      <span>{tr('Indietro')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Validation Result */}
-              {validationResult && (
+              {validationResult && !pendingNewExercises && (
                 <div className="ai-validation-feedback">
                   {validationResult.success ? (
                     <div className="ai-success-panel">
@@ -395,7 +504,9 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                         <div className="ai-warning-pill">
                           <AlertTriangle size={13} />
                           <span>
-                            {tr('{n} es. non in lista verranno importati come personalizzati.', { n: validationResult.stats.unknownCount })}
+                            {validationResult.stats.unknownCount === 1
+                              ? tr('1 esercizio non è nel database: prima di importare ti chiederò se aggiungerlo.')
+                              : tr('{n} esercizi non sono nel database: prima di importare ti chiederò se aggiungerli.', { n: validationResult.stats.unknownCount })}
                           </span>
                         </div>
                       )}
@@ -440,6 +551,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               )}
 
               {/* Action Button */}
+              {!pendingNewExercises && (
               <div className="ai-footer-actions">
                 <button
                   type="button"
@@ -455,6 +567,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                   </span>
                 </button>
               </div>
+              )}
 
               {/* Mini Guida in basso */}
               <div className="ai-friend-guide-box">

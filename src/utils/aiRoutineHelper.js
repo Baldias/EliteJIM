@@ -1,4 +1,4 @@
-import { normalizeName, getExerciseCategories } from '../data/exercises.js';
+import { normalizeName, getExerciseCategories, EXERCISE_CATEGORIES, EQUIPMENT_TYPES } from '../data/exercises.js';
 import { parseNonNegativeInt } from './number.js';
 import { tr } from '../i18n';
 
@@ -32,9 +32,9 @@ Your task is to create a professional, science-based workout routine for the "El
 STRICT RULES (CRITICAL FOR PARSING)
 ═══════════════════════════════════════════════════════════════
 1. OUTPUT FORMAT: Return ONLY a raw, valid JSON array. DO NOT wrap with conversational text, explanations, or text outside the JSON.
-2. EXERCISE NAMES: The "name" field of each exercise MUST be chosen EXACTLY and VERBATIM from the "AVAILABLE EXERCISES DATABASE" below (which contains Italian exercise names as stored in the app). Do NOT translate, alter spelling, or invent new names.
+2. EXERCISE NAMES: Prefer names chosen EXACTLY and VERBATIM from the "AVAILABLE EXERCISES DATABASE" below (which contains Italian exercise names as stored in the app). Do NOT translate or alter the spelling of existing names. Add an exercise that is not in the list ONLY when no listed exercise fits: then also give its "category" (the main muscle, one of: ${Object.values(EXERCISE_CATEGORIES).join(', ')}), optional "secondaryCategories" (array, same values) and "equipmentType" ("barbell", "dumbbell" or "machine"). The user will be asked whether to add it to their database.
 3. FIELDS PER EXERCISE:
-   - "name": string (exact match from the DB list)
+   - "name": string (exact match from the DB list, or a new exercise as described above)
    - "setsCount": integer (e.g. 3 or 4)
    - "targetReps": string rep range (e.g. "6-8", "8-10", "10-12", "12-15")
    - "restTime": integer rest in seconds between sets (e.g. 60, 90, 120, 180)
@@ -176,6 +176,7 @@ export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
   let totalExercisesCount = 0;
   let matchedExercisesCount = 0;
   const unknownExercisesSet = new Set();
+  const newExercisesMap = new Map();
 
   for (let i = 0; i < templatesList.length; i++) {
     const rawTpl = templatesList[i];
@@ -206,6 +207,7 @@ export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
         matchedExercisesCount++;
       } else {
         unknownExercisesSet.add(originalName);
+        if (!newExercisesMap.has(norm)) newExercisesMap.set(norm, describeNewExercise(originalName, rawEx));
       }
 
       validatedExercises.push({
@@ -240,8 +242,96 @@ export function parseAndValidateWorkoutJson(rawText, allKnownExercises = []) {
       totalExercises: totalExercisesCount,
       matchedCount: matchedExercisesCount,
       unknownCount: unknownExercisesSet.size,
-      unknownExercises: Array.from(unknownExercisesSet)
+      unknownExercises: Array.from(unknownExercisesSet),
+      newExercises: Array.from(newExercisesMap.values())
     }
+  };
+}
+
+const C = EXERCISE_CATEGORIES;
+
+// Aliases accepted in the JSON "category" fields (keys, Italian values, common English names).
+const CATEGORY_ALIASES = {
+  chest: C.CHEST, pecs: C.CHEST, pectorals: C.CHEST,
+  back: C.BACK, lats: C.BACK, dorsali: C.BACK, schiena: C.BACK, trapezius: C.BACK, traps: C.BACK,
+  quadriceps: C.QUADRICEPS, quads: C.QUADRICEPS, quadricipite: C.QUADRICEPS, gambe: C.QUADRICEPS, legs: C.QUADRICEPS,
+  hamstrings: C.HAMSTRINGS, femorale: C.HAMSTRINGS,
+  glutes: C.GLUTES, gluteo: C.GLUTES, glutei: C.GLUTES,
+  adductors: C.ADDUCTORS, adduttore: C.ADDUCTORS,
+  calves: C.CALVES, calf: C.CALVES, polpaccio: C.CALVES,
+  shoulders: C.SHOULDERS, delts: C.SHOULDERS, deltoids: C.SHOULDERS, deltoidi: C.SHOULDERS,
+  biceps: C.BICEPS, bicipite: C.BICEPS,
+  triceps: C.TRICEPS, tricipite: C.TRICEPS,
+  core: C.CORE, abs: C.CORE, abdominals: C.CORE, addominali: C.CORE,
+  cardio: C.CARDIO,
+  neck: C.NECK,
+  forearms: C.FOREARMS, avambraccio: C.FOREARMS
+};
+Object.entries(C).forEach(([key, value]) => {
+  CATEGORY_ALIASES[key.toLowerCase()] = value;
+  CATEGORY_ALIASES[value.toLowerCase()] = value;
+});
+
+export function resolveCategory(value) {
+  if (typeof value !== 'string') return null;
+  return CATEGORY_ALIASES[normalizeName(value)] || null;
+}
+
+// Keyword rules to guess the main muscle from an exercise name (Italian or English). Order matters: specific first.
+const CATEGORY_RULES = [
+  [/calf|polpacc|tibial/, C.CALVES],
+  [/wrist|polso|avambracc|forearm|farmer/, C.FOREARMS],
+  [/leg curl|curl femoral|femoral|hamstring|nordic|rdl|rumen|romanian|stacc|deadlift|good morning/, C.HAMSTRINGS],
+  [/hip thrust|glute|glut|abduct|abduz|slanci|kickback ai cavi|frog pump/, C.GLUTES],
+  [/adduct|adduz/, C.ADDUCTORS],
+  [/squat|leg press|pressa|affond|lunge|leg extension|step up|split/, C.QUADRICEPS],
+  [/tricip|tricep|pushdown|push down|french|skull|kickback|dip alla panca|estensioni/, C.TRICEPS],
+  [/curl|bicip|bicep/, C.BICEPS],
+  [/alzat|lateral|raise|military|shoulder|spall|face pull|lento|arnold|delt|tirate|upright/, C.SHOULDERS],
+  [/panca|bench|chest|pett|croci|fly|push-up|push up|piegament|pec|dip/, C.CHEST],
+  [/lat |lat$|trazion|pull-up|pull up|pulldown|pull-down|row|rematore|pulley|dors|back|shrug|scrollat|pullover/, C.BACK],
+  [/crunch|plank|addom|abs|core|leg raise|twist|ab roller|hollow/, C.CORE],
+  [/neck|collo/, C.NECK],
+  [/tapis|bike|cyclette|corsa|run|ellittic|vogatore|rower|stepper|corda|jump rope|cardio/, C.CARDIO]
+];
+
+export function guessCategory(name) {
+  const n = normalizeName(name);
+  const rule = CATEGORY_RULES.find(([re]) => re.test(n));
+  return rule ? rule[1] : null;
+}
+
+const EQUIPMENT_ALIASES = {
+  barbell: EQUIPMENT_TYPES.BARBELL, bilanciere: EQUIPMENT_TYPES.BARBELL,
+  dumbbell: EQUIPMENT_TYPES.DUMBBELL, manubri: EQUIPMENT_TYPES.DUMBBELL, manubrio: EQUIPMENT_TYPES.DUMBBELL,
+  machine: EQUIPMENT_TYPES.MACHINE, macchina: EQUIPMENT_TYPES.MACHINE, cable: EQUIPMENT_TYPES.MACHINE, cavi: EQUIPMENT_TYPES.MACHINE
+};
+
+export function guessEquipment(name) {
+  const n = normalizeName(name);
+  if (/manubr|dumbbell|\bdb\b/.test(n)) return EQUIPMENT_TYPES.DUMBBELL;
+  if (/macchin|machine|cav[io]|cable|pulley|smith|multipower|lat machine|press orizzontale|pressa|leg press/.test(n)) return EQUIPMENT_TYPES.MACHINE;
+  return EQUIPMENT_TYPES.BARBELL;
+}
+
+/**
+ * Builds the database entry proposed for an exercise that is not in the DB:
+ * muscles and equipment come from the JSON when given, otherwise they are guessed from the name.
+ */
+export function describeNewExercise(name, rawEx = {}) {
+  const fromJson = resolveCategory(rawEx.category ?? rawEx.muscle ?? rawEx.primaryMuscle);
+  const category = fromJson || guessCategory(name);
+  const rawSecondary = rawEx.secondaryCategories ?? rawEx.secondaryMuscles ?? [];
+  const secondaryCategories = [...new Set((Array.isArray(rawSecondary) ? rawSecondary : [rawSecondary])
+    .map(resolveCategory)
+    .filter(c => c && c !== category))];
+  const equipmentType = EQUIPMENT_ALIASES[normalizeName(rawEx.equipmentType || rawEx.equipment || '')] || guessEquipment(name);
+  return {
+    name,
+    category,
+    secondaryCategories,
+    equipmentType,
+    source: fromJson ? 'json' : category ? 'guess' : null
   };
 }
 
