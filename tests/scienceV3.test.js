@@ -39,7 +39,8 @@ describe('direct scientific accounting', () => {
     const result = scienceVolumes([w], EXERCISES_DB, science, start, start + 86400000);
     expect(result.muscles.Petto).toEqual({ direct: 1, ordinary: 2, unknown: 1, indirect: 0 });
     expect(result.muscles.Tricipiti.direct).toBe(0);
-    expect(result.muscles.Tricipiti.indirect).toBe(1);
+    // Assisting work is the same with or without a recorded RIR.
+    expect(result.muscles.Tricipiti.indirect).toBe(2);
   });
   it('does not invent RIR or modify legacy logs', () => {
     const w = workout(1, start + 1000);

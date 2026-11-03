@@ -1,4 +1,4 @@
-import { BALANCED_VOLUME_VERSION, fitBalancedTargets, scienceSessionBudget } from '../utils/scienceBalanced';
+import { BALANCED_VOLUME_VERSION, fitBalancedTargets, scienceSessionBudget, scienceSessionBaseTargets } from '../utils/scienceBalanced';
 import { getAllExercises, normalizeName } from '../data/exercises';
 import { SCIENCE_REFERENCE_VERSION } from '../utils/scienceReferences';
 import { migrateLegacyScience } from '../utils/scienceMigration';
@@ -8,6 +8,7 @@ import { tr } from '../i18n';
 import {
   SCIENCE_MUSCLES, OPTIONAL_MUSCLES, emptyScienceState, hasLegacyScience,
   createScienceProgram, closeScienceWeek, respondScienceRecommendation,
+  classifyScienceExercise as defaultScienceClassification,
 } from '../utils/scienceV3';
 
 const database = state => getAllExercises(state.customExercises, state.exerciseOverrides);
@@ -167,7 +168,10 @@ export function scienceActions(set) {
       if (!ex) return state;
       const science = state.scienceState || emptyScienceState();
       const found = database(state).find(e => normalizeName(e.name) === normalizeName(ex.name));
-      const classification = { primary, indirect: [], name: ex.name };
+      // Keep the exercise's assisting muscles: choosing the main muscle must
+      // not erase them for this and every later workout.
+      const indirect = (defaultScienceClassification(ex, database(state), emptyScienceState()).indirect || []).filter(m => m !== primary);
+      const classification = { primary, indirect, name: ex.name };
       return { ...(state.activeWorkout?.id === workoutId ? { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now() } } : {}), scienceState: {
         ...science,
         classifications: { ...science.classifications, [found?.id || normalizeName(ex.name)]: classification },
@@ -209,9 +213,14 @@ export function scienceActions(set) {
       if (!p || p.status !== 'active') return state;
       const plannedSessions = clamp(sessions, 1, 7, science.profile.daysPerWeek || 4);
       const sessionPlans = { ...p.sessionPlans, [p.currentWeek]: { plannedSessions } };
-      const targets = science.profile.goal === 'balanced' ? fitBalancedTargets(p.targets, scienceSessionBudget(science.profile, { ...p, sessionPlans })) : p.targets;
-      const decisions = { ...p.decisions, ...Object.fromEntries(Object.keys(targets).filter(m => targets[m] !== p.targets[m]).map(m => [m, 'Obiettivo adattato alle sedute disponibili: massimo 20 serie per seduta.'])) };
+      const balanced = science.profile.goal === 'balanced';
+      // Refit from the targets before any session cut, so more sessions give
+      // back the sets removed when fewer sessions were chosen.
+      const base = balanced ? scienceSessionBaseTargets(p) : p.targets;
+      const targets = balanced ? fitBalancedTargets(base, scienceSessionBudget(science.profile, { ...p, sessionPlans })) : p.targets;
+      const decisions = { ...p.decisions, ...Object.fromEntries(Object.keys(targets).filter(m => targets[m] !== p.targets[m]).map(m => [m, targets[m] < p.targets[m] ? 'Obiettivo adattato alle sedute disponibili: massimo 20 serie per seduta.' : 'Obiettivo ripristinato con più sedute disponibili.'])) };
       return { scienceState: { ...science, program: { ...p, sessionPlans, targets, decisions,
+        ...(balanced ? { sessionBase: { week: p.currentWeek, targets: base, fitted: { ...targets } } } : {}),
         recommendations: science.profile.goal === 'balanced' ? p.recommendations.map(r => r.status === 'pending' && r.type === 'redistribution' ? { ...r, status: 'superseded' } : r) : p.recommendations,
       } } };
     }),
