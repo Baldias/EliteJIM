@@ -916,3 +916,57 @@
 .ai-friend-guide-text {
   color: var(--c-text-muted);
 }
+
+/* Conferma esercizi nuovi prima dell'import */
+.ai-new-ex-panel {
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-new-ex-title { margin: 0; font-size: 0.9rem; font-weight: 700; color: #ffffff; }
+.ai-new-ex-text { margin: 0; font-size: 0.74rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4; }
+.ai-new-ex-list { display: flex; flex-direction: column; gap: 8px; }
+.ai-new-ex-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ai-new-ex-card.selected { border-color: rgba(0, 229, 255, 0.35); }
+.ai-new-ex-head { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.ai-new-ex-name { font-size: 0.84rem; font-weight: 600; color: #ffffff; }
+.ai-new-ex-muscles { margin: 0; font-size: 0.74rem; color: rgba(255, 255, 255, 0.7); }
+.ai-new-ex-guess { color: rgba(255, 255, 255, 0.45); }
+.ai-new-ex-fields { display: flex; gap: 6px; flex-wrap: wrap; }
+.ai-new-ex-select {
+  flex: 1 1 140px;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.76rem;
+  padding: 6px 8px;
+}
+.ai-new-ex-select option { color: #000000; }
+.ai-new-ex-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px; min-width: 0; }
+.ai-new-ex-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.5); }
+.ai-new-ex-field .ai-new-ex-select { flex: none; width: 100%; }
+.ai-new-ex-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.ai-new-ex-chip {
+  font-size: 0.7rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+.ai-new-ex-chip.active { background: rgba(0, 229, 255, 0.15); border-color: rgba(0, 229, 255, 0.5); color: #00e5ff; }
