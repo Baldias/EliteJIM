@@ -10,6 +10,7 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { WorkoutSetEffort, ScienceExerciseClassification } from '../../components/ScienceTraining';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 import { sanitizeDecimalInput } from '../../utils/number';
+import { getExerciseNote, setNote } from '../../utils/exerciseNotes';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import TrainingReminder from '../../components/TrainingReminder';
 import './Workout.css';
@@ -109,7 +110,6 @@ function Workout() {
     useStore.setState(state => {
       if (!state.activeWorkout) return state;
       const hist = machineHistory(state.history || [], newName, allDB, state.activeWorkout);
-      const templates = state.templates || [];
       const targetEx = state.activeWorkout.exercises.find(e => e.id === exerciseId);
       if (!targetEx || targetEx.name === newName) return state;
       const isAdded = targetEx.isAdded;
@@ -124,18 +124,14 @@ function Workout() {
       const bestData = findLastBest1RMSet(hist, newName);
       const bestSet = bestData?.set;
 
-      let initialNotes = bestData?.notes || pastEx?.notes || '';
-      if (!initialNotes) {
-        for (const tpl of templates) {
-          const found = tpl.exercises?.find(e => normalizeName(e.name) === norm);
-          if (found?.notes) {
-            initialNotes = found.notes;
-            break;
-          }
-        }
-      }
+      // The note belongs to the exercise: show the new exercise's own note. A note typed
+      // before the exercise had a name becomes its note if it has none yet.
+      const savedNote = getExerciseNote(state.exerciseNotes, newName);
+      const draftNote = !targetEx.name && targetEx.notes ? targetEx.notes : '';
+      const nextNote = savedNote || draftNote;
 
       return {
+        ...(draftNote && !savedNote ? { exerciseNotes: setNote(state.exerciseNotes, newName, draftNote) } : {}),
         activeWorkout: {
           ...state.activeWorkout,
           lastActivityAt: Date.now(),
@@ -152,7 +148,7 @@ function Workout() {
               }
               return s;
             });
-            return { ...ex, name: newName, notes: ex.notes || initialNotes, sets };
+            return { ...ex, name: newName, notes: nextNote, sets };
           })
         }
       };
