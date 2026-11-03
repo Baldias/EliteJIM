@@ -349,3 +349,10 @@
   font-size: 0.8125rem;
   color: var(--c-text-dim);
 }
+
+.tb-label-hint {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  opacity: 0.8;
+}

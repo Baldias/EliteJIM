@@ -3,9 +3,11 @@ import { Share2, Copy, Download, Check, X, Dumbbell, MessageSquareShare } from '
 import { formatTemplatesForExport, downloadTemplatesAsJson } from '../utils/aiRoutineHelper';
 import './ShareTemplateModal.css';
 import { tr } from '../i18n';
+import { useStore } from '../store/useStore';
 
 export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }) {
   const [copied, setCopied] = useState(false);
+  const exerciseNotes = useStore(state => state.exerciseNotes);
 
   if (!isOpen) return null;
 
@@ -16,7 +18,7 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
     : (targetTemplates[0]?.name || tr('Scheda Workout'));
 
   const totalExercises = targetTemplates.reduce((acc, t) => acc + (t.exercises?.length || 0), 0);
-  const jsonString = formatTemplatesForExport(targetTemplates);
+  const jsonString = formatTemplatesForExport(targetTemplates, exerciseNotes);
 
   const handleCopyJson = async () => {
     try {
@@ -54,7 +56,7 @@ export function ShareTemplateModal({ isOpen, onClose, template, templates = [] }
 
   const handleDownload = () => {
     const filename = isMultiple ? 'schede-elitejim' : (targetTemplates[0]?.name || 'scheda-elitejim');
-    downloadTemplatesAsJson(targetTemplates, filename);
+    downloadTemplatesAsJson(targetTemplates, filename, exerciseNotes);
   };
 
   return (

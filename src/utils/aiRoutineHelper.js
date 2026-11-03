@@ -1,5 +1,6 @@
 import { normalizeName, getExerciseCategories, EXERCISE_CATEGORIES, EQUIPMENT_TYPES } from '../data/exercises.js';
 import { parseNonNegativeInt } from './number.js';
+import { getExerciseNote } from './exerciseNotes.js';
 import { tr, getLanguage } from '../i18n';
 import { getExerciseStats } from './exerciseStreaks.js';
 import { hasLegacyScience } from './scienceV3.js';
@@ -437,10 +438,13 @@ export function describeNewExercise(name, rawEx = {}) {
   };
 }
 
+// The note of an exercise: the one being edited on the plan, else the saved per-exercise note.
+const noteFor = (e, exerciseNotes) => ((e.notes && e.notes.trim()) || getExerciseNote(exerciseNotes, e.name)).trim();
+
 /**
  * Formatta uno o più template in JSON pulito conforme allo standard di importazione.
  */
-export function formatTemplatesForExport(templates) {
+export function formatTemplatesForExport(templates, exerciseNotes = null) {
   if (!templates) return '[]';
   const list = Array.isArray(templates) ? templates : [templates];
   const cleaned = list.map(t => ({
@@ -450,7 +454,7 @@ export function formatTemplatesForExport(templates) {
       setsCount: Number(e.setsCount) || 3,
       targetReps: String(e.targetReps || '8-10'),
       restTime: parseNonNegativeInt(e.restTime, 90),
-      ...(e.notes ? { notes: e.notes.trim() } : {})
+      ...(noteFor(e, exerciseNotes) ? { notes: noteFor(e, exerciseNotes) } : {})
     }))
   }));
   return JSON.stringify(cleaned, null, 2);
@@ -459,8 +463,8 @@ export function formatTemplatesForExport(templates) {
 /**
  * Avvia il download locale di un file .json contenente i template.
  */
-export function downloadTemplatesAsJson(templates, filename) {
-  const jsonStr = formatTemplatesForExport(templates);
+export function downloadTemplatesAsJson(templates, filename, exerciseNotes = null) {
+  const jsonStr = formatTemplatesForExport(templates, exerciseNotes);
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const safeName = (filename || 'scheda-elitejim').replace(/[^a-z0-9_-]/gi, '_').toLowerCase();

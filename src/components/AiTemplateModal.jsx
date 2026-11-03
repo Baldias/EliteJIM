@@ -9,6 +9,7 @@ import {
   formatTemplatesForExport,
   downloadTemplatesAsJson
 } from '../utils/aiRoutineHelper';
+import { planNoteImport } from '../utils/exerciseNotes';
 import { 
   Sparkles, Copy, Check, X, Code2, AlertTriangle, Dumbbell, 
   ClipboardPaste, ArrowRight, ChevronDown, ChevronUp, Share2, Download 
@@ -26,6 +27,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
   const scienceState = useStore(state => state.scienceState);
   const scienceReport = useStore(state => state.scienceReport);
   const showScience = useStore(state => state.showScience);
+  const exerciseNotes = useStore(state => state.exerciseNotes);
 
   const allExercises = useMemo(() => {
     return getAllExercises(customExercises, exerciseOverrides);
@@ -53,6 +55,8 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
   const [importStatus, setImportStatus] = useState(null);
   // Exercises not in the DB, waiting for the user's ok before the import
   const [pendingNewExercises, setPendingNewExercises] = useState(null);
+  // Imported notes that differ from the saved ones: the user picks which to replace
+  const [pendingNoteConflicts, setPendingNoteConflicts] = useState(null);
 
   // Form state per export
   const [selectedTemplateIds, setSelectedTemplateIds] = useState([]);
@@ -123,6 +127,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
       if (text) {
         setJsonInput(text);
         setPendingNewExercises(null);
+        setPendingNoteConflicts(null);
       }
     } catch (err) {
       alert(tr("Incolla manualmente premendo a lungo nell'area di testo."));
@@ -167,7 +172,26 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
   };
 
   const finishImport = (addedExercises) => {
-    const count = importTemplates(validationResult.templates);
+    const { conflicts } = planNoteImport(validationResult.templates, exerciseNotes);
+    if (conflicts.length > 0) {
+      setPendingNoteConflicts({ addedExercises, items: conflicts.map(c => ({ ...c, replace: false })) });
+      return;
+    }
+    completeImport(addedExercises, []);
+  };
+
+  const toggleNoteReplace = (idx) => {
+    setPendingNoteConflicts(prev => ({ ...prev, items: prev.items.map((c, i) => i === idx ? { ...c, replace: !c.replace } : c) }));
+  };
+
+  const handleImportWithNotes = () => {
+    const { addedExercises, items } = pendingNoteConflicts;
+    setPendingNoteConflicts(null);
+    completeImport(addedExercises, items.filter(c => c.replace).map(c => c.key));
+  };
+
+  const completeImport = (addedExercises, replaceNoteKeys) => {
+    const count = importTemplates(validationResult.templates, { replaceNoteKeys });
     const base = count === 1 ? tr('1 scheda importata con successo!') : tr('{n} schede importate!', { n: count });
     setImportStatus({
       success: true,
@@ -201,7 +225,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
 
   const handleCopyExportJson = async () => {
     if (exportTemplatesList.length === 0) return;
-    const jsonStr = formatTemplatesForExport(exportTemplatesList);
+    const jsonStr = formatTemplatesForExport(exportTemplatesList, exerciseNotes);
     try {
       await navigator.clipboard.writeText(jsonStr);
       setExportCopied(true);
@@ -220,7 +244,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
 
   const handleNativeShareExport = async () => {
     if (exportTemplatesList.length === 0) return;
-    const jsonStr = formatTemplatesForExport(exportTemplatesList);
+    const jsonStr = formatTemplatesForExport(exportTemplatesList, exerciseNotes);
     const title = exportTemplatesList.length === 1 
       ? `EliteJIM: ${exportTemplatesList[0].name}`
       : `EliteJIM: ${exportTemplatesList.length} Schede`;
@@ -243,7 +267,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
     const filename = exportTemplatesList.length === 1 
       ? exportTemplatesList[0].name 
       : 'schede-elitejim';
-    downloadTemplatesAsJson(exportTemplatesList, filename);
+    downloadTemplatesAsJson(exportTemplatesList, filename, exerciseNotes);
   };
 
   return (
@@ -471,15 +495,48 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                   className="ai-minimal-textarea"
                   placeholder={tr('Incolla qui il JSON generato da ChatGPT o inviato da un amico (es. [ { "name": "Push A", "exercises": [...] } ])')}
                   value={jsonInput}
-                  onChange={e => { setJsonInput(e.target.value); setPendingNewExercises(null); }}
+                  onChange={e => { setJsonInput(e.target.value); setPendingNewExercises(null); setPendingNoteConflicts(null); }}
                   rows={7}
                   spellCheck={false}
                 />
               </div>
 
 
+              {/* Note diverse da quelle salvate */}
+              {pendingNoteConflicts && (
+                <div className="ai-new-ex-panel">
+                  <p className="ai-new-ex-title">{tr('Vuoi sostituire le tue note?')}</p>
+                  <p className="ai-new-ex-text">
+                    {tr('Questi esercizi hanno già una tua nota, diversa da quella nel JSON. Se non scegli niente, restano le tue.')}
+                  </p>
+                  <div className="ai-new-ex-list">
+                    {pendingNoteConflicts.items.map((c, idx) => (
+                      <div key={c.key} className={`ai-new-ex-card ${c.replace ? 'selected' : ''}`}>
+                        <label className="ai-new-ex-head">
+                          <input type="checkbox" checked={c.replace} onChange={() => toggleNoteReplace(idx)} />
+                          <span className="ai-new-ex-name">{c.name}</span>
+                        </label>
+                        <p className="ai-new-ex-muscles"><span className="ai-new-ex-label">{tr('La tua nota')}</span><br />{c.current}</p>
+                        <p className="ai-new-ex-muscles"><span className="ai-new-ex-label">{tr('Nota nel JSON')}</span><br />{c.incoming}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="ai-footer-actions">
+                    <button type="button" className="ai-cta-primary" onClick={handleImportWithNotes}>
+                      <Check size={17} />
+                      <span>
+                        {pendingNoteConflicts.items.some(c => c.replace) ? tr('Sostituisci le selezionate e importa') : tr('Tieni le mie note e importa')}
+                      </span>
+                    </button>
+                    <button type="button" className="ai-subtle-nav-btn" onClick={() => setPendingNoteConflicts(null)}>
+                      <span>{tr('Indietro')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Conferma esercizi nuovi */}
-              {pendingNewExercises && (
+              {pendingNewExercises && !pendingNoteConflicts && (
                 <div className="ai-new-ex-panel">
                   <p className="ai-new-ex-title">{tr('Vuoi aggiungere questi esercizi al database esercizi?')}</p>
                   <p className="ai-new-ex-text">
@@ -576,7 +633,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               )}
 
               {/* Validation Result */}
-              {validationResult && !pendingNewExercises && (
+              {validationResult && !pendingNewExercises && !pendingNoteConflicts && (
                 <div className="ai-validation-feedback">
                   {validationResult.success ? (
                     <div className="ai-success-panel">
@@ -638,7 +695,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               )}
 
               {/* Action Button */}
-              {!pendingNewExercises && (
+              {!pendingNewExercises && !pendingNoteConflicts && (
               <div className="ai-footer-actions">
                 <button
                   type="button"
