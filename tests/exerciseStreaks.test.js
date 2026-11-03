@@ -39,9 +39,13 @@ describe('per-exercise streak and ordering', () => {
     expect(gaps.get('Military Press').streak).toBe(3);
   });
 
-  it('loses the streak after a whole calendar week without it', () => {
-    expect(getExerciseStats([workout(8, 'Military Press')], NOW).get('Military Press').streak).toBe(1);
-    expect(getExerciseStats([workout(10, 'Military Press')], NOW).get('Military Press').streak).toBe(0);
+  it('tolerates one skipped week, and loses the streak after two', () => {
+    expect(getExerciseStats([workout(10, 'Military Press')], NOW).get('Military Press').streak).toBe(1);
+    expect(getExerciseStats([workout(17, 'Military Press')], NOW).get('Military Press').streak).toBe(0);
+    // weeks -1 and -3 (week -2 skipped): two weeks counted
+    expect(getExerciseStats([workout(4, 'Military Press'), workout(23, 'Military Press')], NOW).get('Military Press').streak).toBe(2);
+    // weeks -1 and -4 (two weeks skipped): only the last one counts
+    expect(getExerciseStats([workout(4, 'Military Press'), workout(30, 'Military Press')], NOW).get('Military Press').streak).toBe(1);
   });
 
   it('shares the streak between spellings of the same name', () => {
