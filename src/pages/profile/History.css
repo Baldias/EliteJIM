@@ -348,6 +348,47 @@
   flex-shrink: 0;
 }
 
+.hs-note-flag {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--c-accent);
+}
+
+/* Session note: visible without opening the session, dashed like in the workout */
+.hs-session-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(var(--c-accent-rgb), 0.06);
+  border: 1px dashed rgba(var(--c-accent-rgb), 0.45);
+}
+
+.hs-session-note-icon {
+  color: var(--c-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.hs-session-note-text {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--c-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hs-session-note-text.is-full {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
 .hs-exercises {
   display: flex;
   flex-direction: column;

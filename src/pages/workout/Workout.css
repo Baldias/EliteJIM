@@ -209,6 +209,74 @@
   padding: 16px 16px 48px;
 }
 
+/* Session note: volatile (this session only), so dashed and in the accent color */
+.wk-session-note-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  background: transparent;
+  border: 1px dashed var(--c-border);
+}
+
+.wk-session-note {
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(var(--c-accent-rgb), 0.06);
+  border: 1px dashed rgba(var(--c-accent-rgb), 0.45);
+}
+
+.wk-session-note-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.wk-session-note-icon {
+  color: var(--c-accent);
+  flex-shrink: 0;
+}
+
+.wk-session-note-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--c-accent);
+}
+
+.wk-session-note-badge {
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  border: 1px dashed var(--c-border);
+}
+
+.wk-session-note-input {
+  width: 100%;
+  resize: none;
+  background: transparent;
+  border: none;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  outline: none;
+  padding: 0;
+}
+
+.wk-session-note-input::placeholder {
+  color: var(--c-text-dim);
+}
+
 .wk-empty {
   display: flex;
   flex-direction: column;
