@@ -1,13 +1,70 @@
 import { normalizeName, getExerciseCategories, EXERCISE_CATEGORIES, EQUIPMENT_TYPES } from '../data/exercises.js';
 import { parseNonNegativeInt } from './number.js';
 import { getExerciseNote } from './exerciseNotes.js';
-import { tr } from '../i18n';
+import { tr, getLanguage } from '../i18n';
+import { getExerciseStats } from './exerciseStreaks.js';
+import { hasLegacyScience } from './scienceV3.js';
+
+const RULE = '═══════════════════════════════════════════════════════════════';
+const section = title => `${RULE}\n${title}\n${RULE}`;
+
+// Streaks shorter than this say nothing about consistency.
+export const PROMPT_MIN_STREAK_WEEKS = 2;
+const PROMPT_MAX_STREAKS = 20;
+
+/**
+ * Exercises with an active streak of at least two weeks, for the AI prompt.
+ * Uses the same stats as the Progress page, so it follows any change to the streak rule.
+ * Names are given with the database spelling when the exercise is in the DB.
+ */
+export function exerciseStreaksForPrompt(history = [], allExercises = [], referenceDate = Date.now()) {
+  const dbNames = new Map(allExercises.map(ex => [normalizeName(ex.name), ex.name]));
+  const best = new Map();
+  getExerciseStats(history, referenceDate).forEach(({ streak }, name) => {
+    const key = normalizeName(name);
+    if (streak < PROMPT_MIN_STREAK_WEEKS || (best.get(key)?.weeks || 0) >= streak) return;
+    best.set(key, { name: dbNames.get(key) || name, weeks: streak });
+  });
+  return [...best.values()]
+    .sort((a, b) => b.weeks - a.weeks || a.name.localeCompare(b.name))
+    .slice(0, PROMPT_MAX_STREAKS);
+}
+
+/**
+ * Weekly direct-set targets of the current Scienza week, or null when no
+ * Scienza program is running. Muscles with 0 sets are left out.
+ */
+export function scienceWeekForPrompt({ scienceState, scienceReport, showScience } = {}) {
+  const program = scienceState?.program;
+  if (!showScience || program?.status !== 'active' || hasLegacyScience(scienceReport, scienceState)) return null;
+  const priorities = scienceState.profile?.priorities || [];
+  const targets = Object.entries(program.targets || {})
+    .filter(([, sets]) => Number(sets) > 0)
+    .map(([muscle, sets]) => ({ muscle, sets: Number(sets), priority: priorities.includes(muscle) }))
+    .sort((a, b) => Number(b.priority) - Number(a.priority) || b.sets - a.sets || a.muscle.localeCompare(b.muscle));
+  if (!targets.length) return null;
+  const sessions = Math.round(Number(program.sessionPlans?.[program.currentWeek]?.plannedSessions ?? scienceState.profile?.daysPerWeek)) || 4;
+  return { week: program.currentWeek, sessions: Math.min(7, Math.max(1, sessions)), targets };
+}
+
+const GOAL_REPS = {
+  Ipertrofia: 'Ipertrofia: mostly 6-12 reps, isolation exercises up to 15-20.',
+  Forza: 'Forza: main compound lifts in 3-6 reps with 180-300 s rest, accessories in 6-10 reps.',
+  Definizione: 'Definizione: train exactly like Ipertrofia (fat loss comes from the diet, not from higher reps); keep volume at the lower end if recovery is limited.',
+  'Full Body': 'Full Body: this is the split type, every workout trains the whole body; use Ipertrofia rep ranges.'
+};
+
+const LANGUAGE_NAMES = { it: 'Italian', en: 'English' };
 
 /**
  * Genera il Master Prompt da copiare per un'AI esterna (ChatGPT, Claude, Gemini, DeepSeek).
- * Include le regole sintattiche, lo schema JSON e l'intero catalogo di esercizi disponibili nel DB.
+ * Include le regole sintattiche, lo schema JSON, i principi con cui l'app conta le serie,
+ * l'intero catalogo di esercizi, gli esercizi in streak e (facoltativo) le serie della settimana Scienza.
  */
-export function buildAiWorkoutPrompt({ allExercises = [], splitDays = 3, customGoal = 'Ipertrofia', userNotes = '' }) {
+export function buildAiWorkoutPrompt({
+  allExercises = [], splitDays = 3, customGoal = 'Ipertrofia', userNotes = '',
+  streaks = [], scienceWeek = null, language = getLanguage()
+}) {
   // Raggruppa gli esercizi per categoria primaria
   const categorized = {};
 
@@ -26,25 +83,62 @@ export function buildAiWorkoutPrompt({ allExercises = [], splitDays = 3, customG
     return `• ${cat.toUpperCase()}: ${list}`;
   }).join('\n');
 
+  const days = scienceWeek ? scienceWeek.sessions : splitDays;
+  const notesLanguage = LANGUAGE_NAMES[language] || 'Italian';
+  const goalLine = GOAL_REPS[customGoal] || GOAL_REPS.Ipertrofia;
+
+  const volumeLine = scienceWeek
+    ? '• Weekly volume: follow EXACTLY the "SCIENZA WEEKLY SETS" section below.'
+    : '• Weekly volume: aim for 10-18 working sets per muscle group per week. Count a set as 1 for the main muscle of the exercise and 0.5 for each muscle that only assists (e.g. one bench press set = 1 chest + 0.5 triceps + 0.5 shoulders).';
+
+  const scienceBlock = scienceWeek ? `
+
+${section(`SCIENZA WEEKLY SETS (WEEK ${scienceWeek.week} OF THE USER'S PROGRAM) - MANDATORY`)}
+The user follows a science-based program that sets the exact number of weekly working sets per muscle.
+Across the ${days} workouts, program EXACTLY these sets per muscle, no more and no fewer:
+${scienceWeek.targets.map(t => `• ${t.muscle}: ${t.sets} sets${t.priority ? ' (priority muscle)' : ''}`).join('\n')}
+How the app counts them: a set counts ONLY for the main muscle of its exercise (the group it is listed under in the database below, or its "category" if it is a new exercise). Sets where a muscle only assists do NOT count toward these numbers.
+Muscles not listed get no direct sets (they can still work as assisting muscles).
+Spread each muscle's sets over at least two workouts when it has 6 or more sets, and keep each workout at 20 working sets or fewer.
+Before answering, add up the sets per main muscle and check that every total matches the list exactly.` : '';
+
+  const streakBlock = !streaks.length ? '' : `
+
+${section('EXERCISES THE USER IS DOING CONSISTENTLY (ACTIVE STREAK)')}
+Consecutive weeks in which the user has trained each exercise:
+${streaks.map(s => `• ${s.name}: ${s.weeks} weeks`).join('\n')}
+Keep these exercises in the new program, with the same exact names, when they fit the goal and the split: the user is tracking progressive overload on them. Replace one only for a clear reason (injury or user request, it no longer fits the split${scienceWeek ? ', the Scienza set targets' : ''}, or the muscle already has enough volume), and then prefer a close variation.`;
+
   return `You are an elite Strength & Conditioning coach and biomechanics expert.
 Your task is to create a professional, science-based workout routine for the "EliteJIM" fitness app.
 
-═══════════════════════════════════════════════════════════════
-STRICT RULES (CRITICAL FOR PARSING)
-═══════════════════════════════════════════════════════════════
-1. OUTPUT FORMAT: Return ONLY a raw, valid JSON array. DO NOT wrap with conversational text, explanations, or text outside the JSON.
-2. EXERCISE NAMES: Prefer names chosen EXACTLY and VERBATIM from the "AVAILABLE EXERCISES DATABASE" below (which contains Italian exercise names as stored in the app). Do NOT translate or alter the spelling of existing names. Add an exercise that is not in the list ONLY when no listed exercise fits: then also give its "category" (the main muscle, one of: ${Object.values(EXERCISE_CATEGORIES).join(', ')}), optional "secondaryCategories" (array, same values) and "equipmentType" ("barbell", "dumbbell" or "machine"). The user will be asked whether to add it to their database.
-3. FIELDS PER EXERCISE:
-   - "name": string (exact match from the DB list, or a new exercise as described above)
-   - "setsCount": integer (e.g. 3 or 4)
-   - "targetReps": string rep range (e.g. "6-8", "8-10", "10-12", "12-15")
-   - "restTime": integer rest in seconds between sets (e.g. 60, 90, 120, 180)
-   - "notes": concise coaching cue, tempo or setup tip (e.g. "1s pause at chest, control eccentric")
+${section('STRICT RULES (CRITICAL FOR PARSING)')}
+1. OUTPUT FORMAT: Return ONLY a raw, valid JSON array. No text, explanations or markdown outside the JSON.
+2. EXERCISE NAMES: Prefer names copied EXACTLY and VERBATIM from the "AVAILABLE EXERCISES DATABASE" below (Italian names as stored in the app). Do NOT translate or alter existing names.
+   Use an exercise that is NOT in the list only when no listed exercise fits. For every such new exercise you MUST also give:
+   - "category": the main muscle, one of: ${Object.values(EXERCISE_CATEGORIES).join(', ')}
+   - "secondaryCategories": array of the muscles that clearly assist (same values), [] if none
+   - "equipmentType": "barbell", "dumbbell" or "machine" (cables count as "machine")
+   The user will be asked whether to add it to their database.
+3. Do not repeat the same exercise twice in the same workout.
+4. FIELDS PER EXERCISE:
+   - "name": string (exact name from the database, or a new exercise as in rule 2)
+   - "setsCount": integer, WORKING SETS ONLY (warm-up sets are not counted)
+   - "targetReps": string rep range (e.g. "4-6", "6-8", "8-12", "12-15")
+   - "restTime": integer rest in seconds between sets
+   - "notes": one short cue in ${notesLanguage} (max ~80 characters) about technique or setup. Use "" when there is nothing useful to add. Do not repeat sets, reps or rest here: the user sees and edits these notes during every workout.
 
-═══════════════════════════════════════════════════════════════
-REQUIRED JSON FORMAT
-═══════════════════════════════════════════════════════════════
-Return an array of workout routines (for a ${splitDays}-day weekly program):
+${section('TRAINING PRINCIPLES (HOW THE APP COUNTS YOUR PROGRAM)')}
+• Effort: every working set is taken to 0-1 reps in reserve (RIR 0 = no other clean rep possible, RIR 1 = one clean rep left), with correct technique. The app only counts sets at RIR 0-1 as working sets.
+${volumeLine}
+• Frequency: train each muscle about twice per week, leaving 48-72 hours before training the same muscle hard again.
+• Rest: 120-180 s for heavy compound lifts, 90-120 s for isolation exercises.
+• Exercise selection: prefer full range of motion and exercises that load the muscle in its lengthened position when possible. Put compound lifts before isolation work.
+• Session size: keep each workout around 15-20 working sets.
+• Rep ranges for the goal: ${goalLine}${scienceBlock}
+
+${section('REQUIRED JSON FORMAT')}
+Return an array of workout routines (for a ${days}-day weekly program):
 
 [
   {
@@ -52,33 +146,41 @@ Return an array of workout routines (for a ${splitDays}-day weekly program):
     "exercises": [
       {
         "name": "Panca Piana Bilanciere",
-        "setsCount": 4,
+        "setsCount": 3,
         "targetReps": "6-8",
-        "restTime": 120,
-        "notes": "1s chest pause, controlled 3s eccentric"
+        "restTime": 180,
+        "notes": "Scapole addotte, pausa di 1s al petto"
       },
       {
-        "name": "Military Press",
+        "name": "Alzate Laterali Manubri",
         "setsCount": 3,
-        "targetReps": "8-10",
+        "targetReps": "12-15",
         "restTime": 90,
-        "notes": "Locked core and glutes, full lockout"
+        "notes": ""
+      },
+      {
+        "name": "Croci al Cavo Basso",
+        "category": "Petto",
+        "secondaryCategories": ["Spalle"],
+        "equipmentType": "machine",
+        "setsCount": 3,
+        "targetReps": "10-12",
+        "restTime": 90,
+        "notes": "Allungamento completo in basso"
       }
     ]
   }
 ]
+(The third exercise shows the format of a NEW exercise that is not in the database.)
 
-═══════════════════════════════════════════════════════════════
-AVAILABLE EXERCISES DATABASE (USE ONLY THESE EXACT NAMES)
-═══════════════════════════════════════════════════════════════
-${dbLines}
+${section('AVAILABLE EXERCISES DATABASE (USE THESE EXACT NAMES)')}
+${dbLines}${streakBlock}
 
-═══════════════════════════════════════════════════════════════
-USER SPECIFICATIONS
-═══════════════════════════════════════════════════════════════
-• Weekly frequency: ${splitDays} days
+${section('USER SPECIFICATIONS')}
+• Weekly frequency: ${days} days
 • Primary goal: ${customGoal}
-${userNotes ? `• Special requirements / injuries / focus: ${userNotes}` : '• No specific limitations: build an optimal, balanced split with proper weekly volume (10-18 weekly sets per muscle group).'}`;
+• Special requirements / injuries / focus: ${userNotes || 'none: build an optimal, balanced split.'}
+These user specifications take priority over the training principles above when they conflict${scienceWeek ? ', but never change the Scienza weekly sets' : ''}.`;
 }
 
 /**

@@ -3,6 +3,8 @@ import { useStore } from '../store/useStore';
 import { getAllExercises, EXERCISE_CATEGORIES, EQUIPMENT_TYPES } from '../data/exercises';
 import { 
   buildAiWorkoutPrompt, 
+  exerciseStreaksForPrompt,
+  scienceWeekForPrompt,
   parseAndValidateWorkoutJson,
   formatTemplatesForExport,
   downloadTemplatesAsJson
@@ -21,6 +23,10 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
   const importTemplates = useStore(state => state.importTemplates);
   const addCustomExercises = useStore(state => state.addCustomExercises);
   const templates = useStore(state => state.templates || []);
+  const history = useStore(state => state.history);
+  const scienceState = useStore(state => state.scienceState);
+  const scienceReport = useStore(state => state.scienceReport);
+  const showScience = useStore(state => state.showScience);
   const exerciseNotes = useStore(state => state.exerciseNotes);
 
   const allExercises = useMemo(() => {
@@ -41,6 +47,8 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
   const [userNotes, setUserNotes] = useState('');
   const [copied, setCopied] = useState(false);
   const [showRawPrompt, setShowRawPrompt] = useState(false);
+  const [followScience, setFollowScience] = useState(false);
+  const [preferStreaks, setPreferStreaks] = useState(true);
 
   // Form state per import JSON
   const [jsonInput, setJsonInput] = useState('');
@@ -61,15 +69,27 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
     }
   }, [templates]);
 
+  const scienceWeek = useMemo(
+    () => scienceWeekForPrompt({ scienceState, scienceReport, showScience }),
+    [scienceState, scienceReport, showScience]
+  );
+  const useScienceWeek = followScience && Boolean(scienceWeek);
+  const streaks = useMemo(
+    () => (isOpen ? exerciseStreaksForPrompt(history, allExercises) : []),
+    [isOpen, history, allExercises]
+  );
+
   // Genera il prompt in tempo reale
   const generatedPrompt = useMemo(() => {
     return buildAiWorkoutPrompt({
       allExercises,
       splitDays,
       customGoal,
-      userNotes: userNotes.trim()
+      userNotes: userNotes.trim(),
+      streaks: preferStreaks ? streaks : [],
+      scienceWeek: useScienceWeek ? scienceWeek : null
     });
-  }, [allExercises, splitDays, customGoal, userNotes]);
+  }, [allExercises, splitDays, customGoal, userNotes, streaks, preferStreaks, useScienceWeek, scienceWeek]);
 
   // Validazione in tempo reale del JSON
   const validationResult = useMemo(() => {
@@ -312,7 +332,42 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
               {/* Opzioni minimali */}
               <div className="ai-options-grid">
                 
+                {/* Serie della settimana Scienza */}
+                {scienceWeek && (
+                  <label className={`ai-science-toggle ${useScienceWeek ? 'selected' : ''}`}>
+                    <input
+                      type="checkbox"
+                      className="ai-export-checkbox"
+                      checked={followScience}
+                      onChange={e => setFollowScience(e.target.checked)}
+                    />
+                    <span>
+                      <strong>{tr('Segui le serie della Scienza')}</strong>
+                      <small>{tr('La scheda avrà esattamente le serie per muscolo della settimana {week}, su {n} giorni. Come nella Scienza, conta solo le serie in cui il muscolo è quello principale.', { week: scienceWeek.week, n: scienceWeek.sessions })}</small>
+                    </span>
+                  </label>
+                )}
+
+                {/* Priorità agli esercizi in streak */}
+                {streaks.length > 0 && (
+                  <label className={`ai-science-toggle ${preferStreaks ? 'selected' : ''}`}>
+                    <input
+                      type="checkbox"
+                      className="ai-export-checkbox"
+                      checked={preferStreaks}
+                      onChange={e => setPreferStreaks(e.target.checked)}
+                    />
+                    <span>
+                      <strong>{tr('Dai priorità agli esercizi in streak')}</strong>
+                      <small>{streaks.length === 1
+                        ? tr("L'AI tiene l'esercizio che fai da almeno 2 settimane di fila, così continui a progredire. Lo cambia solo se c'è un motivo.")
+                        : tr("L'AI tiene i {n} esercizi che fai da almeno 2 settimane di fila, così continui a progredire. Li cambia solo se c'è un motivo.", { n: streaks.length })}</small>
+                    </span>
+                  </label>
+                )}
+
                 {/* Frequenza */}
+                {!useScienceWeek && (
                 <div className="ai-option-item">
                   <span className="ai-option-label">{tr('Frequenza settimanale')}</span>
                   <div className="ai-capsule-row">
@@ -328,6 +383,7 @@ export function AiTemplateModal({ isOpen, onClose, initialTab = 'prompt' }) {
                     ))}
                   </div>
                 </div>
+                )}
 
                 {/* Obiettivo */}
                 <div className="ai-option-item">
