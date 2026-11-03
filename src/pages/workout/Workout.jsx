@@ -2,7 +2,7 @@ import { machineHistory } from '../../utils/gymLocation';
 import WorkoutGymLocation from '../../components/GymLocation';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell, TrendingUp } from 'lucide-react';
+import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell, TrendingUp, MessageSquareDashed } from 'lucide-react';
 import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/useStore';
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
@@ -32,6 +32,7 @@ function Workout() {
   const finishStoreWorkout = useStore(state => state.finishWorkout);
   const updateSet = useStore(state => state.updateActiveWorkoutSet);
   const updateExerciseNotes = useStore(state => state.updateActiveWorkoutExerciseNotes);
+  const updateSessionNote = useStore(state => state.updateActiveWorkoutSessionNote);
   const addExercise = useStore(state => state.addExerciseToActiveSession);
   const addSet = useStore(state => state.addSetToActiveExercise);
   const markScienceSetCompleted = useStore(state => state.markScienceSetCompleted);
@@ -51,6 +52,7 @@ function Workout() {
   const clearGlobalRestTimer = useStore(state => state.clearGlobalRestTimer);
   const { restTimeLeft, isResting } = useRestTimer();
   const [expandedNotes, setExpandedNotes] = useState({});
+  const [sessionNoteOpen, setSessionNoteOpen] = useState(false);
   // Set that just beat the all-time PR: drives a short celebration animation
   const [prCelebration, setPrCelebration] = useState(null);
   const prTimer = useRef(null);
@@ -203,6 +205,31 @@ function Workout() {
       <div className="wk-body">
         <WorkoutGymLocation key={activeWorkout.id} workout={activeWorkout} />
       <TrainingReminder key={activeWorkout.id} workout={activeWorkout} />
+
+        {/* Session note: only for this session, dashed to show it does not carry over */}
+        {sessionNoteOpen || activeWorkout.sessionNote ? (
+          <div className="wk-session-note">
+            <div className="wk-session-note-head">
+              <MessageSquareDashed size={14} className="wk-session-note-icon" />
+              <span className="wk-session-note-title">{tr('Nota della sessione')}</span>
+              <span className="wk-session-note-badge">{tr('Solo oggi')}</span>
+            </div>
+            <textarea
+              rows={2}
+              autoFocus={sessionNoteOpen && !activeWorkout.sessionNote}
+              placeholder={tr('Come va oggi? (es. dormito poco, spalla dolorante)...')}
+              value={activeWorkout.sessionNote || ''}
+              onChange={e => updateSessionNote(e.target.value)}
+              onBlur={() => { if (!activeWorkout.sessionNote?.trim()) setSessionNoteOpen(false); }}
+              className="wk-session-note-input"
+            />
+          </div>
+        ) : (
+          <button type="button" className="wk-session-note-add" onClick={() => setSessionNoteOpen(true)}>
+            <MessageSquareDashed size={14} />
+            <span>{tr('+ Nota della sessione')}</span>
+          </button>
+        )}
 
         {/* Empty state */}
         {activeWorkout.exercises.length === 0 && (

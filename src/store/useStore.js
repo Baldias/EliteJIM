@@ -19,6 +19,7 @@ const MAX_RECENT_FOODS = 40;
 import { IS_DEMO, STORAGE_KEY, getAppStorage } from '../demo/demoMode';
 import { buildDemoState } from '../demo/demoData';
 import { applyNoteImport, getExerciseNote, moveNote, resolveExerciseNotes, setNote, stripTemplateNotes } from '../utils/exerciseNotes';
+import { withSessionNote } from '../utils/sessionNote';
 
 // Only completed sets are real performances: skipped sets keep the values
 // pre-filled from the previous session and must not count as "last" or PR.
@@ -695,6 +696,14 @@ export const useStore = create(
         });
       },
 
+      // Note for this session only: saved with the workout, never carried to the next one
+      updateActiveWorkoutSessionNote: (note) => {
+        set((state) => {
+          if (!state.activeWorkout || (state.activeWorkout.sessionNote || '') === note) return state;
+          return { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), sessionNote: note } };
+        });
+      },
+
       addExerciseToActiveSession: (name) => {
         set((state) => {
           if (!state.activeWorkout) return state;
@@ -764,10 +773,10 @@ export const useStore = create(
           const now = options.now ?? Date.now();
           const lastActivity = state.activeWorkout.lastActivityAt;
           if (options.auto && (state.activeWorkout.id !== options.workoutId || lastActivity !== options.lastActivityAt || !Number.isFinite(lastActivity) || now < lastActivity + 3600000)) return state;
-          const completedWorkout = {
+          const completedWorkout = withSessionNote({
             ...state.activeWorkout,
             endTime: options.auto ? Math.max(state.activeWorkout.startTime, lastActivity) : now
-          };
+          }, state.activeWorkout.sessionNote);
 
           const allKnown = getAllExercises(state.customExercises, state.exerciseOverrides);
           const sessionScore = calculateSessionScore(completedWorkout, state.history, allKnown, scienceScoringReport(state), resolveBodyweight(state));

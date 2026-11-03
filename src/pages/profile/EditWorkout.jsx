@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ChevronLeft, Check, Plus, Trash2, X } from 'lucide-react';
+import { ChevronLeft, Check, Plus, Trash2, X, MessageSquareDashed } from 'lucide-react';
+import { getSessionNote } from '../../utils/sessionNote';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { sanitizeDecimalInput } from '../../utils/number';
 import './EditWorkout.css';
@@ -15,7 +16,7 @@ function EditWorkout() {
 
   const workout = useMemo(() => history.find(w => String(w.id) === workoutId), [history, workoutId]);
 
-  const [editForm, setEditForm] = useState({ date: '', time: '', duration: 0 });
+  const [editForm, setEditForm] = useState({ date: '', time: '', duration: 0, sessionNote: '' });
   const [draftExercises, setDraftExercises] = useState([]);
   const [showAddEx, setShowAddEx] = useState(false);
 
@@ -27,7 +28,7 @@ function EditWorkout() {
     const dateStr = localISOTime.split('T')[0];
     const timeStr = localISOTime.split('T')[1].slice(0, 5);
     const duration = workout.endTime ? Math.floor((workout.endTime - workout.startTime) / 1000 / 60) : 0;
-    setEditForm({ date: dateStr, time: timeStr, duration });
+    setEditForm({ date: dateStr, time: timeStr, duration, sessionNote: getSessionNote(workout) });
     setDraftExercises(JSON.parse(JSON.stringify(workout.exercises)));
   }, [workout]);
 
@@ -84,6 +85,8 @@ function EditWorkout() {
       const newEnd = newStart + (editForm.duration * 60 * 1000);
       if (!isNaN(newStart) && !isNaN(newEnd)) {
         updateHistoryWorkout(workout.id, {
+          // undefined drops the key when the history is saved
+          sessionNote: editForm.sessionNote.trim() || undefined,
           startTime: newStart,
           endTime: newEnd,
           exercises: draftExercises
@@ -137,6 +140,19 @@ function EditWorkout() {
             value={editForm.duration}
             onChange={e => setEditForm({ ...editForm, duration: parseInt(e.target.value) || 0 })}
             className="edit-input edit-input--short"
+          />
+        </div>
+
+        <div className="edit-section">
+          <label className="edit-label edit-label--session-note">
+            <MessageSquareDashed size={12} /> {tr('Nota della sessione')}
+          </label>
+          <textarea
+            rows={2}
+            placeholder={tr('Solo per questa sessione')}
+            value={editForm.sessionNote}
+            onChange={e => setEditForm({ ...editForm, sessionNote: e.target.value })}
+            className="edit-input edit-input--session-note"
           />
         </div>
 

@@ -330,3 +330,19 @@
   background: var(--c-surface-2);
   border: none;
 }
+
+/* Session note: volatile, dashed like in the workout */
+.edit-label--session-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--c-accent);
+}
+
+.edit-input--session-note {
+  resize: vertical;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border-style: dashed;
+  border-color: rgba(var(--c-accent-rgb), 0.45);
+}

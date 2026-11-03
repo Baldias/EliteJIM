@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Calendar, Clock, ChevronDown, ChevronUp, Edit2, ChevronLeft, Layers, Trophy } from 'lucide-react';
+import { Calendar, Clock, ChevronDown, ChevronUp, Edit2, ChevronLeft, Layers, Trophy, MessageSquareDashed } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { getAllExercises } from '../../data/exercises';
+import { getSessionNote } from '../../utils/sessionNote';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import './History.css';
 import { locale, tr } from '../../i18n';
@@ -124,6 +125,7 @@ function History() {
 
               {month.workouts.map(workout => {
                 const isExpanded = expandedSessions[workout.id];
+                const sessionNote = getSessionNote(workout);
                 return (
                   <SwipeToDelete key={workout.id} onDelete={(e) => handleDelete(e, workout.id)}>
                     <div className={`ej-card hs-card ${isExpanded ? 'is-open' : ''}`} onClick={() => toggleSession(workout.id)}>
@@ -131,6 +133,11 @@ function History() {
                         <div className="hs-card-text">
                           <div className="hs-card-title">
                             <h3>{workout.name}</h3>
+                            {sessionNote && (
+                              <span className="hs-note-flag" title={tr('Nota della sessione')} aria-label={tr('Nota della sessione')}>
+                                <MessageSquareDashed size={14} />
+                              </span>
+                            )}
                             <button type="button" className="ej-icon-btn hs-edit" onClick={(e) => handleEdit(e, workout.id)} title={tr('Modifica sessione')}>
                               <Edit2 size={13} />
                             </button>
@@ -143,6 +150,13 @@ function History() {
                         </div>
                         {isExpanded ? <ChevronUp size={20} className="hs-chevron" /> : <ChevronDown size={20} className="hs-chevron" />}
                       </div>
+
+                      {sessionNote && (
+                        <div className="hs-session-note">
+                          <MessageSquareDashed size={13} className="hs-session-note-icon" />
+                          <p className={`hs-session-note-text ${isExpanded ? 'is-full' : ''}`}>{sessionNote}</p>
+                        </div>
+                      )}
 
                       <div className="hs-exercises">
                         {workout.exercises.map(ex => {
