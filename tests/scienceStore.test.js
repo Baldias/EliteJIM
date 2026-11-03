@@ -216,3 +216,15 @@ describe('backup export and import', () => {
     create.mockRestore(); revoke.mockRestore();
   });
 });
+
+describe('manual exercise classification', () => {
+  it('keeps the assisting muscles when the main muscle is chosen by hand', () => {
+    useStore.getState().startScienceV3(profile, start);
+    useStore.getState().classifyScienceExercise(42, 43, 'Spalle');
+    const science = useStore.getState().scienceState;
+    expect(science.exerciseSnapshots[42][43]).toMatchObject({ primary: 'Spalle', indirect: ['Tricipiti'] });
+    expect(science.classifications.c1.indirect).toEqual(['Tricipiti']);
+    useStore.getState().classifyScienceExercise(42, 43, 'Petto');
+    expect(useStore.getState().scienceState.classifications.c1.indirect.sort()).toEqual(['Spalle', 'Tricipiti']);
+  });
+});

@@ -1463,6 +1463,7 @@ export default {
   "Esclusi dai target per il profilo uomo. Le serie restano nello storico.": "Excluded from targets for the male profile. Sets stay in history.",
   "Base di crescita ripristinata per i distretti fuori priorità. Nelle ultime due settimane potrai redistribuire parte delle serie verso le priorità.": "Growth baseline restored for non-priority muscle groups. In the last two weeks you can redistribute some sets towards priorities.",
   "Obiettivo adattato alle sedute disponibili: massimo 20 serie per seduta.": "Target adapted to available sessions: at most 20 sets per session.",
+  "Obiettivo ripristinato con più sedute disponibili.": "Target restored with more sessions available.",
   "Partenza ristimata per esperienza e ruolo del distretto. Lo storico scarso non abbassa la dose di base.": "Starting point re-estimated for experience and muscle group role. Sparse history does not lower the base dose.",
   "Obiettivo della settimana corrente conservato nel passaggio a Scienza V3.0. I prossimi aggiornamenti seguono qualità e recupero.": "Current week target kept in the move to Science V3.0. Upcoming updates follow quality and recovery.",
   "Scarico già in corso nel protocollo precedente: mantenuto senza una seconda riduzione.": "Deload already under way in the previous protocol: kept without a second reduction.",

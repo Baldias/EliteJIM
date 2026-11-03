@@ -1,5 +1,5 @@
 import { isMachineExercise, locationKey } from './gymLocation';
-import { balancedStartingTargets, BALANCED_VOLUME_VERSION, fitBalancedTargets, scienceSessionBudget } from './scienceBalanced';
+import { balancedStartingTargets, BALANCED_VOLUME_VERSION, fitBalancedTargets, scienceSessionBudget, scienceSessionBaseTargets } from './scienceBalanced';
 import { normalizeName } from '../data/exercises';
 import { scienceProgramWeekRange } from './scienceCalendar';
 import { tr } from '../i18n';
@@ -101,15 +101,17 @@ export function scienceVolumes(history, db, science, start, end) {
         const volume = muscles[classification.primary];
         if (!volume) { unclassified.push({ workoutId: workout.id, exerciseId: ex.id, name: ex.name }); continue; }
         volume.ordinary++;
+        // Assisting work is shown separately and never added to the target,
+        // but it is the same work with or without a recorded RIR.
+        for (const muscle of new Set(classification.indirect || [])) {
+          if (muscles[muscle] && muscle !== classification.primary) muscles[muscle].indirect++;
+        }
         if (annotation.rir !== 0 && annotation.rir !== 1) {
           volume.unknown++;
           if (imported) volume.imported = (volume.imported || 0) + 1;
           continue;
         }
         volume.direct++;
-        for (const muscle of new Set(classification.indirect || [])) {
-          if (muscles[muscle] && muscle !== classification.primary) muscles[muscle].indirect++;
-        }
       }
     }
   }
@@ -329,7 +331,10 @@ export function closeScienceWeek(science, history, db, now = Date.now()) {
       decisions[muscle] = 'Incremento disponibile: in attesa dell’allocazione del volume settimanale.';
     }
   }
-  const allocation = allocateScienceGrowth(p, science.profile, candidates, increments, p.currentWeek + 1, growthScores);
+  // Fewer sessions chosen for this week cut only this week: the next week grows
+  // from the targets before that cut.
+  const allocationBase = science.profile.goal === 'balanced' ? { ...p, targets: scienceSessionBaseTargets(p) } : p;
+  const allocation = allocateScienceGrowth(allocationBase, science.profile, candidates, increments, p.currentWeek + 1, growthScores);
   let nextRoles = { ...p.roles };
   for (let i = 0; i < recommendations.length; i++) {
     if (recommendations[i].status === 'pending' && recommendations[i].type === 'redistribution') recommendations[i] = { ...recommendations[i], status: 'superseded' };

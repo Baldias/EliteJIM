@@ -7,6 +7,17 @@ const sum = values => Object.values(values).reduce((n, value) => n + value, 0);
 export const scienceSessionBudget = (profile, program, week = program?.currentWeek) =>
   SCIENCE_SESSION_SET_LIMIT * Math.min(7, Math.max(1, Math.round(Number(program?.sessionPlans?.[week]?.plannedSessions ?? profile.daysPerWeek)) || 4));
 
+// Targets before the cut for this week's planned sessions. A later change of
+// sessions refits from these, so choosing fewer sessions is never permanent.
+// Any other change of the targets (manual edit, accepted proposal) wins.
+export function scienceSessionBaseTargets(program) {
+  const base = program?.sessionBase;
+  const same = base && base.week === program.currentWeek
+    && Object.keys(program.targets).every(m => base.fitted?.[m] === program.targets[m])
+    && Object.keys(base.fitted || {}).length === Object.keys(program.targets).length;
+  return same ? { ...program.targets, ...base.targets } : { ...program.targets };
+}
+
 // Integer water filling: comparable progress from each district's MEV towards
 // the low MAV, with a small delay for calves, abs and hamstrings.
 export function fitBalancedTargets(desired, budget, floors) {

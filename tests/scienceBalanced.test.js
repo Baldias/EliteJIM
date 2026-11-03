@@ -111,6 +111,32 @@ describe('full-body session cap across store actions', () => {
     expect(scienceSessionBudget(science.profile, science.program)).toBe(60);
     expect(scienceSessionGuidance(science, [], EXERCISES_DB, start).average).toBe(20);
   });
+  it('restores the targets cut by fewer sessions when more sessions are chosen again', () => {
+    const before = structuredClone(useStore.getState().scienceState.program.targets);
+    useStore.getState().setScienceWeekSessions(1);
+    expect(total(useStore.getState().scienceState.program.targets)).toBe(20);
+    useStore.getState().setScienceWeekSessions(6);
+    expect(useStore.getState().scienceState.program.targets).toEqual(before);
+    useStore.getState().setScienceWeekSessions(2);
+    useStore.getState().setScienceWeekSessions(3);
+    expect(total(useStore.getState().scienceState.program.targets)).toBe(Math.min(60, total(before)));
+  });
+  it('starts the next week from the targets before a one-week session cut', () => {
+    const before = structuredClone(useStore.getState().scienceState.program.targets);
+    useStore.getState().setScienceWeekSessions(1);
+    const science = useStore.getState().scienceState;
+    const next = closeScienceWeek(science, [], EXERCISES_DB, scienceWeekRange(start, 1).end);
+    expect(next.program.weeks[0].targets).toEqual(science.program.targets);
+    expect(total(next.program.targets)).toBe(Math.min(total(before), 120));
+    expect(total(next.program.targets)).toBeGreaterThan(20);
+  });
+  it('a manual target after the cut becomes the new base', () => {
+    useStore.getState().setScienceWeekSessions(1);
+    useStore.getState().setScienceTarget('Petto', 1, 30);
+    const edited = structuredClone(useStore.getState().scienceState.program.targets);
+    useStore.getState().setScienceWeekSessions(1);
+    expect(useStore.getState().scienceState.program.targets).toEqual(edited);
+  });
   it('adopts the policy once without rewriting archives, workouts or XP', () => {
     const science = make();
     delete science.program.balancedVolumeVersion;
