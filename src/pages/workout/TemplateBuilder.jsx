@@ -5,6 +5,7 @@ import { Plus, ArrowLeft, Check, Trash2, FileText, ChevronUp, ChevronDown, GripV
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { ShareTemplateModal } from '../../components/ShareTemplateModal';
 import { parseNonNegativeInt } from '../../utils/number';
+import { getExerciseNote, noteKey, stripTemplateNotes } from '../../utils/exerciseNotes';
 import './TemplateBuilder.css';
 import { tr, trc } from '../../i18n';
 
@@ -29,6 +30,8 @@ function TemplateBuilder() {
   const location = useLocation();
   const addTemplate = useStore(state => state.addTemplate);
   const updateTemplate = useStore(state => state.updateTemplate);
+  const exerciseNotes = useStore(state => state.exerciseNotes);
+  const setExerciseNote = useStore(state => state.setExerciseNote);
   
   const editTemplateData = location.state?.template;
   const isEditing = !!editTemplateData;
@@ -36,7 +39,7 @@ function TemplateBuilder() {
   const [name, setName] = useState(isEditing ? editTemplateData.name || '' : '');
   const [exercises, setExercises] = useState(
     isEditing 
-      ? (editTemplateData.exercises || []).map((ex, i) => ({ ...ex, id: ex.id || `ex-${Date.now()}-${i}`, restTime: parseNonNegativeInt(ex.restTime, 90), notes: ex.notes || '' }))
+      ? (editTemplateData.exercises || []).map((ex, i) => ({ ...ex, id: ex.id || `ex-${Date.now()}-${i}`, restTime: parseNonNegativeInt(ex.restTime, 90), notes: getExerciseNote(exerciseNotes, ex.name) }))
       : []
   );
   const [draggedIndex, setDraggedIndex] = useState(null);
@@ -45,7 +48,15 @@ function TemplateBuilder() {
   const dragTouchRef = useRef(null);
 
   const addEx = () => setExercises(p => [...p, { id: Date.now(), name: '', setsCount: 3, targetReps: '8-10', restTime: 90, notes: '' }]);
-  const updEx = (id, field, val) => setExercises(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
+  const updEx = (id, field, val) => setExercises(p => p.map(e => {
+    if (e.id !== id) return e;
+    // The note belongs to the exercise: picking another exercise shows its own saved note
+    if (field === 'name') {
+      const typed = e.notes && e.notes !== getExerciseNote(exerciseNotes, e.name) ? e.notes : '';
+      return { ...e, name: val, notes: getExerciseNote(exerciseNotes, val) || typed };
+    }
+    return { ...e, [field]: val };
+  }));
   const rmEx = id => setExercises(p => p.filter(e => e.id !== id));
 
   const moveEx = (fromIndex, toIndex) => {
@@ -63,10 +74,20 @@ function TemplateBuilder() {
     if (!exercises.length) return alert(tr('Aggiungi almeno un esercizio'));
     if (exercises.some(e => !e.name.trim())) return alert(tr('Tutti gli esercizi devono avere un nome'));
     
+    // Notes are saved on the exercise, so every plan and session shows the same one
+    const written = new Set();
+    for (const ex of exercises) {
+      const key = noteKey(ex.name);
+      const note = (ex.notes || '').trim();
+      if (written.has(key) || note === getExerciseNote(exerciseNotes, ex.name).trim()) continue;
+      written.add(key);
+      setExerciseNote(ex.name, note);
+    }
+    const planExercises = stripTemplateNotes(exercises);
     if (isEditing) {
-      updateTemplate({ id: editTemplateData.id, name, exercises });
+      updateTemplate({ id: editTemplateData.id, name, exercises: planExercises });
     } else {
-      addTemplate({ name, exercises });
+      addTemplate({ name, exercises: planExercises });
     }
     navigate('/');
   };
@@ -241,7 +262,7 @@ function TemplateBuilder() {
                 </div>
 
                 <div className="tb-field">
-                  <p className="tb-label"><FileText size={11} /> {tr('Note esercizio')}</p>
+                  <p className="tb-label"><FileText size={11} /> {tr('Note esercizio')} <span className="tb-label-hint">· {tr('uguale in tutte le schede')}</span></p>
                   <input
                     type="text"
                     placeholder={tr('Es. Impugnatura larga, fermo in basso 1 sec...')}

@@ -1584,4 +1584,11 @@ export default {
   "{n} esercizi aggiunti al database.": "{n} exercises added to the database.",
   "Scegli": "Choose",
   "Muscoli secondari": "Secondary muscles",
+  "Vuoi sostituire le tue note?": "Replace your notes?",
+  "Questi esercizi hanno già una tua nota, diversa da quella nel JSON. Se non scegli niente, restano le tue.": "These exercises already have a note of yours that differs from the one in the JSON. If you pick nothing, yours stay.",
+  "La tua nota": "Your note",
+  "Nota nel JSON": "Note in the JSON",
+  "Sostituisci le selezionate e importa": "Replace selected and import",
+  "Tieni le mie note e importa": "Keep my notes and import",
+  "uguale in tutte le schede": "same in every plan",
 };

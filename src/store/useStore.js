@@ -18,6 +18,7 @@ import { existingFeaturePreferences } from '../utils/featurePreferences';
 const MAX_RECENT_FOODS = 40;
 import { IS_DEMO, STORAGE_KEY, getAppStorage } from '../demo/demoMode';
 import { buildDemoState } from '../demo/demoData';
+import { applyNoteImport, getExerciseNote, moveNote, resolveExerciseNotes, setNote, stripTemplateNotes } from '../utils/exerciseNotes';
 
 // Only completed sets are real performances: skipped sets keep the values
 // pre-filled from the previous session and must not count as "last" or PR.
@@ -123,6 +124,9 @@ export const useStore = create(
       ],
       // Array of completed workouts
       history: [],
+      // One note per exercise (normalized name -> text), shared by every plan and session
+      exerciseNotes: {},
+      setExerciseNote: (name, note) => set(state => ({ exerciseNotes: setNote(state.exerciseNotes, name, note) })),
       // Array of custom exercises created by user
       customExercises: [],
       // Map of overrides for default DB exercises: { [id]: { name, category, secondaryCategories, equipmentType } }
@@ -493,6 +497,7 @@ export const useStore = create(
             exerciseOverrides: nextOverrides,
             templates: nextTemplates,
             history: nextHistory,
+            exerciseNotes: moveNote(state.exerciseNotes, oldName, newName),
             activeWorkout: nextActiveWorkout,
             userXP,
             muscleXP,
@@ -564,6 +569,7 @@ export const useStore = create(
             exerciseOverrides: nextOverrides,
             templates: nextTemplates,
             history: nextHistory,
+            exerciseNotes: moveNote(state.exerciseNotes, oldName, defaultName),
             activeWorkout: nextActiveWorkout,
             userXP,
             muscleXP,
@@ -580,7 +586,8 @@ export const useStore = create(
         set((state) => ({ templates: state.templates.map(t => t.id === updatedTemplate.id ? updatedTemplate : t) })),
       deleteTemplate: (id) =>
         set((state) => ({ templates: state.templates.filter((t) => t.id !== id) })),
-      importTemplates: (newTemplates) => {
+      // `replaceNoteKeys`: exercises whose saved note the user chose to replace with the imported one
+      importTemplates: (newTemplates, { replaceNoteKeys = [] } = {}) => {
         const list = Array.isArray(newTemplates) ? newTemplates : [newTemplates];
         if (list.length === 0) return 0;
         const normalizedList = list.map((t, idx) => ({
@@ -595,7 +602,10 @@ export const useStore = create(
             notes: (ex.notes || '').trim()
           }))
         }));
-        set((state) => ({ templates: [...(state.templates || []), ...normalizedList] }));
+        set((state) => ({
+          exerciseNotes: applyNoteImport(state.exerciseNotes, normalizedList, replaceNoteKeys),
+          templates: [...(state.templates || []), ...normalizedList.map(t => ({ ...t, exercises: stripTemplateNotes(t.exercises) }))]
+        }));
         return normalizedList.length;
       },
 
@@ -636,7 +646,7 @@ export const useStore = create(
             return {
               id: Date.now() + Math.random(),
               name: ex.name,
-              notes: ex.notes !== undefined ? ex.notes : '',
+              notes: getExerciseNote(state.exerciseNotes, ex.name),
               restTime: parseNonNegativeInt(ex.restTime, 60),
               isAdded: false,
               sets: Array.from({ length: parseInt(ex.setsCount) || 1 }, (_, i) => {
@@ -674,12 +684,14 @@ export const useStore = create(
 
       updateActiveWorkoutExerciseNotes: (exerciseId, notes) => {
         set((state) => {
-          if (!state.activeWorkout?.exercises.some(ex => ex.id === exerciseId && ex.notes !== notes)) return state;
+          const target = state.activeWorkout?.exercises.find(ex => ex.id === exerciseId);
+          if (!target || target.notes === notes) return state;
+          const exerciseNotes = target.name ? setNote(state.exerciseNotes, target.name, notes) : state.exerciseNotes;
           const updatedExercises = state.activeWorkout.exercises.map((ex) => {
             if (ex.id !== exerciseId) return ex;
             return { ...ex, notes };
           });
-          return { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), exercises: updatedExercises } };
+          return { exerciseNotes, activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), exercises: updatedExercises } };
         });
       },
 
@@ -687,21 +699,10 @@ export const useStore = create(
         set((state) => {
           if (!state.activeWorkout) return state;
           const history = state.history || [];
-          const templates = state.templates || [];
           const db = getAllExercises(state.customExercises, state.exerciseOverrides);
           const bestData = name ? findLastBest1RMSet(machineHistory(history, name, db, state.activeWorkout), name) : null;
           const bestSet = bestData?.set;
-
-          let initialNotes = bestData?.notes || '';
-          if (!initialNotes && name) {
-            for (const tpl of templates) {
-              const found = tpl.exercises?.find(e => normalizeName(e.name) === normalizeName(name));
-              if (found?.notes) {
-                initialNotes = found.notes;
-                break;
-              }
-            }
-          }
+          const initialNotes = getExerciseNote(state.exerciseNotes, name);
 
           const newExercise = {
             id: Date.now(),
@@ -792,25 +793,8 @@ export const useStore = create(
             streak: newStreak
           };
 
-          let updatedTemplates = state.templates;
-          if (completedWorkout.templateId) {
-            updatedTemplates = state.templates.map((tpl) => {
-              if (tpl.id !== completedWorkout.templateId) return tpl;
-              const updatedTplExercises = tpl.exercises.map((tEx) => {
-                const activeEx = completedWorkout.exercises.find(
-                  (e) => normalizeName(e.name) === normalizeName(tEx.name)
-                );
-                if (activeEx && activeEx.notes !== undefined) {
-                  return { ...tEx, notes: activeEx.notes };
-                }
-                return tEx;
-              });
-              return { ...tpl, exercises: updatedTplExercises };
-            });
-          }
-
+          // Notes are saved per exercise while typing (see updateActiveWorkoutExerciseNotes)
           return {
-            templates: updatedTemplates,
             history: updatedHistory,
             ...(scienceTrackingEnabled(state) ? { scienceState: captureScienceExercises(state.scienceState, completedWorkout, allKnown) } : {}),
             activeWorkout: null,
@@ -933,7 +917,7 @@ export const useStore = create(
     {
       name: STORAGE_KEY, // demo mode uses its own key in sessionStorage
       storage: createJSONStorage(getAppStorage),
-      merge: (saved, current) => ({ ...current, ...saved, ...existingFeaturePreferences(saved), ...themePreferences(saved), trainingReminder: saved?.trainingReminder || emptyTrainingReminder() }),
+      merge: (saved, current) => ({ ...current, ...saved, ...(saved ? { exerciseNotes: resolveExerciseNotes(saved) } : {}), ...existingFeaturePreferences(saved), ...themePreferences(saved), trainingReminder: saved?.trainingReminder || emptyTrainingReminder() }),
     }
   )
 );
