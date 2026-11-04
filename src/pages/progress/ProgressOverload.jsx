@@ -20,6 +20,15 @@ const fmtSigned = (n) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${fmtNum(Math.abs
 const fmtShortDate = (t) => new Date(t).toLocaleDateString(locale(), { day: 'numeric', month: 'short' }).replace('.', '');
 const fmtAxisDate = (t) => new Date(t).toLocaleDateString(locale(), { day: 'numeric', month: 'numeric' });
 
+// One small red square per drop set done in that session
+function DropSquares({ count }) {
+    return (
+        <span className="pg-drop-squares" aria-label={tr('{n} drop', { n: count })}>
+            {Array.from({ length: Math.min(count, 5) }, (_, i) => <span key={i} className="pg-drop-square" />)}
+        </span>
+    );
+}
+
 function ChartTooltip({ active, payload, unit }) {
     if (!active || !payload || !payload.length) return null;
     const d = payload[0].payload;
@@ -30,16 +39,24 @@ function ChartTooltip({ active, payload, unit }) {
             <p className="pg-tooltip-set">{d.kg > 0 ? `${fmtNum(d.kg)}kg × ${d.reps}` : `${d.reps} reps`}</p>
             {d.locationLabel && <p className="pg-tooltip-set">{d.locationLabel}</p>}
             {d.isPR && <p className="pg-tooltip-pr"><Trophy size={11} /> {tr('Nuovo PR')}</p>}
+            {d.drops?.length > 0 && (
+                <div className="pg-tooltip-drops">
+                    <p className="pg-tooltip-drops-title"><DropSquares count={d.drops.length} /> {tr('Drop set')}</p>
+                    {d.drops.map((drop, i) => <p key={i} className="pg-tooltip-set">{drop.kg > 0 ? `${fmtNum(drop.kg)}kg × ${drop.reps}` : `${drop.reps} reps`}</p>)}
+                </div>
+            )}
         </div>
     );
 }
 
 function ChartDot({ cx, cy, payload }) {
     if (cx == null || cy == null) return null;
-    if (payload.isPR) {
-        return <circle cx={cx} cy={cy} r={5} fill="var(--c-streak)" stroke="var(--c-bg)" strokeWidth={2} />;
-    }
-    return <circle cx={cx} cy={cy} r={3.5} fill="var(--c-bg)" stroke="var(--c-primary)" strokeWidth={2} />;
+    const dot = payload.isPR
+        ? <circle cx={cx} cy={cy} r={5} fill="var(--c-streak)" stroke="var(--c-bg)" strokeWidth={2} />
+        : <circle cx={cx} cy={cy} r={3.5} fill="var(--c-bg)" stroke="var(--c-primary)" strokeWidth={2} />;
+    if (!payload.drops?.length) return dot;
+    // Sessions with drop sets get a small red square above the point
+    return <g>{dot}<rect x={cx - 3} y={cy - 14} width={6} height={6} rx={1.5} fill="var(--c-danger)" /></g>;
 }
 
 function ProgressOverload() {
@@ -125,7 +142,10 @@ function ProgressOverload() {
                     || (!rm && !best.rm && reps > best.reps);
                 if (better) best = { kg, reps, rm };
             });
-            if (best) list.push({ time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best });
+            // Drop sets never enter the 1RM: they are only shown on the session
+            const drops = ex.sets.filter(s => s.done && s.isDropset && (parseInt(s.reps, 10) || 0) > 0)
+                .map(s => ({ kg: parseFloat(s.kg) || 0, reps: parseInt(s.reps, 10) || 0 }));
+            if (best) list.push({ time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best, drops });
         });
         list.sort((a, b) => a.time - b.time);
 
@@ -387,7 +407,7 @@ function ProgressOverload() {
                                         <span className="pg-log-date">{fmtShortDate(s.time)}</span>
                                         <div className="pg-log-main">
                                             <span className="pg-log-set">{s.kg > 0 ? `${fmtNum(s.kg)}kg × ${s.reps}` : `${s.reps} reps`}</span>
-                                            <span className="pg-log-cap">{tr('Miglior serie')}</span>
+                                            <span className="pg-log-cap">{tr('Miglior serie')}{s.drops?.length > 0 && <> · <DropSquares count={s.drops.length} /> {tr('{n} drop', { n: s.drops.length })}</>}</span>
                                         </div>
                                         <div className="pg-log-rm">
                                             <span className="pg-log-set">

@@ -2,7 +2,7 @@ import { GymLocationSettings } from '../../components/GymLocation';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Bell, Weight, CookingPot, Gauge } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Dna, Download, Upload, ShieldCheck, HardDrive, Check, Clock, Bell, Weight, CookingPot, Gauge, Layers } from 'lucide-react';
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import { ThemeSettingRow } from '../../components/ThemePicker';
 import { LanguageSettingRow } from '../../components/LanguagePicker';
@@ -21,6 +21,8 @@ function Settings() {
   const toggleDiary = useStore(state => state.toggleDiary);
   const showRirSelector = useStore(state => state.showRirSelector ?? true);
   const toggleRirSelector = useStore(state => state.toggleRirSelector);
+  const showDropsets = useStore(state => state.showDropsets ?? false);
+  const toggleDropsets = useStore(state => state.toggleDropsets);
   
   const autoBackupEnabled = useStore(state => state.autoBackupEnabled ?? true);
   const autoBackupFrequency = useStore(state => state.autoBackupFrequency || 'after_workout');
@@ -157,6 +159,11 @@ function Settings() {
         <span className="st-row-icon is-primary"><Gauge size={20} /></span>
         <span className="st-row-text"><span className="st-row-title">{tr('Selettore RIR')}</span><span className="st-row-sub">{tr('Segna 0 o 1 RIR su ogni serie. In Scienza le serie completate valgono 0 RIR in automatico.')}</span></span>
         <button type="button" role="switch" aria-checked={showRirSelector} aria-label={tr('Attiva selettore RIR')} className={`st-switch ${showRirSelector ? 'is-on' : ''}`} onClick={toggleRirSelector}><span /></button>
+      </div>
+      <div className="ej-card st-row">
+        <span className="st-row-icon is-primary"><Layers size={20} /></span>
+        <span className="st-row-text"><span className="st-row-title">{tr('Drop set')}</span><span className="st-row-sub">{tr("Aggiunge il pulsante Drop durante l'allenamento. I drop non contano in volume, fatica, record e Scienza: li vedi nei Progressi.")}</span></span>
+        <button type="button" role="switch" aria-checked={showDropsets} aria-label={tr('Attiva drop set')} className={`st-switch ${showDropsets ? 'is-on' : ''}`} onClick={toggleDropsets}><span /></button>
       </div>
       <div className="st-disclosure"><ScienceTutorialButton inline /></div>
 

@@ -2,7 +2,7 @@ import { machineHistory } from '../../utils/gymLocation';
 import WorkoutGymLocation from '../../components/GymLocation';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell, TrendingUp, MessageSquareDashed } from 'lucide-react';
+import { Plus, Check, TrendingDown, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell, TrendingUp, MessageSquareDashed } from 'lucide-react';
 import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/useStore';
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
@@ -10,6 +10,7 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { WorkoutSetEffort, ScienceExerciseClassification } from '../../components/ScienceTraining';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 import { sanitizeDecimalInput } from '../../utils/number';
+import { formatElapsed } from '../../utils/duration';
 import { getExerciseNote, setNote } from '../../utils/exerciseNotes';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import TrainingReminder from '../../components/TrainingReminder';
@@ -35,6 +36,8 @@ function Workout() {
   const updateSessionNote = useStore(state => state.updateActiveWorkoutSessionNote);
   const addExercise = useStore(state => state.addExerciseToActiveSession);
   const addSet = useStore(state => state.addSetToActiveExercise);
+  const addDropset = useStore(state => state.addDropsetToActiveExercise);
+  const showDropsets = useStore(state => state.showDropsets ?? false);
   const markScienceSetCompleted = useStore(state => state.markScienceSetCompleted);
   const deleteExercise = useStore(state => state.deleteExerciseFromActiveSession);
   const deleteSet = useStore(state => state.deleteSetFromActiveExercise);
@@ -65,7 +68,7 @@ function Workout() {
     if (!activeWorkout) return;
     const interval = setInterval(() => {
       const diff = Math.floor((Date.now() - activeWorkout.startTime) / 1000);
-      setSessionTimeStr(`${String(Math.floor(diff / 60)).padStart(2, '0')}:${String(diff % 60).padStart(2, '0')}`);
+      setSessionTimeStr(formatElapsed(diff));
     }, 1000);
     return () => clearInterval(interval);
   }, [activeWorkout]);
@@ -413,9 +416,9 @@ function Workout() {
                       }
                     }}
                   >
-                    <div className={`workout-set-row-item ${set.done ? 'is-completed' : ''} ${newPR?.set.id === set.id ? 'is-pr' : ''} ${isCelebrating && prCelebration.setId === set.id ? 'is-pr-pop' : ''}`}>
+                    <div className={`workout-set-row-item ${set.isDropset ? 'is-drop' : ''} ${set.done ? 'is-completed' : ''} ${newPR?.set.id === set.id ? 'is-pr' : ''} ${isCelebrating && prCelebration.setId === set.id ? 'is-pr-pop' : ''}`}>
                       <span className={`workout-set-badge ${set.isDropset ? 'is-dropset' : ''}`}>
-                        {set.isDropset ? 'D' : newPR?.set.id === set.id ? <Trophy size={13} /> : sIdx + 1}
+                        {set.isDropset ? <TrendingDown size={12} strokeWidth={3} aria-label={tr('Drop')} /> : newPR?.set.id === set.id ? <Trophy size={13} /> : sIdx + 1}
                       </span>
 
                       {/* KG input */}
@@ -484,6 +487,16 @@ function Workout() {
                   >
                     {tr('+ Serie')}
                   </button>
+                  {showDropsets && (
+                    <button
+                      type="button"
+                      onClick={() => addDropset(ex.id)}
+                      className="workout-add-drop-btn"
+                    >
+                      <TrendingDown size={15} strokeWidth={2.5} aria-hidden="true" />
+                      {tr('Drop')}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
