@@ -755,9 +755,17 @@
 
 .workout-set-badge.is-dropset,
 .workout-set-row-item.is-completed .workout-set-badge.is-dropset {
-  color: var(--c-accent);
-  background: rgba(var(--c-accent-rgb), 0.18);
-  font-size: 0.6875rem;
+  justify-self: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: #fff;
+  background: var(--c-danger);
+  box-shadow: 0 0 0 3px rgba(var(--c-danger-rgb), 0.18);
+}
+
+.workout-set-row-item.is-completed .workout-set-badge.is-dropset {
+  opacity: 0.85;
 }
 
 /* Stepper (KG & reps) */
@@ -871,24 +879,24 @@
 .workout-add-drop-btn {
   flex: 0 0 auto;
   min-width: 96px;
-  color: var(--c-accent);
-  background: linear-gradient(135deg, rgba(var(--c-accent-rgb), 0.16), rgba(var(--c-accent-rgb), 0.06));
-  border: 1px solid rgba(var(--c-accent-rgb), 0.3);
+  color: var(--c-danger);
+  background: linear-gradient(135deg, rgba(var(--c-danger-rgb), 0.16), rgba(var(--c-danger-rgb), 0.06));
+  border: 1px solid rgba(var(--c-danger-rgb), 0.3);
   transition: transform 0.12s ease, background 0.2s ease;
 }
 
 .workout-add-drop-btn:active {
   transform: scale(0.96);
-  background: rgba(var(--c-accent-rgb), 0.22);
+  background: rgba(var(--c-danger-rgb), 0.22);
 }
 
-/* A drop continues the set above: indented, tied to it by an accent rail.
+/* A drop continues the set above: indented, tied to it by a red rail.
    Indented with padding (not margin) so the swipe-to-delete red never shows. */
 .workout-set-row-item.is-drop {
   position: relative;
   padding-left: 20px;
-  border-color: rgba(var(--c-accent-rgb), 0.22);
-  background: linear-gradient(90deg, rgba(var(--c-accent-rgb), 0.08), transparent 55%), var(--c-surface);
+  border-color: rgba(var(--c-danger-rgb), 0.22);
+  background: linear-gradient(90deg, rgba(var(--c-danger-rgb), 0.08), transparent 55%), var(--c-surface);
 }
 
 .workout-set-row-item.is-drop::before {
@@ -898,8 +906,8 @@
   top: 0;
   width: 8px;
   height: 50%;
-  border-left: 2px solid rgba(var(--c-accent-rgb), 0.5);
-  border-bottom: 2px solid rgba(var(--c-accent-rgb), 0.5);
+  border-left: 2px solid rgba(var(--c-danger-rgb), 0.5);
+  border-bottom: 2px solid rgba(var(--c-danger-rgb), 0.5);
   border-bottom-left-radius: 6px;
 }
 

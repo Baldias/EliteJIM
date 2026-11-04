@@ -1,5 +1,4 @@
 import { EXERCISE_CATEGORIES, normalizeName } from '../data/exercises';
-import { setVolumeValue } from './setCounting';
 
 /**
  * Residual fatigue per muscle, estimated from the logged sessions.
@@ -129,7 +128,12 @@ export function exerciseMuscleWeights(exerciseName, allExercises = []) {
   return weights;
 }
 
-const setValue = setVolumeValue;
+const PARTIAL_SET = 0.5;
+// Drop sets never count toward fatigue (Giuseppe's choice); rest-pause counts half.
+const setValue = set => {
+  if (!set?.done || set.isWarmup || set.isDropset) return 0;
+  return set.isRestPause ? PARTIAL_SET : 1;
+};
 
 export const recoveryHours = (muscle, dose) => {
   const base = Math.min(72, Math.max(24, 24 + 6 * dose));

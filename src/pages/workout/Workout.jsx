@@ -10,6 +10,7 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { WorkoutSetEffort, ScienceExerciseClassification } from '../../components/ScienceTraining';
 import { normalizeName, EXERCISES_DB, getAllExercises, getWeightStep } from '../../data/exercises';
 import { sanitizeDecimalInput } from '../../utils/number';
+import { formatElapsed } from '../../utils/duration';
 import { getExerciseNote, setNote } from '../../utils/exerciseNotes';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import TrainingReminder from '../../components/TrainingReminder';
@@ -67,7 +68,7 @@ function Workout() {
     if (!activeWorkout) return;
     const interval = setInterval(() => {
       const diff = Math.floor((Date.now() - activeWorkout.startTime) / 1000);
-      setSessionTimeStr(`${String(Math.floor(diff / 60)).padStart(2, '0')}:${String(diff % 60).padStart(2, '0')}`);
+      setSessionTimeStr(formatElapsed(diff));
     }, 1000);
     return () => clearInterval(interval);
   }, [activeWorkout]);
@@ -417,7 +418,7 @@ function Workout() {
                   >
                     <div className={`workout-set-row-item ${set.isDropset ? 'is-drop' : ''} ${set.done ? 'is-completed' : ''} ${newPR?.set.id === set.id ? 'is-pr' : ''} ${isCelebrating && prCelebration.setId === set.id ? 'is-pr-pop' : ''}`}>
                       <span className={`workout-set-badge ${set.isDropset ? 'is-dropset' : ''}`}>
-                        {set.isDropset ? <TrendingDown size={14} strokeWidth={2.5} aria-label={tr('Drop')} /> : newPR?.set.id === set.id ? <Trophy size={13} /> : sIdx + 1}
+                        {set.isDropset ? <TrendingDown size={12} strokeWidth={3} aria-label={tr('Drop')} /> : newPR?.set.id === set.id ? <Trophy size={13} /> : sIdx + 1}
                       </span>
 
                       {/* KG input */}

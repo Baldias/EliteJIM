@@ -527,3 +527,34 @@
 .pg-period-btn { padding: 8px 10px; border: 1px solid var(--c-border); border-radius: 10px; background: var(--c-surface-2); color: var(--c-text-muted); font: inherit; font-size: .75rem; font-weight: 700; cursor: pointer; }
 .pg-period-btn.is-active { color: var(--c-text); border-color: var(--c-primary); background: rgba(var(--c-primary-rgb), .12); }
 .pg-period-btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+
+/* Drop sets: shown on the session only, never counted */
+.pg-drop-squares {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.pg-drop-square {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--c-danger);
+  box-shadow: 0 0 0 1px rgba(var(--c-danger-rgb), 0.25);
+}
+
+.pg-tooltip-drops {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(var(--c-danger-rgb), 0.25);
+}
+
+.pg-tooltip-drops-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--c-danger);
+}

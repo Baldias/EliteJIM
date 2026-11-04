@@ -1,5 +1,4 @@
 import { annotationFor, classifyScienceExercise } from './scienceV3';
-import { setVolumeValue } from './setCounting';
 
 export function progressRange(period, history, now, customStart, customEnd) {
   const end = new Date(now);
@@ -34,10 +33,9 @@ const weekStart = time => {
   return +date;
 };
 
-// Drop sets and rest-pause count half a set (see setCounting.js).
-const workingSetValue = (set, science, workout, exercise) => Number(set.reps) > 0
-  && !annotationFor(science, workout.id, exercise.id, set.id).excluded ? setVolumeValue(set) : 0;
-const isWorkingSet = (...args) => workingSetValue(...args) > 0;
+const isWorkingSet = (set, science, workout, exercise) => set.done && Number(set.reps) > 0
+  && !set.isWarmup && !set.isDropset && !set.isRestPause
+  && !annotationFor(science, workout.id, exercise.id, set.id).excluded;
 
 export function weeklyMuscleProgress(history, db, science, muscle, range) {
   const empty = { weeks: [], total: 0, average: 0, best: 0, activeWeeks: 0 };
@@ -66,7 +64,7 @@ export function weeklyMuscleProgress(history, db, science, muscle, range) {
     if (!bucket) continue;
     for (const exercise of workout.exercises || []) {
       if (classifyScienceExercise(exercise, db, science, workout.id).primary !== muscle) continue;
-      bucket.sets += (exercise.sets || []).reduce((sum, set) => sum + workingSetValue(set, science, workout, exercise), 0);
+      bucket.sets += (exercise.sets || []).filter(set => isWorkingSet(set, science, workout, exercise)).length;
     }
   }
   const weeks = [...buckets.values()];

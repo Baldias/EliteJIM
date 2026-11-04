@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { useStore } from '../src/store/useStore';
-import { countSets, setVolumeValue } from '../src/utils/setCounting';
-import { calculateVolumeForDateRange } from '../src/utils/rpVolume';
+import { muscleSessions } from '../src/utils/muscleFatigue';
+import { formatElapsed } from '../src/utils/duration';
 import { EXERCISES_DB } from '../src/data/exercises';
 
 const original = useStore.getInitialState();
@@ -26,13 +26,15 @@ describe('optional drop sets', () => {
     expect(useStore.getState().activeWorkout.exercises[0].sets).toHaveLength(2);
   });
 
-  it('count as half a set in weekly volume, warm-ups and skipped sets as zero', () => {
-    expect(setVolumeValue({ done: true })).toBe(1);
-    expect(setVolumeValue({ done: true, isDropset: true })).toBe(0.5);
-    expect(setVolumeValue({ done: true, isWarmup: true })).toBe(0);
-    expect(setVolumeValue({ done: false, isDropset: true })).toBe(0);
-    expect(countSets([{ done: true }, { done: true, isDropset: true }, { done: true, isDropset: true }])).toBe(2);
-    const history = [{ id: 1, startTime: 10, exercises: [{ name: 'Curl Bilanciere', sets: [{ done: true }, { done: true }, { done: true, isDropset: true }] }] }];
-    expect(calculateVolumeForDateRange(history, EXERCISES_DB, 0, 100).Bicipiti).toBe(2.5);
+  it('never count toward fatigue', () => {
+    const now = Date.now();
+    const history = [{ id: 1, startTime: now - 3600000, exercises: [{ name: 'Curl Bilanciere', sets: [{ done: true, reps: 10, isDropset: true }] }] }];
+    expect(Object.values(muscleSessions(history, EXERCISES_DB, now)).flat()).toEqual([]);
+  });
+
+  it('formats the workout clock in hours past 60 minutes', () => {
+    expect(formatElapsed(59 * 60 + 5)).toBe('59:05');
+    expect(formatElapsed(80 * 60)).toBe('1:20:00');
+    expect(formatElapsed(2 * 3600 + 61)).toBe('2:01:01');
   });
 });

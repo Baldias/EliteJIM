@@ -5,6 +5,7 @@ import { useStore } from '../store/useStore';
 import { useRestTimer } from '../hooks/useRestTimer';
 import './GlobalWorkoutBanner.css';
 import { tr } from '../i18n';
+import { formatElapsed } from '../utils/duration';
 
 function GlobalWorkoutBanner() {
   const navigate = useNavigate();
@@ -20,9 +21,7 @@ function GlobalWorkoutBanner() {
     if (!activeWorkout) return;
     const interval = setInterval(() => {
       const diff = Math.floor((Date.now() - activeWorkout.startTime) / 1000);
-      const m = String(Math.floor(diff / 60)).padStart(2, '0');
-      const s = String(diff % 60).padStart(2, '0');
-      setSessionTimeStr(`${m}:${s}`);
+      setSessionTimeStr(formatElapsed(diff));
     }, 1000);
     return () => clearInterval(interval);
   }, [activeWorkout]);

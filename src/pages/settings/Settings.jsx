@@ -162,7 +162,7 @@ function Settings() {
       </div>
       <div className="ej-card st-row">
         <span className="st-row-icon is-primary"><Layers size={20} /></span>
-        <span className="st-row-text"><span className="st-row-title">{tr('Drop set')}</span><span className="st-row-sub">{tr("Aggiunge il pulsante Drop durante l'allenamento. Ogni drop vale mezza serie nel volume settimanale e nella mappa fatica; non entra in record, 1RM e Scienza.")}</span></span>
+        <span className="st-row-text"><span className="st-row-title">{tr('Drop set')}</span><span className="st-row-sub">{tr("Aggiunge il pulsante Drop durante l'allenamento. I drop non contano in volume, fatica, record e Scienza: li vedi nei Progressi.")}</span></span>
         <button type="button" role="switch" aria-checked={showDropsets} aria-label={tr('Attiva drop set')} className={`st-switch ${showDropsets ? 'is-on' : ''}`} onClick={toggleDropsets}><span /></button>
       </div>
       <div className="st-disclosure"><ScienceTutorialButton inline /></div>
