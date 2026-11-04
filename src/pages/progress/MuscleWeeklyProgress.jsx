@@ -27,7 +27,7 @@ export default function MuscleWeeklyProgress({ muscle, history, db, science }) {
     </div>}
     {!range ? <p role="status">{tr('Scegli un intervallo di date valido.')}</p> : <>
       <div className="pg-insights">
-        {[['Media serie / settimana', stats.average.toLocaleString(locale(), { maximumFractionDigits: 1 })], ['Serie totali', stats.total], ['Massimo settimanale', stats.best]].map(([label, value]) => <div className="pg-insight" key={label}><span className="pg-insight-value">{value}</span><span className="pg-insight-label">{tr(label)}</span></div>)}
+        {[['Media serie / settimana', stats.average.toLocaleString(locale(), { maximumFractionDigits: 1 })], ['Serie totali', stats.total.toLocaleString(locale(), { maximumFractionDigits: 1 })], ['Massimo settimanale', stats.best.toLocaleString(locale(), { maximumFractionDigits: 1 })]].map(([label, value]) => <div className="pg-insight" key={label}><span className="pg-insight-value">{value}</span><span className="pg-insight-label">{tr(label)}</span></div>)}
       </div>
       <div className="pg-chart">
         <ResponsiveContainer width="100%" height="100%">
@@ -41,7 +41,7 @@ export default function MuscleWeeklyProgress({ muscle, history, db, science }) {
         </ResponsiveContainer>
       </div>
       {stats.total === 0 && <p className="pg-hero-note">{tr('Nessuna serie completata in questo intervallo.')}</p>}
-      <p className="pg-hero-note">{tr('{active} settimane attive su {total}. Media sulle settimane coperte dallo storico: incluse le settimane vuote tra gli allenamenti e quelle parziali. Serie dirette completate, anche senza RIR; esclusi riscaldamento, dropset e rest-pause.', { active: stats.activeWeeks, total: stats.weeks.length })}</p>
+      <p className="pg-hero-note">{tr('{active} settimane attive su {total}. Media sulle settimane coperte dallo storico: incluse le settimane vuote tra gli allenamenti e quelle parziali. Serie dirette completate, anche senza RIR; drop set e rest-pause valgono mezza serie, il riscaldamento è escluso.', { active: stats.activeWeeks, total: stats.weeks.length })}</p>
     </>}
   </section>;
 }

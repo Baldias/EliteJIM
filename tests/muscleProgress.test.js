@@ -10,14 +10,14 @@ const workout = (day, sets) => ({ id: day, startTime: time(day), exercises: [{ i
 const set = (id, extra = {}) => ({ id, done: true, reps: 10, kg: 60, ...extra });
 
 describe('weekly muscle progress', () => {
-  it('counts ordinary direct work without RIR, includes zero weeks and respects exact date boundaries', () => {
+  it('counts direct work without RIR (drop and rest-pause as half a set), includes zero weeks and respects exact date boundaries', () => {
     const history = [workout(5, [set(1), set(2), set(3, { isWarmup: true }), set(4, { isDropset: true }), set(5, { isRestPause: true }), set(6, { done: false }), set(7, { reps: 0 }), set(8)]), workout(19, [set(1)]), workout(26, [set(1)])];
     const science = emptyScienceState();
     science.annotations[5] = { ex: { 8: { excluded: true } } };
     const before = structuredClone(history);
     const result = weeklyMuscleProgress(history, EXERCISES_DB, science, 'Petto', { start: new Date(2026, 9, 5).getTime(), end: new Date(2026, 9, 26).getTime() });
-    expect(result.weeks.map(w => w.sets)).toEqual([2, 0, 1]);
-    expect(result).toMatchObject({ total: 3, average: 1, best: 2, activeWeeks: 2 });
+    expect(result.weeks.map(w => w.sets)).toEqual([3, 0, 1]);
+    expect(result).toMatchObject({ total: 4, average: 4 / 3, best: 3, activeWeeks: 2 });
     expect(weeklyMuscleProgress(history, EXERCISES_DB, science, 'Tricipiti', { start: time(5), end: time(26) }).total).toBe(0);
     expect(history).toEqual(before);
   });

@@ -211,6 +211,8 @@ export const useStore = create(
       showDiary: false,
       // Per-set RIR 0/1 selector during workouts (Scienza always records RIR)
       showRirSelector: true,
+      // Optional "+ Drop" button in the workout (off by default)
+      showDropsets: false,
       // --- Backup & Storage State ---
       autoBackupEnabled: true,
       autoBackupFrequency: 'after_workout', // 'after_workout' | 'weekly' | 'monthly'
@@ -380,6 +382,7 @@ export const useStore = create(
       toggleScience: () => set((state) => ({ showScience: !state.showScience })),
       toggleDiary: () => set((state) => ({ showDiary: !state.showDiary })),
       toggleRirSelector: () => set((state) => ({ showRirSelector: !(state.showRirSelector ?? true) })),
+      toggleDropsets: () => set((state) => ({ showDropsets: !state.showDropsets })),
       
       // --- Exercise Management Actions ---
       // Adds several custom exercises at once (e.g. from a JSON import), skipping names already in the DB.
@@ -757,6 +760,23 @@ export const useStore = create(
             return {
               ...ex,
               sets: [...ex.sets, { id: Date.now(), kg: lastKg, reps: lastReps, targetReps, done: false }]
+            };
+          });
+          return { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), exercises: updatedExercises } };
+        });
+      },
+
+      // A drop set continues the last set with less load: same kg/reps as a
+      // starting point, no target reps, flagged so stats count it apart.
+      addDropsetToActiveExercise: (exerciseId) => {
+        set((state) => {
+          if (!state.activeWorkout?.exercises.some(ex => ex.id === exerciseId)) return state;
+          const updatedExercises = state.activeWorkout.exercises.map((ex) => {
+            if (ex.id !== exerciseId) return ex;
+            const lastSet = ex.sets?.[ex.sets.length - 1];
+            return {
+              ...ex,
+              sets: [...(ex.sets || []), { id: Date.now(), kg: lastSet?.kg || '', reps: lastSet?.reps || '', targetReps: '', done: false, isDropset: true }]
             };
           });
           return { activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), exercises: updatedExercises } };

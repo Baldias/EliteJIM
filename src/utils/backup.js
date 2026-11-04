@@ -47,6 +47,7 @@ export function exportDataBackup() {
           showScience: currentState.showScience ?? false,
           showDiary: currentState.showDiary ?? false,
           showRirSelector: currentState.showRirSelector ?? true,
+          showDropsets: currentState.showDropsets ?? false,
           ...themePreferences(currentState),
           trainingReminder: currentState.trainingReminder || emptyTrainingReminder(),
           autoBackupEnabled: currentState.autoBackupEnabled ?? true,

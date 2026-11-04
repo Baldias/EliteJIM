@@ -1,4 +1,5 @@
 import { normalizeName } from '../data/exercises';
+import { countSets } from './setCounting';
 
 export const RP_LANDMARKS = {
   // Landmarks in number of sets per week (Mike Israetel / RP)
@@ -49,8 +50,8 @@ export const calculateLast7DaysVolume = (history, exercisesDb) => {
     workout.exercises.forEach(ex => {
       const categories = categoryMap[normalizeName(ex.name)];
       if (categories) {
-        // Count only completed sets, ignore dropsets for structural volume
-        const completedSets = ex.sets.filter(s => s.done && !s.isDropset).length;
+        // Completed sets; drop sets count half (see setCounting.js)
+        const completedSets = countSets(ex.sets);
         // Distribute sets across ALL muscle groups this exercise targets
         categories.forEach(cat => {
           if (volumes[cat] !== undefined) {
@@ -86,7 +87,7 @@ export const calculateVolumeForDateRange = (history, exercisesDb, startTime, end
     workout.exercises.forEach(ex => {
       const categories = categoryMap[normalizeName(ex.name)];
       if (categories) {
-        const completedSets = ex.sets.filter(s => s.done && !s.isDropset).length;
+        const completedSets = countSets(ex.sets);
         categories.forEach(cat => {
           if (volumes[cat] !== undefined) {
             volumes[cat] += completedSets;

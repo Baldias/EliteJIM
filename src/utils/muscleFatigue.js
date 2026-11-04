@@ -1,4 +1,5 @@
 import { EXERCISE_CATEGORIES, normalizeName } from '../data/exercises';
+import { setVolumeValue } from './setCounting';
 
 /**
  * Residual fatigue per muscle, estimated from the logged sessions.
@@ -33,7 +34,6 @@ export const READY_BELOW = 0.25;
 export const WAIT_FROM = 0.5;
 const FULL_DOSE = 6;
 const SYNERGIST = 0.5;
-const PARTIAL_SET = 0.5;
 const LOWER_BODY = new Set(['quadriceps', 'hamstring', 'gluteal', 'lower-back', 'adductor', 'abductors']);
 
 // react-body-highlighter muscle ids shown on the map, with the Italian label.
@@ -129,10 +129,7 @@ export function exerciseMuscleWeights(exerciseName, allExercises = []) {
   return weights;
 }
 
-const setValue = set => {
-  if (!set?.done || set.isWarmup) return 0;
-  return set.isDropset || set.isRestPause ? PARTIAL_SET : 1;
-};
+const setValue = setVolumeValue;
 
 export const recoveryHours = (muscle, dose) => {
   const base = Math.min(72, Math.max(24, 24 + 6 * dose));
