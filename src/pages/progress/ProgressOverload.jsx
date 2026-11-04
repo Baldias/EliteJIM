@@ -130,14 +130,17 @@ function ProgressOverload() {
         list.sort((a, b) => a.time - b.time);
 
         const hasLoad = list.some(s => s.kg > 0);
-        const previous = new Map();
+        // Compare each session with the previous one in the visible history: the list is
+        // already narrowed to one location when a filter is set, while "Tutte le località"
+        // is a single overall history. Keying by location here made the first session at a
+        // new gym (or an unlocated one) show "Inizio" even when it was the latest session.
+        let last = null;
         return list.map(s => {
-            const key = machine ? s.location : 'global';
-            const last = previous.get(key);
             const value = hasLoad ? round1(s.rm || 0) : s.reps;
             const isPR = Boolean(last && value > last.max);
-            previous.set(key, { value, max: Math.max(last?.max || 0, value) });
-            return { ...s, value, delta: last ? round1(value - last.value) : null, isPR };
+            const delta = last ? round1(value - last.value) : null;
+            last = { value, max: Math.max(last?.max || 0, value) };
+            return { ...s, value, delta, isPR };
         });
     }, [history, currentExercise, bodyweightLoad, machine, locationFilter, aliases]);
 
