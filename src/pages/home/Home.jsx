@@ -37,6 +37,7 @@ function Home() {
   const startWorkout = useStore(state => state.startWorkout);
   const deleteTemplate = useStore(state => state.deleteTemplate);
   const activeWorkout = useStore(state => state.activeWorkout);
+  const showDiary = useStore(state => state.showDiary);
   const history = useStore(state => state.history);
   const lastWorkoutDate = useStore(state => state.lastWorkoutDate);
   const userXP = useStore(state => state.userXP) || 0;
@@ -127,8 +128,8 @@ function Home() {
           </button>
         )}
 
-        {/* ── RIEPILOGO GIORNALIERO (→ Diario) ──────── */}
-        {!activeWorkout && <DailyRecapCard />}
+        {/* ── RIEPILOGO GIORNALIERO (→ Diario, solo se attivo) ──────── */}
+        {showDiary && !activeWorkout && <DailyRecapCard />}
 
         {/* ── ALLENAMENTO LIBERO ─────────────────────── */}
         <section className="home-section" aria-labelledby="home-training-title">
