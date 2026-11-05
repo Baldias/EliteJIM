@@ -327,6 +327,7 @@ export default {
   "Aggiungi nota (es. presa larga, fermo al petto 1s)...": "Add a note (e.g. wide grip, 1s pause at chest)...",
   "Segna come da completare": "Mark as not done",
   "Completa serie": "Complete set",
+  "Fatta": "Done",
   "+ Serie": "+ Set",
   "Annullare senza salvare?": "Cancel without saving?",
   "Annulla": "Cancel",

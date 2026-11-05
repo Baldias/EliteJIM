@@ -176,10 +176,11 @@ function EditWorkout() {
                   <span>Set</span>
                   <span>Kg</span>
                   <span>Reps</span>
+                  <span>{tr('Fatta')}</span>
                   <span></span>
                 </div>
                 {ex.sets.map((set, setIdx) => (
-                  <div key={set.id} className="edit-set-row">
+                  <div key={set.id} className={`edit-set-row ${set.done ? '' : 'is-pending'}`}>
                     <span className="edit-set-num">
                       {set.isDropset ? <span className="edit-drop">Drop</span> : setIdx + 1}
                     </span>
@@ -199,6 +200,16 @@ function EditWorkout() {
                       className="edit-set-input"
                       placeholder="reps"
                     />
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={!!set.done}
+                      onClick={() => hndUpdSet(ex.id, set.id, 'done', !set.done)}
+                      className={`edit-set-done ${set.done ? 'checked' : ''}`}
+                      title={set.done ? tr('Segna come da completare') : tr('Completa serie')}
+                    >
+                      <Check size={16} strokeWidth={set.done ? 3 : 2} />
+                    </button>
                     <button onClick={() => hndRmSet(ex.id, set.id)} className="edit-set-delete">
                       <X size={16} />
                     </button>
