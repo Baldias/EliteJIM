@@ -200,7 +200,7 @@
 .edit-sets-header,
 .edit-set-row {
   display: grid;
-  grid-template-columns: 38px 1fr 1fr 30px;
+  grid-template-columns: 38px 1fr 1fr 36px 30px;
   gap: 8px;
   align-items: center;
 }
@@ -345,4 +345,32 @@
   font-size: 0.875rem;
   border-style: dashed;
   border-color: rgba(var(--c-accent-rgb), 0.45);
+}
+
+/* Serie non completate: restano modificabili e si possono segnare come fatte */
+.edit-set-row.is-pending .edit-set-input,
+.edit-set-row.is-pending .edit-set-num {
+  opacity: 0.55;
+}
+
+.edit-set-done {
+  width: 36px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: none;
+  background: var(--c-surface-2);
+  color: var(--c-text-dim);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.edit-set-done.checked {
+  background: var(--c-success);
+  color: var(--c-bg);
+}
+
+.edit-set-done:active {
+  transform: scale(0.92);
 }
