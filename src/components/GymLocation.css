@@ -13,6 +13,9 @@
 .gym-settings h3 { display:flex; align-items:center; gap:8px; margin-top:0; }
 .gym-settings > p { color:var(--c-text-muted); font-size:.8rem; line-height:1.5; }
 .gym-settings label { display:flex; gap:10px; align-items:center; padding:12px 0; font-size:.85rem; }
+.gym-settings-toggle { display:flex; gap:12px; align-items:center; justify-content:space-between; padding:12px 0; font-size:.85rem; }
+.gym-settings-toggle .lg-switch { flex-shrink:0; }
+.gym-settings-toggle .lg-switch:disabled { opacity:.4; }
 .pg-gym-filter { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 .pg-gym-filter select { flex:1; min-width:0; padding:10px; border-radius:10px; border:1px solid var(--c-border); color:var(--c-text); background:var(--c-surface); font:inherit; font-size:.8rem; }
 .pg-gym-filter button { padding:8px; background:var(--c-surface); color:var(--c-text-muted); border:1px solid var(--c-border); border-radius:10px; }

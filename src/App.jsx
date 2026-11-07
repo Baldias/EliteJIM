@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useWorkoutAutoFinish } from './hooks/useWorkoutAutoFinish';
 import { hasCurrentThemeChoice } from './utils/theme';
-import { BrowserRouter, Routes, Route, NavLink, useLocation, useNavigationType } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
+import { TabBar } from 'glisse';
 import { Home as HomeIcon, TrendingUp, User, Dna, Utensils } from 'lucide-react';
 import { initPersistentStorage } from './utils/backup';
 import Home from './pages/home/Home';
@@ -33,33 +34,31 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
 import { tr } from './i18n';
 
+const NAV_ITEMS = [
+  { value: '/science', label: 'Scienza', icon: <Dna size={22} /> },
+  { value: '/diario', label: 'Diario', icon: <Utensils size={22} /> },
+  { value: '/', label: 'Home', icon: <HomeIcon size={22} /> },
+  { value: '/progress', label: 'Progressi', icon: <TrendingUp size={22} /> },
+  { value: '/profile', label: 'Profilo', icon: <User size={22} /> },
+];
+
 function Navigation() {
   const location = useLocation();
+  const navigate = useNavigate();
   // Hide bottom nav on active workout session, template builder, settings, recap, history, levels, and activity
   if (['/workout', '/build', '/settings', '/recap', '/levels', '/settings/exercises', '/settings/pasti', '/history', '/activity', '/fatigue'].includes(location.pathname) || location.pathname.startsWith('/edit-workout')) return null;
 
+  const active = NAV_ITEMS.find(item => item.value === location.pathname)?.value ?? null;
+
+  // Liquid glass tab bar (glisse): the selection springs between tabs, follows a drag and lifts into a lens while held.
   return (
-    <nav className="bottom-nav">
-        <NavLink to="/science" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Dna size={24} />
-          <span>{tr("Scienza")}</span>
-        </NavLink>
-      <NavLink to="/diario" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <Utensils size={24} />
-        <span>{tr("Diario")}</span>
-      </NavLink>
-      <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} end>
-        <HomeIcon size={24} />
-        <span>Home</span>
-      </NavLink>
-      <NavLink to="/progress" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <TrendingUp size={24} />
-        <span>{tr("Progressi")}</span>
-      </NavLink>
-      <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <User size={24} />
-        <span>{tr("Profilo")}</span>
-      </NavLink>
+    <nav className="glass-nav" aria-label={tr('Navigazione')}>
+      <TabBar
+        aria-label={tr('Navigazione')}
+        items={NAV_ITEMS.map(item => ({ ...item, label: tr(item.label) }))}
+        value={active}
+        onValueChange={value => { if (value !== location.pathname) navigate(value); }}
+      />
     </nav>
   );
 }

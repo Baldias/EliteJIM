@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { SegmentedControl } from 'glisse';
 import { Target, ChevronDown, Sparkles, X, Trash2 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { toDateKey, formatDayLabel, dayEntries } from '../../utils/nutrition';
@@ -64,13 +65,12 @@ export default function Monitoring() {
 
       <header className="mn-header">
         <h1 className="mn-title">{tr('Diario')}</h1>
-        <div className="mn-switch" role="tablist" aria-label={tr('Sezioni')}>
-          {VIEWS.map(({ id, label }) => (
-            <button key={id} type="button" role="tab" className={view === id ? 'is-active' : ''} onClick={() => setView(id)} aria-selected={view === id}>
-              {tr(label)}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          aria-label={tr('Sezioni')}
+          items={VIEWS.map(({ id, label }) => ({ value: id, label: tr(label) }))}
+          value={view}
+          onValueChange={setView}
+        />
         <button type="button" className="ej-icon-btn ej-icon-btn--round mn-header-btn" onClick={() => setSheet({ type: 'goals' })} aria-label={tr('I tuoi obiettivi')}>
           <Target size={18} />
         </button>

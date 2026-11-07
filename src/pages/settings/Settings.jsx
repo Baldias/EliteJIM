@@ -1,3 +1,4 @@
+import { Switch, SegmentedControl } from 'glisse';
 import { GymLocationSettings } from '../../components/GymLocation';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -137,33 +138,24 @@ function Settings() {
             <span className="st-row-title">{tr('Sezione Scienza')}</span>
             <span className="st-row-sub">{tr('Abilita tracker e obiettivi mesociclo')}</span>
           </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={showScience}
-            aria-label={tr('Attiva Sezione Scienza')}
-            className={`st-switch ${showScience ? 'is-on' : ''}`}
-            onClick={toggleScience}
-          >
-            <span />
-          </button>
+          <Switch aria-label={tr('Attiva Sezione Scienza')} checked={showScience} onCheckedChange={toggleScience} />
         </div>
       </div>
 
       <div className="ej-card st-row">
         <span className="st-row-icon is-primary"><Utensils size={20} /></span>
         <span className="st-row-text"><span className="st-row-title">{tr('Sezione Diario')}</span><span className="st-row-sub">{tr('Alimentazione e andamento del peso')}</span></span>
-        <button type="button" role="switch" aria-checked={showDiary} aria-label={tr('Attiva Sezione Diario')} className={`st-switch ${showDiary ? 'is-on' : ''}`} onClick={toggleDiary}><span /></button>
+        <Switch aria-label={tr('Attiva Sezione Diario')} checked={showDiary} onCheckedChange={toggleDiary} />
       </div>
       <div className="ej-card st-row">
         <span className="st-row-icon is-primary"><Gauge size={20} /></span>
         <span className="st-row-text"><span className="st-row-title">{tr('Selettore RIR')}</span><span className="st-row-sub">{tr('Segna 0 o 1 RIR su ogni serie. In Scienza le serie completate valgono 0 RIR in automatico.')}</span></span>
-        <button type="button" role="switch" aria-checked={showRirSelector} aria-label={tr('Attiva selettore RIR')} className={`st-switch ${showRirSelector ? 'is-on' : ''}`} onClick={toggleRirSelector}><span /></button>
+        <Switch aria-label={tr('Attiva selettore RIR')} checked={showRirSelector} onCheckedChange={toggleRirSelector} />
       </div>
       <div className="ej-card st-row">
         <span className="st-row-icon is-primary"><Layers size={20} /></span>
         <span className="st-row-text"><span className="st-row-title">{tr('Drop set')}</span><span className="st-row-sub">{tr("Aggiunge il pulsante Drop durante l'allenamento. I drop non contano in volume, fatica, record e Scienza: li vedi nei Progressi.")}</span></span>
-        <button type="button" role="switch" aria-checked={showDropsets} aria-label={tr('Attiva drop set')} className={`st-switch ${showDropsets ? 'is-on' : ''}`} onClick={toggleDropsets}><span /></button>
+        <Switch aria-label={tr('Attiva drop set')} checked={showDropsets} onCheckedChange={toggleDropsets} />
       </div>
       <div className="st-disclosure"><ScienceTutorialButton inline /></div>
 
@@ -203,35 +195,25 @@ function Settings() {
         <div className="st-reminder">
           <div className="st-reminder-head">
             <span className="st-status-label"><Bell size={15} /> <span><strong>{tr('Promemoria automatico')}</strong><br /><small>{tr('Mostra un promemoria per salvare i dati')}</small></span></span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={autoBackupEnabled}
+            <Switch
               aria-label={tr('Attiva promemoria automatico')}
-              className={`st-switch ${autoBackupEnabled ? 'is-on' : ''}`}
-              onClick={() => setAutoBackupSettings({ autoBackupEnabled: !autoBackupEnabled })}
-            >
-              <span />
-            </button>
+              checked={autoBackupEnabled}
+              onCheckedChange={checked => setAutoBackupSettings({ autoBackupEnabled: checked })}
+            />
           </div>
 
           {autoBackupEnabled && (
-            <div className="st-segmented">
-              {[
-                { key: 'after_workout', label: 'Fine Workout' },
-                { key: 'weekly', label: 'Settimanale' },
-                { key: 'monthly', label: 'Mensile' }
-              ].map(opt => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setAutoBackupSettings({ autoBackupFrequency: opt.key })}
-                  className={autoBackupFrequency === opt.key ? 'is-active' : ''}
-                >
-                  {tr(opt.label)}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              className="st-glass-segmented"
+              aria-label={tr('Frequenza promemoria')}
+              items={[
+                { value: 'after_workout', label: tr('Fine Workout') },
+                { value: 'weekly', label: tr('Settimanale') },
+                { value: 'monthly', label: tr('Mensile') }
+              ]}
+              value={autoBackupFrequency}
+              onValueChange={value => setAutoBackupSettings({ autoBackupFrequency: value })}
+            />
           )}
         </div>
 
