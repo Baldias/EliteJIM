@@ -35,10 +35,13 @@
 /* Bottom navigation: a floating glisse tab bar. */
 .glass-nav {
   position: fixed;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px) * 0.5);
-  transform: translateX(-50%);
   z-index: 1000;
+  /* Centred without a transform: a transformed fixed element is one of the
+     things that makes iOS Safari scroll it away with the page. */
+  margin: 0 auto;
   width: calc(100% - 2rem);
   max-width: 440px;
   display: flex;

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useWorkoutAutoFinish } from './hooks/useWorkoutAutoFinish';
 import { hasCurrentThemeChoice } from './utils/theme';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
@@ -51,7 +52,9 @@ function Navigation() {
   const active = NAV_ITEMS.find(item => item.value === location.pathname)?.value ?? null;
 
   // Liquid glass tab bar (glisse): the selection springs between tabs, follows a drag and lifts into a lens while held.
-  return (
+  // Rendered straight into <body>: iOS Safari can pin a fixed bar to the page
+  // instead of the screen when an ancestor creates a containing block.
+  return createPortal(
     <nav className="glass-nav" aria-label={tr('Navigazione')}>
       <TabBar
         aria-label={tr('Navigazione')}
@@ -59,7 +62,8 @@ function Navigation() {
         value={active}
         onValueChange={value => { if (value !== location.pathname) navigate(value); }}
       />
-    </nav>
+    </nav>,
+    document.body
   );
 }
 
