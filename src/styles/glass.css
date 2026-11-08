@@ -1,8 +1,8 @@
-/* Liquid glass (glisse) — tokens for EliteJIM's dark themes.
+/* Liquid glass (glisse) for the bottom navigation — tokens for EliteJIM's dark themes.
    glisse only knows data-theme="light"/"dark"; our themes are "og" and
    "science-v3", both dark, so we give it its dark palette here and tint the
    accents with the app's primary colour. */
-:root[data-theme] {
+.glass-nav {
   --lg-foreground: rgb(255 255 255);
   --lg-muted: rgb(235 235 245 / 0.55);
   --lg-glass: rgb(22 24 28 / 0.55);
@@ -55,11 +55,5 @@
 }
 .glass-nav .lg-tab-bar svg { width: 22px; height: 22px; }
 
-/* Segmented controls */
-.st-reminder { container-type: inline-size; }
-.st-glass-segmented { --lg-tab-width: min(104px, calc(100cqw / 3)); align-self: center; }
-.st-glass-segmented .lg-tab { font-size: 12px; }
-
 /* The app's global button press (scale) fights glisse's own lens motion. */
-:is(.lg-tab, .lg-switch, .lg-button):active { transform: none; }
-.mn-header .lg-segmented { --lg-tab-width: 66px; flex-shrink: 0; }
+.glass-nav .lg-tab:active { transform: none; }

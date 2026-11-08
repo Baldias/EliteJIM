@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MapPin, ArrowRight, Building2, Check, LocateFixed } from 'lucide-react';
-import { Switch } from 'glisse';
 import { useStore } from '../store/useStore';
 import { detectGymCity, gymLabel, GYM_LOCATION_INTRO_VERSION } from '../utils/gymLocation';
 import { Sheet } from '../pages/monitoring/Sheet';
@@ -15,8 +14,8 @@ export function GymLocationSettings() {
   const preferences = useStore(s => s.gymLocationPreferences);
   const update = useStore(s => s.setGymLocationPreferences);
   return <section className="ej-card gym-settings"><h3><MapPin size={18} /> {tr('Palestre e località')}</h3><p>{tr('Le preferenze si applicano ai prossimi allenamenti. Il filtro nei Progressi è sempre disponibile per i macchinari.')}</p><LocationConsent />
-    <div className="gym-settings-toggle"><span>{tr('Rileva il comune degli allenamenti')}</span><Switch aria-label={tr('Rileva il comune degli allenamenti')} checked={Boolean(preferences.capture)} onCheckedChange={checked => update({ introVersion: GYM_LOCATION_INTRO_VERSION, capture: checked, ...(!checked ? { adaptLoads: false } : {}) })} /></div>
-    <div className="gym-settings-toggle"><span>{tr('Adatta carichi e PR dei macchinari alla località')}</span><Switch aria-label={tr('Adatta carichi e PR dei macchinari alla località')} disabled={!preferences.capture} checked={Boolean(preferences.adaptLoads)} onCheckedChange={checked => update({ adaptLoads: checked })} /></div>
+    <label><input type="checkbox" checked={Boolean(preferences.capture)} onChange={e => update({ introVersion: GYM_LOCATION_INTRO_VERSION, capture: e.target.checked, ...(!e.target.checked ? { adaptLoads: false } : {}) })} />{tr('Rileva il comune degli allenamenti')}</label>
+    <label><input type="checkbox" disabled={!preferences.capture} checked={Boolean(preferences.adaptLoads)} onChange={e => update({ adaptLoads: e.target.checked })} />{tr('Adatta carichi e PR dei macchinari alla località')}</label>
   </section>;
 }
 

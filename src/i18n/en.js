@@ -19,7 +19,6 @@ export default {
   "Scienza": "Science",
   "Diario": "Diary",
   "Navigazione": "Navigation",
-  "Frequenza promemoria": "Reminder frequency",
   "Progressi": "Progress",
   "Profilo": "Profile",
   // components/ThemePicker.jsx
