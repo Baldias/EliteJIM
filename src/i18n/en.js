@@ -18,6 +18,7 @@ export default {
   "Home": "Home",
   "Scienza": "Science",
   "Diario": "Diary",
+  "Navigazione": "Navigation",
   "Progressi": "Progress",
   "Profilo": "Profile",
   // components/ThemePicker.jsx

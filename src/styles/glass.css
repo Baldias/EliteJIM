@@ -1,0 +1,59 @@
+/* Liquid glass (glisse) for the bottom navigation — tokens for EliteJIM's dark themes.
+   glisse only knows data-theme="light"/"dark"; our themes are "og" and
+   "science-v3", both dark, so we give it its dark palette here and tint the
+   accents with the app's primary colour. */
+.glass-nav {
+  --lg-foreground: rgb(255 255 255);
+  --lg-muted: rgb(235 235 245 / 0.55);
+  --lg-glass: rgb(22 24 28 / 0.55);
+  --lg-glass-active: rgb(60 62 68 / 0.6);
+  --lg-edge: rgb(255 255 255 / 0.09);
+  --lg-drop: transparent;
+  --lg-selection: rgb(255 255 255 / 0.13);
+  --lg-lens: rgb(255 255 255 / 0.055);
+  --lg-lens-drop: transparent;
+  --lg-segment-track: rgb(255 255 255 / 0.06);
+  --lg-segment-thumb: rgb(235 235 245 / 0.22);
+  --lg-segment-label: rgb(255 255 255);
+  --lg-segment-lens: transparent;
+  --lg-surface: rgb(20 20 23 / 0.86);
+  --lg-surface-edge: rgb(255 255 255 / 0.13);
+  --lg-shadow: rgb(0 0 0 / 0.45);
+  --lg-highlight: rgb(235 235 245 / 0.13);
+  --lg-separator: rgb(235 235 245 / 0.16);
+  --lg-destructive: #ff4245;
+  --lg-track: rgb(235 235 245 / 0.22);
+  --lg-rail: rgb(255 255 255 / 0.1);
+  --lg-on: var(--c-primary);
+  --lg-fill: var(--c-primary);
+  --lg-tab-selected: var(--c-primary);
+  --lg-ring: rgb(255 255 255 / 0.5);
+  --lg-lens-shine: 1;
+  --lg-rim-shine: 0.16;
+}
+
+/* Bottom navigation: a floating glisse tab bar. */
+.glass-nav {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px) * 0.5);
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: calc(100% - 2rem);
+  max-width: 440px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.glass-nav .lg-tab-bar,
+.glass-nav .lg-tab-bar[data-icons] {
+  /* Five tabs that share the available width instead of glisse's fixed 84px. */
+  --lg-tab-width: min(84px, calc((100vw - 2rem - 8px) / 5));
+  --lg-tab-height: 54px;
+  pointer-events: auto;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.45);
+}
+.glass-nav .lg-tab-bar svg { width: 22px; height: 22px; }
+
+/* The app's global button press (scale) fights glisse's own lens motion. */
+.glass-nav .lg-tab:active { transform: none; }
