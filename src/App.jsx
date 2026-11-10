@@ -20,6 +20,7 @@ import History from './pages/profile/History';
 import EditWorkout from './pages/profile/EditWorkout';
 import Activity from './pages/activity/Activity';
 import FatigueMap from './pages/fatigue/FatigueMap';
+import AiReport from './pages/report/AiReport';
 import Monitoring from './pages/monitoring/Monitoring';
 import MyMeals from './pages/monitoring/MyMeals';
 import ReloadPrompt from './components/ReloadPrompt';
@@ -113,6 +114,7 @@ function AppContent() {
           <Route path="/edit-workout/:workoutId" element={<EditWorkout />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/fatigue" element={<FatigueMap />} />
+          <Route path="/report-ai" element={<AiReport />} />
           <Route path="/diario" element={<OptionalFeature key="diary" feature="diary"><Monitoring /></OptionalFeature>} />
           <Route path="/settings/pasti" element={<OptionalFeature key="meals" feature="diary"><MyMeals /></OptionalFeature>} />
         </Routes>

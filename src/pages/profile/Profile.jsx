@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
-import { ChevronDown, ChevronUp, ChevronRight, Settings as SettingsIcon, Zap, Trash2, Flame, Trophy, Edit2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronRight, Settings as SettingsIcon, Zap, Trash2, Flame, Trophy, Edit2, Sparkles } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../utils/rpVolume';
 import { getAllExercises } from '../../data/exercises';
@@ -322,6 +322,7 @@ function Profile() {
         )}
       </section>
 
+      <button type="button" className="ej-card progress-share-entry" onClick={() => navigate('/report-ai')}><span><Sparkles size={21} /></span><div><strong>{tr('Report AI')}</strong><small>{tr('I tuoi dati di un periodo, pronti da far analizzare all\'AI')}</small></div><ChevronRight size={18} /></button>
       <ProgressShare />
     </div>
   );
