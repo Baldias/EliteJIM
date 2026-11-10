@@ -42,7 +42,9 @@ describe('Report AI', () => {
   it('writes progress, weekly sets per muscle, notes and the prompt', () => {
     const state = { history: [workout(1, [set(85, 8)], { sessionNote: 'spalla  tirava' }), workout(5, [set(80, 8)])] };
     const { text } = buildAiReport(state, { periodId: '30d', question: 'perché?' }, now);
-    expect(text).toContain('Domanda specifica: perché?');
+    expect(text).toContain('MY SPECIFIC QUESTION: perché?');
+    expect(text).toContain('Answer in Italian');
+    expect(text).toMatch(/consult the relevant studies/);
     expect(text).toContain('Panca Piana Bilanciere: 2 sedute, 2 serie · 80×8 → 85×8');
     expect(text).toMatch(/Serie a settimana per muscolo \(media\): Petto/);
     expect(text).toContain('Nota: spalla tirava');

@@ -7,7 +7,7 @@ import { estimate1RM, getBodyweightLoad, resolveBodyweight } from './oneRepMax';
 import { dayTotals, macroGoalsInGrams, toDateKey, weeklyRate, weightTrend } from './nutrition';
 import { annotationFor } from './scienceV3';
 import { getSessionNote } from './sessionNote';
-import { locale, tr } from '../i18n';
+import { getLanguage, locale, tr } from '../i18n';
 
 const DAY = 86400000;
 // Up to this many days every workout is written set by set. Longer periods get
@@ -126,19 +126,31 @@ const setLabel = (s, bodyweight) => bodyweight ? `${s.kg > 0 ? `+${fmt(s.kg, 2)}
 
 const muscleLine = sets => Object.entries(sets).sort((a, b) => b[1] - a[1]).map(([m, v]) => `${tr(m)} ${fmt(v)}`).join(', ');
 
-function promptHeader(question) {
+// The instructions stay in English whatever the app language: assistants follow
+// them more reliably and the scientific literature they should check is in
+// English. Only the answer is asked in the user's language.
+const ANSWER_LANGUAGE = { it: 'Italian', en: 'English' };
+
+export function promptHeader(question = '', language = getLanguage()) {
   return [
-    tr('Sei un coach esperto di ipertrofia e forza, aggiornato sulla letteratura scientifica. Analizza i miei dati di allenamento esportati dall\'app EliteJIM.'),
+    'You are an elite, evidence-based strength & hypertrophy coach. Analyse the training data below, exported from my EliteJIM app.',
     '',
-    tr('Cosa voglio da te:'),
-    tr('1. Cosa sta andando bene (progressi reali sui carichi o sulle ripetizioni).'),
-    tr('2. Esercizi fermi o in calo, con una possibile causa e cosa cambiare.'),
-    tr('3. Volume per muscolo: chi riceve troppe o troppo poche serie a settimana, e come riequilibrare.'),
-    tr('4. Frequenza e recupero tra le sedute.'),
-    tr('5. Se ci sono dati su peso e alimentazione: se sono coerenti con i progressi in palestra.'),
-    tr('6. Le 3 modifiche più utili da fare da subito, in ordine di priorità.'),
-    tr('Basati solo sui dati qui sotto, dimmi quando un dato manca o è troppo poco per concludere, e rispondi in modo diretto e pratico.'),
-    ...(question ? ['', `${tr('Domanda specifica')}: ${question}`] : []),
+    'HOW TO WORK',
+    '- Base every judgement on the peer-reviewed scientific literature (meta-analyses, systematic reviews and RCTs first). Whenever you can, look up and consult the relevant studies, and cite them briefly (author, year) next to each recommendation.',
+    '- If you cannot access studies, rely on the established evidence you know and say so. Never invent studies, numbers or references.',
+    '- Use only the data below. Say clearly when something is missing or too little to draw a conclusion.',
+    '- Labels and exercise names are in the app language; the legend explains the notation.',
+    '',
+    'WHAT I WANT',
+    '1. Progress: what is really improving (load, reps, estimated 1RM) and how fast compared with what the evidence expects for my level.',
+    '2. Stalls or drops: which exercises, the most likely cause (volume, effort, frequency, recovery, exercise choice, nutrition) and what to change.',
+    '3. Weekly volume per muscle: compare it with the evidence-based ranges for hypertrophy and flag muscles with too few or too many sets.',
+    '4. Frequency, effort (RIR) and recovery between sessions for the same muscle.',
+    '5. If bodyweight and nutrition data are present: whether calories and protein are consistent with my goal and my progress.',
+    '6. The 3 most useful changes to make right away, in order of priority, each with its supporting evidence.',
+    '',
+    `Answer in ${ANSWER_LANGUAGE[language] || 'English'}, in a direct and practical way.`,
+    ...(question ? ['', `MY SPECIFIC QUESTION: ${question}`] : []),
   ];
 }
 
