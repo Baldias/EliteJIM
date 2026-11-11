@@ -536,3 +536,21 @@
   font-size: 0.6875rem;
   color: var(--c-text-dim);
 }
+
+/* Exercise note as it was in this session */
+.hs-ex-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--c-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.hs-ex-note-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
