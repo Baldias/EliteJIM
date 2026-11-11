@@ -8,8 +8,9 @@ import { EXERCISE_CATEGORIES, getAllExercises, getExerciseCategories } from '../
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { getMuscleLevelByXp } from '../../utils/gamification';
-import { Zap, Search, Trophy, TrendingUp, TrendingDown, Flame, StickyNote } from 'lucide-react';
+import { Zap, Search, Trophy, TrendingUp, TrendingDown, Flame, StickyNote, MessageSquareDashed } from 'lucide-react';
 import { markNoteChanges } from '../../utils/exerciseNotes';
+import { getSessionNote } from '../../utils/sessionNote';
 import { getExerciseStats, sortExercisesByStreakAndRecency } from '../../utils/exerciseStreaks';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight, MAX_RELIABLE_REPS, REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './ProgressOverload.css';
@@ -44,6 +45,12 @@ function ChartTooltip({ active, payload, unit }) {
                 <div className="pg-tooltip-drops">
                     <p className="pg-tooltip-drops-title"><DropSquares count={d.drops.length} /> {tr('Drop set')}</p>
                     {d.drops.map((drop, i) => <p key={i} className="pg-tooltip-set">{drop.kg > 0 ? `${fmtNum(drop.kg)}kg × ${drop.reps}` : `${drop.reps} reps`}</p>)}
+                </div>
+            )}
+            {d.sessionNote && (
+                <div className="pg-tooltip-note is-session">
+                    <p className="pg-tooltip-note-title"><MessageSquareDashed size={11} /> {tr('Nota della sessione')}</p>
+                    <p className="pg-tooltip-note-text">{d.sessionNote}</p>
                 </div>
             )}
             {d.note && (
@@ -155,7 +162,7 @@ function ProgressOverload() {
             // Drop sets never enter the 1RM: they are only shown on the session
             const drops = ex.sets.filter(s => s.done && s.isDropset && (parseInt(s.reps, 10) || 0) > 0)
                 .map(s => ({ kg: parseFloat(s.kg) || 0, reps: parseInt(s.reps, 10) || 0 }));
-            if (best) list.push({ time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best, drops, note: ex.notes });
+            if (best) list.push({ time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best, drops, note: ex.notes, sessionNote: getSessionNote(workout) });
         });
         list.sort((a, b) => a.time - b.time);
 
@@ -429,6 +436,9 @@ function ProgressOverload() {
                                         <span className={`ej-pill ${s.delta == null ? 'ej-pill--flat' : s.delta > 0 ? 'ej-pill--up' : s.delta < 0 ? 'ej-pill--down' : 'ej-pill--flat'}`}>
                                             {s.delta == null ? tr('Inizio') : fmtSigned(s.delta)}
                                         </span>
+                                        {s.sessionNote && (
+                                            <p className="pg-log-note is-session"><MessageSquareDashed size={12} /> <span>{s.sessionNote}</span></p>
+                                        )}
                                         {s.noteChanged && (
                                             <p className="pg-log-note"><StickyNote size={12} /> <span>{s.note}</span></p>
                                         )}

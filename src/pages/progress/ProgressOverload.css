@@ -608,3 +608,8 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.pg-log-note.is-session svg,
+.pg-tooltip-note.is-session .pg-tooltip-note-title {
+  color: var(--c-accent);
+}

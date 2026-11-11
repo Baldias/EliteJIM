@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { Calendar, Clock, ChevronDown, ChevronUp, Edit2, ChevronLeft, Layers, Trophy, MessageSquareDashed, StickyNote } from 'lucide-react';
+import { Calendar, Clock, ChevronDown, ChevronUp, Edit2, ChevronLeft, Layers, Trophy, MessageSquareDashed } from 'lucide-react';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { getAllExercises } from '../../data/exercises';
 import { getSessionNote } from '../../utils/sessionNote';
@@ -177,12 +177,6 @@ function History() {
                                 <span className="hs-ex-name">{ex.name}</span>
                                 <span className="hs-ex-count">{visibleSets.length} {tr('set completati')}</span>
                               </div>
-                              {isExpanded && ex.notes?.trim() && (
-                                <p className="hs-ex-note">
-                                  <StickyNote size={12} className="hs-ex-note-icon" aria-label={tr('Nota')} />
-                                  <span>{ex.notes.trim()}</span>
-                                </p>
-                              )}
                               {isExpanded && (
                                 <div className="hs-table">
                                   <div className="hs-thead">
