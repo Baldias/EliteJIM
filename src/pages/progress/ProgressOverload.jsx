@@ -8,7 +8,8 @@ import { EXERCISE_CATEGORIES, getAllExercises, getExerciseCategories } from '../
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { getMuscleLevelByXp } from '../../utils/gamification';
-import { Zap, Search, Trophy, TrendingUp, TrendingDown, Flame } from 'lucide-react';
+import { Zap, Search, Trophy, TrendingUp, TrendingDown, Flame, StickyNote } from 'lucide-react';
+import { markNoteChanges } from '../../utils/exerciseNotes';
 import { getExerciseStats, sortExercisesByStreakAndRecency } from '../../utils/exerciseStreaks';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight, MAX_RELIABLE_REPS, REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './ProgressOverload.css';
@@ -45,6 +46,12 @@ function ChartTooltip({ active, payload, unit }) {
                     {d.drops.map((drop, i) => <p key={i} className="pg-tooltip-set">{drop.kg > 0 ? `${fmtNum(drop.kg)}kg × ${drop.reps}` : `${drop.reps} reps`}</p>)}
                 </div>
             )}
+            {d.note && (
+                <div className="pg-tooltip-note">
+                    <p className="pg-tooltip-note-title"><StickyNote size={11} /> {d.noteChanged ? tr('Nota nuova') : tr('Nota')}</p>
+                    <p className="pg-tooltip-note-text">{d.note}</p>
+                </div>
+            )}
         </div>
     );
 }
@@ -54,9 +61,12 @@ function ChartDot({ cx, cy, payload }) {
     const dot = payload.isPR
         ? <circle cx={cx} cy={cy} r={5} fill="var(--c-streak)" stroke="var(--c-bg)" strokeWidth={2} />
         : <circle cx={cx} cy={cy} r={3.5} fill="var(--c-bg)" stroke="var(--c-primary)" strokeWidth={2} />;
-    if (!payload.drops?.length) return dot;
-    // Sessions with drop sets get a small red square above the point
-    return <g>{dot}<rect x={cx - 3} y={cy - 14} width={6} height={6} rx={1.5} fill="var(--c-danger)" /></g>;
+    // Sessions with drop sets get a small red square above the point,
+    // sessions where the exercise note changed a small dot below it
+    const drop = payload.drops?.length ? <rect x={cx - 3} y={cy - 14} width={6} height={6} rx={1.5} fill="var(--c-danger)" /> : null;
+    const note = payload.noteChanged ? <circle cx={cx} cy={cy + 11} r={2.5} fill="var(--c-text-muted)" /> : null;
+    if (!drop && !note) return dot;
+    return <g>{dot}{drop}{note}</g>;
 }
 
 function ProgressOverload() {
@@ -145,7 +155,7 @@ function ProgressOverload() {
             // Drop sets never enter the 1RM: they are only shown on the session
             const drops = ex.sets.filter(s => s.done && s.isDropset && (parseInt(s.reps, 10) || 0) > 0)
                 .map(s => ({ kg: parseFloat(s.kg) || 0, reps: parseInt(s.reps, 10) || 0 }));
-            if (best) list.push({ time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best, drops });
+            if (best) list.push({ time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best, drops, note: ex.notes });
         });
         list.sort((a, b) => a.time - b.time);
 
@@ -155,7 +165,7 @@ function ProgressOverload() {
         // is a single overall history. Keying by location here made the first session at a
         // new gym (or an unlocated one) show "Inizio" even when it was the latest session.
         let last = null;
-        return list.map(s => {
+        return markNoteChanges(list).map(s => {
             const value = hasLoad ? round1(s.rm || 0) : s.reps;
             const isPR = Boolean(last && value > last.max);
             const delta = last ? round1(value - last.value) : null;
@@ -419,6 +429,9 @@ function ProgressOverload() {
                                         <span className={`ej-pill ${s.delta == null ? 'ej-pill--flat' : s.delta > 0 ? 'ej-pill--up' : s.delta < 0 ? 'ej-pill--down' : 'ej-pill--flat'}`}>
                                             {s.delta == null ? tr('Inizio') : fmtSigned(s.delta)}
                                         </span>
+                                        {s.noteChanged && (
+                                            <p className="pg-log-note"><StickyNote size={12} /> <span>{s.note}</span></p>
+                                        )}
                                     </div>
                                 ))}
                             </div>

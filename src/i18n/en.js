@@ -462,6 +462,7 @@ export default {
   "Nessun overload nell'ultima sessione": "No overload in the last session",
   "Storico sovraccarico": "Overload history",
   "Miglior serie": "Best set",
+  "Nota nuova": "New note",
   "Inizio": "Start",
   // pages/progress/MuscleWeeklyProgress.jsx
   "3 mesi": "3 months",
