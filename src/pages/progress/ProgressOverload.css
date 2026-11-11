@@ -558,3 +558,58 @@
   font-weight: 800;
   color: var(--c-danger);
 }
+
+/* Exercise note of the session: explains a drop in performance */
+.pg-log-row {
+  flex-wrap: wrap;
+}
+
+.pg-log-note {
+  flex-basis: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: -4px 0 0 56px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--c-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pg-log-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pg-tooltip {
+  max-width: 220px;
+}
+
+.pg-tooltip-note {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--c-border);
+}
+
+.pg-tooltip-note-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--c-text-muted);
+}
+
+.pg-tooltip-note-text {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--c-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pg-log-note.is-session svg,
+.pg-tooltip-note.is-session .pg-tooltip-note-title {
+  color: var(--c-accent);
+}

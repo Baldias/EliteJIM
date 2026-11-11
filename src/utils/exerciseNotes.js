@@ -88,3 +88,16 @@ export const moveNote = (notes, oldName, newName) => {
   if (!note || getExerciseNote(notes, newName)) return notes;
   return setNote(setNote(notes, newName, note), oldName, '');
 };
+
+// Progress view: each session keeps the note it had when it was done. A note
+// is flagged as new on the first session that carries it, so a change (an
+// injury, a new grip) stands out next to the drop in performance it explains.
+export const markNoteChanges = (sessions) => {
+  let previous = '';
+  return (sessions || []).map(s => {
+    const note = typeof s.note === 'string' ? s.note.trim() : '';
+    const noteChanged = Boolean(note) && note !== previous;
+    previous = note;
+    return { ...s, note, noteChanged };
+  });
+};

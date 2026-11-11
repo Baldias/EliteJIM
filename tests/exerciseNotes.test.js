@@ -72,3 +72,19 @@ describe('exercise notes belong to the exercise', () => {
     expect(json[0].exercises[0].notes).toBe('Gomiti a 45°');
   });
 });
+
+describe('markNoteChanges', () => {
+  it('flags the first session that carries each note', async () => {
+    const { markNoteChanges } = await import('../src/utils/exerciseNotes.js');
+    const out = markNoteChanges([
+      { time: 1 },
+      { time: 2, note: ' Spalla dolorante ' },
+      { time: 3, note: 'Spalla dolorante' },
+      { time: 4, note: 'Presa larga' },
+      { time: 5, note: '' },
+      { time: 6, note: 'Presa larga' },
+    ]);
+    expect(out.map(s => s.note)).toEqual(['', 'Spalla dolorante', 'Spalla dolorante', 'Presa larga', '', 'Presa larga']);
+    expect(out.map(s => s.noteChanged)).toEqual([false, true, false, true, false, true]);
+  });
+});

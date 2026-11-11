@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
-import { ChevronDown, ChevronUp, ChevronRight, Settings as SettingsIcon, Zap, Trash2, Flame, Trophy, Edit2, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronRight, Settings as SettingsIcon, Zap, Trash2, Flame, Trophy, Edit2, Sparkles, MessageSquareDashed } from 'lucide-react';
+import { getSessionNote } from '../../utils/sessionNote';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../utils/rpVolume';
 import { getAllExercises } from '../../data/exercises';
@@ -257,6 +258,7 @@ function Profile() {
 
                 {group.workouts.map(workout => {
                   const isExpanded = expandedSessions[workout.id];
+                  const sessionNote = getSessionNote(workout);
                   return (
                     <SwipeToDelete key={workout.id} onDelete={(e) => handleDelete(e, workout.id)}>
                       <div className={`ej-card pf-session ${isExpanded ? 'is-open' : ''}`} onClick={() => toggleSession(workout.id)}>
@@ -275,6 +277,13 @@ function Profile() {
                           </button>
                           {isExpanded ? <ChevronUp size={20} className="pf-chevron" /> : <ChevronDown size={20} className="pf-chevron" />}
                         </div>
+
+                        {sessionNote && (
+                          <div className="pf-session-note">
+                            <MessageSquareDashed size={13} className="pf-session-note-icon" aria-label={tr('Nota della sessione')} />
+                            <p className={`pf-session-note-text ${isExpanded ? 'is-full' : ''}`}>{sessionNote}</p>
+                          </div>
+                        )}
 
                         {isExpanded && (
                           <div className="pf-session-details">
