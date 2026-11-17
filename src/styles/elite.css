@@ -51,7 +51,8 @@
   background: #0a0610 !important;
   color: var(--c-text);
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
+  isolation: isolate;
 }
 
 .ej-page > * {
@@ -62,15 +63,20 @@
 .ej-page .ej-glow {
   position: absolute;
   z-index: 0;
-  top: -170px;
+  top: -140px;
   left: 50%;
-  width: 360px;
-  height: 260px;
+  width: min(760px, 160vw);
+  height: 460px;
   transform: translateX(-50%);
   border-radius: 50%;
-  /* colore azzurrino background: rgba(var(--glow-rgb, var(--c-primary-rgb)), var(--glow-opacity, 0.3)); */
-  background: rgb(230 207 0 / 30%);
-  filter: blur(110px);
+  /* Pure radial gradient instead of a huge CSS blur filter, which clips/bands
+     on mobile GPUs when page height or child compositing layers change. */
+  background: radial-gradient(
+    ellipse 50% 50% at 50% 38%,
+    rgba(var(--ej-glow-color, 230, 207, 0), var(--ej-glow-alpha, 0.22)) 0%,
+    rgba(var(--ej-glow-color, 230, 207, 0), calc(var(--ej-glow-alpha, 0.22) * 0.42)) 44%,
+    transparent 74%
+  );
   pointer-events: none;
 }
 

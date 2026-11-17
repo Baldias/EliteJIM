@@ -97,9 +97,8 @@
   color: var(--c-text);
 }
 :where(:root[data-theme="og"]) .ej-page .ej-glow {
-  border-radius: 50%;
-  background: rgba(var(--glow-rgb, var(--c-primary-rgb)), var(--glow-opacity, 0.3));
-  filter: blur(110px);
+  --ej-glow-color: var(--glow-rgb, var(--c-primary-rgb));
+  --ej-glow-alpha: var(--glow-opacity, 0.24);
 }
 :where(:root[data-theme="og"]) .ej-eyebrow {
   color: var(--c-text-muted);

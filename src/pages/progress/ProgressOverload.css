@@ -138,6 +138,8 @@
   padding: 13px 14px 13px 44px;
   border-radius: 14px;
   background: var(--c-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-color: var(--c-border);
   color: var(--c-text);
   font-size: 0.9375rem;
@@ -275,6 +277,7 @@
 .pg-chart {
   height: 190px;
   width: 100%;
+  cursor: pointer;
 }
 
 .pg-legend {
@@ -612,4 +615,226 @@
 .pg-log-note.is-session svg,
 .pg-tooltip-note.is-session .pg-tooltip-note-title {
   color: var(--c-accent);
+}
+
+/* ── 1RM change over the chosen window ─────────────────────── */
+.pg-change {
+  position: relative;
+  top: -6px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+}
+
+.pg-change.is-up {
+  color: var(--c-success);
+  background: rgba(var(--c-success-rgb), 0.14);
+}
+
+.pg-change.is-down {
+  color: var(--c-danger);
+  background: rgba(var(--c-danger-rgb), 0.14);
+}
+
+.pg-change-note {
+  margin: 4px 0 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--c-text-dim);
+}
+
+/* ── Time window (tiny segmented buttons) ──────────────────── */
+.pg-range {
+  display: flex;
+  gap: 4px;
+}
+
+.pg-range button {
+  padding: 3px 9px;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text-dim);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.pg-range button.is-active {
+  color: var(--c-text);
+  background: var(--c-surface-2);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.pg-range button:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+.pg-range-empty {
+  margin: 0;
+  padding: 28px 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--c-text-dim);
+}
+
+/* ── Selected session strip: fixed above the chart, never over a point ── */
+.pg-session {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-height: 54px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.pg-session-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.pg-session-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  padding-top: 7px;
+  border-top: 1px solid var(--c-border);
+}
+
+.pg-session-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--c-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pg-session-detail svg,
+.pg-session-detail .pg-drop-squares {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--c-text-muted);
+}
+
+.pg-session-detail strong {
+  color: var(--c-text-muted);
+  font-weight: 800;
+}
+
+.pg-session-detail.is-session svg,
+.pg-session-detail.is-session strong {
+  color: var(--c-accent);
+}
+
+.pg-session-detail.is-drop strong {
+  color: var(--c-danger);
+}
+
+.pg-session:hover {
+  border-color: rgba(var(--c-primary-rgb), 0.45);
+}
+
+.pg-session:active {
+  transform: scale(0.99);
+}
+
+.pg-session-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pg-session-date {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pg-session-set {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pg-session-pr {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.6875rem;
+  color: var(--c-streak);
+}
+
+.pg-session-flag {
+  flex-shrink: 0;
+  color: var(--c-text-muted);
+}
+
+.pg-session-flag.is-session {
+  color: var(--c-accent);
+}
+
+.pg-session-side {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.pg-session-value {
+  font-size: 1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.pg-session-value small {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.pg-session-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--c-primary);
 }

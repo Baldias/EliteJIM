@@ -20,6 +20,7 @@ import { IS_DEMO, STORAGE_KEY, getAppStorage } from '../demo/demoMode';
 import { buildDemoState } from '../demo/demoData';
 import { applyNoteImport, getExerciseNote, moveNote, resolveExerciseNotes, setNote, stripTemplateNotes } from '../utils/exerciseNotes';
 import { withSessionNote } from '../utils/sessionNote';
+import { resolveDynamicTemplate } from '../utils/splits';
 
 // Only completed sets are real performances: skipped sets keep the values
 // pre-filled from the previous session and must not count as "last" or PR.
@@ -123,6 +124,7 @@ export const useStore = create(
           ]
         }
       ],
+      archivedTemplates: [],
       // Array of completed workouts
       history: [],
       // One note per exercise (normalized name -> text), shared by every plan and session
@@ -612,6 +614,38 @@ export const useStore = create(
         }));
         return normalizedList.length;
       },
+      createSplitTemplates: (newTemplates, { archiveExisting = true } = {}) =>
+        set((state) => {
+          const incoming = Array.isArray(newTemplates) ? newTemplates : [];
+          if (incoming.length === 0) return state;
+          const now = Date.now();
+          const current = state.templates || [];
+          if (!archiveExisting) {
+            return { templates: [...current, ...incoming] };
+          }
+          const existingArchived = state.archivedTemplates || [];
+          const movedIds = new Set(current.map(t => t.id));
+          const moved = current.map(t => ({ ...t, archivedAt: t.archivedAt || now }));
+          return {
+            templates: incoming,
+            archivedTemplates: [...moved, ...existingArchived.filter(t => !movedIds.has(t.id))],
+          };
+        }),
+      restoreArchivedTemplate: (id) =>
+        set((state) => {
+          const archived = state.archivedTemplates || [];
+          const target = archived.find(t => t.id === id);
+          if (!target) return state;
+          const { archivedAt: _ARCHIVED_AT, ...restored } = target;
+          return {
+            archivedTemplates: archived.filter(t => t.id !== id),
+            templates: [...(state.templates || []).filter(t => t.id !== id), restored],
+          };
+        }),
+      deleteArchivedTemplate: (id) =>
+        set((state) => ({
+          archivedTemplates: (state.archivedTemplates || []).filter(t => t.id !== id),
+        })),
 
       // --- Workout Actions ---
       startWorkout: (template) => {
@@ -619,6 +653,7 @@ export const useStore = create(
         const history = state.history;
         const db = getAllExercises(state.customExercises, state.exerciseOverrides);
         const scoped = Boolean(state.gymLocationPreferences?.adaptLoads && state.gymLocationPreferences?.capture);
+        const effectiveTemplate = template ? resolveDynamicTemplate(template, state) : null;
 
         // Helper: completed working sets (no drop sets) of the most recent session with this exercise
         const findLastSets = (exerciseName) => {
@@ -638,11 +673,11 @@ export const useStore = create(
           id: Date.now(),
           machineLocationScoped: scoped,
           gymIntroFresh: !state.gymLocationPreferences?.introVersion,
-          templateId: template ? template.id : null,
-          name: template ? template.name : 'Allenamento Libero',
+          templateId: effectiveTemplate ? effectiveTemplate.id : null,
+          name: effectiveTemplate ? effectiveTemplate.name : 'Allenamento Libero',
           startTime: Date.now(),
           lastActivityAt: Date.now(),
-          exercises: template ? template.exercises.map(ex => {
+          exercises: effectiveTemplate ? effectiveTemplate.exercises.map(ex => {
             const pastSets = findLastSets(ex.name);
             // Location is detected after start: machine loads begin from the generic
             // history and are replaced by the city's own data once it is known.
@@ -651,7 +686,7 @@ export const useStore = create(
               id: Date.now() + Math.random(),
               name: ex.name,
               notes: getExerciseNote(state.exerciseNotes, ex.name),
-              restTime: parseNonNegativeInt(ex.restTime, 60),
+              restTime: parseNonNegativeInt(ex.restTime, 90),
               isAdded: false,
               sets: Array.from({ length: parseInt(ex.setsCount) || 1 }, (_, i) => {
                 const pastSet = pastSets && pastSets[i] ? pastSets[i] : (pastSets ? pastSets[pastSets.length - 1] : null);
@@ -720,7 +755,7 @@ export const useStore = create(
             id: Date.now(),
             name: name || '',
             notes: initialNotes,
-            restTime: 60, // default
+            restTime: 90, // default
             isAdded: true,
             sets: [{
               id: Date.now() + 1,

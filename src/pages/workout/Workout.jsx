@@ -98,7 +98,7 @@ function Workout() {
       markScienceSetCompleted(activeWorkout.id, exerciseId, setId);
       const ex = activeWorkout.exercises.find(e => e.id === exerciseId);
       celebrateIfNewPR(ex, ex?.sets.find(s => s.id === setId));
-      const secs = ex?.restTime !== undefined && ex.restTime !== '' ? parseInt(ex.restTime) : 60;
+      const secs = ex?.restTime !== undefined && ex.restTime !== '' ? parseInt(ex.restTime) : 90;
       if (secs > 0) setGlobalRestEndTime(Date.now() + secs * 1000);
     }
   };

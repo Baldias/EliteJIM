@@ -1,0 +1,57 @@
+/* Allenamento salvato in sola lettura (aperto dai Progressi) */
+.wd {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.wd-meta {
+  font-size: 0.75rem;
+}
+
+.wd-meta span:first-child {
+  text-transform: capitalize;
+}
+
+.wd-ex {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+  border: 1px solid transparent;
+}
+
+.wd-ex.is-focus {
+  border-color: rgba(var(--c-primary-rgb), 0.55);
+  background: rgba(var(--c-primary-rgb), 0.08);
+}
+
+.wd-ex.is-dimmed {
+  opacity: 0.22;
+  transition: opacity 0.18s ease;
+}
+
+.wd-ex.is-dimmed:hover,
+.wd-ex.is-dimmed:active {
+  opacity: 0.65;
+}
+
+.wd-ex-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--c-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.wd-ex-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}

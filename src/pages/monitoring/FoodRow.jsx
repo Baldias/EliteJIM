@@ -12,7 +12,7 @@ const isHighProtein = (per100) => {
 };
 
 // Riga di un alimento nei risultati: tocco per il dettaglio, + per aggiungerlo subito
-export function FoodRow({ food, grams, onOpen, onQuickAdd, onDelete, onEdit, justAdded }) {
+export function FoodRow({ food, grams, onOpen, onQuickAdd, onRemove, onDelete, onEdit, justAdded }) {
   const kcal = (food.per100.kcal * grams) / 100;
   const protein = ((food.per100.protein || 0) * grams) / 100;
   const portion = food.source === 'recipe' && food.servingSize && Math.abs(grams - food.servingSize) < 0.5
@@ -46,8 +46,11 @@ export function FoodRow({ food, grams, onOpen, onQuickAdd, onDelete, onEdit, jus
       <button
         type="button"
         className={`mn-row-btn ${justAdded ? 'is-done' : ''}`}
-        onClick={() => onQuickAdd(food, grams)}
-        aria-label={tr('Aggiungi {g} g di {name}', { g: fmtDec(grams), name: food.name })}
+        // Già aggiunto: un secondo tocco sulla spunta lo toglie invece di aggiungerlo di nuovo
+        onClick={() => (justAdded && onRemove ? onRemove(food) : onQuickAdd(food, grams))}
+        aria-label={justAdded && onRemove
+          ? tr('Togli {name}', { name: food.name })
+          : tr('Aggiungi {g} g di {name}', { g: fmtDec(grams), name: food.name })}
       >
         {justAdded ? <Check size={18} /> : <Plus size={18} />}
       </button>

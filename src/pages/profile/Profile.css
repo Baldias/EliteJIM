@@ -320,6 +320,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  cursor: pointer;
   border-color: color-mix(in srgb, var(--rank-color) 30%, transparent);
   background: linear-gradient(135deg, color-mix(in srgb, var(--rank-color) 14%, transparent) 0%, var(--c-surface) 70%);
 }
@@ -350,11 +351,18 @@
 }
 
 .pf-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 0.625rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--c-text-muted);
+}
+
+.pf-rank-chevron {
+  opacity: 0.7;
 }
 
 .pf-rank-title {
@@ -710,6 +718,104 @@
   color: var(--c-primary);
   background: transparent;
   border: 1px dashed rgba(var(--c-primary-rgb), 0.35);
+}
+
+/* ── Calendar strip a settimane (stile Diario/Cibo) ─────────── */
+.pf-week-strip {
+  display: flex;
+  align-items: center;
+  margin: 0 -8px;
+}
+
+.pf-week-arrow {
+  width: 28px;
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-dim);
+}
+
+.pf-week-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.pf-week-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px 5px;
+  border-radius: 12px;
+}
+
+.pf-week-month {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.pf-week-range {
+  min-width: 44px;
+  height: 28px;
+  padding: 0 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+.pf-week-item.is-current .pf-week-range {
+  color: var(--c-primary);
+}
+
+.pf-week-item.is-selected .pf-week-range {
+  color: var(--c-bg);
+  background: var(--c-text);
+}
+
+.pf-week-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.pf-week-dot.is-logged {
+  background: var(--c-primary);
+}
+
+.pf-week-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pf-week-today {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--c-primary);
+  background: rgba(var(--c-primary-rgb), 0.12);
+}
+
+.pf-empty-week {
+  padding: 20px 16px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
 }
 
 .pf-all-history {

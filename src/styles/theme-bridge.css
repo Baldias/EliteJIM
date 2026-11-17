@@ -1,6 +1,6 @@
 /* Shared recent components keep their layout; only the visual skin changes. */
 :root[data-theme="og"] .ej-page { background:var(--c-bg) !important; }
-:root[data-theme="og"] .ej-page .ej-glow { background:rgba(var(--glow-rgb,var(--c-primary-rgb)),var(--glow-opacity,.3)); }
+:root[data-theme="og"] .ej-page .ej-glow { --ej-glow-color:var(--glow-rgb,var(--c-primary-rgb)); --ej-glow-alpha:var(--glow-opacity,.24); }
 :root[data-theme="og"] .home-free { color:var(--c-primary) !important; }
 :root[data-theme="og"] .home-routine,
 :root[data-theme="og"] .home-routine-row { background:linear-gradient(145deg,rgba(var(--c-primary-rgb),.05),transparent 70%),var(--c-surface); }
@@ -41,5 +41,5 @@
 :root[data-science-glow="purple"] { --science-glow-rgb:168,85,247; }
 :root[data-science-glow="pink"] { --science-glow-rgb:236,72,153; }
 :root[data-science-glow="green"] { --science-glow-rgb:48,209,88; }
-:root[data-theme="science-v3"] .ej-page .ej-glow,
+:root[data-theme="science-v3"] .ej-page .ej-glow { --ej-glow-color:var(--science-glow-rgb); --ej-glow-alpha:.24; }
 :root[data-theme="science-v3"] .wk-page .wk-glow { background:rgba(var(--science-glow-rgb),.3); }

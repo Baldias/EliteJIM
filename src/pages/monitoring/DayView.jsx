@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Coffee, UtensilsCrossed, Moon, Apple, Plus, BarChart3 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { resolveBodyweight } from '../../utils/oneRepMax';
 import {
   MEALS, MACROS, dayTotals, sumNutrients, entryNutrients, macroGoalsInGrams, estimateWorkoutKcal,
-  shiftDateKey, toDateKey, fromDateKey, fmtInt, fmtDec
+  shiftDateKey, toDateKey, fromDateKey, fmtInt, fmtDec, defaultMealForHour, frequentFoods
 } from '../../utils/nutrition';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { FuelBar } from './Fuel';
+import { FoodRow } from './FoodRow';
 import { locale, tr } from '../../i18n';
 
 const MEAL_ICONS = { breakfast: Coffee, lunch: UtensilsCrossed, dinner: Moon, snacks: Apple };
@@ -144,15 +145,103 @@ export function MealList({ date, onAdd, onEdit, onDelete }) {
               // trascina a sinistra per eliminare: la pagina offre "Annulla"
               <SwipeToDelete key={entry.id} onDelete={() => onDelete(meal.id, entry, index)}>
                 <button type="button" className="mn-item" onClick={() => onEdit(meal.id, entry)}>
-                  <span className="mn-item-name">{entry.food.name}</span>
-                  <span className="mn-item-qty">{portionText(entry)}</span>
-                  <span className="mn-item-kcal">{fmtInt(entryNutrients(entry).kcal)}</span>
+                  <span className="mn-item-main">
+                    <span className="mn-item-name">{entry.food.name}</span>
+                    <span className="mn-item-qty">{portionText(entry)}</span>
+                  </span>
+                  <span className="mn-item-kcal">{fmtInt(entryNutrients(entry).kcal)} <small>kcal</small></span>
                 </button>
               </SwipeToDelete>
             ))}
           </div>
         );
       })}
+    </section>
+  );
+}
+
+// Cibi più frequenti sotto i pasti: pasto preselezionato in base all'ora, cambio in 1 tap, + con dose abituale
+export function FrequentFoods({ date, onOpenDetail }) {
+  const foodDiary = useStore(state => state.foodDiary);
+  const recentFoods = useStore(state => state.recentFoods || []);
+  const addFoodEntry = useStore(state => state.addFoodEntry);
+  const deleteFoodEntry = useStore(state => state.deleteFoodEntry);
+
+  const [targetMeal, setTargetMeal] = useState(() => defaultMealForHour());
+  const items = useMemo(() => frequentFoods(foodDiary, recentFoods, 8, targetMeal), [foodDiary, recentFoods, targetMeal]);
+  const [justAdded, setJustAdded] = useState({});
+
+  if (items.length === 0) return null;
+
+  const dayEntriesForMeal = foodDiary?.[date]?.[targetMeal] || [];
+  const activeKey = (foodId) => `${date}:${targetMeal}:${foodId}`;
+
+  const handleQuickAdd = (food, grams) => {
+    const entryId = addFoodEntry(date, targetMeal, food, grams);
+    if (!entryId) return;
+    setJustAdded(prev => ({ ...prev, [activeKey(food.id)]: { entryId, meal: targetMeal, date } }));
+    navigator.vibrate?.(20);
+  };
+
+  const handleRemove = (food) => {
+    const key = activeKey(food.id);
+    const added = justAdded[key];
+    if (!added) return;
+    deleteFoodEntry(added.date, added.meal, added.entryId);
+    setJustAdded(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    navigator.vibrate?.(10);
+  };
+
+  return (
+    <section className="mn-panel mn-frequent" aria-label={tr('Cibi frequenti')}>
+      <div className="mn-frequent-head">
+        <div>
+          <h3>{tr('Cibi più frequenti')}</h3>
+          <span>{tr('Tocca + per aggiungere subito')}</span>
+        </div>
+      </div>
+
+      <div className="mn-frequent-meals" role="radiogroup" aria-label={tr('Pasto per aggiunta rapida')}>
+        {MEALS.map(m => {
+          const Icon = MEAL_ICONS[m.id];
+          const active = targetMeal === m.id;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              className={`mn-frequent-meal-btn ${active ? 'is-active' : ''}`}
+              onClick={() => setTargetMeal(m.id)}
+            >
+              <Icon size={13} />
+              <span>{m.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <ul className="mn-rows mn-frequent-list">
+        {items.map(({ food, grams }) => {
+          const added = justAdded[activeKey(food.id)];
+          const isAdded = Boolean(added && dayEntriesForMeal.some(e => e.id === added.entryId));
+          return (
+            <FoodRow
+              key={food.id}
+              food={food}
+              grams={grams}
+              justAdded={isAdded}
+              onOpen={() => onOpenDetail?.(targetMeal, food, grams)}
+              onQuickAdd={handleQuickAdd}
+              onRemove={handleRemove}
+            />
+          );
+        })}
+      </ul>
     </section>
   );
 }

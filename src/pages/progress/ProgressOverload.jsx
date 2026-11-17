@@ -1,6 +1,6 @@
 import { isMachineExercise, locationKey, gymLabel } from '../../utils/gymLocation';
 import ProgressLocationFilter from '../../components/ProgressLocationFilter';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MuscleWeeklyProgress from './MuscleWeeklyProgress';
 import { useStore } from '../../store/useStore';
@@ -8,11 +8,13 @@ import { EXERCISE_CATEGORIES, getAllExercises, getExerciseCategories } from '../
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { getMuscleLevelByXp } from '../../utils/gamification';
-import { Zap, Search, Trophy, TrendingUp, TrendingDown, Flame, StickyNote, MessageSquareDashed } from 'lucide-react';
+import { Zap, Search, Trophy, TrendingUp, TrendingDown, Flame, StickyNote, MessageSquareDashed, ChevronRight } from 'lucide-react';
 import { markNoteChanges } from '../../utils/exerciseNotes';
 import { getSessionNote } from '../../utils/sessionNote';
 import { getExerciseStats, sortExercisesByStreakAndRecency } from '../../utils/exerciseStreaks';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight, MAX_RELIABLE_REPS, REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
+import { EXERCISE_RANGES, rangeStart, smoothedChange } from '../../utils/progressRange';
+import WorkoutDetailSheet from '../../components/WorkoutDetailSheet';
 import './ProgressOverload.css';
 import { locale, tr } from '../../i18n';
 
@@ -31,39 +33,59 @@ function DropSquares({ count }) {
     );
 }
 
-function ChartTooltip({ active, payload, unit }) {
-    if (!active || !payload || !payload.length) return null;
-    const d = payload[0].payload;
+const fmtLongDate = (t) => new Date(t).toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).replace('.', '');
+const fmtPct = (n) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${Math.abs(n).toLocaleString(locale(), { maximumFractionDigits: 1, minimumFractionDigits: Math.abs(n) < 10 ? 1 : 0 })}%`;
+const NoTooltip = () => null;
+
+// Selected session, shown in a fixed strip above the chart so it never covers a point.
+// Shows drop sets and notes immediately on hover/tap; clicking opens the whole workout.
+function SessionStrip({ d, unit, prefix, onOpen }) {
+    const hasDetails = Boolean(d.drops?.length > 0 || d.sessionNote || d.note);
     return (
-        <div className="pg-tooltip">
-            <p className="pg-tooltip-date">{fmtShortDate(d.time)}</p>
-            <p className="pg-tooltip-value">{fmtNum(d.value)} {unit}</p>
-            <p className="pg-tooltip-set">{d.kg > 0 ? `${fmtNum(d.kg)}kg × ${d.reps}` : `${d.reps} reps`}</p>
-            {d.locationLabel && <p className="pg-tooltip-set">{d.locationLabel}</p>}
-            {d.isPR && <p className="pg-tooltip-pr"><Trophy size={11} /> {tr('Nuovo PR')}</p>}
-            {d.drops?.length > 0 && (
-                <div className="pg-tooltip-drops">
-                    <p className="pg-tooltip-drops-title"><DropSquares count={d.drops.length} /> {tr('Drop set')}</p>
-                    {d.drops.map((drop, i) => <p key={i} className="pg-tooltip-set">{drop.kg > 0 ? `${fmtNum(drop.kg)}kg × ${drop.reps}` : `${drop.reps} reps`}</p>)}
-                </div>
+        <button type="button" className="pg-session" onClick={onOpen} aria-label={tr("Apri l'allenamento del {date}", { date: fmtLongDate(d.time) })}>
+            <span className="pg-session-top">
+                <span className="pg-session-main">
+                    <span className="pg-session-date">{fmtLongDate(d.time)}{d.locationLabel ? ` · ${d.locationLabel}` : ''}</span>
+                    <span className="pg-session-set">
+                        {d.kg > 0 ? `${fmtNum(d.kg)}kg × ${d.reps}` : `${d.reps} reps`}
+                        {d.isPR && <span className="pg-session-pr"><Trophy size={11} /> PR</span>}
+                    </span>
+                </span>
+                <span className="pg-session-side">
+                    <span className="pg-session-value">{prefix}{fmtNum(d.value)} <small>{unit}</small></span>
+                    <span className="pg-session-open">{tr('Apri')} <ChevronRight size={12} /></span>
+                </span>
+            </span>
+            {hasDetails && (
+                <span className="pg-session-details">
+                    {d.drops?.length > 0 && (
+                        <span className="pg-session-detail is-drop">
+                            <DropSquares count={d.drops.length} />
+                            <span>
+                                <strong>{tr('Drop set')}:</strong>{' '}
+                                {d.drops.map(drop => (drop.kg > 0 ? `${fmtNum(drop.kg)}kg × ${drop.reps}` : `${drop.reps} reps`)).join(' · ')}
+                            </span>
+                        </span>
+                    )}
+                    {d.sessionNote && (
+                        <span className="pg-session-detail is-session">
+                            <MessageSquareDashed size={12} />
+                            <span><strong>{tr('Nota della sessione')}:</strong> {d.sessionNote}</span>
+                        </span>
+                    )}
+                    {d.note && (
+                        <span className="pg-session-detail">
+                            <StickyNote size={12} />
+                            <span><strong>{d.noteChanged ? tr('Nota nuova') : tr('Nota')}:</strong> {d.note}</span>
+                        </span>
+                    )}
+                </span>
             )}
-            {d.sessionNote && (
-                <div className="pg-tooltip-note is-session">
-                    <p className="pg-tooltip-note-title"><MessageSquareDashed size={11} /> {tr('Nota della sessione')}</p>
-                    <p className="pg-tooltip-note-text">{d.sessionNote}</p>
-                </div>
-            )}
-            {d.note && (
-                <div className="pg-tooltip-note">
-                    <p className="pg-tooltip-note-title"><StickyNote size={11} /> {d.noteChanged ? tr('Nota nuova') : tr('Nota')}</p>
-                    <p className="pg-tooltip-note-text">{d.note}</p>
-                </div>
-            )}
-        </div>
+        </button>
     );
 }
 
-function ChartDot({ cx, cy, payload }) {
+function ChartDot({ cx, cy, payload, selectedTime }) {
     if (cx == null || cy == null) return null;
     const dot = payload.isPR
         ? <circle cx={cx} cy={cy} r={5} fill="var(--c-streak)" stroke="var(--c-bg)" strokeWidth={2} />
@@ -72,8 +94,9 @@ function ChartDot({ cx, cy, payload }) {
     // sessions where the exercise note changed a small dot below it
     const drop = payload.drops?.length ? <rect x={cx - 3} y={cy - 14} width={6} height={6} rx={1.5} fill="var(--c-danger)" /> : null;
     const note = payload.noteChanged ? <circle cx={cx} cy={cy + 11} r={2.5} fill="var(--c-text-muted)" /> : null;
-    if (!drop && !note) return dot;
-    return <g>{dot}{drop}{note}</g>;
+    const ring = payload.time === selectedTime ? <circle cx={cx} cy={cy} r={9} fill="none" stroke="var(--c-text)" strokeOpacity={0.7} strokeWidth={1.5} /> : null;
+    if (!drop && !note && !ring) return dot;
+    return <g>{ring}{dot}{drop}{note}</g>;
 }
 
 function ProgressOverload() {
@@ -84,6 +107,10 @@ function ProgressOverload() {
     const bodyweight = useStore(resolveBodyweight);
     const aliases = useStore(state => state.gymLocationAliases);
     const [locationChoice, setLocationChoice] = useState(null);
+    const [range, setRange] = useState('max');
+    const [now] = useState(() => Date.now());
+    const [selectedTime, setSelectedTime] = useState(null);
+    const [openWorkoutId, setOpenWorkoutId] = useState(null);
 
     const [searchParams] = useSearchParams();
     const requestedExercise = searchParams.get('exercise') || '';
@@ -162,7 +189,7 @@ function ProgressOverload() {
             // Drop sets never enter the 1RM: they are only shown on the session
             const drops = ex.sets.filter(s => s.done && s.isDropset && (parseInt(s.reps, 10) || 0) > 0)
                 .map(s => ({ kg: parseFloat(s.kg) || 0, reps: parseInt(s.reps, 10) || 0 }));
-            if (best) list.push({ time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best, drops, note: ex.notes, sessionNote: getSessionNote(workout) });
+            if (best) list.push({ workoutId: workout.id, time: workout.startTime, location: locationKey(workout), locationLabel: machine ? gymLabel(workout.gymLocation, aliases) : null, ...best, drops, note: ex.notes, sessionNote: getSessionNote(workout) });
         });
         list.sort((a, b) => a.time - b.time);
 
@@ -197,6 +224,42 @@ function ProgressOverload() {
     }, [sessions]);
 
     const log = useMemo(() => sessions.slice(-6).reverse(), [sessions]);
+
+    // Sessions inside the chosen time window (deltas and PRs still compare with the whole history)
+    const visibleSessions = useMemo(() => {
+        const from = rangeStart(range, now);
+        return sessions.filter(s => s.time >= from);
+    }, [sessions, range, now]);
+
+    // Change of the 1RM over the window: mean of the first 3 sessions vs mean of the last 3.
+    // Bodyweight exercises compare the whole moved mass, not just the added weight.
+    const change = useMemo(() => {
+        const offset = hasLoad ? bodyweightLoad : 0;
+        return smoothedChange(visibleSessions.map(s => s.value + offset));
+    }, [visibleSessions, hasLoad, bodyweightLoad]);
+
+    const selected = visibleSessions.find(s => s.time === selectedTime) || visibleSessions[visibleSessions.length - 1] || null;
+    const openWorkout = openWorkoutId != null ? history.find(w => w.id === openWorkoutId) : null;
+    const rangeInfo = EXERCISE_RANGES.find(r => r.id === range);
+
+    // Hover or drag on the chart previews the nearest session in the strip above
+    const pickSession = useCallback((state) => {
+        const raw = state?.activeTooltipIndex ?? state?.activeIndex;
+        const index = raw == null || raw === '' ? NaN : Number(raw);
+        if (!Number.isInteger(index)) return;
+        const session = visibleSessions[index];
+        if (session) setSelectedTime(prev => (prev === session.time ? prev : session.time));
+    }, [visibleSessions]);
+
+    // Clicking/tapping on the chart while hovering an exercise session opens its workout
+    const openHoveredSession = useCallback((state) => {
+        const raw = state?.activeTooltipIndex ?? state?.activeIndex;
+        const index = raw == null || raw === '' ? NaN : Number(raw);
+        const session = Number.isInteger(index) ? visibleSessions[index] : selected;
+        if (!session) return;
+        setSelectedTime(session.time);
+        setOpenWorkoutId(session.workoutId);
+    }, [visibleSessions, selected]);
 
     return (
         <div className="ej-page pg-page">
@@ -292,7 +355,19 @@ function ProgressOverload() {
                                         </p>
                                         <p className="pg-hero-value">
                                             {hasLoad && bodyweightLoad > 0 ? '+' : ''}{fmtNum(summary.last.value)} <span>{unit}</span>
+                                            {change && (
+                                                <em className={`pg-change ${change.pct >= 0.05 ? 'is-up' : change.pct <= -0.05 ? 'is-down' : ''}`} title={tr('Variazione nel periodo')}>
+                                                    {fmtPct(change.pct)}
+                                                </em>
+                                            )}
                                         </p>
+                                        {change && (
+                                            <p className="pg-change-note">
+                                                {change.k === 1
+                                                    ? tr('{period} · prima vs ultima sessione', { period: tr(rangeInfo.period) })
+                                                    : tr('{period} · media prime {k} vs ultime {k} sessioni', { period: tr(rangeInfo.period), k: change.k })}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="pg-hero-badges">
                                         {summary.last.isPR && (
@@ -306,52 +381,86 @@ function ProgressOverload() {
                                     </div>
                                 </div>
 
-                                <div className="pg-chart">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={sessions} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="pgArea" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="var(--c-primary)" stopOpacity={0.3} />
-                                                    <stop offset="100%" stopColor="var(--c-primary)" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-                                            <XAxis
-                                                dataKey="time"
-                                                type="number"
-                                                scale="time"
-                                                domain={['dataMin', 'dataMax']}
-                                                padding={{ left: 8, right: 8 }}
-                                                tickFormatter={fmtAxisDate}
-                                                stroke="var(--c-text-dim)"
-                                                fontSize={10}
-                                                tickMargin={10}
-                                                axisLine={false}
-                                                tickLine={false}
-                                                minTickGap={16}
-                                            />
-                                            <YAxis
-                                                stroke="var(--c-text-dim)"
-                                                fontSize={10}
-                                                axisLine={false}
-                                                tickLine={false}
-                                                domain={[(min) => Math.floor(min - 2), (max) => Math.ceil(max + 2)]}
-                                                allowDecimals={false}
-                                            />
-                                            <Tooltip content={<ChartTooltip unit={unit} />} cursor={{ stroke: 'rgba(255,255,255,0.15)' }} />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="value"
-                                                stroke="var(--c-primary)"
-                                                strokeWidth={3}
-                                                fill="url(#pgArea)"
-                                                dot={<ChartDot />}
-                                                activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--c-primary)' }}
-                                                animationDuration={900}
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
+                                <div className="pg-range" role="group" aria-label={tr('Intervallo di tempo')}>
+                                    {EXERCISE_RANGES.map(r => (
+                                        <button
+                                            type="button"
+                                            key={r.id}
+                                            aria-pressed={range === r.id}
+                                            className={range === r.id ? 'is-active' : ''}
+                                            onClick={() => setRange(r.id)}
+                                        >
+                                            {tr(r.label)}
+                                        </button>
+                                    ))}
                                 </div>
+
+                                {selected ? (
+                                    <SessionStrip
+                                        d={selected}
+                                        unit={unit}
+                                        prefix={hasLoad && bodyweightLoad > 0 ? '+' : ''}
+                                        onOpen={() => setOpenWorkoutId(selected.workoutId)}
+                                    />
+                                ) : (
+                                    <p className="pg-range-empty">{tr('Nessuna sessione in questo periodo.')}</p>
+                                )}
+
+                                {visibleSessions.length > 0 && (
+                                    <div className="pg-chart">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart
+                                                data={visibleSessions}
+                                                margin={{ top: 16, right: 8, left: -22, bottom: 0 }}
+                                                onMouseMove={pickSession}
+                                                onClick={openHoveredSession}
+                                                onTouchMove={pickSession}
+                                            >
+                                                <defs>
+                                                    <linearGradient id="pgArea" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="0%" stopColor="var(--c-primary)" stopOpacity={0.3} />
+                                                        <stop offset="100%" stopColor="var(--c-primary)" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                                <XAxis
+                                                    dataKey="time"
+                                                    type="number"
+                                                    scale="time"
+                                                    domain={['dataMin', 'dataMax']}
+                                                    padding={{ left: 8, right: 8 }}
+                                                    tickFormatter={fmtAxisDate}
+                                                    stroke="var(--c-text-dim)"
+                                                    fontSize={10}
+                                                    tickMargin={10}
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    minTickGap={16}
+                                                />
+                                                <YAxis
+                                                    stroke="var(--c-text-dim)"
+                                                    fontSize={10}
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    domain={[(min) => Math.floor(min - 2), (max) => Math.ceil(max + 2)]}
+                                                    allowDecimals={false}
+                                                />
+                                                {/* No floating tooltip: the details live in the strip above, never on top of a point */}
+                                                <Tooltip content={NoTooltip} cursor={{ stroke: 'rgba(255,255,255,0.15)' }} />
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="value"
+                                                    stroke="var(--c-primary)"
+                                                    strokeWidth={3}
+                                                    fill="url(#pgArea)"
+                                                    dot={<ChartDot selectedTime={selected?.time} />}
+                                                    activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--c-primary)' }}
+                                                    animationDuration={900}
+                                                />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                )}
 
                                 <div className="pg-legend">
                                     <span><i style={{ background: 'var(--c-primary)' }} /> {hasLoad ? tr('1RM stimato') : 'Reps'}</span>
@@ -471,6 +580,9 @@ function ProgressOverload() {
 
 
                 </>
+            )}
+            {openWorkout && (
+                <WorkoutDetailSheet workout={openWorkout} focusExercise={currentExercise} onClose={() => setOpenWorkoutId(null)} />
             )}
         </div>
     );

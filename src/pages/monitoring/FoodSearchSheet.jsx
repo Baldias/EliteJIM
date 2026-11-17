@@ -171,11 +171,24 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
     navigator.vibrate?.(20);
   };
 
-  const undo = () => {
-    if (!toast) return;
-    deleteFoodEntry(date, toast.meal, toast.entryId);
-    setAdded(a => a.filter(i => i.entryId !== toast.entryId));
-    setToast(null);
+  const remove = (item) => {
+    if (!item) return;
+    deleteFoodEntry(date, item.meal, item.entryId);
+    setAdded(a => a.filter(i => i.entryId !== item.entryId));
+    if (toast?.entryId === item.entryId) {
+      clearTimeout(toastTimer.current);
+      setToast(null);
+    }
+  };
+
+  const undo = () => remove(toast);
+
+  // Tocco sulla spunta verde: toglie l'ultima aggiunta di quell'alimento
+  const unlog = (food) => {
+    const item = [...added].reverse().find(i => i.foodId === food.id);
+    if (!item) return;
+    remove(item);
+    navigator.vibrate?.(10);
   };
 
   const handleBarcode = useCallback(async (code) => {
@@ -196,7 +209,7 @@ export function FoodSearchSheet({ date, initialMeal, onClose }) {
   const addedIds = new Set(added.map(i => i.foodId));
   const searching = trimmed.length > 0;
   const addedKcal = added.reduce((a, i) => a + i.kcal, 0);
-  const rowProps = (f) => ({ food: f, grams: defaultGrams(f), justAdded: addedIds.has(f.id), onOpen: setSelected, onQuickAdd: (food, g) => log(food, g) });
+  const rowProps = (f) => ({ food: f, grams: defaultGrams(f), justAdded: addedIds.has(f.id), onOpen: setSelected, onQuickAdd: (food, g) => log(food, g), onRemove: unlog });
 
   return (
     <>

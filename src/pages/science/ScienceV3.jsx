@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Dna, TrendingUp, ChevronRight, RotateCcw } from 'lucide-react';
+import { Dna, TrendingUp, ChevronRight, RotateCcw, History } from 'lucide-react';
 import { useScienceStore as useStore } from '../../store/scienceContext';
 import { useScienceClock } from '../../hooks/useScienceClock';
 import { getAllExercises } from '../../data/exercises';
@@ -30,12 +30,95 @@ function RecoveryAdvice({ program }) {
     <button type="button" className="sci-small-btn" onClick={() => respond(r.id, 'pause', now)}>{tr('Pausa dei distretti')}</button><button type="button" className="sci-link" onClick={() => respond(r.id, 'reject', now)}>{r.type === 'deload' ? tr('Rimanda') : tr('Rifiuta')}</button></div></section>);
 }
 
+function decisionBadge(reason = '') {
+  const inc = String(reason).match(/^\+(\d+)\s*serie/i);
+  if (inc) return { tone: 'is-up', label: `+${inc[1]}` };
+  if (/ridott|−|pausa|scaric|deload/i.test(reason)) return { tone: 'is-down', label: tr('Riduzione') };
+  return { tone: 'is-flat', label: tr('Invariato') };
+}
+
 function ScienceArchives({ science, legacy, history, db }) {
   const programs = [...(science?.archives || []), ...(science?.program?.status === 'completed' ? [science.program] : [])];
   if (!programs.length && !legacy) return null;
-  return <details className="ej-card sv3-archives"><summary>{tr('Mesocicli e decisioni precedenti')}</summary>
-    {programs.map(p => <details key={p.id}><summary>{tr('Scienza V3')} · {new Date(p.startDate).toLocaleDateString(locale())}</summary>{p.weeks.map(w => <details key={w.week}><summary>W{w.week} · {dates(w.start, w.end)}{w.recovery ? ` · ${tr('recupero accettato')}` : ''}</summary>{Object.entries(w.targets).map(([m, target]) => <p key={m}><strong>{tr(m)}</strong>: {scienceCompletedSets(w.volumes.muscles[m])}/{target} · {tr(w.decisions[m])}</p>)}</details>)}{p.recommendations.map(r => <p key={r.id}>W{r.week} · {tr(r.reason)} · {r.status === 'accepted' ? tr('Accettato') : r.status === 'rejected' ? tr('Rifiutato / rimandato') : tr('Non applicato')}</p>)}</details>)}
-    {legacy && <details><summary>{tr('Protocollo precedente')} · {science.legacyMigration ? tr('Trasferito a Scienza V3.0') : legacy.status === 'completed' ? tr('Completato') : tr('In corso')}</summary>{Object.keys(Object.keys(science.legacyMigration?.snapshots || {}).length ? science.legacyMigration.snapshots : legacy.weekHistory || {}).map(w => { const snapshot = science.legacyMigration?.snapshots?.[w]; const sets = snapshot?.counts || getActualSetsForScienceWeek(history, db, legacy, Number(w)); return <details key={w}><summary>{tr('Settimana {n}', { n: w })}</summary>{Object.keys(legacy.baseLandmarks || {}).map(m => <p key={m}>{tr(m)}: {sets[m] || 0}/{snapshot?.targets?.[m] ?? getScienceTargetForMuscle(legacy, m, Number(w))} {tr('serie')}</p>)}</details>; })}</details>}
+  const totalCount = programs.length + (legacy ? 1 : 0);
+  return <details className="ej-card sv3-archives">
+    <summary className="sv3-collapse-head">
+      <span className="sv3-section-icon"><History size={16} /></span>
+      <span className="sv3-collapse-title">
+        <strong>{tr('Mesocicli e decisioni precedenti')}</strong>
+        <small>{totalCount === 1 ? tr('1 ciclo salvato') : tr('{n} cicli salvati', { n: totalCount })}</small>
+      </span>
+    </summary>
+    <div className="sv3-archive-cards">
+      {programs.map(p => <details key={p.id} className="sv3-archive-card">
+        <summary>
+          <span className="sv3-archive-card-title">
+            <strong>{tr('Scienza V3')}</strong>
+            <small>{new Date(p.startDate).toLocaleDateString(locale())}</small>
+          </span>
+          <span className="sv3-archive-pill">{p.weeks.length} {tr('sett')}</span>
+        </summary>
+        <div className="sv3-archive-weeks">
+          {p.weeks.map(w => <details key={w.week} className="sv3-archive-week">
+            <summary>
+              <span>W{w.week} · {dates(w.start, w.end)}</span>
+              {w.recovery && <span className="sv3-decision-badge is-down">{tr('recupero accettato')}</span>}
+            </summary>
+            <div className="sv3-decision-list">
+              {Object.entries(w.targets).map(([m, target]) => (
+                <div key={m} className="sv3-decision-row is-compact">
+                  <div className="sv3-decision-top">
+                    <strong>{tr(m)}</strong>
+                    <span className="sv3-archive-ratio">{scienceCompletedSets(w.volumes.muscles[m])}/{target}</span>
+                  </div>
+                  {w.decisions[m] && <p>{tr(w.decisions[m])}</p>}
+                </div>
+              ))}
+            </div>
+          </details>)}
+          {p.recommendations.length > 0 && (
+            <div className="sv3-archive-recs">
+              {p.recommendations.map(r => (
+                <div key={r.id} className="sv3-archive-rec">
+                  <span className="sv3-archive-rec-head">
+                    <strong>W{r.week}</strong>
+                    <span className={`sv3-decision-badge ${r.status === 'accepted' ? 'is-up' : r.status === 'rejected' ? 'is-down' : 'is-flat'}`}>
+                      {r.status === 'accepted' ? tr('Accettato') : r.status === 'rejected' ? tr('Rifiutato / rimandato') : tr('Non applicato')}
+                    </span>
+                  </span>
+                  <p>{tr(r.reason)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </details>)}
+      {legacy && <details className="sv3-archive-card">
+        <summary>
+          <span className="sv3-archive-card-title">
+            <strong>{tr('Protocollo precedente')}</strong>
+            <small>{science.legacyMigration ? tr('Trasferito a Scienza V3.0') : legacy.status === 'completed' ? tr('Completato') : tr('In corso')}</small>
+          </span>
+        </summary>
+        <div className="sv3-archive-weeks">
+          {Object.keys(Object.keys(science.legacyMigration?.snapshots || {}).length ? science.legacyMigration.snapshots : legacy.weekHistory || {}).map(w => {
+            const snapshot = science.legacyMigration?.snapshots?.[w];
+            const sets = snapshot?.counts || getActualSetsForScienceWeek(history, db, legacy, Number(w));
+            return <details key={w} className="sv3-archive-week">
+              <summary><span>{tr('Settimana {n}', { n: w })}</span></summary>
+              <div className="sv3-archive-grid">
+                {Object.keys(legacy.baseLandmarks || {}).map(m => (
+                  <div key={m} className="sv3-archive-metric">
+                    <span>{tr(m)}</span>
+                    <strong>{sets[m] || 0}/{snapshot?.targets?.[m] ?? getScienceTargetForMuscle(legacy, m, Number(w))}</strong>
+                  </div>
+                ))}
+              </div>
+            </details>;
+          })}
+        </div>
+      </details>}
+    </div>
   </details>;
 }
 
@@ -91,7 +174,34 @@ export default function ScienceV3() {
       {science.profile.useWeight && <section className="ej-card sv3-weight"><h3>{tr('Peso · contesto per la massa')}</h3><p>{rate == null ? tr('Servono più pesate nel Diario per stimare una tendenza.') : tr('{rate} kg/settimana di tendenza.', { rate: `${rate > 0 ? '+' : ''}${rate.toFixed(2)}` })}</p><p className="sci-muted">{tr('Il peso non misura direttamente la crescita muscolare e non cambia automaticamente le serie.')}</p></section>}
     </>}
     {p?.status === 'active' && <ScienceSessionPlanner />}
-    {p?.weeks.length > 0 && <details className="ej-card sv3-decisions"><summary>{tr('Ultimo aggiornamento · perché cambiano le serie')}</summary>{Object.entries(p.decisions).map(([m, reason]) => <p key={m}><strong>{tr(m)}</strong> · {tr(reason)}</p>)}</details>}
+    {p?.weeks.length > 0 && (() => {
+      const entries = Object.entries(p.decisions);
+      return (
+        <details className="ej-card sv3-decisions">
+          <summary className="sv3-collapse-head">
+            <span className="sv3-section-icon"><TrendingUp size={16} /></span>
+            <span className="sv3-collapse-title">
+              <strong>{tr('Ultimo aggiornamento')}</strong>
+              <small>{tr('Perché cambiano le serie · {n} distretti', { n: entries.length })}</small>
+            </span>
+          </summary>
+          <div className="sv3-decision-list">
+            {entries.map(([m, reason]) => {
+              const badge = decisionBadge(reason);
+              return (
+                <div key={m} className={`sv3-decision-row ${badge.tone}`}>
+                  <div className="sv3-decision-top">
+                    <strong>{tr(m)}</strong>
+                    <span className={`sv3-decision-badge ${badge.tone}`}>{badge.label}</span>
+                  </div>
+                  <p>{tr(reason)}</p>
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      );
+    })()}
     <ScienceArchives science={science} legacy={legacy} history={history} db={db} />
     {restart && <ScienceSetup repeat onCancel={() => setRestart(false)} onStarted={() => { setRestart(false); setViewWeek(null); }} />}
 
