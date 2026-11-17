@@ -151,19 +151,20 @@ export function macroGoalsInGrams(goals, bodyweight) {
   return { kcal: g.kcal, protein, fat, carbs };
 }
 
-// Peso di tendenza: media mobile esponenziale che pesa il 10% ogni giorno
-// trascorso, così le oscillazioni di acqua e glicogeno si smorzano.
+export const WEIGHT_TREND_DAYS = 7;
+
+// Peso di tendenza: media mobile a 7 giorni. Per ogni pesata fa la media delle
+// pesate registrate negli ultimi 7 giorni di calendario (quel giorno compreso):
+// i giorni in cui non ti pesi non entrano nella media, così le oscillazioni di
+// acqua e glicogeno si smorzano senza inventare dati.
 export function weightTrend(log = []) {
-  let trend = null;
-  let prevDate = null;
-  return log.map((e) => {
-    if (trend == null) {
-      trend = e.kg;
-    } else {
-      const days = Math.max(1, Math.round((fromDateKey(e.date) - fromDateKey(prevDate)) / 86400000));
-      trend += (1 - Math.pow(0.9, days)) * (e.kg - trend);
-    }
-    prevDate = e.date;
+  const days = log.map(e => Math.round(fromDateKey(e.date).getTime() / 86400000));
+  let start = 0;
+  let sum = 0;
+  return log.map((e, i) => {
+    sum += e.kg;
+    while (days[i] - days[start] >= WEIGHT_TREND_DAYS) sum -= log[start++].kg;
+    const trend = sum / (i - start + 1);
     return { ...e, trend: Math.round(trend * 100) / 100 };
   });
 }
@@ -238,4 +239,90 @@ export function macroSplit({ carbs = 0, protein = 0, fat = 0 }) {
   const tot = kc + kp + kf;
   if (tot <= 0) return { carbs: 0, protein: 0, fat: 0 };
   return { carbs: (kc / tot) * 100, protein: (kp / tot) * 100, fat: (kf / tot) * 100 };
+}
+
+// Pasto suggerito in base all'ora del giorno
+export function defaultMealForHour(hour = new Date().getHours()) {
+  if (hour < 11) return 'breakfast';
+  if (hour < 15) return 'lunch';
+  if (hour < 19) return 'snacks';
+  return 'dinner';
+}
+
+function mealsForFrequentFilter(mealFilter) {
+  if (!mealFilter) return MEALS.map(m => m.id);
+  if (mealFilter === 'lunch' || mealFilter === 'dinner') return ['lunch', 'dinner'];
+  return [mealFilter];
+}
+
+// Cibi più frequenti nello storico del diario (filtrati per pasto, con Pranzo e Cena
+// in un pool unico), con la dose usata più spesso in quel pasto già precompilata.
+export function frequentFoods(foodDiary = {}, recentFoods = [], limit = 8, mealFilter = null) {
+  const byFood = new Map();
+  const dates = Object.keys(foodDiary || {}).sort();
+  const mealIds = mealsForFrequentFilter(mealFilter);
+  let seq = 0;
+
+  for (const date of dates) {
+    const day = foodDiary[date];
+    if (!day) continue;
+    for (const mealId of mealIds) {
+      for (const entry of day[mealId] || []) {
+        const food = entry?.food;
+        const rawGrams = Number(entry?.grams);
+        if (!food?.id || food.source === 'quick' || !(rawGrams > 0)) continue;
+        const g = Math.round(rawGrams * 10) / 10;
+        seq += 1;
+        let rec = byFood.get(food.id);
+        if (!rec) {
+          rec = { food, count: 0, lastDate: date, lastSeq: seq, doses: new Map() };
+          byFood.set(food.id, rec);
+        }
+        rec.food = food;
+        rec.count += 1;
+        if (date > rec.lastDate || (date === rec.lastDate && seq > rec.lastSeq)) {
+          rec.lastDate = date;
+          rec.lastSeq = seq;
+        }
+        const prev = rec.doses.get(g) || { count: 0, lastSeq: 0 };
+        rec.doses.set(g, { count: prev.count + 1, lastSeq: seq });
+      }
+    }
+  }
+
+  const ranked = [...byFood.values()]
+    .map((rec) => {
+      let bestGrams = 100;
+      let bestCount = -1;
+      let bestSeq = -1;
+      for (const [g, info] of rec.doses.entries()) {
+        if (info.count > bestCount || (info.count === bestCount && info.lastSeq > bestSeq)) {
+          bestGrams = g;
+          bestCount = info.count;
+          bestSeq = info.lastSeq;
+        }
+      }
+      return { food: rec.food, grams: bestGrams, count: rec.count, lastDate: rec.lastDate, lastSeq: rec.lastSeq };
+    })
+    .sort((a, b) => (b.count - a.count) || b.lastDate.localeCompare(a.lastDate) || (b.lastSeq - a.lastSeq))
+    .slice(0, limit)
+    .map(({ food, grams, count }) => ({ food, grams, count }));
+
+  // Se per questo pasto non ci sono ancora voci registrate, ripiega sullo storico generale
+  if (ranked.length === 0 && mealFilter) {
+    return frequentFoods(foodDiary, recentFoods, limit, null);
+  }
+
+  if (!mealFilter && ranked.length < limit) {
+    const seen = new Set(ranked.map(item => item.food.id));
+    for (const food of recentFoods || []) {
+      if (!food?.id || food.source === 'quick' || seen.has(food.id)) continue;
+      const grams = Math.round((Number(food.lastGrams) || Number(food.servingSize) || 100) * 10) / 10;
+      ranked.push({ food, grams: grams > 0 ? grams : 100, count: 0 });
+      seen.add(food.id);
+      if (ranked.length >= limit) break;
+    }
+  }
+
+  return ranked;
 }

@@ -1,4 +1,4 @@
-export const RELEASE_NOTES_VERSION = '1.5';
+export const RELEASE_NOTES_VERSION = '1.6';
 
 const changes14 = [
   ['Allenamento', [
@@ -42,8 +42,38 @@ const changes15 = [
   ]],
 ];
 
+const changes16 = [
+  ['Schede e Splits', [
+    'Aggiunto il generatore guidato “Splits” in Nuova Scheda per 2–6 allenamenti settimanali.',
+    'Selezione rapida degli esercizi su una sola pagina con gli esercizi più usati in evidenza, Addome e Glutei opzionali, Polpacci da 1 esercizio e Glutei nascosti per gli uomini.',
+    'Ordinamento automatico di ogni seduta dai distretti muscolari più grandi ai più piccoli e dai multiarticolari all’isolamento.',
+    'Sincronizzazione dinamica con Scienza: bilancia e scala automaticamente le serie sulle sedute rimanenti della settimana; le schede completate diventano verdi con badge Fatta e aprono il riepilogo della sessione svolta.',
+    'Archivio nascosto delle vecchie schede in fondo alla Home, svelabile con overscroll verso il basso stile WhatsApp.',
+  ]],
+  ['Progressi', [
+    'Aggiunti gli intervalli temporali 1M, 3M, 6M, 1A e Max anche nei progressi dei singoli esercizi.',
+    'Aggiunta la variazione percentuale dell’1RM nel periodo calcolata con media mobile sulle prime 3 e ultime 3 sessioni.',
+    'Schedina fissa sopra il grafico (mai sopra i puntini) con note e drop set subito visibili in hover; click sul grafico o sulla schedina per aprire l’allenamento con gli altri esercizi attenuati.',
+  ]],
+  ['Diario e Peso', [
+    'Aggiunta la lista dei cibi più frequenti sotto i pasti, filtrata per pasto (con Pranzo e Cena unificati) e con dose abituale già precompilata.',
+    'Corretto il doppio tocco sulla spunta verde nella ricerca alimenti: ora rimuove la voce invece di riaggiungerla.',
+    'Tendenza del peso calcolata come media mobile a 7 giorni sui soli giorni con pesata registrata.',
+  ]],
+  ['Allenamento', [
+    'Timer di recupero predefinito tra le serie portato da 1:00 a 1:30.',
+  ]],
+];
+
 export function releaseNotesFor(previousVersion) {
   const match = String(previousVersion || '').match(/^(\d+)\.(\d+)(?:\.\d+)?$/);
-  const alreadySaw14 = match && (Number(match[1]) > 1 || Number(match[1]) === 1 && Number(match[2]) >= 4);
-  return [{ version: '1.5', changes: changes15 }, ...(!alreadySaw14 ? [{ version: '1.4', changes: changes14 }] : [])];
+  const major = match ? Number(match[1]) : 0;
+  const minor = match ? Number(match[2]) : 0;
+  const alreadySaw15 = major > 1 || (major === 1 && minor >= 5);
+  const alreadySaw14 = major > 1 || (major === 1 && minor >= 4);
+  return [
+    { version: '1.6', changes: changes16 },
+    ...(!alreadySaw15 ? [{ version: '1.5', changes: changes15 }] : []),
+    ...(!alreadySaw14 ? [{ version: '1.4', changes: changes14 }] : []),
+  ];
 }

@@ -119,7 +119,7 @@
 :root[data-theme="science-v3"] .progress-share-entry > span { background: rgba(var(--c-primary-rgb), .05); }
 
 /* Science keeps its agreed color meaning inside the otherwise neutral cards. */
-:root[data-theme="science-v3"] .sv3-volumes { border-color: rgba(var(--c-primary-rgb), .25); }
+:root[data-theme="science-v3"] .sv3-volumes.is-compact { border-color: rgba(var(--c-primary-rgb), .25); }
 :root[data-theme="science-v3"] .sv3-volume-row, :root[data-theme="science-v3"] .sv3-volume-row:last-child { background: #050505; border-color: #1C1C1C; }
 :root[data-theme="science-v3"] .sv3-volume-bar { background: var(--c-surface-2); }
 :root[data-theme="science-v3"] .sv3-tutorial-button { background: rgba(var(--c-xp-rgb), .05); border-color: rgba(var(--c-xp-rgb), .25); box-shadow: none; }

@@ -14,7 +14,11 @@ import { useMicroTransition } from '../../hooks/useMicroTransition';
 import { localScienceDate, nextScienceMonday } from '../../utils/sciencePlanning';
 import { locale, tr } from '../../i18n';
 
-const LEVELS = [['beginner', 'Principiante', 'Costruiamo una base solida, su tutto il corpo.'], ['intermediate', 'Intermedio', 'Volume progressivo e priorità più precise.'], ['advanced', 'Avanzato', 'Accumulo verso la fascia alta, se recuperi bene.']];
+const LEVELS = [
+  ['beginner', 'Principiante', 'Mi alleno da meno di 1 anno regolarmente.'],
+  ['intermediate', 'Intermedio', 'Mi alleno regolarmente da 1–3 anni.'],
+  ['advanced', 'Avanzato', 'Mi alleno regolarmente da oltre 3 anni.'],
+];
 
 export default function ScienceSetup({ onStarted, onCancel, repeat = false }) {
   const transition = useMicroTransition(850);

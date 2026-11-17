@@ -2,7 +2,7 @@ import { scienceSessionBudget } from '../utils/scienceBalanced';
 import { scienceCompletedSets, scienceUnconfirmedSets } from '../utils/scienceCarry';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, ChevronDown, ChevronRight, Flame, Info, Target } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, ChevronRight, Info, Target } from 'lucide-react';
 import { useScienceStore as useStore } from '../store/scienceContext';
 import { useScienceClock } from '../hooks/useScienceClock';
 import { getAllExercises } from '../data/exercises';
@@ -48,7 +48,7 @@ export function ScienceVolumePanel({ compact = false, collapsible = false, edita
   const missing = names.reduce((n, m) => n + scienceUnconfirmedSets(muscles[m]), 0);
   const lm = selected && (summary.landmarks || p.landmarks)[selected];
   return <>
-    <section className={`ej-card sv3-volumes ${compact ? 'is-compact' : ''} ${collapsible && !open ? 'is-collapsed' : ''}`}>
+    <section className={`${compact ? 'ej-card ' : ''}sv3-volumes ${compact ? 'is-compact' : ''} ${collapsible && !open ? 'is-collapsed' : ''}`}>
       {collapsible
         ? <button type="button" className="sv3-panel-heading sv3-panel-toggle" aria-expanded={open} onClick={() => setOpen(o => !o)}><span className="sv3-panel-icon"><Target size={17} /></span><div><h2>{workout ? tr('Il lavoro di oggi, nel tuo percorso') : estimated ? tr('Stima settimana {week}', { week: summary.week }) : summary.kind === 'archive' ? tr('Settimana {week} · registrata', { week: summary.week }) : tr('Obiettivi Settimana {week}', { week: summary.week })}</h2><p>{new Date(summary.start).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })} – {new Date(summary.end - 1).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}</p></div><ChevronDown size={18} className="sv3-panel-chevron" /></button>
         : <div className="sv3-panel-heading"><span className="sv3-panel-icon"><Target size={17} /></span><div><h2>{workout ? tr('Il lavoro di oggi, nel tuo percorso') : estimated ? tr('Stima settimana {week}', { week: summary.week }) : summary.kind === 'archive' ? tr('Settimana {week} · registrata', { week: summary.week }) : tr('Obiettivi Settimana {week}', { week: summary.week })}</h2><p>{new Date(summary.start).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })} – {new Date(summary.end - 1).toLocaleDateString(locale(), { day: 'numeric', month: 'short' })}</p></div></div>}
@@ -60,7 +60,7 @@ export function ScienceVolumePanel({ compact = false, collapsible = false, edita
         const done = !estimated && target > 0 && completed >= target;
         const band = scienceLandmarkBand((summary.landmarks || p.landmarks)[muscle], target, summary.roles[muscle]);
         return <button type="button" key={muscle} className={`sv3-volume-row landmark--${band} ${focus ? 'is-priority' : ''} ${done ? 'is-done' : ''}`} onClick={() => setSelected(muscle)} aria-label={estimated ? tr('{muscle}: {target} serie stimate. Dettagli obiettivo', { muscle: tr(muscle), target }) : tr('{muscle}: {done} su {target} serie. Dettagli obiettivo', { muscle: tr(muscle), done: completed, target })}>
-          <span className="sv3-volume-top"><span className="sv3-volume-name">{tr(muscle)}{focus && <span className="sv3-focus-badge"><Flame size={11} fill="currentColor" />FOCUS</span>}</span><span className="sv3-volume-number">{done && <Check size={13} />}<strong>{estimated ? target : completed}</strong><span>{estimated ? tr('serie stimate') : tr('/ {n} serie', { n: target })}</span><ChevronRight size={13} /></span></span>
+          <span className="sv3-volume-top"><span className="sv3-volume-name">{tr(muscle)}</span><span className="sv3-volume-number">{done && <Check size={13} />}<strong>{estimated ? target : completed}</strong><span>{estimated ? tr('serie stimate') : tr('/ {n} serie', { n: target })}</span><ChevronRight size={13} /></span></span>
           <span className="sv3-volume-bar"><span style={{ width: `${estimated ? Math.min(100, target / Math.max(target, p.ceilings[muscle]) * 100) : target ? Math.min(100, completed / target * 100) : 0}%` }} /></span>
           {(v.indirect > 0 || v.unknown > 0 || v.imported > 0) && <span className="sv3-volume-subline">{v.indirect > 0 && <span>{tr('+{n} indirette', { n: v.indirect })}</span>}{v.imported > 0 && <span>{v.imported === 1 ? tr('{n} riportata da V2', { n: 1 }) : tr('{n} riportate da V2', { n: v.imported })}</span>}{unknown > 0 && <span>{tr('{n} senza RIR', { n: unknown })}</span>}</span>}
 

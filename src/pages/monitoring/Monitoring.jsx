@@ -4,7 +4,7 @@ import { Target, ChevronDown, Sparkles, X, Trash2 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { toDateKey, formatDayLabel, dayEntries } from '../../utils/nutrition';
 import { SetupWizard } from './SetupWizard';
-import { WeekStrip, FuelCard, MealList } from './DayView';
+import { WeekStrip, FuelCard, MealList, FrequentFoods } from './DayView';
 import { WeightTab } from './WeightTab';
 import { GoalsSheet } from './GoalsSheet';
 import { AnalysisSheet } from './AnalysisSheet';
@@ -29,6 +29,7 @@ export default function Monitoring() {
     && !Object.values(state.foodDiary || {}).some(day => dayEntries(day).length > 0));
   const [sheet, setSheet] = useState(() => (isBlankStart ? { type: 'setup' } : null)); // { type: 'add' | 'edit' | 'analysis' | 'goals' | 'setup', ... }
 
+  const addFoodEntry = useStore(state => state.addFoodEntry);
   const updateFoodEntry = useStore(state => state.updateFoodEntry);
   const deleteFoodEntry = useStore(state => state.deleteFoodEntry);
   const hideDietSetupCard = useStore(state => state.hideDietSetupCard);
@@ -109,6 +110,10 @@ export default function Monitoring() {
             onEdit={(meal, entry) => setSheet({ type: 'edit', meal, entry })}
             onDelete={removeEntry}
           />
+          <FrequentFoods
+            date={date}
+            onOpenDetail={(meal, food, grams) => setSheet({ type: 'quick-detail', meal, food, grams })}
+          />
           {removed && (
             <div className="mn-toast mn-toast--page" role="status">
               <Trash2 size={16} />
@@ -122,6 +127,15 @@ export default function Monitoring() {
       )}
 
       {sheet?.type === 'add' && <FoodSearchSheet date={date} initialMeal={sheet.meal} onClose={close} />}
+      {sheet?.type === 'quick-detail' && (
+        <FoodDetailSheet
+          food={{ ...sheet.food, lastGrams: sheet.grams }}
+          date={date}
+          initialMeal={sheet.meal}
+          onClose={close}
+          onSubmit={({ grams, meal }) => { addFoodEntry(date, meal, sheet.food, grams); close(); }}
+        />
+      )}
       {sheet?.type === 'edit' && (
         <FoodDetailSheet
           mode="edit"

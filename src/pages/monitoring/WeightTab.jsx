@@ -35,7 +35,7 @@ function WeightTooltip({ active, payload }) {
     <div className="pg-tooltip">
       <p className="pg-tooltip-date">{fmtLongDate(d.date)}</p>
       <p className="pg-tooltip-value">{fmtDec(d.kg)} kg</p>
-      <p className="pg-tooltip-set">tendenza {fmtDec(d.trend)} kg</p>
+      <p className="pg-tooltip-set">{tr('media 7 giorni {kg} kg', { kg: fmtDec(d.trend) })}</p>
     </div>
   );
 }
@@ -189,7 +189,7 @@ export function WeightTab() {
         <div className="mn-wt-top">
           <div>
             <p className="mn-wt-big">{fmtDec(current.trend)}<small>kg</small></p>
-            <p className="mn-wt-sub">{tr('peso di tendenza')}</p>
+            <p className="mn-wt-sub">{tr('media mobile 7 giorni')}</p>
             <p className="mn-wt-rate">
               {rate != null ? (
                 <span className={Math.abs(rate) < 0.05 ? '' : rateGood ? 'is-good' : 'is-bad'}>
@@ -254,7 +254,7 @@ export function WeightTab() {
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-            <p className="mn-hint">{tr('La linea è la tendenza, i punti sono le singole pesate.')}</p>
+            <p className="mn-hint">{tr('La linea è la media mobile a 7 giorni (conta solo i giorni in cui ti pesi), i punti sono le singole pesate.')}</p>
           </>
         )}
       </section>

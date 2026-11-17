@@ -1,11 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Trash2, Minus, Plus, ChevronDown } from 'lucide-react';
-import { useStore } from '../../store/useStore';
-import { resolveBodyweight } from '../../utils/oneRepMax';
 import {
-  MEALS, NUTRIENTS, entryNutrients, dayTotals, macroGoalsInGrams, estimateWorkoutKcal, fmtInt, fmtDec
+  MEALS, MACROS, NUTRIENTS, entryNutrients, fmtInt, fmtDec
 } from '../../utils/nutrition';
-import { FuelBar, MacroMeter, MacroStrip } from './Fuel';
+import { MacroStrip } from './Fuel';
 import { Sheet } from './Sheet';
 import { ScorePanel, BetterAlternatives } from './ScorePanel';
 import { athleteScore } from '../../utils/athleteScore';
@@ -15,14 +13,10 @@ const GRAM_PRESETS = [50, 100, 150, 200];
 const SERVING_PRESETS = [0.5, 1, 2, 3];
 const round = (n, step) => Math.round(n / step) * step;
 
-// Dettaglio di un alimento: quantità, pasto e impatto sulla giornata.
+// Dettaglio di un alimento: quantità, pasto e macro della porzione scelta.
 // mode 'add' → aggiunge al diario, 'edit' → modifica una voce esistente.
-export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initialMeal, onSubmit, onDelete, onClose, onPickAlternative }) {
+export function FoodDetailSheet({ food, mode = 'add', initialGrams, initialMeal, onSubmit, onDelete, onClose, onPickAlternative }) {
   const score = useMemo(() => athleteScore(food), [food]);
-  const goals = useStore(state => state.nutritionGoals);
-  const day = useStore(state => state.foodDiary?.[date]);
-  const history = useStore(state => state.history);
-  const bodyweight = useStore(resolveBodyweight);
 
   const isQuick = food.source === 'quick';
   const hasServing = food.servingSize > 0;
@@ -43,17 +37,6 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
   };
 
   const values = useMemo(() => entryNutrients({ food, grams }), [food, grams]);
-
-  // In modifica la voce è già nel totale del giorno: la tolgo per mostrare solo l'aggiunta
-  const base = useMemo(() => {
-    const t = dayTotals(day);
-    if (mode !== 'edit') return t;
-    const current = entryNutrients({ food, grams: initialGrams || 0 });
-    return Object.fromEntries(Object.keys(t).map(k => [k, Math.max(0, t[k] - current[k])]));
-  }, [day, mode, food, initialGrams]);
-
-  const goalG = macroGoalsInGrams(goals, bodyweight);
-  const budget = goalG.kcal + estimateWorkoutKcal(history, date, bodyweight);
   const valid = grams > 0;
 
   const footer = (
@@ -137,16 +120,19 @@ export function FoodDetailSheet({ food, date, mode = 'add', initialGrams, initia
           ))}
         </div>
 
-        <section className="mn-impact">
-          <p className="mn-label">{tr('Dopo questo pasto')}</p>
-          <FuelBar totals={base} budget={budget} preview={values} height={10} />
-          <p className="mn-impact-kcal">
-            <strong>{fmtInt(base.kcal + values.kcal)}</strong> / {fmtInt(budget)} kcal
-          </p>
-          <MacroMeter macro="protein" value={base.protein} preview={values.protein} goal={goalG.protein} />
-          <div className="mn-fuel-pair">
-            <MacroMeter macro="carbs" value={base.carbs} preview={values.carbs} goal={goalG.carbs} />
-            <MacroMeter macro="fat" value={base.fat} preview={values.fat} goal={goalG.fat} />
+        <section className="mn-impact mn-portion">
+          <div className="mn-portion-head">
+            <p className="mn-label">{tr('In questa porzione')}</p>
+            <strong className="mn-portion-kcal">{fmtInt(values.kcal)} <span>kcal</span></strong>
+          </div>
+          <MacroStrip per100={values} />
+          <div className="mn-portion-grid">
+            {MACROS.map(m => (
+              <div key={m.id} className={`mn-portion-macro is-${m.id}`}>
+                <span>{m.label}</span>
+                <strong>{fmtDec(values[m.id])} g</strong>
+              </div>
+            ))}
           </div>
         </section>
 

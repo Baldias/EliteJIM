@@ -577,13 +577,17 @@
   background: rgba(var(--c-primary-rgb), 0.12);
 }
 
+.mn-meal > :not(.mn-meal-head) + :not(.mn-meal-head) {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .mn-item {
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto 48px;
-  align-items: baseline;
-  gap: 10px;
-  padding: 7px 16px 7px 43px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px 11px 43px;
   text-align: left;
   border-radius: 0;
 }
@@ -591,6 +595,14 @@
 .mn-item:active {
   transform: none;
   background: var(--c-surface-2);
+}
+
+.mn-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .mn-item-name {
@@ -610,10 +622,19 @@
 }
 
 .mn-item-kcal {
+  flex-shrink: 0;
   text-align: right;
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+.mn-item-kcal small {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-dim);
 }
 
 /* ── Sheet ──────────────────────────────────────────────────── */
@@ -1145,6 +1166,69 @@
 .mn-impact-kcal strong {
   font-size: 0.9375rem;
   font-weight: 900;
+  color: var(--c-text);
+}
+
+.mn-portion-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mn-portion-kcal {
+  font-size: 1.125rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text);
+}
+
+.mn-portion-kcal span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.mn-portion .mn-strip {
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.mn-portion-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mn-portion-macro {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--c-surface-2);
+  border-top: 2px solid var(--c-border);
+}
+
+.mn-portion-macro.is-protein { border-top-color: var(--mn-protein); }
+.mn-portion-macro.is-carbs { border-top-color: var(--mn-carbs); }
+.mn-portion-macro.is-fat { border-top-color: var(--mn-fat); }
+
+.mn-portion-macro span {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.mn-portion-macro.is-protein span { color: var(--mn-protein); }
+.mn-portion-macro.is-carbs span { color: var(--mn-carbs); }
+.mn-portion-macro.is-fat span { color: var(--mn-fat); }
+
+.mn-portion-macro strong {
+  font-size: 1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
   color: var(--c-text);
 }
 
@@ -2433,3 +2517,70 @@
 .mn-weight-calendar-days > button[aria-pressed="true"] { background:var(--c-primary); color:var(--c-bg); font-weight:800; }
 .mn-weight-calendar-days > button:disabled { opacity:.2; }
 .mn-weighin-selected { display:flex; align-items:center; justify-content:center; gap:8px; margin:18px 0 0; font-size:12px; line-height:1.5; color:var(--c-primary); }
+
+/* ── Cibi frequenti (aggiunta rapida sotto i pasti) ──────────── */
+.mn-frequent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mn-frequent-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mn-frequent-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.mn-frequent-head span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+}
+
+.mn-frequent-meals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mn-frequent-meal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-2);
+  color: var(--c-text-muted);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  min-width: 0;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.mn-frequent-meal-btn span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mn-frequent-meal-btn.is-active {
+  background: var(--c-text);
+  border-color: var(--c-text);
+  color: var(--c-bg);
+  font-weight: 800;
+}
+
+.mn-frequent-list {
+  margin: 0 -2px;
+}

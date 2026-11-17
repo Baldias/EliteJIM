@@ -25,6 +25,7 @@ export function exportDataBackup() {
       data = JSON.stringify({
         state: {
           templates: currentState.templates || [],
+          archivedTemplates: currentState.archivedTemplates || [],
           history: currentState.history || [],
           customExercises: currentState.customExercises || [],
           exerciseOverrides: currentState.exerciseOverrides || {},

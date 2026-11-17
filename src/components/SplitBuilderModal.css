@@ -1,0 +1,455 @@
+/* ── Split Builder Sheet ────────────────────────────────────── */
+.sp-step1,
+.sp-step2 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 12px;
+}
+
+.sp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sp-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+.sp-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Giorni a settimana */
+.sp-days {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sp-day-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 4px;
+  border-radius: 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text-muted);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.sp-day-btn strong {
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.sp-day-btn span {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sp-day-btn.is-active {
+  background: rgba(var(--c-primary-rgb), 0.14);
+  border-color: var(--c-primary);
+  color: var(--c-text);
+}
+
+.sp-day-btn.is-active strong {
+  color: var(--c-primary);
+}
+
+/* Split cards */
+.sp-splits {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sp-split-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  text-align: left;
+  color: var(--c-text);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.sp-split-card.is-active {
+  background: rgba(var(--c-primary-rgb), 0.08);
+  border-color: var(--c-primary);
+}
+
+.sp-split-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sp-split-title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sp-split-title strong {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.sp-split-title span {
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+}
+
+.sp-radio {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-bg);
+}
+
+.sp-radio.is-active {
+  border-color: var(--c-primary);
+  background: var(--c-primary);
+}
+
+.sp-split-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sp-day-pill {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.sp-split-card.is-active .sp-day-pill {
+  color: var(--c-text);
+  border-color: rgba(var(--c-primary-rgb), 0.35);
+}
+
+/* Sincronizzazione Scienza */
+.sp-sync {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  cursor: pointer;
+}
+
+.sp-sync input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sp-sync.is-active {
+  background: rgba(var(--c-primary-rgb), 0.08);
+  border-color: rgba(var(--c-primary-rgb), 0.45);
+}
+
+.sp-sync-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--c-primary-rgb), 0.14);
+  color: var(--c-primary);
+}
+
+.sp-sync-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sp-sync-text strong {
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.sp-sync-text small {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--c-text-muted);
+}
+
+.sp-toggle {
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  padding: 3px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.sp-toggle i {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--c-text-muted);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.sp-toggle.is-on {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+
+.sp-toggle.is-on i {
+  transform: translateX(18px);
+  background: var(--c-bg);
+}
+
+/* Footer */
+.sp-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sp-archive-hint {
+  margin: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+}
+
+/* ── Step 2: Selezione rapida esercizi per muscolo ──────────── */
+.sp-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 -16px;
+  padding: 10px 16px 12px;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sp-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sp-progress-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sp-progress-info strong {
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.sp-progress-info span {
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+}
+
+.sp-auto-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(var(--c-primary-rgb), 0.14);
+  border: 1px solid rgba(var(--c-primary-rgb), 0.35);
+  color: var(--c-primary);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.sp-progress-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--c-surface-2);
+  overflow: hidden;
+}
+
+.sp-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--c-success);
+  transition: width 0.2s ease;
+}
+
+.sp-muscles {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sp-muscle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+
+.sp-muscle.is-valid {
+  border-color: rgba(var(--c-success-rgb), 0.35);
+}
+
+.sp-muscle-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sp-muscle-head h4 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.sp-muscle-head span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.6875rem;
+  color: var(--c-text-muted);
+}
+
+.sp-count {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  background: var(--c-surface-2);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.sp-count.is-partial {
+  color: var(--c-streak);
+  background: rgba(var(--c-streak-rgb), 0.14);
+}
+
+.sp-count.is-valid {
+  color: var(--c-success);
+  background: rgba(var(--c-success-rgb), 0.14);
+}
+
+.sp-ex-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sp-ex-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-2);
+  color: var(--c-text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: left;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.sp-ex-chip.is-frequent:not(.is-picked) {
+  border-color: rgba(var(--c-streak-rgb), 0.45);
+  color: var(--c-text);
+}
+
+.sp-ex-freq {
+  display: inline-flex;
+  color: var(--c-streak);
+}
+
+.sp-ex-chip.is-picked {
+  background: rgba(var(--c-primary-rgb), 0.16);
+  border-color: var(--c-primary);
+  color: var(--c-text);
+  font-weight: 700;
+}
+
+.sp-ex-chip.is-picked .sp-ex-freq {
+  color: var(--c-primary);
+}
+
+.sp-ex-count {
+  font-style: normal;
+  font-size: 0.625rem;
+  font-weight: 800;
+  opacity: 0.75;
+}
+
+.sp-ex-chip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

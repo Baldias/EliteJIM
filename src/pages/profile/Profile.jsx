@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
-import { ChevronDown, ChevronUp, ChevronRight, Settings as SettingsIcon, Zap, Trash2, Flame, Trophy, Edit2, Sparkles, MessageSquareDashed } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Settings as SettingsIcon, Trash2, Flame, Trophy, Edit2, Sparkles, MessageSquareDashed } from 'lucide-react';
 import { getSessionNote } from '../../utils/sessionNote';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { calculateLast7DaysVolume, getVolumeStatus, RP_LANDMARKS } from '../../utils/rpVolume';
@@ -15,6 +15,25 @@ import ProgressShare from '../../components/ProgressShare';
 import { ScienceVolumePanel } from '../../components/ScienceVolumePanel';
 import { hasLegacyScience } from '../../utils/scienceV3';
 import { locale, tr } from '../../i18n';
+
+function mondayOfTimestamp(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d;
+}
+
+function shiftWeeks(mondayTs, deltaWeeks) {
+  const d = new Date(mondayTs);
+  d.setDate(d.getDate() + deltaWeeks * 7);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function weekKeyOf(ts) {
+  const d = mondayOfTimestamp(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 function Profile() {
   const navigate = useNavigate();
@@ -30,8 +49,10 @@ function Profile() {
   const allKnownExercises = useMemo(() => getAllExercises(customExercises, exerciseOverrides), [customExercises, exerciseOverrides]);
   const bodyweight = useStore(resolveBodyweight);
 
+  const [thisMonday] = useState(() => mondayOfTimestamp(Date.now()).getTime());
+  const [selectedMonday, setSelectedMonday] = useState(thisMonday);
+  const [windowEndMonday, setWindowEndMonday] = useState(thisMonday);
   const [expandedSessions, setExpandedSessions] = useState({});
-  const [visibleWeeks, setVisibleWeeks] = useState(2);
 
   // --- History Logic ---
   // e is undefined when called from SwipeToDelete
@@ -86,50 +107,34 @@ function Profile() {
 
   const rank = getRankByXp(userXP || 0);
 
-  // --- Journey Logic (Weekly Grouping) ---
-  const groupedHistory = useMemo(() => {
-    if (!history || history.length === 0) return [];
-
-    const sorted = [...history].sort((a, b) => b.startTime - a.startTime);
-    const groups = [];
-
-    sorted.forEach(workout => {
-      const date = new Date(workout.startTime);
-      const day = date.getDay();
-      const diff = date.getDate() - (day === 0 ? 6 : day - 1);
-      const monday = new Date(new Date(workout.startTime).setDate(diff));
-      monday.setHours(0, 0, 0, 0);
-
-      const weekKey = monday.toISOString().split('T')[0];
-      let group = groups.find(g => g.weekKey === weekKey);
-
-      if (!group) {
-        group = {
-          weekKey,
-          monday,
-          workouts: []
-        };
-        groups.push(group);
-      }
-      group.workouts.push(workout);
-    });
-
-    return groups;
+  // --- Journey Logic (Calendar Strip by Weeks) ---
+  const workoutsByWeek = useMemo(() => {
+    const map = new Map();
+    const sorted = [...(history || [])].sort((a, b) => b.startTime - a.startTime);
+    for (const workout of sorted) {
+      const key = weekKeyOf(workout.startTime);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(workout);
+    }
+    return map;
   }, [history]);
 
-  const displayedGroups = groupedHistory.slice(0, visibleWeeks);
+  const weeksInStrip = useMemo(
+    () => Array.from({ length: 5 }, (_, i) => shiftWeeks(windowEndMonday, i - 4)),
+    [windowEndMonday]
+  );
+
+  const selectedWeekKey = weekKeyOf(selectedMonday);
+  const selectedWorkouts = workoutsByWeek.get(selectedWeekKey) || [];
+
+  const shiftStrip = (deltaWeeks) => {
+    const nextEnd = Math.min(thisMonday, shiftWeeks(windowEndMonday, deltaWeeks));
+    setWindowEndMonday(nextEnd);
+    setSelectedMonday(prev => Math.min(thisMonday, shiftWeeks(prev, deltaWeeks)));
+  };
 
   const getWeekLabel = (monday) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Get this week's monday
-    const currentDay = today.getDay();
-    const currentDiff = today.getDate() - (currentDay === 0 ? 6 : currentDay - 1);
-    const thisMonday = new Date(new Date().setDate(currentDiff));
-    thisMonday.setHours(0, 0, 0, 0);
-
-    const diffWeeks = Math.round((thisMonday - monday) / (7 * 24 * 60 * 60 * 1000));
+    const diffWeeks = Math.round((thisMonday - monday.getTime()) / (7 * 24 * 60 * 60 * 1000));
 
     if (diffWeeks === 0) return tr("Questa Settimana");
     if (diffWeeks === 1) return tr("Settimana Scorsa");
@@ -157,15 +162,33 @@ function Profile() {
         </button>
       </header>
 
-      {/* ── RANK ───────────────────────────────────── */}
-      <section className="ej-card pf-rank" style={{ '--rank-color': rank.color }}>
+      {/* ── RANK (click → Livelli Muscolari) ─────────── */}
+      <section
+        className="ej-card pf-rank"
+        style={{ '--rank-color': rank.color }}
+        role="button"
+        tabIndex={0}
+        aria-label={tr('I Tuoi Livelli Muscolari')}
+        onClick={() => navigate('/levels')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            navigate('/levels');
+          }
+        }}
+      >
         <div className="pf-rank-row">
           <span className="pf-rank-icon"><Trophy size={26} /></span>
           <div className="pf-rank-text">
-            <span className="pf-kicker">Rank</span>
+            <span className="pf-kicker">Rank <ChevronRight size={12} className="pf-rank-chevron" /></span>
             <span className="pf-rank-title">{rank.title}</span>
           </div>
-          <button type="button" className="pf-streak" onClick={() => navigate('/activity')} title={tr("Apri pagina attività e streak")}>
+          <button
+            type="button"
+            className="pf-streak"
+            onClick={(e) => { e.stopPropagation(); navigate('/activity'); }}
+            title={tr("Apri pagina attività e streak")}
+          >
             <span className="pf-streak-value">
               {currentStreak || 0} {tr('sett.')} <Flame size={18} fill={currentStreak >= 1 ? 'currentColor' : 'none'} />
             </span>
@@ -196,16 +219,6 @@ function Profile() {
           <span className="pf-stat-label">Overload</span>
         </div>
       </div>
-
-
-      {/* ── MUSCLE LEVELS ──────────────────────────── */}
-      {showScience && (
-        <button type="button" className="pf-levels" onClick={() => navigate('/levels')}>
-          <span className="pf-levels-icon"><Zap size={18} fill="currentColor" /></span>
-          <span className="pf-levels-label">{tr("I Tuoi Livelli Muscolari")}</span>
-          <ChevronRight size={18} />
-        </button>
-      )}
 
       {/* ── RP VOLUME ──────────────────────────────── */}
       <ScienceVolumePanel compact collapsible />
@@ -252,11 +265,64 @@ function Profile() {
           <div className="ej-card pf-empty">{tr("Ancora nessun passo registrato nel tuo percorso.")}</div>
         ) : (
           <>
-            {displayedGroups.map(group => (
-              <div key={group.weekKey} className="pf-week">
-                <p className="pf-week-label">{getWeekLabel(group.monday)} · {group.workouts.length} {group.workouts.length === 1 ? tr("sessione") : tr("sessioni")}</p>
+            <div className="pf-week-strip">
+              <button type="button" className="pf-week-arrow" onClick={() => shiftStrip(-5)} aria-label={tr('Settimane precedenti')}>
+                <ChevronLeft size={18} />
+              </button>
+              {weeksInStrip.map(wTs => {
+                const key = weekKeyOf(wTs);
+                const mondayDate = new Date(wTs);
+                const sundayDate = new Date(wTs);
+                sundayDate.setDate(sundayDate.getDate() + 6);
+                const monthLabel = mondayDate.toLocaleDateString(locale(), { month: 'short' }).replace('.', '');
+                const rangeLabel = `${mondayDate.getDate()}–${sundayDate.getDate()}`;
+                const hasWorkouts = (workoutsByWeek.get(key)?.length || 0) > 0;
+                const isCurrent = wTs === thisMonday;
+                const isSelected = wTs === selectedMonday;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`pf-week-item ${isSelected ? 'is-selected' : ''} ${isCurrent ? 'is-current' : ''}`}
+                    onClick={() => setSelectedMonday(wTs)}
+                    aria-label={`${rangeLabel} ${monthLabel}`}
+                    aria-pressed={isSelected}
+                  >
+                    <span className="pf-week-month">{monthLabel}</span>
+                    <span className="pf-week-range">{rangeLabel}</span>
+                    <i className={`pf-week-dot ${hasWorkouts ? 'is-logged' : ''}`} aria-hidden="true" />
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                className="pf-week-arrow"
+                disabled={windowEndMonday >= thisMonday}
+                onClick={() => shiftStrip(5)}
+                aria-label={tr('Settimane successive')}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
 
-                {group.workouts.map(workout => {
+            <div className="pf-week">
+              <div className="pf-week-head">
+                <p className="pf-week-label">{getWeekLabel(new Date(selectedMonday))} · {selectedWorkouts.length} {selectedWorkouts.length === 1 ? tr("sessione") : tr("sessioni")}</p>
+                {selectedMonday !== thisMonday && (
+                  <button
+                    type="button"
+                    className="pf-week-today"
+                    onClick={() => { setSelectedMonday(thisMonday); setWindowEndMonday(thisMonday); }}
+                  >
+                    {tr('Questa settimana')}
+                  </button>
+                )}
+              </div>
+
+              {selectedWorkouts.length === 0 ? (
+                <div className="ej-card pf-empty-week">{tr('Nessun allenamento in questa settimana.')}</div>
+              ) : (
+                selectedWorkouts.map(workout => {
                   const isExpanded = expandedSessions[workout.id];
                   const sessionNote = getSessionNote(workout);
                   return (
@@ -314,15 +380,9 @@ function Profile() {
                       </div>
                     </SwipeToDelete>
                   );
-                })}
-              </div>
-            ))}
-
-            {groupedHistory.length > visibleWeeks && (
-              <button type="button" className="pf-more" onClick={() => setVisibleWeeks(prev => prev + 1)}>
-                {tr("Mostra settimana precedente")}
-              </button>
-            )}
+                })
+              )}
+            </div>
 
             <button type="button" className="pf-all-history" onClick={() => navigate('/history')}>
               {tr("Vedi tutto lo storico")} <ChevronRight size={16} />

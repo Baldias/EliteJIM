@@ -1,4 +1,4 @@
-.sv3-page { --glow-rgb:0,180,230; }
+.sv3-page { --glow-rgb:0,180,230; gap:20px; }
 .sv3-setup-intro { padding:24px 20px; }
 .sv3-intro-icon { display:grid; place-items:center; width:56px; height:56px; border-radius:18px; color:var(--c-primary); background:rgba(var(--c-primary-rgb),.12); margin-bottom:24px; }
 .sv3-eyebrow { color:var(--c-text-muted); font-size:10px; font-weight:800; letter-spacing:.12em; margin:0 0 12px; }
@@ -36,7 +36,7 @@
 .sv3-quiz-dose strong { font-size:14px; }
 .sv3-quiz-dose small { color:var(--c-text-muted); font-weight:400; font-size:11px; }
 .sv3-quiz-note { font-size:11px; line-height:1.7; color:var(--c-text-muted); margin:16px 0 0; }
-.sv3-dashboard-hero, .sv3-volumes, .sv3-advice, .sv3-archives, .sv3-glossary, .sv3-session-checks, .sv3-decisions, .sv3-weight, .sv3-week-check { padding:18px 16px; }
+.sv3-dashboard-hero, .sv3-advice, .sv3-archives, .sv3-glossary, .sv3-session-checks, .sv3-decisions, .sv3-weight, .sv3-week-check { padding:18px 16px; }
 .sv3-status { display:inline-flex; gap:7px; align-items:center; color:var(--c-primary); font-size:10px; font-weight:800; }
 .sv3-dashboard-hero h2 { font-size:25px; font-weight:900; line-height:1.15; letter-spacing:-.035em; margin:16px 0 12px; }
 .sv3-dashboard-hero p { font-size:12px; line-height:1.7; color:var(--c-text-muted); margin:0; }
@@ -89,11 +89,50 @@
 .sv3-advice-actions { display:grid; gap:8px; margin-top:18px; }
 .sv3-advice-actions .sci-small-btn { min-height:44px; justify-content:center; }
 .sv3-advice-actions .sci-link { padding:10px; font-size:12px; }
-.sv3-archives summary, .sv3-glossary summary, .sv3-session-checks summary, .sv3-decisions summary { display:flex; align-items:center; gap:8px; list-style:none; cursor:pointer; font-size:12px; line-height:1.6; font-weight:600; }
+.sv3-archives summary, .sv3-glossary summary, .sv3-session-checks summary, .sv3-decisions summary { display:flex; align-items:center; gap:10px; list-style:none; cursor:pointer; font-size:13px; line-height:1.45; font-weight:700; }
 .sv3-archives summary::-webkit-details-marker, .sv3-glossary summary::-webkit-details-marker, .sv3-session-checks summary::-webkit-details-marker, .sv3-decisions summary::-webkit-details-marker { display:none; }
-.sv3-archives summary::after, .sv3-glossary summary::after, .sv3-session-checks summary::after, .sv3-decisions summary::after { content:''; width:6px; height:6px; flex-shrink:0; border-right:1.5px solid var(--c-text-muted); border-bottom:1.5px solid var(--c-text-muted); transform:rotate(45deg); margin:0 3px 4px auto; }
+.sv3-archives summary::after, .sv3-glossary summary::after, .sv3-session-checks summary::after, .sv3-decisions summary::after { content:''; width:7px; height:7px; flex-shrink:0; border-right:1.75px solid var(--c-text-muted); border-bottom:1.75px solid var(--c-text-muted); transform:rotate(45deg); margin:0 3px 4px auto; transition:transform .18s ease; }
 .sv3-archives[open] > summary::after, .sv3-glossary[open] > summary::after, .sv3-session-checks[open] > summary::after, .sv3-decisions[open] > summary::after, .sv3-archives details[open] > summary::after, .sv3-session-checks details[open] > summary::after { transform:rotate(225deg); margin-bottom:0; }
-.sv3-archives details, .sv3-session-checks details { padding:16px 0; border-bottom:1px solid var(--c-border); }
+.sv3-session-checks details { padding:16px 0; border-bottom:1px solid var(--c-border); }
+
+/* Redesigned decisions & archives cards */
+.sv3-collapse-head { width:100%; }
+.sv3-section-icon { width:34px; height:34px; flex-shrink:0; display:grid; place-items:center; border-radius:11px; color:var(--c-primary); background:rgba(var(--c-primary-rgb),.12); }
+.sv3-collapse-title { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.sv3-collapse-title strong { font-size:14px; font-weight:800; color:var(--c-text); line-height:1.3; }
+.sv3-collapse-title small { font-size:11px; font-weight:500; color:var(--c-text-muted); }
+
+.sv3-decision-list { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+.sv3-decision-row { display:flex; flex-direction:column; gap:5px; padding:11px 12px; border-radius:13px; background:var(--c-surface-2); border:1px solid var(--c-border); }
+.sv3-decision-row.is-up { border-color:rgba(var(--c-success-rgb),.28); background:rgba(var(--c-success-rgb),.05); }
+.sv3-decision-row.is-down { border-color:rgba(var(--c-streak-rgb),.28); background:rgba(var(--c-streak-rgb),.05); }
+.sv3-decision-row.is-compact { padding:10px 11px; }
+.sv3-decision-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.sv3-decision-top strong { font-size:13px; font-weight:800; color:var(--c-text); }
+.sv3-decision-row p { margin:0 !important; font-size:11.5px !important; line-height:1.45 !important; color:var(--c-text-muted); }
+.sv3-decision-badge { flex-shrink:0; padding:3px 8px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.02em; }
+.sv3-decision-badge.is-up { color:var(--c-success); background:rgba(var(--c-success-rgb),.16); }
+.sv3-decision-badge.is-down { color:var(--c-streak); background:rgba(var(--c-streak-rgb),.16); }
+.sv3-decision-badge.is-flat { color:var(--c-text-dim); background:rgba(255,255,255,.06); }
+
+.sv3-archive-cards { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.sv3-archive-card { padding:12px 14px; border-radius:14px; background:var(--c-surface-2); border:1px solid var(--c-border); }
+.sv3-archive-card-title { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.sv3-archive-card-title strong { font-size:13px; font-weight:800; color:var(--c-text); }
+.sv3-archive-card-title small { font-size:11px; font-weight:500; color:var(--c-text-muted); }
+.sv3-archive-pill { padding:3px 8px; border-radius:999px; font-size:10px; font-weight:800; color:var(--c-primary); background:rgba(var(--c-primary-rgb),.12); }
+.sv3-archive-weeks { display:flex; flex-direction:column; gap:8px; margin-top:12px; padding-top:10px; border-top:1px solid var(--c-border); }
+.sv3-archive-week { padding:10px 12px; border-radius:12px; background:var(--c-bg); border:1px solid var(--c-border); }
+.sv3-archive-week > summary { font-size:12px; font-weight:700; color:var(--c-text); }
+.sv3-archive-ratio { font-size:12px; font-weight:800; color:var(--c-primary); font-variant-numeric:tabular-nums; }
+.sv3-archive-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:10px; }
+.sv3-archive-metric { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:10px; background:var(--c-surface-2); font-size:11.5px; }
+.sv3-archive-metric span { color:var(--c-text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sv3-archive-metric strong { color:var(--c-text); font-weight:800; font-variant-numeric:tabular-nums; }
+.sv3-archive-recs { display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+.sv3-archive-rec { padding:9px 11px; border-radius:10px; background:var(--c-bg); border:1px solid var(--c-border); }
+.sv3-archive-rec-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; font-size:11px; color:var(--c-text); }
+.sv3-archive-rec p { margin:0 !important; font-size:11px !important; line-height:1.45 !important; }
 .sv3-session-checks > details:first-of-type { margin-top:12px; }
 .sv3-session-checks h4 { font-size:13px; margin-top:20px; }
 .sv3-session-checks .science-set-controls { padding:10px 0 16px; }
@@ -197,17 +236,24 @@
 .science-week-prompt-actions .science-feedback-skip { width:100%; min-height:40px; text-align:center; }
 .sv3-debug-late-day { margin-top:8px; }
 
-/* Weekly cards mirror the original Scienza layout; only color identifies the dose. */
-.sv3-volumes { border-color:rgba(var(--c-primary-rgb),.5); border-radius:24px; padding:20px 16px; }
+/* Weekly targets sit free on the main Scienza page; compact uses a card wrapper. */
+.sv3-volumes { padding:0; margin:10px 0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+.sv3-volumes.is-compact { margin:0; border-color:rgba(var(--c-primary-rgb),.5); border-radius:24px; padding:20px 16px; }
 .sv3-panel-heading h2 { font-size:19px; font-weight:850; }
 .sv3-volumes .sv3-panel-icon { background:none; width:26px; height:30px; border-radius:0; }
 .sv3-volumes .sv3-panel-icon svg { width:23px; height:23px; }
-.sv3-volume-list { display:flex; flex-direction:column; gap:9px; margin-top:18px; }
+.sv3-volume-list { display:flex; flex-direction:column; gap:11px; margin-top:18px; }
 .sv3-volume-row, .sv3-volume-row:last-child { padding:16px 12px; gap:13px; border:1px solid rgba(138,148,163,.11); border-radius:16px; background:#0B0E12; }
 .sv3-volume-name { flex-wrap:wrap; gap:6px; font-size:14px; font-weight:800; color:var(--c-text-muted); }
+.sv3-volume-row.is-priority,
+.sv3-volume-row.is-priority:last-child,
+:root[data-theme="og"] .sv3-volume-row.is-priority,
+:root[data-theme="science-v3"] .sv3-volume-row.is-priority,
+:root[data-theme="science-v3"] .sv3-volume-row.is-priority:last-child {
+  border-color: color-mix(in srgb, var(--landmark-color, var(--c-primary)) 48%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--landmark-color, var(--c-primary)) 14%, transparent), transparent 72%), #0B0E12;
+}
 .sv3-volume-row.is-priority .sv3-volume-name { color:var(--c-text); }
-.sv3-focus-badge { display:inline-flex; align-items:center; gap:3px; padding:4px 6px; border-radius:6px; font-size:9px; font-weight:850; line-height:1.1; letter-spacing:.025em; color:var(--landmark-color); background:color-mix(in srgb,var(--landmark-color) 16%,transparent); }
-.sv3-focus-badge svg { color:inherit; }
 .sv3-volume-number { flex-shrink:0; gap:4px; font-size:11px; }
 .sv3-volume-number strong { font-size:17px; }
 .sv3-volume-number > svg:last-child { display:none; }
@@ -223,7 +269,7 @@
 .science-week-outstanding li small { color:var(--c-text-muted); font-size:10px; line-height:1.5; }
 .science-week-outstanding b { white-space:nowrap; color:var(--c-text-muted); }
 .science-week-outstanding > p { font-size:11px; margin-bottom:0; }
-@media (max-width:360px) { .sv3-volume-row { padding:14px 10px; } .sv3-volume-name { font-size:12px; } .sv3-focus-badge { font-size:8px; padding:4px; } .sv3-volume-number { font-size:10px; } }
+@media (max-width:360px) { .sv3-volume-row { padding:14px 10px; } .sv3-volume-name { font-size:12px; } .sv3-volume-number { font-size:10px; } }
 
 .sv3-history-preview { padding:18px 14px; border:1px solid var(--c-border); border-radius:16px; background:var(--c-surface); margin:20px 0 24px; }
 .sv3-history-preview h4 { display:flex; align-items:center; gap:8px; margin:0 0 12px; color:var(--c-primary); font-size:14px; }
