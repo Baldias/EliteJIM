@@ -15,17 +15,23 @@ export default function RoutineCard({ template, completedThisWeek = false, onSta
   return <button type="button" className={`ej-card home-routine ${completedThisWeek ? 'is-completed-week' : ''}`} aria-label={`Inizia ${template.name}`} aria-describedby="routine-gesture-hint" aria-haspopup="dialog" aria-keyshortcuts="Shift+F10" onPointerDown={e => { if (e.button !== 0 || !e.isPrimary) return; e.currentTarget.setPointerCapture?.(e.pointerId); gesture.down(e.clientX, e.clientY); }} onPointerMove={e => gesture.move(e.clientX, e.clientY)} onPointerUp={e => { if (gesture.up()) e.preventDefault(); }} onPointerCancel={() => gesture.cancel()} onContextMenu={e => { e.preventDefault(); gesture.context(); }} onKeyDown={e => { if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) { e.preventDefault(); gesture.context(true); } }} onClick={e => gesture.click(e.detail === 0)}>
     <div className="home-routine-top">
       <strong>{name}{detail && <small>{detail}</small>}</strong>
-      {completedThisWeek && (
-        <span className="home-routine-done" title={tr('Completata questa settimana')}>
-          <Check size={12} strokeWidth={3} /> {tr('Fatta')}
+      {(completedThisWeek || template.scienceSync) && (
+        <span className="home-routine-badges">
+          {template.scienceSync && (
+            <span className="home-routine-science-mark" title={tr('Scheda associata a Scienza')} aria-label={tr('Scheda associata a Scienza')} role="img">
+              <Dna size={13} strokeWidth={2.5} />
+            </span>
+          )}
+          {completedThisWeek && (
+            <span className="home-routine-done" title={tr('Completata questa settimana')}>
+              <Check size={12} strokeWidth={3} /> {tr('Fatta')}
+            </span>
+          )}
         </span>
       )}
     </div>
     <span className="home-routine-meta">
       {exercises.length} {tr('esercizi')} <i aria-hidden="true">·</i> {sets} {tr('serie')}
-      {template.scienceSync && (
-        <span className="home-routine-science"><Dna size={11} /> {tr('Scienza')}</span>
-      )}
     </span>
   </button>;
 }

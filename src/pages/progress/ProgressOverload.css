@@ -277,7 +277,8 @@
 .pg-chart {
   height: 190px;
   width: 100%;
-  cursor: pointer;
+  cursor: crosshair;
+  touch-action: pan-y; /* two-finger pinch switches the period instead of zooming the page */
 }
 
 .pg-legend {

@@ -161,7 +161,8 @@ function Home() {
   }), [templates, history, customExercises, exerciseOverrides, scienceState, scienceReport]);
 
   const templateCards = useMemo(() => templates.map(t => {
-    const completedWorkout = findCompletedWorkoutThisWeek(t, storeSnapshot, now);
+    // "Fatta" belongs to the weekly Scienza plan: only schede linked to Scienza get it.
+    const completedWorkout = t.scienceSync ? findCompletedWorkoutThisWeek(t, storeSnapshot, now) : null;
     return {
       raw: t,
       resolved: resolveDynamicTemplate(t, storeSnapshot, now),
@@ -294,7 +295,9 @@ function Home() {
                       onClick={completedWorkout ? () => setCompletedPreview({ workout: completedWorkout, template: raw }) : undefined}
                       style={completedWorkout ? { cursor: 'pointer' } : undefined}
                     >
-                      <span className="home-routine-badge">{(resolved.name || '?').trim().charAt(0).toUpperCase()}</span>
+                      <span className={`home-routine-badge ${resolved.scienceSync ? 'is-science' : ''}`} title={resolved.scienceSync ? tr('Scheda associata a Scienza') : undefined}>
+                        {resolved.scienceSync ? <Dna size={18} strokeWidth={2.5} aria-label={tr('Scheda associata a Scienza')} /> : (resolved.name || '?').trim().charAt(0).toUpperCase()}
+                      </span>
                       <div className="home-routine-text">
                         <h3>{resolved.name}</h3>
                         <p>

@@ -1025,3 +1025,40 @@
 }
 .workout-exercise-progress-btn:hover, .workout-exercise-progress-btn:focus-visible { color: var(--c-primary); background: var(--c-surface-2); }
 .workout-exercise-progress-btn:disabled { opacity: .35; cursor: default; }
+
+/* ── Reorder exercises (drag handle) ───────────── */
+.workout-exercise-handle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 40px;
+  margin-right: -4px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--c-text-dim);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.workout-exercise-handle:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 1px; }
+.workout-exercise-handle:active { cursor: grabbing; color: var(--c-primary); }
+
+/* While dragging, cards collapse to their title bar so the list is short */
+.wk-body.is-reordering { user-select: none; -webkit-user-select: none; }
+.wk-body.is-reordering .workout-exercise-card { display: none; }
+.wk-body.is-reordering .workout-exercise-group { margin-bottom: 10px; }
+.wk-body.is-reordering .workout-exercise-title-input-wrap { pointer-events: none; }
+.workout-exercise-group.is-dragging { will-change: transform; }
+.workout-exercise-group.is-dragging .workout-exercise-title-bar {
+  border-radius: 14px;
+  background: var(--c-surface);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(var(--c-primary-rgb), 0.5);
+}
+.workout-exercise-group.is-dragging .workout-exercise-handle { color: var(--c-primary); cursor: grabbing; }

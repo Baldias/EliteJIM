@@ -1762,4 +1762,6 @@ export default {
   "Questa settimana": "This week",
   "Nessun allenamento in questa settimana.": "No workouts in this week.",
   "In questa porzione": "In this serving",
+  "Scheda associata a Scienza": "Workout linked to Science",
+  "Sposta {name} (trascina o usa le frecce)": "Move {name} (drag or use the arrow keys)",
 };
