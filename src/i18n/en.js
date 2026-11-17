@@ -1764,5 +1764,4 @@ export default {
   "In questa porzione": "In this serving",
   "Scheda associata a Scienza": "Workout linked to Science",
   "Sposta {name} (trascina o usa le frecce)": "Move {name} (drag or use the arrow keys)",
-  "Trascina per riordinare": "Drag to reorder",
 };
