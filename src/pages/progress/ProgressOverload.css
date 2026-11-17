@@ -138,6 +138,8 @@
   padding: 13px 14px 13px 44px;
   border-radius: 14px;
   background: var(--c-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-color: var(--c-border);
   color: var(--c-text);
   font-size: 0.9375rem;
