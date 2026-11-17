@@ -910,6 +910,23 @@ export const useStore = create(
         });
       },
 
+      // Moves an exercise of the running session to a new position (drag handle / arrows)
+      moveExerciseInActiveSession: (exerciseId, toIndex) => {
+        set((state) => {
+          const list = state.activeWorkout?.exercises;
+          const from = list ? list.findIndex(ex => ex.id === exerciseId) : -1;
+          if (from < 0) return state;
+          const to = Math.max(0, Math.min(list.length - 1, Number(toIndex)));
+          if (!Number.isInteger(to) || to === from) return state;
+          const exercises = [...list];
+          const [moved] = exercises.splice(from, 1);
+          exercises.splice(to, 0, moved);
+          return {
+            activeWorkout: { ...state.activeWorkout, lastActivityAt: Date.now(), exercises },
+          };
+        });
+      },
+
       deleteExerciseFromActiveSession: (exerciseId) => {
         set((state) => {
           if (!state.activeWorkout?.exercises.some(ex => ex.id === exerciseId)) return state;

@@ -14,6 +14,7 @@ import { getSessionNote } from '../../utils/sessionNote';
 import { getExerciseStats, sortExercisesByStreakAndRecency } from '../../utils/exerciseStreaks';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight, MAX_RELIABLE_REPS, REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import { EXERCISE_RANGES, rangeStart, smoothedChange } from '../../utils/progressRange';
+import { usePinchSteps } from '../../hooks/usePinchSteps';
 import WorkoutDetailSheet from '../../components/WorkoutDetailSheet';
 import './ProgressOverload.css';
 import { locale, tr } from '../../i18n';
@@ -38,7 +39,7 @@ const fmtPct = (n) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${Math.abs(n).toLoca
 const NoTooltip = () => null;
 
 // Selected session, shown in a fixed strip above the chart so it never covers a point.
-// Shows drop sets and notes immediately on hover/tap; clicking opens the whole workout.
+// Shows drop sets and notes immediately on hover/tap; tapping the strip opens the whole workout.
 function SessionStrip({ d, unit, prefix, onOpen }) {
     const hasDetails = Boolean(d.drops?.length > 0 || d.sessionNote || d.note);
     return (
@@ -108,6 +109,13 @@ function ProgressOverload() {
     const aliases = useStore(state => state.gymLocationAliases);
     const [locationChoice, setLocationChoice] = useState(null);
     const [range, setRange] = useState('max');
+    // Pinch on the chart: zoom in → shorter period (1M), zoom out → longer (1A, Max)
+    const chartPinchRef = usePinchSteps(dir => setRange(cur => {
+        const i = EXERCISE_RANGES.findIndex(r => r.id === cur);
+        const next = EXERCISE_RANGES[Math.max(0, Math.min(EXERCISE_RANGES.length - 1, i + dir))];
+        if (next.id !== cur) navigator.vibrate?.(8);
+        return next.id;
+    }));
     const [now] = useState(() => Date.now());
     const [selectedTime, setSelectedTime] = useState(null);
     const [openWorkoutId, setOpenWorkoutId] = useState(null);
@@ -251,15 +259,14 @@ function ProgressOverload() {
         if (session) setSelectedTime(prev => (prev === session.time ? prev : session.time));
     }, [visibleSessions]);
 
-    // Clicking/tapping on the chart while hovering an exercise session opens its workout
-    const openHoveredSession = useCallback((state) => {
+    // Tapping the chart only selects the session in the strip above:
+    // the workout opens from the strip ("Apri"), never from the chart itself.
+    const selectTappedSession = useCallback((state) => {
         const raw = state?.activeTooltipIndex ?? state?.activeIndex;
         const index = raw == null || raw === '' ? NaN : Number(raw);
-        const session = Number.isInteger(index) ? visibleSessions[index] : selected;
-        if (!session) return;
-        setSelectedTime(session.time);
-        setOpenWorkoutId(session.workoutId);
-    }, [visibleSessions, selected]);
+        const session = Number.isInteger(index) ? visibleSessions[index] : null;
+        if (session) setSelectedTime(session.time);
+    }, [visibleSessions]);
 
     return (
         <div className="ej-page pg-page">
@@ -407,13 +414,13 @@ function ProgressOverload() {
                                 )}
 
                                 {visibleSessions.length > 0 && (
-                                    <div className="pg-chart">
+                                    <div className="pg-chart" ref={chartPinchRef}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart
                                                 data={visibleSessions}
                                                 margin={{ top: 16, right: 8, left: -22, bottom: 0 }}
                                                 onMouseMove={pickSession}
-                                                onClick={openHoveredSession}
+                                                onClick={selectTappedSession}
                                                 onTouchMove={pickSession}
                                             >
                                                 <defs>

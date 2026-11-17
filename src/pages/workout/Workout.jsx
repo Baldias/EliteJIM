@@ -2,7 +2,7 @@ import { machineHistory } from '../../utils/gymLocation';
 import WorkoutGymLocation from '../../components/GymLocation';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, TrendingDown, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell, TrendingUp, MessageSquareDashed } from 'lucide-react';
+import { Plus, Check, TrendingDown, X, ChevronLeft, Trash2, Clock, FileText, Zap, Trophy, Dumbbell, TrendingUp, MessageSquareDashed, GripVertical } from 'lucide-react';
 import { useStore, findLastBest1RMSet, getExercise1RMStats } from '../../store/useStore';
 import { useRestTimer } from '../../hooks/useRestTimer';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
@@ -14,6 +14,7 @@ import { formatElapsed } from '../../utils/duration';
 import { getExerciseNote, setNote } from '../../utils/exerciseNotes';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import TrainingReminder from '../../components/TrainingReminder';
+import { useDragReorder } from '../../hooks/useDragReorder';
 import './Workout.css';
 import { tr, trc } from '../../i18n';
 
@@ -40,6 +41,7 @@ function Workout() {
   const showDropsets = useStore(state => state.showDropsets ?? false);
   const markScienceSetCompleted = useStore(state => state.markScienceSetCompleted);
   const deleteExercise = useStore(state => state.deleteExerciseFromActiveSession);
+  const moveExercise = useStore(state => state.moveExerciseInActiveSession);
   const deleteSet = useStore(state => state.deleteSetFromActiveExercise);
   const cancelWorkout = useStore(state => state.cancelWorkout);
   const history = useStore(state => state.history);
@@ -61,6 +63,13 @@ function Workout() {
   const prTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(prTimer.current), []);
+
+  const exerciseIds = useMemo(() => (activeWorkout?.exercises || []).map(ex => ex.id), [activeWorkout?.exercises]);
+  const { draggingId, itemRef, handleProps } = useDragReorder({
+    ids: exerciseIds,
+    onMove: moveExercise,
+    topInset: () => document.querySelector('.wk-sticky')?.getBoundingClientRect().bottom || 0,
+  });
 
   const toggleNotes = (id) => setExpandedNotes(p => ({ ...p, [id]: !p[id] }));
 
@@ -205,7 +214,7 @@ function Workout() {
       </div>
 
       {/* ── EXERCISES ─────────────────────── */}
-      <div className="wk-body">
+      <div className={`wk-body ${draggingId ? 'is-reordering' : ''}`}>
         <WorkoutGymLocation key={activeWorkout.id} workout={activeWorkout} />
       <TrainingReminder key={activeWorkout.id} workout={activeWorkout} />
 
@@ -258,13 +267,25 @@ function Workout() {
           const isCelebrating = !!newPR && prCelebration?.exerciseId === ex.id;
 
           return (
-            <div 
-              key={ex.id} 
-              className="workout-exercise-group"
-              style={{ zIndex: activeWorkout.exercises.length - idx }}
+            <div
+              key={ex.id}
+              ref={itemRef(ex.id)}
+              className={`workout-exercise-group ${draggingId === ex.id ? 'is-dragging' : ''}`}
+              style={{ zIndex: draggingId === ex.id ? activeWorkout.exercises.length + 1 : activeWorkout.exercises.length - idx }}
             >
               {/* Unified Exercise Title Bar ABOVE the card */}
               <div className="workout-exercise-title-bar">
+                {activeWorkout.exercises.length > 1 && (
+                  <button
+                    type="button"
+                    className="workout-exercise-handle"
+                    aria-label={tr('Sposta {name} (trascina o usa le frecce)', { name: ex.name || tr('questo esercizio') })}
+                    title={tr('Trascina per riordinare')}
+                    {...handleProps(ex.id)}
+                  >
+                    <GripVertical size={18} />
+                  </button>
+                )}
                 <span className="workout-exercise-idx-pill">
                   <span className="workout-exercise-idx-hash">#</span>
                   <span className="workout-exercise-idx-num">{idx + 1}</span>
