@@ -1,4 +1,5 @@
 import { machineHistory, isMachineExercise } from '../utils/gymLocation';
+import { WORKOUT_AUTO_FINISH_MS } from '../utils/workoutInactivity';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { calculateSessionScore, recalculateTotalXpFromHistory, calculateWeeklyStreak } from '../utils/gamification';
@@ -822,12 +823,13 @@ export const useStore = create(
         if (!state.activeWorkout || Number.isFinite(state.activeWorkout.lastActivityAt)) return state;
         return { activeWorkout: { ...state.activeWorkout, lastActivityAt: now } };
       }),
+      keepWorkoutActive: (now = Date.now()) => set(state => (state.activeWorkout ? { activeWorkout: { ...state.activeWorkout, lastActivityAt: now } } : state)),
       finishWorkout: (options = {}) => {
         set((state) => {
           if (!state.activeWorkout) return state;
           const now = options.now ?? Date.now();
           const lastActivity = state.activeWorkout.lastActivityAt;
-          if (options.auto && (state.activeWorkout.id !== options.workoutId || lastActivity !== options.lastActivityAt || !Number.isFinite(lastActivity) || now < lastActivity + 3600000)) return state;
+          if (options.auto && (state.activeWorkout.id !== options.workoutId || lastActivity !== options.lastActivityAt || !Number.isFinite(lastActivity) || now < lastActivity + WORKOUT_AUTO_FINISH_MS)) return state;
           const completedWorkout = withSessionNote({
             ...state.activeWorkout,
             endTime: options.auto ? Math.max(state.activeWorkout.startTime, lastActivity) : now

@@ -24,6 +24,7 @@ import AiReport from './pages/report/AiReport';
 import Monitoring from './pages/monitoring/Monitoring';
 import MyMeals from './pages/monitoring/MyMeals';
 import ReloadPrompt from './components/ReloadPrompt';
+import WorkoutInactivityWarning from './components/WorkoutInactivityWarning';
 import ReleaseNotes from './components/ReleaseNotes';
 import { RELEASE_NOTES_VERSION } from './utils/releaseNotes';
 import ScienceWeekPrompt from './components/ScienceWeekPrompt';
@@ -100,6 +101,7 @@ function AppContent() {
       <div className="app-container">
         <DemoBanner />
         <ReloadPrompt />
+        <WorkoutInactivityWarning />
         <GlobalWorkoutBanner />
         <Routes>
           <Route path="/" element={<Home />} />
