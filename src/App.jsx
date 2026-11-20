@@ -35,6 +35,7 @@ import OptionalFeature from './components/OptionalFeature';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
 import { tr } from './i18n';
+import { SCROLL_MEMORY_PATHS } from './hooks/useScrollMemory';
 
 const NAV_ITEMS = [
   { value: '/science', label: 'Scienza', icon: <Dna size={22} /> },
@@ -71,11 +72,12 @@ function Navigation() {
 // Open every new page from the top: without this the browser keeps the previous
 // page's scroll, so "Termina" at the end of a long workout opened the recap at the bottom.
 // Back/forward (POP) keeps the browser's own scroll restoration.
+// Pages in SCROLL_MEMORY_PATHS (the active workout) restore their own position instead.
 function ScrollToTop() {
   const { pathname } = useLocation();
   const navigationType = useNavigationType();
   useEffect(() => {
-    if (navigationType !== 'POP') window.scrollTo(0, 0);
+    if (navigationType !== 'POP' && !SCROLL_MEMORY_PATHS.has(pathname)) window.scrollTo(0, 0);
   }, [pathname, navigationType]);
   return null;
 }
