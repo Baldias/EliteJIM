@@ -15,6 +15,7 @@ import { getExerciseNote, setNote } from '../../utils/exerciseNotes';
 import { estimate1RM, getBodyweightLoad, resolveBodyweight } from '../../utils/oneRepMax';
 import TrainingReminder from '../../components/TrainingReminder';
 import { useDragReorder } from '../../hooks/useDragReorder';
+import { useScrollMemory } from '../../hooks/useScrollMemory';
 import './Workout.css';
 import { tr, trc } from '../../i18n';
 
@@ -63,6 +64,7 @@ function Workout() {
   const prTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(prTimer.current), []);
+  useScrollMemory(activeWorkout?.id);
 
   const exerciseIds = useMemo(() => (activeWorkout?.exercises || []).map(ex => ex.id), [activeWorkout?.exercises]);
   const { draggingId, itemRef, handleProps } = useDragReorder({
