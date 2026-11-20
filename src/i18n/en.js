@@ -308,6 +308,11 @@ export default {
   "Esercizio": "Exercise",
   "Terminare e salvare l'allenamento?": "Finish and save the workout?",
   "Torna alla Home": "Back to Home",
+  // components/WorkoutInactivityWarning.jsx
+  "Stai ancora allenandoti?": "Still training?",
+  "Nessuna attività da {idle} min: l'allenamento si chiuderà da solo tra {minutes} min.": "No activity for {idle} min: the workout will close on its own in {minutes} min.",
+  "Sto continuando": "I'm still going",
+  "Termina ora": "Finish now",
   "Termina": "Finish",
   "Interrompi recupero": "Stop rest",
   "Nessun esercizio": "No exercises",

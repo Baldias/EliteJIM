@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useStore } from '../store/useStore';
 
-const INACTIVITY_MS = 60 * 60 * 1000;
+import { WORKOUT_AUTO_FINISH_MS as INACTIVITY_MS } from '../utils/workoutInactivity';
 
 // Browser timers can pause in the background; recheck the persisted timestamp
 // on focus and visibility changes, and after every activity update.
