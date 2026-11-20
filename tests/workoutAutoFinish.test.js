@@ -21,7 +21,7 @@ function startSession() {
 }
 
 describe('automatic workout finish', () => {
-  it('updates activity for working-set edits and saves the exact last activity after 30 minutes without activity', () => {
+  it('updates activity for working-set edits and saves the exact last activity after one hour without activity', () => {
     const { workoutId, exerciseId, setId } = startSession();
     vi.setSystemTime(start + 10 * 60000);
     useStore.getState().updateActiveWorkoutSet(exerciseId, setId, 'reps', 10);
@@ -42,13 +42,13 @@ describe('automatic workout finish', () => {
     expect(useStore.getState().history).toHaveLength(1);
     expect(useStore.getState().userXP).toBe(xp);
   });
-  it('closes after 30 minutes, and "still going" resets the countdown', () => {
-    expect(WORKOUT_AUTO_FINISH_MS).toBe(30 * 60000);
+  it('closes after one hour, and "still going" resets the countdown', () => {
+    expect(WORKOUT_AUTO_FINISH_MS).toBe(hour);
     const { workoutId } = startSession();
     const resumedAt = start + 25 * 60000;
     useStore.getState().keepWorkoutActive(resumedAt);
     expect(useStore.getState().activeWorkout.lastActivityAt).toBe(resumedAt);
-    useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt: start, now: start + 31 * 60000 });
+    useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt: start, now: start + hour + 60000 });
     expect(useStore.getState().activeWorkout).not.toBeNull();
     useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt: resumedAt, now: resumedAt + WORKOUT_AUTO_FINISH_MS });
     expect(useStore.getState().history[0].endTime).toBe(resumedAt);
