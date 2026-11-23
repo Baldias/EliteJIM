@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useStore } from '../src/store/useStore';
 import { emptyScienceState } from '../src/utils/scienceV3';
+import { WORKOUT_AUTO_FINISH_MS } from '../src/utils/workoutInactivity';
 
 const original = useStore.getInitialState();
 const start = new Date(2026, 9, 29, 10).getTime();
@@ -20,16 +21,16 @@ function startSession() {
 }
 
 describe('automatic workout finish', () => {
-  it('updates activity for working-set edits and saves the exact last activity after one hour', () => {
+  it('updates activity for working-set edits and saves the exact last activity after 30 minutes without activity', () => {
     const { workoutId, exerciseId, setId } = startSession();
     vi.setSystemTime(start + 10 * 60000);
     useStore.getState().updateActiveWorkoutSet(exerciseId, setId, 'reps', 10);
     useStore.getState().updateActiveWorkoutSet(exerciseId, setId, 'done', true);
     const lastActivityAt = start + 10 * 60000;
     expect(useStore.getState().activeWorkout.lastActivityAt).toBe(lastActivityAt);
-    useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt, now: lastActivityAt + hour - 1 });
+    useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt, now: lastActivityAt + WORKOUT_AUTO_FINISH_MS - 1 });
     expect(useStore.getState().history).toHaveLength(0);
-    useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt, now: lastActivityAt + hour + 10000 });
+    useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt, now: lastActivityAt + WORKOUT_AUTO_FINISH_MS + 10000 });
     const state = useStore.getState();
     expect(state.activeWorkout).toBeNull();
     expect(state.history).toHaveLength(1);
@@ -40,6 +41,17 @@ describe('automatic workout finish', () => {
     useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt, now: lastActivityAt + 2 * hour });
     expect(useStore.getState().history).toHaveLength(1);
     expect(useStore.getState().userXP).toBe(xp);
+  });
+  it('closes after 30 minutes, and "still going" resets the countdown', () => {
+    expect(WORKOUT_AUTO_FINISH_MS).toBe(30 * 60000);
+    const { workoutId } = startSession();
+    const resumedAt = start + 25 * 60000;
+    useStore.getState().keepWorkoutActive(resumedAt);
+    expect(useStore.getState().activeWorkout.lastActivityAt).toBe(resumedAt);
+    useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt: start, now: start + 31 * 60000 });
+    expect(useStore.getState().activeWorkout).not.toBeNull();
+    useStore.getState().finishWorkout({ auto: true, workoutId, lastActivityAt: resumedAt, now: resumedAt + WORKOUT_AUTO_FINISH_MS });
+    expect(useStore.getState().history[0].endTime).toBe(resumedAt);
   });
   it('ignores stale deadlines after new activity or a different workout', () => {
     const { workoutId, exerciseId, setId } = startSession();

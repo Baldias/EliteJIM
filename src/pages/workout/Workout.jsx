@@ -84,7 +84,15 @@ function Workout() {
     return () => clearInterval(interval);
   }, [activeWorkout]);
 
-  useEffect(() => { if (!activeWorkout && !isFinishing.current) navigate('/'); }, [activeWorkout, navigate]);
+  // When the workout ends from outside this page (the inactivity warning's "Termina ora"),
+  // show its recap; a cancelled workout goes back Home.
+  const shownWorkoutId = useRef(activeWorkout?.id);
+  useEffect(() => {
+    if (activeWorkout) { shownWorkoutId.current = activeWorkout.id; return; }
+    if (isFinishing.current) return;
+    const recapWorkoutId = useStore.getState().recapData?.workout?.id;
+    navigate(recapWorkoutId && recapWorkoutId === shownWorkoutId.current ? '/recap' : '/');
+  }, [activeWorkout, navigate]);
   if (!activeWorkout) return null;
 
   const celebrateIfNewPR = (ex, set) => {
