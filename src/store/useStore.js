@@ -216,6 +216,7 @@ export const useStore = create(
       showRirSelector: true,
       // Optional "+ Drop" button in the workout (off by default)
       showDropsets: false,
+      workoutPushEnabled: false,
       // --- Backup & Storage State ---
       autoBackupEnabled: true,
       autoBackupFrequency: 'after_workout', // 'after_workout' | 'weekly' | 'monthly'
@@ -386,6 +387,7 @@ export const useStore = create(
       toggleDiary: () => set((state) => ({ showDiary: !state.showDiary })),
       toggleRirSelector: () => set((state) => ({ showRirSelector: !(state.showRirSelector ?? true) })),
       toggleDropsets: () => set((state) => ({ showDropsets: !state.showDropsets })),
+      setWorkoutPushEnabled: (enabled) => set({ workoutPushEnabled: !!enabled }),
       
       // --- Exercise Management Actions ---
       // Adds several custom exercises at once (e.g. from a JSON import), skipping names already in the DB.

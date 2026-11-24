@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useWorkoutAutoFinish } from './hooks/useWorkoutAutoFinish';
+import { useWorkoutPushReminder } from './hooks/useWorkoutPushReminder';
 import { hasCurrentThemeChoice } from './utils/theme';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { TabBar } from 'glisse';
@@ -85,6 +86,7 @@ function ScrollToTop() {
 
 function AppContent() {
   useWorkoutAutoFinish();
+  useWorkoutPushReminder();
   const themeChosen = useStore(hasCurrentThemeChoice);
   const releaseNotesSeen = useStore(state => state.releaseNotesSeen);
   const dismissReleaseNotes = useStore(state => state.dismissReleaseNotes);
