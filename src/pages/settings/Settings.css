@@ -1318,3 +1318,7 @@ button.st-row {
 .st-guide-text strong {
   color: var(--c-text);
 }
+
+.st-row-error {
+  color: var(--c-danger, #ff6b6b);
+}

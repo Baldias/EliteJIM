@@ -8,6 +8,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
+      // Push notifications (forgotten-workout reminder): see public/push-sw.js
+      workbox: { importScripts: ['push-sw.js'] },
       includeAssets: ['vite.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Elite Gym Tracker',

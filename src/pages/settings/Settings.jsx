@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Dna, Download, Upload, S
 import { exportDataBackup, importDataBackup, formatLastBackupDate, initPersistentStorage } from '../../utils/backup';
 import { ThemeSettingRow } from '../../components/ThemePicker';
 import { LanguageSettingRow } from '../../components/LanguagePicker';
+import { WorkoutPushSettingRow } from '../../components/WorkoutPushSetting';
 import { sanitizeDecimalInput } from '../../utils/number';
 import { REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import './Settings.css';
@@ -165,6 +166,7 @@ function Settings() {
         <span className="st-row-text"><span className="st-row-title">{tr('Drop set')}</span><span className="st-row-sub">{tr("Aggiunge il pulsante Drop durante l'allenamento. I drop non contano in volume, fatica, record e Scienza: li vedi nei Progressi.")}</span></span>
         <button type="button" role="switch" aria-checked={showDropsets} aria-label={tr('Attiva drop set')} className={`st-switch ${showDropsets ? 'is-on' : ''}`} onClick={toggleDropsets}><span /></button>
       </div>
+      <WorkoutPushSettingRow />
       <div className="st-disclosure"><ScienceTutorialButton inline /></div>
 
       <GymLocationSettings />
