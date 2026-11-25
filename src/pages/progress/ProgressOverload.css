@@ -278,7 +278,13 @@
   height: 190px;
   width: 100%;
   cursor: crosshair;
-  touch-action: pan-y; /* two-finger pinch switches the period instead of zooming the page */
+  /* Gestures are handled in JS: one finger sideways scrubs the sessions (useChartScrub),
+     two fingers switch the period (usePinchSteps); vertical drags still scroll the page. */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .pg-legend {

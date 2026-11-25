@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import MuscleWeeklyProgress from './MuscleWeeklyProgress';
 import { useStore } from '../../store/useStore';
 import { EXERCISE_CATEGORIES, getAllExercises, getExerciseCategories } from '../../data/exercises';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { ExerciseAutocomplete } from '../../components/ExerciseAutocomplete';
 import { getMuscleLevelByXp } from '../../utils/gamification';
 import { Zap, Search, Trophy, TrendingUp, TrendingDown, Flame, StickyNote, MessageSquareDashed, ChevronRight } from 'lucide-react';
@@ -15,6 +15,7 @@ import { getExerciseStats, sortExercisesByStreakAndRecency } from '../../utils/e
 import { estimate1RM, getBodyweightLoad, resolveBodyweight, MAX_RELIABLE_REPS, REFERENCE_BODYWEIGHT_KG } from '../../utils/oneRepMax';
 import { EXERCISE_RANGES, rangeStart, smoothedChange } from '../../utils/progressRange';
 import { usePinchSteps } from '../../hooks/usePinchSteps';
+import { useChartScrub } from '../../hooks/useChartScrub';
 import WorkoutDetailSheet from '../../components/WorkoutDetailSheet';
 import './ProgressOverload.css';
 import { locale, tr } from '../../i18n';
@@ -96,8 +97,8 @@ function ChartDot({ cx, cy, payload, selectedTime }) {
     const drop = payload.drops?.length ? <rect x={cx - 3} y={cy - 14} width={6} height={6} rx={1.5} fill="var(--c-danger)" /> : null;
     const note = payload.noteChanged ? <circle cx={cx} cy={cy + 11} r={2.5} fill="var(--c-text-muted)" /> : null;
     const ring = payload.time === selectedTime ? <circle cx={cx} cy={cy} r={9} fill="none" stroke="var(--c-text)" strokeOpacity={0.7} strokeWidth={1.5} /> : null;
-    if (!drop && !note && !ring) return dot;
-    return <g>{ring}{dot}{drop}{note}</g>;
+    // data-time lets the finger scrub snap to the dots actually drawn (useChartScrub)
+    return <g data-time={payload.time}>{ring}{dot}{drop}{note}</g>;
 }
 
 function ProgressOverload() {
@@ -118,6 +119,12 @@ function ProgressOverload() {
     }));
     const [now] = useState(() => Date.now());
     const [selectedTime, setSelectedTime] = useState(null);
+    // One finger sliding sideways on the chart moves the selected session, snapping to each dot
+    const chartScrubRef = useChartScrub(time => {
+        setSelectedTime(time);
+        navigator.vibrate?.(4);
+    });
+    const chartRef = useCallback(node => { chartPinchRef(node); chartScrubRef(node); }, [chartPinchRef, chartScrubRef]);
     const [openWorkoutId, setOpenWorkoutId] = useState(null);
 
     const [searchParams] = useSearchParams();
@@ -414,14 +421,13 @@ function ProgressOverload() {
                                 )}
 
                                 {visibleSessions.length > 0 && (
-                                    <div className="pg-chart" ref={chartPinchRef}>
+                                    <div className="pg-chart pg-chart--scrub" ref={chartRef}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart
                                                 data={visibleSessions}
                                                 margin={{ top: 16, right: 8, left: -22, bottom: 0 }}
                                                 onMouseMove={pickSession}
                                                 onClick={selectTappedSession}
-                                                onTouchMove={pickSession}
                                             >
                                                 <defs>
                                                     <linearGradient id="pgArea" x1="0" y1="0" x2="0" y2="1">
@@ -453,7 +459,9 @@ function ProgressOverload() {
                                                     allowDecimals={false}
                                                 />
                                                 {/* No floating tooltip: the details live in the strip above, never on top of a point */}
-                                                <Tooltip content={NoTooltip} cursor={{ stroke: 'rgba(255,255,255,0.15)' }} />
+                                                <Tooltip content={NoTooltip} cursor={false} />
+                                                {/* Guide line on the selected session: follows the finger while scrubbing */}
+                                                {selected && <ReferenceLine x={selected.time} stroke="var(--c-text)" strokeOpacity={0.25} strokeWidth={1} />}
                                                 <Area
                                                     type="monotone"
                                                     dataKey="value"
